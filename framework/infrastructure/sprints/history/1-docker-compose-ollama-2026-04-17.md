@@ -4,9 +4,9 @@
 Create docker-compose files for local and production environments that start Ollama and load the agents defined in the agents layer.
 
 ## Status
-status: active
+status: completed
 started_at: 2026-04-17 00:00:00
-closed_at:
+closed_at: 2026-04-17 00:00:00
 blocked_by:
 waiting_for:
 
