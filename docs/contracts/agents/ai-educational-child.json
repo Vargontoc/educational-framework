@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "contract_version": "1.1.0",
+  "contract_version": "1.2.0",
   "agent": "ai-educational-child",
   "description": "Event-driven companion agent for children aged 3-8. Reacts to game and activity events with short, safe, age-appropriate responses.",
   "runtime": {
@@ -110,8 +110,8 @@
     "no_negative_framing": true
   },
   "personalities_available": {
-    "v1": ["cheerful", "calm"],
-    "planned": ["explorer", "wise", "silly"]
+    "v1": ["cheerful", "calm", "explorer", "wise", "silly"],
+    "planned": []
   },
   "breaking_change_triggers": [
     "Adding or removing fields from input schema",
@@ -137,6 +137,11 @@
       "version": "1.1.0",
       "date": "2026-04-17",
       "summary": "Non-breaking: added docker section with image name, exposed port and build context."
+    },
+    {
+      "version": "1.2.0",
+      "date": "2026-04-17",
+      "summary": "Non-breaking: personalities explorer, wise and silly implemented. personalities_available.v1 complete."
     }
   ]
 }
