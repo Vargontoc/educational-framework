@@ -1,0 +1,25 @@
+services:
+  ollama-educational:
+    image: educational-framework/ollama-educational:${IMAGE_TAG:-latest}
+    build:
+      context: ../agents
+      dockerfile: Dockerfile
+    container_name: ollama-educational
+    ports: !reset []
+    env_file:
+      - envs/ollama-educational.env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 12G
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    restart: always
