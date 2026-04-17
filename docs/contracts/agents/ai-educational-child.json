@@ -1,12 +1,19 @@
 {
   "schema_version": "1.0",
-  "contract_version": "1.0.0",
+  "contract_version": "1.1.0",
   "agent": "ai-educational-child",
   "description": "Event-driven companion agent for children aged 3-8. Reacts to game and activity events with short, safe, age-appropriate responses.",
   "runtime": {
     "engine": "ollama",
     "model": "qwen2.5:7b-instruct-q5_K_M",
     "endpoint": "http://localhost:11434/api/generate"
+  },
+  "docker": {
+    "dockerfile": "framework/agents/Dockerfile",
+    "image_name": "ai-educational-child",
+    "exposed_port": 11434,
+    "model_name_in_container": "ai-educational-child",
+    "build_context": "framework/agents"
   },
   "input": {
     "type": "object",
@@ -125,6 +132,11 @@
       "version": "1.0.0",
       "date": "2026-04-17",
       "summary": "Initial contract. Core event set, cheerful and calm personalities, no MCP tools."
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-04-17",
+      "summary": "Non-breaking: added docker section with image name, exposed port and build context."
     }
   ]
 }
