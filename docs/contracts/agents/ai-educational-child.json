@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0",
+  "contract_version": "1.0.0",
+  "agent": "ai-educational-child",
+  "description": "Event-driven companion agent for children aged 3-8. Reacts to game and activity events with short, safe, age-appropriate responses.",
+  "runtime": {
+    "engine": "ollama",
+    "model": "qwen2.5:7b-instruct-q5_K_M",
+    "endpoint": "http://localhost:11434/api/generate"
+  },
+  "input": {
+    "type": "object",
+    "required": ["event", "companion_name", "child_name", "child_age", "personality", "language"],
+    "properties": {
+      "event": {
+        "type": "string",
+        "enum": [
+          "session.start",
+          "session.end",
+          "activity.start",
+          "activity.success",
+          "activity.fail",
+          "activity.idle",
+          "activity.hint_request",
+          "activity.complete",
+          "emotion.detected"
+        ]
+      },
+      "companion_name": {
+        "type": "string",
+        "default": "Nubi",
+        "description": "Configurable companion name shown and spoken to the child"
+      },
+      "child_name": {
+        "type": "string",
+        "description": "Child first name only — used in responses"
+      },
+      "child_age": {
+        "type": "integer",
+        "minimum": 3,
+        "maximum": 8
+      },
+      "personality": {
+        "type": "string",
+        "enum": ["cheerful", "calm", "explorer", "wise", "silly"],
+        "description": "Active personality profile. Only cheerful and calm are implemented in v1."
+      },
+      "language": {
+        "type": "string",
+        "description": "ISO 639-1 language code (e.g. es, en, pt)"
+      },
+      "activity_id": {
+        "type": "string",
+        "description": "Identifier of the current activity (optional)"
+      },
+      "attempt_count": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Number of attempts on the current item (optional)"
+      },
+      "hint_level": {
+        "type": "string",
+        "enum": ["normal", "strong"],
+        "description": "Hint depth for activity.hint_request (optional)"
+      },
+      "session_duration_s": {
+        "type": "integer",
+        "description": "Seconds elapsed since session start (optional)"
+      },
+      "emotion_type": {
+        "type": "string",
+        "enum": ["frustration", "joy", "boredom"],
+        "description": "Detected emotion signal, used with emotion.detected event (optional)"
+      }
+    }
+  },
+  "output": {
+    "type": "object",
+    "required": ["text", "emotion", "tts_speed"],
+    "properties": {
+      "text": {
+        "type": "string",
+        "maxLength": 200,
+        "description": "Response text spoken to the child. Max 35 words enforced by agent rules."
+      },
+      "emotion": {
+        "type": "string",
+        "enum": ["happy", "encouraging", "calm", "curious", "playful", "proud"]
+      },
+      "tts_speed": {
+        "type": "string",
+        "enum": ["normal", "slow", "fast"]
+      }
+    }
+  },
+  "tools": [],
+  "constraints": {
+    "max_response_words": 35,
+    "output_format": "json_only",
+    "child_safe": true,
+    "no_open_questions": true,
+    "no_brand_references": true,
+    "no_negative_framing": true
+  },
+  "personalities_available": {
+    "v1": ["cheerful", "calm"],
+    "planned": ["explorer", "wise", "silly"]
+  },
+  "breaking_change_triggers": [
+    "Adding or removing fields from input schema",
+    "Adding or removing fields from output schema",
+    "Adding or removing event types from the enum",
+    "Changing output format from JSON",
+    "Adding or removing MCP tools"
+  ],
+  "non_breaking_change_triggers": [
+    "Adding a new personality file",
+    "Adjusting tone in an existing personality",
+    "Adding examples to examples.md",
+    "Tuning temperature, top_p, or top_k",
+    "Updating rules wording without changing semantics"
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-04-17",
+      "summary": "Initial contract. Core event set, cheerful and calm personalities, no MCP tools."
+    }
+  ]
+}
