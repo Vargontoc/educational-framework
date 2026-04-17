@@ -1,0 +1,106 @@
+{
+  "meta": {
+    "agent": "ai-educational-child",
+    "description": "Test payloads for all event types. Each event is combined with all personalities by validate.py.",
+    "companion_name": "Nubi",
+    "language": "es"
+  },
+  "events": [
+    {
+      "id": "session_start_age4",
+      "event": "session.start",
+      "child_name": "Leo",
+      "child_age": 4
+    },
+    {
+      "id": "session_start_age7",
+      "event": "session.start",
+      "child_name": "Mia",
+      "child_age": 7
+    },
+    {
+      "id": "activity_start",
+      "event": "activity.start",
+      "child_name": "Leo",
+      "child_age": 5,
+      "activity_id": "colors-match-01"
+    },
+    {
+      "id": "activity_success_first_try",
+      "event": "activity.success",
+      "child_name": "Leo",
+      "child_age": 5,
+      "attempt_count": 1
+    },
+    {
+      "id": "activity_success_third_try",
+      "event": "activity.success",
+      "child_name": "Mia",
+      "child_age": 7,
+      "attempt_count": 3
+    },
+    {
+      "id": "activity_fail_first",
+      "event": "activity.fail",
+      "child_name": "Leo",
+      "child_age": 4,
+      "attempt_count": 1
+    },
+    {
+      "id": "activity_fail_second",
+      "event": "activity.fail",
+      "child_name": "Mia",
+      "child_age": 7,
+      "attempt_count": 2
+    },
+    {
+      "id": "activity_idle",
+      "event": "activity.idle",
+      "child_name": "Leo",
+      "child_age": 5
+    },
+    {
+      "id": "activity_hint_normal",
+      "event": "activity.hint_request",
+      "child_name": "Leo",
+      "child_age": 5,
+      "activity_id": "colors-match-01",
+      "hint_level": "normal"
+    },
+    {
+      "id": "activity_hint_strong",
+      "event": "activity.hint_request",
+      "child_name": "Mia",
+      "child_age": 7,
+      "activity_id": "numbers-sort-03",
+      "hint_level": "strong"
+    },
+    {
+      "id": "activity_complete",
+      "event": "activity.complete",
+      "child_name": "Leo",
+      "child_age": 5
+    },
+    {
+      "id": "session_end",
+      "event": "session.end",
+      "child_name": "Mia",
+      "child_age": 7
+    },
+    {
+      "id": "emotion_detected",
+      "event": "emotion.detected",
+      "child_name": "Leo",
+      "child_age": 5,
+      "emotion_type": "frustration"
+    }
+  ],
+  "personalities": ["cheerful", "calm", "explorer", "wise", "silly"],
+  "constraints": {
+    "max_words": 35,
+    "valid_emotions": ["happy", "encouraging", "calm", "curious", "playful", "proud"],
+    "valid_tts_speeds": ["normal", "slow", "fast"],
+    "banned_words": ["wrong", "failed", "bad", "mistake", "incorrect"],
+    "no_coletilla_on_events": ["emotion.detected", "activity.fail"]
+  }
+}
