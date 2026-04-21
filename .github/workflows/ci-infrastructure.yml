@@ -1,0 +1,39 @@
+name: CI — Infrastructure
+
+on:
+  push:
+    branches:
+      - 'framework/infrastructure/**'
+    paths:
+      - 'framework/infrastructure/**'
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'framework/infrastructure/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate docker-compose syntax (local)
+        working-directory: framework/infrastructure
+        run: |
+          docker compose config --quiet
+
+      - name: Validate docker-compose syntax (prod override)
+        working-directory: framework/infrastructure/prod-override
+        run: |
+          docker compose config --quiet
+
+      - name: Verify no real .env files were committed
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -qE "framework/infrastructure/envs/.*\.env$" | grep -v ".example"; then
+            echo "ERROR: real .env file detected in commit"
+            echo "Only .env.example files should be committed"
+            exit 1
+          fi
