@@ -26,14 +26,17 @@ jobs:
           docker compose config --quiet
 
       - name: Validate docker-compose syntax (prod override)
-        working-directory: framework/infrastructure/prod-override
+        working-directory: framework/infrastructure
         run: |
-          docker compose config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
 
       - name: Verify no real .env files were committed
+        working-directory: framework/infrastructure
         run: |
-          if git diff --name-only HEAD~1 HEAD | grep -qE "framework/infrastructure/envs/.*\.env$" | grep -v ".example"; then
-            echo "ERROR: real .env file detected in commit"
+          # Fail if any tracked .env files exist under envs/ (excluding .example)
+          if git ls-files 'framework/infrastructure/envs/*.env' | grep -v '\.example' | grep -q '.'; then
+            echo "ERROR: real .env file detected in repository under framework/infrastructure/envs/"
             echo "Only .env.example files should be committed"
+            git ls-files 'framework/infrastructure/envs/*.env' | grep -v '\.example' || true
             exit 1
           fi
