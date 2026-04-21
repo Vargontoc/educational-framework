@@ -7,8 +7,6 @@ languague: All code and comments must be in English
 
 ## Stack
 
-agents: Ollama - qwen2.5:7b-instruct-q5_K_M
-
 
 ## Layer Structure
 
