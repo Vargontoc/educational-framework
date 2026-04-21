@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  # Production overrides: keep Ollama internal, expose only required app ports elsewhere
+  ollama-educational:
+    deploy:
+      restart_policy:
+        condition: on-failure
+    device_requests:
+      - driver: nvidia
+        count: all
+        capabilities: [gpu]
+    volumes:
+      - ollama_models:/models
+
+  postgres:
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+    driver: local
+  ollama_models:
+    driver: local

@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+  ollama-educational:
+    image: ollama/ollama:latest
+    container_name: ollama-educational
+    env_file:
+      - envs/ollama.env
+    environment:
+      # Enable GPU usage in the container if set in env file
+      - OLLAMA_USE_GPU=${OLLAMA_USE_GPU}
+      - OLLAMA_GPU_DEVICES=${OLLAMA_GPU_DEVICES}
+    networks:
+      - educational-network-dev
+    restart: unless-stopped
+    # Request GPU devices from the host (Docker Engine with NVIDIA support)
+    device_requests:
+      - driver: nvidia
+        count: all
+        capabilities: [gpu]
+    volumes:
+      - ollama_models:/models
+    # Do NOT publish Ollama port to the host in development by default
+    # Expose only to the docker network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:15
+    container_name: edu-postgres
+    env_file:
+      - envs/postgres.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - educational-network-dev
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  pgdata:
+  ollama_models:
+
+networks:
+  educational-network-dev:
+    name: educational-network-dev
+    driver: bridge
