@@ -44,6 +44,21 @@ waiting_for:
 ## Notes
 This sprint is derived directly from ADR-001 — it focuses on Option A (Docker + local Ollama in dev, managed Postgres in prod) and implements the ADR checklist items flagged as required for development readiness.
 
+## Acceptance Criteria
+- Ollama service defined in `framework/infrastructure/docker-compose.yml` and not published to host ports in production override.
+- PostgreSQL defined with named volume `pgdata` and reachable from app; backups can be created with `framework/infrastructure/scripts/backup_postgres.sh`.
+- `framework/infrastructure/envs/{service}.env.example` files present for `ollama` and `postgres`; no real `.env` files committed.
+- Healthchecks present for `ollama` and `postgres` and report `healthy` within a reasonable time after startup.
+- GPU support validated on host and from a GPU-enabled container; `OLLAMA_USE_GPU` configurable and `ollama` can detect GPUs.
+- Runbook entries added to `framework/infrastructure/runbook.md` covering Ollama failures and GPU checks.
+- CI workflow validates `docker compose config` for local and prod override (see `.github/workflows/ci-infrastructure.yml`).
+
+## Owners
+- `infrastructure`: infra-team (owner: infrastructure)
+- `ollama` service and GPU validation: infra-devops
+- `postgres` backups and retention policy: infra-database
+- CI / pipeline checks: ci-owner
+- Documentation and runbook: docs-owner
 ## Review
 
 completed_tasks:
