@@ -1,14 +1,11 @@
-version: '3.8'
 services:
   # Production overrides: keep Ollama internal, expose only required app ports elsewhere
   ollama-educational:
     deploy:
       restart_policy:
         condition: on-failure
-    device_requests:
-      - driver: nvidia
-        count: all
-        capabilities: [gpu]
+    # Fallback for GPU access in environments where device_requests is unsupported
+    runtime: nvidia
     volumes:
       - ollama_models:/models
 
