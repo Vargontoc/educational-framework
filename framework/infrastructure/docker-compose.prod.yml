@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  # Production overrides: keep Ollama internal, expose only required app ports elsewhere
+  ollama-educational:
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  postgres:
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+    driver: local
