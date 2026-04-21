@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   ollama-educational:
     image: ollama/ollama:latest
@@ -7,16 +6,15 @@ services:
       - envs/ollama.env
     environment:
       # Enable GPU usage in the container if set in env file
-      - OLLAMA_USE_GPU=${OLLAMA_USE_GPU}
-      - OLLAMA_GPU_DEVICES=${OLLAMA_GPU_DEVICES}
+      - OLLAMA_USE_GPU=${OLLAMA_USE_GPU:-false}
+      - OLLAMA_GPU_DEVICES=${OLLAMA_GPU_DEVICES:-all}
     networks:
       - educational-network-dev
     restart: unless-stopped
-    # Request GPU devices from the host (Docker Engine with NVIDIA support)
-    device_requests:
-      - driver: nvidia
-        count: all
-        capabilities: [gpu]
+    # GPU access: use Docker device_requests where supported, otherwise
+    # fallback to the legacy runtime field. If your Docker Compose
+    # installation rejects `device_requests`, use `runtime: nvidia`.
+    runtime: nvidia
     volumes:
       - ollama_models:/models
     # Do NOT publish Ollama port to the host in development by default
@@ -38,7 +36,7 @@ services:
       - educational-network-dev
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edu} -d ${POSTGRES_DB:-edu_db}"]
       interval: 30s
       timeout: 10s
       retries: 5
