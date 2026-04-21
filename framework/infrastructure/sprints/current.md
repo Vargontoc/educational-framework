@@ -75,3 +75,5 @@ learnings:
 
 next_sprint_suggestions:
     {}
+
+-- moved to history: see `framework/infrastructure/sprints/history/001-infrastructure-adr001-2026-04-21.md` --
