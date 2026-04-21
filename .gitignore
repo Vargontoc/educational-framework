@@ -1,1 +1,17 @@
-.env
+# ── OS and editor ────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# ── Logs ─────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+
+# ── Docker ───────────────────────────────────
+# Never commit generated docker volumes or override files
+docker-compose.override.yml

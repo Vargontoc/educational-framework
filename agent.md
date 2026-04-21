@@ -14,13 +14,11 @@ agents: Ollama - qwen2.5:7b-instruct-q5_K_M
 
 analysis/           -> read-only agent: observes, plans, reports
 docs/               -> architecture decisions, contractsm sprint management
-framework/agents    -> domain AI agents, Modelfiles, context, MCP Tools
 
 ## Contracts
 
 Single source of truth for all inter-layer arguments
 No layer duplicates contract files locally
-docs/contracts/agents/{name}.json   -> agent capability contract (agents =/= backend)
 
 ## Sprint Structure
 
@@ -28,8 +26,6 @@ Sprints are managed pewr layer to reflect independent progress.
 
 docs/sprints/sprint_template.md     -> global reusable template for all layers
 docs/sprints/history/               -> closed sprints archive (global)
-{layer}/sprints/current.md          -> active sprint for that layer
-{layer}/sprints/history/            -> closed sprint archive for that layer
 
 If a layer is blocked by another, current.md must declare
     status: blocked
@@ -40,16 +36,15 @@ If a layer is blocked by another, current.md must declare
 
 - All code, comments, variable names and documentation must be in English
 - Commit messages follow Conventional Commits: type(scope): short description
-- Branch naming: {layer}/type/short-description
+- Branch naming: framework/{layer}/type/short-description
 - No secrets or credentials committed to the repository
 - Each layer is independently deployable
 - Changes to one layer must not break the contracts in docs/contracts
-- Frontend must necer reference backend source directly, only via docs/contracts/openapi.json and docs/contracts/websocket.json
-- Backend mustr never reference agent Modelfiles directly, only via docs/contracts/agents/
+- Frontend must never reference backend source directly, only via docs/contracts/openapi.json and docs/contracts/websocket.json
+- Backend must never reference agent Modelfiles directly, only via docs/contracts/agents/
 
 ## Available Agents
 
-framework/agents/agent.md           -> manages domain AI agents, Modelfiles and capability contracts
 
 ## Workflow
 
