@@ -5,6 +5,12 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+    device_requests:
+      - driver: nvidia
+        count: all
+        capabilities: [gpu]
+    volumes:
+      - ollama_models:/models
 
   postgres:
     volumes:
@@ -12,4 +18,6 @@ services:
 
 volumes:
   pgdata:
+    driver: local
+  ollama_models:
     driver: local

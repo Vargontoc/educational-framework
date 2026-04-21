@@ -5,9 +5,20 @@ services:
     container_name: ollama-educational
     env_file:
       - envs/ollama.env
+    environment:
+      # Enable GPU usage in the container if set in env file
+      - OLLAMA_USE_GPU=${OLLAMA_USE_GPU}
+      - OLLAMA_GPU_DEVICES=${OLLAMA_GPU_DEVICES}
     networks:
       - educational-network-dev
     restart: unless-stopped
+    # Request GPU devices from the host (Docker Engine with NVIDIA support)
+    device_requests:
+      - driver: nvidia
+        count: all
+        capabilities: [gpu]
+    volumes:
+      - ollama_models:/models
     # Do NOT publish Ollama port to the host in development by default
     # Expose only to the docker network
     healthcheck:
@@ -34,6 +45,7 @@ services:
 
 volumes:
   pgdata:
+  ollama_models:
 
 networks:
   educational-network-dev:
