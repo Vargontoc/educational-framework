@@ -16,6 +16,15 @@
   waiting_for: -
 
 
+## Pase 0 - Environment Setup
+# Build the initial environment for development and testing.
+
+intitial_setup:
+  goal: Configure development and testing environments.
+  features: - 
+  blocks:  -
+  depends_on: -
+  blocked_by:
 
 ## What is deliberately not here
 # Dates. Roadmaps with dates become lies within two weeks.
