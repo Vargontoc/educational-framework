@@ -1,0 +1,19 @@
+{
+  "version": "v1",
+  "event_type": "help_requested",
+  "event_payload": {
+    "activity_id": "colors-paint-003",
+    "activity_name": "Color Painting",
+    "step": 2
+  },
+  "child_profile": {
+    "id": "child-test-002",
+    "age": 4,
+    "consent_flags": {
+      "tts_enabled": true,
+      "parent_notifications_enabled": false
+    }
+  },
+  "request_id": "test-req-002",
+  "timestamp": "2026-04-23T10:05:00Z"
+}

@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "contract_version": "v1",
+  "agent_name": "education-framework-agent-child",
+  "alias": "Nubi",
+  "status": "approved",
+  "runtime": "ollama",
+  "base_model": "qwen2.5:7b-instruct-q5_K_M",
+  "parameters": {
+    "temperature": 0.15,
+    "top_p": 0.9,
+    "num_ctx": 4096
+  },
+  "consumed_by": "backend/event-processor",
+  "endpoint": "http://ollama-educational:11434 (internal Docker network: educational-network-dev)",
+
+  "input_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "education-framework-agent-child-input-v1",
+    "type": "object",
+    "required": ["version", "event_type", "event_payload", "child_profile", "request_id", "timestamp"],
+    "additionalProperties": false,
+    "properties": {
+      "version": { "type": "string", "pattern": "^v\\d+$" },
+      "event_type": {
+        "type": "string",
+        "enum": ["activity_completed", "activity_started", "activity_failed", "help_requested", "out_of_scope_query"]
+      },
+      "event_payload": {
+        "type": "object",
+        "description": "Event-specific data. Backend must redact PII before sending.",
+        "additionalProperties": true
+      },
+      "child_profile": {
+        "type": "object",
+        "required": ["id", "age", "consent_flags"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "age": { "type": "integer", "minimum": 3, "maximum": 8 },
+          "consent_flags": {
+            "type": "object",
+            "properties": {
+              "tts_enabled": { "type": "boolean" },
+              "parent_notifications_enabled": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "request_id": { "type": "string" },
+      "timestamp": { "type": "string", "format": "date-time" },
+      "truncated_context": {
+        "type": "string",
+        "description": "Optional backend-summarized prior context. Max 512 chars.",
+        "maxLength": 512
+      }
+    }
+  },
+
+  "output_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "education-framework-agent-child-output-v1",
+    "type": "object",
+    "required": ["version", "response_type", "content_text", "content_type", "suggested_actions", "safety_flags", "tool_calls"],
+    "additionalProperties": false,
+    "properties": {
+      "version": { "type": "string", "pattern": "^v\\d+$" },
+      "response_type": {
+        "type": "string",
+        "enum": ["narration", "prompt", "action", "tool_call", "refusal"]
+      },
+      "content_text": { "type": "string", "maxLength": 300 },
+      "content_type": {
+        "type": "string",
+        "enum": ["plain_text", "tts_snippet", "structured_activity"]
+      },
+      "suggested_actions": {
+        "type": "array",
+        "items": { "type": "string" },
+        "maxItems": 5
+      },
+      "safety_flags": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["age_inappropriate", "pii_detected", "out_of_scope", "needs_parent_attention"]
+        }
+      },
+      "tool_calls": {
+        "type": "array",
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "required": ["tool_name"],
+          "additionalProperties": false,
+          "properties": {
+            "tool_name": {
+              "type": "string",
+              "enum": ["fetch_child_profile", "fetch_recommended_activity", "record_event", "send_parent_notification"]
+            },
+            "inputs": { "type": "object" },
+            "note": { "type": "string" }
+          }
+        }
+      },
+      "confidence_score": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Optional. Backend may use for quality monitoring."
+      }
+    }
+  },
+
+  "tools": [
+    {
+      "name": "fetch_child_profile",
+      "description": "Retrieve allowed profile fields for the child. Backend gates PII.",
+      "inputs": { "child_id": "string" },
+      "outputs": { "age": "integer", "activity_level": "string" },
+      "destructive": false
+    },
+    {
+      "name": "fetch_recommended_activity",
+      "description": "Get the next recommended activity for the child based on their profile.",
+      "inputs": { "child_id": "string", "current_activity_id": "string" },
+      "outputs": { "activity_id": "string", "activity_name": "string", "difficulty": "string" },
+      "destructive": false
+    },
+    {
+      "name": "record_event",
+      "description": "Append-only event logging. Backend writes to audit log.",
+      "inputs": { "child_id": "string", "event_type": "string", "metadata": "object" },
+      "outputs": { "recorded": "boolean" },
+      "destructive": false
+    },
+    {
+      "name": "send_parent_notification",
+      "description": "Trigger a notification to the parent. Backend gates consent check.",
+      "inputs": { "child_id": "string", "reason": "string", "severity": "string" },
+      "outputs": { "queued": "boolean" },
+      "destructive": false
+    }
+  ],
+
+  "breaking_change_policy": {
+    "breaking": [
+      "Adding or removing required input/output fields",
+      "Changing enum values in event_type, response_type, content_type, safety_flags",
+      "Adding or removing tools",
+      "Changing output additionalProperties from false to true"
+    ],
+    "non_breaking": [
+      "Tone or wording adjustments in system prompt",
+      "Adding few-shot examples to context/examples.md",
+      "Parameter tuning (temperature, top_p) within approved ranges"
+    ]
+  }
+}
