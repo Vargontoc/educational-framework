@@ -12,17 +12,17 @@ blocked_by:
 waiting_for:
 
 ## Tasks
-- [ ] Create `framework/agents/education-framework-agent-child/Modelfile` with system prompt, model base, and parameters
-- [ ] Finalize and write input JSON schema to `docs/contracts/agents/education-framework-agent-child.json`
-- [ ] Finalize and write output JSON schema to `docs/contracts/agents/education-framework-agent-child.json`
-- [ ] Load the agent into the Ollama container (`docker exec ollama-educational ollama create education-framework-agent-child -f /tmp/Modelfile`)
-- [ ] Validate agent returns schema-compliant JSON for: `activity_completed`, `help_requested`, `out_of_scope_query`
-- [ ] Create `framework/agents/education-framework-agent-child/context/rules.md`
-- [ ] Create `framework/agents/education-framework-agent-child/context/examples.md` (≥3 input→output pairs)
-- [ ] Create `framework/agents/education-framework-agent-child/tools/mcp-tools.json`
-- [ ] Write `framework/agents/education-framework-agent-child/tests/test_availability.sh` — asserts container is running and model is loaded
-- [ ] Write `framework/agents/education-framework-agent-child/tests/test_schema.sh` — sends a synthetic payload and validates required JSON fields and constraints
-- [ ] Write `framework/agents/education-framework-agent-child/tests/test_functional.sh` — asserts correct response_type for `activity_completed`, `help_requested`, `out_of_scope_query`
+- [x] Create `framework/agents/education-framework-agent-child/Modelfile` with system prompt, model base, and parameters
+- [x] Finalize and write input JSON schema to `docs/contracts/agents/education-framework-agent-child.json`
+- [x] Finalize and write output JSON schema to `docs/contracts/agents/education-framework-agent-child.json`
+- [x] Load the agent into the Ollama container (`docker exec ollama-educational ollama create education-framework-agent-child -f /tmp/Modelfile`)
+- [x] Validate agent returns schema-compliant JSON for: `activity_completed`, `help_requested`, `out_of_scope_query`
+- [x] Create `framework/agents/education-framework-agent-child/context/rules.md`
+- [x] Create `framework/agents/education-framework-agent-child/context/examples.md` (≥3 input→output pairs)
+- [x] Create `framework/agents/education-framework-agent-child/tools/mcp-tools.json`
+- [x] Write `framework/agents/education-framework-agent-child/tests/test_availability.sh` — asserts container is running and model is loaded
+- [x] Write `framework/agents/education-framework-agent-child/tests/test_schema.sh` — sends a synthetic payload and validates required JSON fields and constraints
+- [x] Write `framework/agents/education-framework-agent-child/tests/test_functional.sh` — asserts correct response_type for `activity_completed`, `help_requested`, `out_of_scope_query`
 - [ ] Add test execution step to `.github/workflows/ci-infrastructure.yml` (availability test only; schema/functional require running container)
 
 ## Risks
