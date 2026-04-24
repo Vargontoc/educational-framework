@@ -5,9 +5,9 @@
 Build, validate, and document the Modelfile for `education-framework-agent-child` ("Nubi") so the agent runs on Ollama and returns schema-valid JSON responses.
 
 ## Status
-status: active
+status: closed
 started_at: 2026-04-23 00:00:00
-closed_at:
+closed_at: 2026-04-24 00:00:00
 blocked_by:
 waiting_for:
 
@@ -23,7 +23,7 @@ waiting_for:
 - [x] Write `framework/agents/education-framework-agent-child/tests/test_availability.sh` — asserts container is running and model is loaded
 - [x] Write `framework/agents/education-framework-agent-child/tests/test_schema.sh` — sends a synthetic payload and validates required JSON fields and constraints
 - [x] Write `framework/agents/education-framework-agent-child/tests/test_functional.sh` — asserts correct response_type for `activity_completed`, `help_requested`, `out_of_scope_query`
-- [ ] Add test execution step to `.github/workflows/ci-infrastructure.yml` (availability test only; schema/functional require running container)
+- [x] Add test execution step to `.github/workflows/ci-infrastructure.yml` (availability test only; schema/functional require running container)
 
 ## Risks
 - Hallucination: agent may produce incorrect or misleading information for children (ages 3–8)
@@ -104,16 +104,27 @@ event_out_of_scope_query  → assert response_type == refusal and safety_flags i
 ## Review
 
 completed_tasks:
-    -
+    - Modelfile for education-framework-agent-child (Nubi) built, loaded, and validated in Ollama container
+    - Input/output JSON schema finalized and promoted to approved in docs/contracts/agents/
+    - context/rules.md and context/examples.md (5 examples) documented
+    - tools/mcp-tools.json with 4 typed, non-destructive tools
+    - Three-tier test suite: test_availability.sh, test_schema.sh, test_functional.sh — all passed locally
+    - CI job agent-availability added to ci-infrastructure.yml (tier 1, container check only)
+    - docker-compose.ci.yml override created to allow Ollama to start without NVIDIA runtime in CI
 
 incomplete_tasks:
-    -
+    - Tier 2 and tier 3 tests not wired to CI (requires live model in runner — out of scope by design)
 
 contract_changes:
-    -
+    - docs/contracts/agents/education-framework-agent-child.json created (status: approved, version: v1)
+    - Output schema Rule 2 tightened: all 7 fields mandatory even when empty (safety_flags omission bug)
 
 learnings:
-    -
+    - Git Bash on Windows translates absolute Linux paths in docker commands to Windows paths; use PowerShell for docker cp and docker exec with Linux paths
+    - LLMs tend to omit empty array fields unless the system prompt is explicit — "NEVER omit these keys" language was required
+    - docker-compose runtime: nvidia must be overridden for CI; a ci override file is the cleanest approach
 
 next_sprint_suggestions:
-    -
+    - Sprint 003 (backend): implement Spring AI integration that calls education-framework-agent-child via HTTP on educational-network-dev
+    - Sprint 003 (agents): implement adult agent (parent/educator persona) Modelfile following same pattern
+    - Add CI secret scanning step to prevent real env values reaching the repository

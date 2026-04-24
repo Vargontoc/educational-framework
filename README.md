@@ -8,19 +8,67 @@ App web is not a videogame, it's a web app that runs on any device with web brow
 
 Java 21 + Spring Boot 3 + SpringAI · Vue 3 + TypeScript · PostgreSQL · Docker
 
-## Quick start
+## Quick start — Development
 
-{Empty}
+**Prerequisites:** Docker Desktop, Docker Compose, Git.
 
+```bash
+# 1. Clone and move into the project
+git clone <repo-url> educational-framework
+cd educational-framework
 
-# Expected:
+# 2. Create env files from examples (edit secrets before starting)
+cp framework/infrastructure/envs/ollama.env.example framework/infrastructure/envs/ollama.env
+cp framework/infrastructure/envs/postgres.env.example framework/infrastructure/envs/postgres.env
 
-{empty}
+# 3. Start all services (Ollama + PostgreSQL)
+docker compose -f framework/infrastructure/docker-compose.yml up -d
 
-# Data persists in named volume postgres_data
-# Use docker compose down -v to also remove the volume
+# 4. Verify services are healthy
+docker compose -f framework/infrastructure/docker-compose.yml ps
+```
 
-## Production
+**Load AI agents after the Ollama container is healthy:**
+
+```powershell
+# Run in PowerShell (Git Bash translates Linux paths incorrectly on Windows)
+docker cp "framework/agents/education-framework-agent-child/Modelfile" `
+    ollama-educational:/root/Modelfile
+
+docker exec ollama-educational ollama create education-framework-agent-child `
+    -f /root/Modelfile
+
+# Verify the model is loaded
+docker exec ollama-educational ollama list
+```
+
+**Data** persists in named volumes `pgdata` and `ollama_models`.
+Use `docker compose down -v` to also remove the volumes.
+
+## Quick start — Production
+
+**Prerequisites:** Docker, Docker Compose, NVIDIA drivers (for GPU), access to secret manager or CI secrets.
+
+```bash
+# 1. Create and configure env files with real secrets (never commit these)
+cp framework/infrastructure/envs/ollama.env.example framework/infrastructure/envs/ollama.env
+cp framework/infrastructure/envs/postgres.env.example framework/infrastructure/envs/postgres.env
+# Edit both files: replace all placeholder values with production secrets
+
+# 2. Start with production overrides (stricter restart policy, no host port exposure)
+docker compose \
+  -f framework/infrastructure/docker-compose.yml \
+  -f framework/infrastructure/docker-compose.prod.yml \
+  up -d
+
+# 3. Load AI agents (same as development, run in PowerShell)
+docker cp framework/agents/education-framework-agent-child/Modelfile \
+    ollama-educational:/root/Modelfile
+docker exec ollama-educational ollama create education-framework-agent-child \
+    -f /root/Modelfile
+```
+
+> Ollama is **not exposed to the host** in production — it is accessible only within `educational-network-dev`.
 
 
 ## Project structure

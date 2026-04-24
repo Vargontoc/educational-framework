@@ -4,13 +4,16 @@ on:
   push:
     branches:
       - 'framework/infrastructure/**'
+      - 'framework/agents/**'
     paths:
       - 'framework/infrastructure/**'
+      - 'framework/agents/**'
   pull_request:
     branches:
       - develop
     paths:
       - 'framework/infrastructure/**'
+      - 'framework/agents/**'
 
 jobs:
   validate:
@@ -40,3 +43,51 @@ jobs:
             git ls-files 'framework/infrastructure/envs/*.env' | grep -v '\.example' || true
             exit 1
           fi
+
+  agent-availability:
+    name: Agent availability (tier 1)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create env files from examples
+        working-directory: framework/infrastructure
+        run: |
+          cp envs/ollama.env.example envs/ollama.env
+          cp envs/postgres.env.example envs/postgres.env
+
+      - name: Start Ollama container (CI override removes nvidia runtime)
+        working-directory: framework/infrastructure
+        run: |
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.ci.yml \
+            up -d ollama-educational
+
+      - name: Wait for container to be running
+        run: |
+          for i in $(seq 1 10); do
+            if docker ps --filter "name=^ollama-educational$" --filter "status=running" \
+               --format "{{.Names}}" | grep -q "^ollama-educational$"; then
+              echo "Container is running."
+              exit 0
+            fi
+            echo "Waiting for container... ($i/10)"
+            sleep 3
+          done
+          echo "ERROR: container did not start in time."
+          docker compose -f framework/infrastructure/docker-compose.yml logs ollama-educational
+          exit 1
+
+      - name: Run availability test (tier 1 — model check skipped in CI)
+        run: |
+          chmod +x framework/agents/education-framework-agent-child/tests/test_availability.sh
+          CI=true framework/agents/education-framework-agent-child/tests/test_availability.sh
+
+      - name: Stop containers
+        if: always()
+        working-directory: framework/infrastructure
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml down
