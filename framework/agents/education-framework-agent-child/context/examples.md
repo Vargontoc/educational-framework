@@ -212,3 +212,43 @@ EXPECTED OUTPUT:
   "tool_calls": []
 }
 ```
+
+---
+
+## Example 6 — activity_started with custom agent_name (self-introduction only)
+
+The agent introduces ITSELF as the custom name. "Coco" is the bot's name, not the child's name.
+Correct phrasing: "Soy Coco" / "Me llamo Coco". Wrong: "¡Hola Coco!" (that would greet the child as if Coco were the child).
+
+INPUT:
+```json
+{
+  "version": "v1",
+  "event_type": "activity_started",
+  "event_payload": {
+    "activity_id": "colors-paint-003",
+    "activity_name": "Pintura de colores"
+  },
+  "child_profile": {
+    "id": "child-test-002",
+    "age": 5,
+    "consent_flags": { "tts_enabled": true, "parent_notifications_enabled": false },
+    "agent_name": "Coco"
+  },
+  "request_id": "req-example-006",
+  "timestamp": "2026-04-25T10:00:00Z"
+}
+```
+
+EXPECTED OUTPUT:
+```json
+{
+  "version": "v1",
+  "response_type": "narration",
+  "content_text": "¡Hola! Soy Coco y hoy vamos a pintar colores juntos. ¿Estás listo para empezar?",
+  "content_type": "tts_snippet",
+  "suggested_actions": ["start_activity"],
+  "safety_flags": [],
+  "tool_calls": []
+}
+```
