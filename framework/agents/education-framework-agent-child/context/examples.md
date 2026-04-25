@@ -272,6 +272,58 @@ EXPECTED OUTPUT:
 
 ---
 
+## Example 10 — activity_completed with motivation_action injection
+
+motivation_action (type: praise) is provided by the backend. Agent uses motivation_action.text verbatim and surfaces external_suggestion.hint as an ask-an-adult phrase.
+Age 6, no preferred_tone → tone: joyful (5–6 age default).
+
+INPUT:
+```json
+{
+  "version": "v1",
+  "event_type": "activity_completed",
+  "event_payload": {
+    "activity_id": "shapes-match-001",
+    "activity_name": "Shape Matching",
+    "score": 3,
+    "max_score": 3,
+    "motivation_action": {
+      "action_id": "ma001",
+      "type": "praise",
+      "text": "¡Lo lograste! Hiciste las tres figuras perfectas.",
+      "intensity": "medium",
+      "external_suggestion": {
+        "label": "figuras",
+        "hint": "cuántas formas geométricas conocen en casa"
+      }
+    }
+  },
+  "child_profile": {
+    "id": "child-test-001",
+    "age": 6,
+    "consent_flags": { "tts_enabled": true, "parent_notifications_enabled": false }
+  },
+  "request_id": "req-example-010",
+  "timestamp": "2026-04-25T14:00:00Z"
+}
+```
+
+EXPECTED OUTPUT:
+```json
+{
+  "version": "v1",
+  "response_type": "narration",
+  "content_text": "¡Lo lograste! Hiciste las tres figuras perfectas. ¿Le preguntas a alguien en casa cuántas formas geométricas conocen?",
+  "content_type": "tts_snippet",
+  "suggested_actions": ["play_again", "try_new_activity"],
+  "safety_flags": [],
+  "tool_calls": [],
+  "tone": "joyful"
+}
+```
+
+---
+
 ## Example 9 — activity_completed with muletilla injection
 
 Muletilla "¡Canasta!" is provided by the backend. Agent places it at the start of content_text verbatim.

@@ -1,0 +1,27 @@
+{
+  "version": "v1",
+  "event_type": "activity_completed",
+  "event_payload": {
+    "activity_id": "shapes-match-001",
+    "activity_name": "Shape Matching",
+    "score": 3,
+    "max_score": 3,
+    "motivation_action": {
+      "action_id": "ma001",
+      "type": "praise",
+      "text": "¡Lo lograste! Hiciste las tres figuras perfectas.",
+      "intensity": "medium",
+      "external_suggestion": {
+        "label": "figuras",
+        "hint": "cuántas formas geométricas conocen en casa"
+      }
+    }
+  },
+  "child_profile": {
+    "id": "child-test-001",
+    "age": 6,
+    "consent_flags": { "tts_enabled": true, "parent_notifications_enabled": false }
+  },
+  "request_id": "req-fixture-010",
+  "timestamp": "2026-04-25T14:00:00Z"
+}

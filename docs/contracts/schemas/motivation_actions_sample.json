@@ -1,0 +1,44 @@
+[
+  {
+    "action_id": "ma001",
+    "type": "praise",
+    "text": "¡Genial! Has mejorado mucho, sigue así.",
+    "age_min": 4,
+    "age_max": 8,
+    "intensity": "low",
+    "allow_paraphrase": true,
+    "paraphrase_constraints": { "max_length": 60, "forbid_new_facts": true, "max_added_entities": 0 },
+    "metadata": { "source": "curated_templates" }
+  },
+  {
+    "action_id": "ma002",
+    "type": "reward",
+    "text": "Has ganado una estrella dorada!",
+    "age_min": 3,
+    "age_max": 7,
+    "intensity": "medium",
+    "allow_paraphrase": false,
+    "metadata": { "reward_type": "badge" }
+  },
+  {
+    "action_id": "ma003",
+    "type": "suggestion",
+    "text": "¿Por qué no preguntas a un adulto sobre cómo funcionan las plantas?",
+    "age_min": 6,
+    "age_max": 12,
+    "intensity": "low",
+    "external_suggestion": { "label": "Pregunta a un adulto", "hint": "Pide a un adulto que te muestre una planta y pregúntale cómo crece." },
+    "allow_paraphrase": true,
+    "paraphrase_constraints": { "max_length": 80, "forbid_new_facts": true, "max_added_entities": 0 }
+  },
+  {
+    "action_id": "ma004",
+    "type": "challenge",
+    "text": "Intenta ordenar estos bloques en menos de 3 minutos.",
+    "age_min": 7,
+    "age_max": 12,
+    "intensity": "medium",
+    "allow_paraphrase": true,
+    "paraphrase_constraints": { "max_length": 70, "forbid_new_facts": true, "max_added_entities": 0 }
+  }
+]
