@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Padres pueden dar un nombre especifico al bot según las preferencias de cada hijo.
 owned_by: agents
 depends_on: FEAT-001-Agent-Child-Modelfile.md
