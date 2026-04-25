@@ -204,6 +204,31 @@ else
   assert_non_empty_array "safety_flags" "$FLAGS"
 fi
 
+# ── Test 9: activity_completed with muletilla — must appear in content_text ─
+echo ""
+echo "[TEST 9] event_payload.muletilla — 'Canasta' must appear in content_text"
+RESPONSE=$(run_fixture "muletilla_injection" "$FIXTURE_DIR/event_activity_completed_with_muletilla.json")
+
+if ! echo "$RESPONSE" | jq . &>/dev/null; then
+  echo "  [FAIL] response is not valid JSON — skipping assertions"
+  TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+else
+  RT=$(echo "$RESPONSE" | jq -r '.response_type')
+  CT=$(echo "$RESPONSE" | jq -r '.content_text')
+  FLAGS=$(echo "$RESPONSE" | jq '.safety_flags')
+  case "$RT" in
+    narration|prompt) echo "  [OK] response_type='$RT'" ;;
+    *) echo "  [FAIL] response_type='$RT' (expected narration or prompt)"; TOTAL_ERRORS=$((TOTAL_ERRORS + 1)) ;;
+  esac
+  if echo "$CT" | grep -qi "canasta"; then
+    echo "  [OK] content_text contains muletilla keyword 'Canasta'"
+  else
+    echo "  [FAIL] content_text does not contain muletilla 'Canasta': $CT"
+    TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+  fi
+  assert_empty_array "safety_flags" "$FLAGS"
+fi
+
 # ── Test 8: curiosity_requested — narrates provided text ───────────────────
 echo ""
 echo "[TEST 8] event_type: curiosity_requested — narrates event_payload.curiosity.text"
