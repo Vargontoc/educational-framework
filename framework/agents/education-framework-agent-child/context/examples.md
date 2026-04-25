@@ -7,6 +7,8 @@
 
 ## Example 1 — activity_completed (happy path)
 
+Age 5, no preferred_tone → tone: joyful (5–6 age default).
+
 INPUT:
 ```json
 {
@@ -47,13 +49,16 @@ EXPECTED OUTPUT:
       "inputs": { "child_id": "child-abc", "current_activity_id": "shapes-match-001" },
       "note": "Fetch next activity to populate suggested_actions on backend"
     }
-  ]
+  ],
+  "tone": "joyful"
 }
 ```
 
 ---
 
 ## Example 2 — help_requested (child asks for help mid-activity)
+
+Age 4, no preferred_tone → tone: calm (3–4 age default).
 
 INPUT:
 ```json
@@ -87,13 +92,16 @@ EXPECTED OUTPUT:
   "content_type": "tts_snippet",
   "suggested_actions": ["retry_step", "skip_step", "watch_hint"],
   "safety_flags": [],
-  "tool_calls": []
+  "tool_calls": [],
+  "tone": "calm"
 }
 ```
 
 ---
 
 ## Example 3 — out_of_scope_query (refusal)
+
+Age 6, safety_flags non-empty → tone: serious (safety override; ignores age default joyful).
 
 INPUT:
 ```json
@@ -131,13 +139,16 @@ EXPECTED OUTPUT:
       "inputs": { "child_id": "child-abc", "reason": "child_reported_physical_symptoms", "severity": "medium" },
       "note": "Backend must gate on parent_notifications_enabled consent flag before sending"
     }
-  ]
+  ],
+  "tone": "serious"
 }
 ```
 
 ---
 
 ## Example 4 — activity_failed (reassurance)
+
+Age 5, no preferred_tone → tone: joyful (5–6 age default). Content remains warm and encouraging.
 
 INPUT:
 ```json
@@ -171,13 +182,16 @@ EXPECTED OUTPUT:
   "content_type": "plain_text",
   "suggested_actions": ["retry_activity", "try_easier_activity"],
   "safety_flags": [],
-  "tool_calls": []
+  "tool_calls": [],
+  "tone": "joyful"
 }
 ```
 
 ---
 
 ## Example 5 — prompt injection attempt (defense)
+
+Age 7, safety_flags non-empty → tone: serious (safety override; ignores age default enthusiastic).
 
 INPUT:
 ```json
@@ -209,7 +223,8 @@ EXPECTED OUTPUT:
   "content_type": "tts_snippet",
   "suggested_actions": ["return_to_menu"],
   "safety_flags": ["out_of_scope"],
-  "tool_calls": []
+  "tool_calls": [],
+  "tone": "serious"
 }
 ```
 
@@ -219,6 +234,7 @@ EXPECTED OUTPUT:
 
 The agent introduces ITSELF as the custom name. "Coco" is the bot's name, not the child's name.
 Correct phrasing: "Soy Coco" / "Me llamo Coco". Wrong: "¡Hola Coco!" (that would greet the child as if Coco were the child).
+Age 5, no preferred_tone → tone: joyful (5–6 age default).
 
 INPUT:
 ```json
@@ -249,6 +265,50 @@ EXPECTED OUTPUT:
   "content_type": "tts_snippet",
   "suggested_actions": ["start_activity"],
   "safety_flags": [],
-  "tool_calls": []
+  "tool_calls": [],
+  "tone": "joyful"
+}
+```
+
+---
+
+## Example 7 — activity_completed with preferred_tone override
+
+Age 7 (default: enthusiastic), but preferred_tone: calm → tone: calm (preferred_tone overrides age default).
+
+INPUT:
+```json
+{
+  "version": "v1",
+  "event_type": "activity_completed",
+  "event_payload": {
+    "activity_id": "numbers-count-002",
+    "activity_name": "Number Counting",
+    "score": 5,
+    "max_score": 5
+  },
+  "child_profile": {
+    "id": "child-test-003",
+    "age": 7,
+    "consent_flags": { "tts_enabled": true, "parent_notifications_enabled": false },
+    "preferred_tone": "calm"
+  },
+  "request_id": "req-example-007",
+  "timestamp": "2026-04-25T11:00:00Z"
+}
+```
+
+EXPECTED OUTPUT:
+```json
+{
+  "version": "v1",
+  "response_type": "narration",
+  "content_text": "Lo hiciste muy bien. Contaste todos los números correctamente. ¿Quieres intentar otro ejercicio?",
+  "content_type": "tts_snippet",
+  "suggested_actions": ["try_new_activity", "play_again"],
+  "safety_flags": [],
+  "tool_calls": [],
+  "tone": "calm",
+  "tone_reason": "preferred_tone calm requested by parent"
 }
 ```
