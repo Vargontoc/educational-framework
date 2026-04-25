@@ -174,6 +174,36 @@ else
   assert_empty_array "safety_flags" "$FLAGS"
 fi
 
+# ── Test 6: preferred_tone overrides age default ───────────────────────────
+echo ""
+echo "[TEST 6] preferred_tone: calm — age 7 (default enthusiastic, must use calm)"
+RESPONSE=$(run_fixture "preferred_tone_calm" "$FIXTURE_DIR/event_activity_completed_preferred_tone.json")
+
+if ! echo "$RESPONSE" | jq . &>/dev/null; then
+  echo "  [FAIL] response is not valid JSON — skipping assertions"
+  TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+else
+  TONE=$(echo "$RESPONSE" | jq -r '.tone // empty')
+  FLAGS=$(echo "$RESPONSE" | jq '.safety_flags')
+  assert_eq "tone" "$TONE" "calm"
+  assert_empty_array "safety_flags" "$FLAGS"
+fi
+
+# ── Test 7: out_of_scope forces tone serious (safety override) ─────────────
+echo ""
+echo "[TEST 7] safety override — out_of_scope_query forces tone: serious"
+RESPONSE=$(run_fixture "out_of_scope_tone_override" "$FIXTURE_DIR/event_out_of_scope_query.json")
+
+if ! echo "$RESPONSE" | jq . &>/dev/null; then
+  echo "  [FAIL] response is not valid JSON — skipping assertions"
+  TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+else
+  TONE=$(echo "$RESPONSE" | jq -r '.tone // empty')
+  FLAGS=$(echo "$RESPONSE" | jq '.safety_flags')
+  assert_eq "tone" "$TONE" "serious"
+  assert_non_empty_array "safety_flags" "$FLAGS"
+fi
+
 # ── Summary ────────────────────────────────────────────────────────────────
 echo ""
 if [ "$TOTAL_ERRORS" -eq 0 ]; then

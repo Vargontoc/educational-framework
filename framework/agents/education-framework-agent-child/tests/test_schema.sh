@@ -65,7 +65,7 @@ else
 fi
 
 # 2. Required fields present
-for field in version response_type content_text content_type suggested_actions safety_flags tool_calls; do
+for field in version response_type content_text content_type suggested_actions safety_flags tool_calls tone; do
   echo -n "[2] Field '$field' present ... "
   if echo "$RESPONSE" | jq -e "has(\"$field\")" &>/dev/null; then
     assert_pass "$field present"
@@ -134,9 +134,40 @@ else
   assert_fail "tool_calls invalid (count=$TC_COUNT or not array)"
 fi
 
-# 10. No unexpected top-level keys
-echo -n "[10] No unexpected top-level keys ... "
-ALLOWED_KEYS='["version","response_type","content_text","content_type","suggested_actions","safety_flags","tool_calls","confidence_score"]'
+# 10. tone is present and valid enum
+echo -n "[10] tone is valid enum ... "
+TONE=$(echo "$RESPONSE" | jq -r '.tone // empty')
+case "$TONE" in
+  calm|joyful|enthusiastic|serious|neutral) assert_pass "tone=$TONE" ;;
+  "") assert_fail "tone field missing" ;;
+  *) assert_fail "tone='$TONE' not in allowed enum" ;;
+esac
+
+# 11. tone_reason is string <= 100 chars when present
+echo -n "[11] tone_reason valid when present ... "
+if echo "$RESPONSE" | jq -e 'has("tone_reason")' &>/dev/null; then
+  TR_LEN=$(echo "$RESPONSE" | jq -r '.tone_reason | length')
+  if [ "$TR_LEN" -le 100 ]; then
+    assert_pass "tone_reason length=$TR_LEN"
+  else
+    assert_fail "tone_reason length=$TR_LEN (max 100)"
+  fi
+else
+  assert_pass "tone_reason absent (optional)"
+fi
+
+# 12. suggested_actions items are strings (not objects)
+echo -n "[12] suggested_actions items are strings ... "
+NON_STR=$(echo "$RESPONSE" | jq '[.suggested_actions[] | type] | map(select(. != "string")) | length')
+if [ "$NON_STR" -eq 0 ]; then
+  assert_pass "all suggested_actions items are strings"
+else
+  assert_fail "suggested_actions contains non-string items ($NON_STR)"
+fi
+
+# 13. No unexpected top-level keys
+echo -n "[13] No unexpected top-level keys ... "
+ALLOWED_KEYS='["version","response_type","content_text","content_type","suggested_actions","safety_flags","tool_calls","tone","tone_reason","confidence_score"]'
 UNEXPECTED=$(echo "$RESPONSE" | jq --argjson allowed "$ALLOWED_KEYS" '[keys[] | select(. as $k | $allowed | index($k) == null)] | length')
 if [ "$UNEXPECTED" -eq 0 ]; then
   assert_pass "no unexpected keys"

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "contract_version": "v1",
+  "contract_version": "v2",
   "agent_name": "education-framework-agent-child",
   "alias": "Nubi",
   "status": "approved",
@@ -51,6 +51,11 @@
             "minLength": 1,
             "maxLength": 32,
             "description": "Parent-assigned display name for the agent. Backend must sanitize and approve before sending. Absent or null means agent uses its default name."
+          },
+          "preferred_tone": {
+            "type": "string",
+            "enum": ["calm", "joyful", "enthusiastic", "serious", "neutral"],
+            "description": "Parent-selected tone preference. Backend must validate and set preferred_tone_approved before injecting. Absent means agent uses age-based default."
           }
         }
       },
@@ -68,7 +73,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "education-framework-agent-child-output-v1",
     "type": "object",
-    "required": ["version", "response_type", "content_text", "content_type", "suggested_actions", "safety_flags", "tool_calls"],
+    "required": ["version", "response_type", "content_text", "content_type", "suggested_actions", "safety_flags", "tool_calls", "tone"],
     "additionalProperties": false,
     "properties": {
       "version": { "type": "string", "pattern": "^v\\d+$" },
@@ -109,6 +114,16 @@
             "note": { "type": "string" }
           }
         }
+      },
+      "tone": {
+        "type": "string",
+        "enum": ["calm", "joyful", "enthusiastic", "serious", "neutral"],
+        "description": "Tone declared by the agent. Selection priority: safety override > preferred_tone > age default. TTS mapping is backend responsibility."
+      },
+      "tone_reason": {
+        "type": "string",
+        "maxLength": 100,
+        "description": "Optional. Brief explanation of tone selection. For audit/debug only — do not expose in child UI."
       },
       "confidence_score": {
         "type": "number",
@@ -161,7 +176,7 @@
       "Tone or wording adjustments in system prompt",
       "Adding few-shot examples to context/examples.md",
       "Parameter tuning (temperature, top_p) within approved ranges",
-      "Adding optional fields to child_profile (e.g. agent_name)"
+      "Adding optional fields to child_profile (e.g. agent_name, preferred_tone)"
     ]
   }
 }
