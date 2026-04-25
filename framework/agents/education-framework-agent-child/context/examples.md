@@ -272,6 +272,49 @@ EXPECTED OUTPUT:
 
 ---
 
+## Example 9 — activity_completed with muletilla injection
+
+Muletilla "¡Canasta!" is provided by the backend. Agent places it at the start of content_text verbatim.
+Age 6, no preferred_tone → tone: joyful (5–6 age default).
+
+INPUT:
+```json
+{
+  "version": "v1",
+  "event_type": "activity_completed",
+  "event_payload": {
+    "activity_id": "shapes-match-001",
+    "activity_name": "Shape Matching",
+    "score": 3,
+    "max_score": 3,
+    "muletilla": { "id": "m001", "text": "¡Canasta!" }
+  },
+  "child_profile": {
+    "id": "child-test-001",
+    "age": 6,
+    "consent_flags": { "tts_enabled": true, "parent_notifications_enabled": false }
+  },
+  "request_id": "req-example-009",
+  "timestamp": "2026-04-25T13:00:00Z"
+}
+```
+
+EXPECTED OUTPUT:
+```json
+{
+  "version": "v1",
+  "response_type": "narration",
+  "content_text": "¡Canasta! Lo hiciste genial, emparejaste todas las figuras. ¿Quieres intentar otra?",
+  "content_type": "tts_snippet",
+  "suggested_actions": ["play_again", "try_new_activity"],
+  "safety_flags": [],
+  "tool_calls": [],
+  "tone": "joyful"
+}
+```
+
+---
+
 ## Example 8 — curiosity_requested (narration of pre-selected curiosity)
 
 The agent wraps the provided curiosity.text with warm framing. It does NOT generate its own curiosity.

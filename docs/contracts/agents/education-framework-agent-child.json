@@ -28,7 +28,7 @@
       },
       "event_payload": {
         "type": "object",
-        "description": "Event-specific data. Backend must redact PII before sending. For curiosity_requested events the payload must include a 'curiosity' object with fields: id (string), text (string, the curiosity content already age-appropriate), locale (string, e.g. 'es-ES'), and phonetic_hint (string, optional, for TTS backends).",
+        "description": "Event-specific data. Backend must redact PII before sending. For curiosity_requested events the payload must include a 'curiosity' object with fields: id (string), text (string, the curiosity content already age-appropriate), locale (string, e.g. 'es-ES'), and phonetic_hint (string, optional, for TTS backends). Any event may optionally include a 'muletilla' object with fields: id (string) and text (string, a curated character catchphrase). When present, the agent must incorporate muletilla.text verbatim into content_text. Muletilla selection, rate-limiting, and parental gating are backend responsibilities.",
         "additionalProperties": true
       },
       "child_profile": {
