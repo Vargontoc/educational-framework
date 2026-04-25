@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: El agente según ciertos eventos del juego contará una curiosidad divertida y educativa.
 owned_by: agents
 depends_on: FEAT-001-Agent-Child-Modelfile.md
