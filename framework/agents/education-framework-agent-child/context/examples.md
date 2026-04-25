@@ -215,9 +215,10 @@ EXPECTED OUTPUT:
 
 ---
 
-## Example 6 — activity_started with custom agent_name
+## Example 6 — activity_started with custom agent_name (self-introduction only)
 
-Verifies that the agent uses the parent-assigned name in the greeting when `child_profile.agent_name` is present.
+The agent introduces ITSELF as the custom name. "Coco" is the bot's name, not the child's name.
+Correct phrasing: "Soy Coco" / "Me llamo Coco". Wrong: "¡Hola Coco!" (that would greet the child as if Coco were the child).
 
 INPUT:
 ```json

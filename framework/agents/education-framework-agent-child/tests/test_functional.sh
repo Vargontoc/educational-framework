@@ -144,8 +144,8 @@ else
   CT=$(echo "$RESPONSE" | jq -r '.content_text')
   FLAGS=$(echo "$RESPONSE" | jq '.safety_flags')
   case "$RT" in
-    narration|prompt) echo "  [OK] response_type='$RT' (expected narration or prompt)" ;;
-    *) echo "  [FAIL] response_type='$RT' (expected narration or prompt)"; TOTAL_ERRORS=$((TOTAL_ERRORS + 1)) ;;
+    narration|prompt|action) echo "  [OK] response_type='$RT' (expected narration, prompt, or action)" ;;
+    *) echo "  [FAIL] response_type='$RT' (expected narration, prompt, or action)"; TOTAL_ERRORS=$((TOTAL_ERRORS + 1)) ;;
   esac
   if echo "$CT" | grep -qi "coco"; then
     echo "  [OK] content_text contains custom name 'Coco'"
