@@ -131,6 +131,49 @@ else
   fi
 fi
 
+# ── Test 4: activity_started with custom agent_name ────────────────────────
+echo ""
+echo "[TEST 4] event_type: activity_started — custom agent_name 'Coco'"
+RESPONSE=$(run_fixture "activity_started_custom_name" "$FIXTURE_DIR/event_activity_started_custom_name.json")
+
+if ! echo "$RESPONSE" | jq . &>/dev/null; then
+  echo "  [FAIL] response is not valid JSON — skipping assertions"
+  TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+else
+  RT=$(echo "$RESPONSE" | jq -r '.response_type')
+  CT=$(echo "$RESPONSE" | jq -r '.content_text')
+  FLAGS=$(echo "$RESPONSE" | jq '.safety_flags')
+  case "$RT" in
+    narration|prompt) echo "  [OK] response_type='$RT' (expected narration or prompt)" ;;
+    *) echo "  [FAIL] response_type='$RT' (expected narration or prompt)"; TOTAL_ERRORS=$((TOTAL_ERRORS + 1)) ;;
+  esac
+  if echo "$CT" | grep -qi "coco"; then
+    echo "  [OK] content_text contains custom name 'Coco'"
+  else
+    echo "  [FAIL] content_text does not contain 'Coco': $CT"
+    TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+  fi
+  assert_empty_array "safety_flags" "$FLAGS"
+fi
+
+# ── Test 5: activity_completed without agent_name (regression) ─────────────
+echo ""
+echo "[TEST 5] regression — activity_completed without agent_name (must still pass)"
+RESPONSE=$(run_fixture "activity_completed_regression" "$FIXTURE_DIR/event_activity_completed.json")
+
+if ! echo "$RESPONSE" | jq . &>/dev/null; then
+  echo "  [FAIL] response is not valid JSON — skipping assertions"
+  TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+else
+  RT=$(echo "$RESPONSE" | jq -r '.response_type')
+  FLAGS=$(echo "$RESPONSE" | jq '.safety_flags')
+  case "$RT" in
+    narration|prompt) echo "  [OK] response_type='$RT' (expected narration or prompt)" ;;
+    *) echo "  [FAIL] response_type='$RT' (expected narration or prompt)"; TOTAL_ERRORS=$((TOTAL_ERRORS + 1)) ;;
+  esac
+  assert_empty_array "safety_flags" "$FLAGS"
+fi
+
 # ── Summary ────────────────────────────────────────────────────────────────
 echo ""
 if [ "$TOTAL_ERRORS" -eq 0 ]; then

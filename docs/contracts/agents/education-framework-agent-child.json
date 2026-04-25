@@ -45,6 +45,12 @@
               "parent_notifications_enabled": { "type": "boolean" }
             },
             "additionalProperties": false
+          },
+          "agent_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "description": "Parent-assigned display name for the agent. Backend must sanitize and approve before sending. Absent or null means agent uses its default name."
           }
         }
       },
@@ -154,7 +160,8 @@
     "non_breaking": [
       "Tone or wording adjustments in system prompt",
       "Adding few-shot examples to context/examples.md",
-      "Parameter tuning (temperature, top_p) within approved ranges"
+      "Parameter tuning (temperature, top_p) within approved ranges",
+      "Adding optional fields to child_profile (e.g. agent_name)"
     ]
   }
 }

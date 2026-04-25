@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "event_type": "activity_started",
+  "event_payload": {
+    "activity_id": "colors-paint-003",
+    "activity_name": "Pintura de colores"
+  },
+  "child_profile": {
+    "id": "child-test-002",
+    "age": 5,
+    "consent_flags": { "tts_enabled": true, "parent_notifications_enabled": false },
+    "agent_name": "Coco"
+  },
+  "request_id": "req-fixture-006",
+  "timestamp": "2026-04-25T10:00:00Z"
+}
