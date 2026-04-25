@@ -257,6 +257,31 @@ else
   assert_empty_array "tool_calls" "$TC"
 fi
 
+# ── Test 10: activity_completed with motivation_action — text must appear in content_text ─
+echo ""
+echo "[TEST 10] event_payload.motivation_action — 'lograste' must appear in content_text"
+RESPONSE=$(run_fixture "motivation_action_injection" "$FIXTURE_DIR/event_activity_completed_with_motivation.json")
+
+if ! echo "$RESPONSE" | jq . &>/dev/null; then
+  echo "  [FAIL] response is not valid JSON — skipping assertions"
+  TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+else
+  RT=$(echo "$RESPONSE" | jq -r '.response_type')
+  CT=$(echo "$RESPONSE" | jq -r '.content_text')
+  FLAGS=$(echo "$RESPONSE" | jq '.safety_flags')
+  case "$RT" in
+    narration|prompt) echo "  [OK] response_type='$RT'" ;;
+    *) echo "  [FAIL] response_type='$RT' (expected narration or prompt)"; TOTAL_ERRORS=$((TOTAL_ERRORS + 1)) ;;
+  esac
+  if echo "$CT" | grep -qi "lograste"; then
+    echo "  [OK] content_text contains motivation_action keyword 'lograste'"
+  else
+    echo "  [FAIL] content_text does not contain motivation_action text 'lograste': $CT"
+    TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+  fi
+  assert_empty_array "safety_flags" "$FLAGS"
+fi
+
 # ── Summary ────────────────────────────────────────────────────────────────
 echo ""
 if [ "$TOTAL_ERRORS" -eq 0 ]; then
