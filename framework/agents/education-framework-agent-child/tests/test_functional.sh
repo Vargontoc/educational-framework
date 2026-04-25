@@ -204,6 +204,34 @@ else
   assert_non_empty_array "safety_flags" "$FLAGS"
 fi
 
+# ── Test 8: curiosity_requested — narrates provided text ───────────────────
+echo ""
+echo "[TEST 8] event_type: curiosity_requested — narrates event_payload.curiosity.text"
+RESPONSE=$(run_fixture "curiosity_requested" "$FIXTURE_DIR/event_curiosity_requested.json")
+
+if ! echo "$RESPONSE" | jq . &>/dev/null; then
+  echo "  [FAIL] response is not valid JSON — skipping assertions"
+  TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+else
+  RT=$(echo "$RESPONSE" | jq -r '.response_type')
+  CT=$(echo "$RESPONSE" | jq -r '.content_text')
+  FLAGS=$(echo "$RESPONSE" | jq '.safety_flags')
+  TC=$(echo "$RESPONSE" | jq '.tool_calls')
+  case "$RT" in
+    narration) echo "  [OK] response_type='$RT'" ;;
+    *) echo "  [FAIL] response_type='$RT' (expected narration)"; TOTAL_ERRORS=$((TOTAL_ERRORS + 1)) ;;
+  esac
+  # content_text must reference the curiosity topic (perros / perro)
+  if echo "$CT" | grep -qi "perro"; then
+    echo "  [OK] content_text contains curiosity topic 'perro'"
+  else
+    echo "  [FAIL] content_text does not reference the curiosity topic 'perro': $CT"
+    TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+  fi
+  assert_empty_array "safety_flags" "$FLAGS"
+  assert_empty_array "tool_calls" "$TC"
+fi
+
 # ── Summary ────────────────────────────────────────────────────────────────
 echo ""
 if [ "$TOTAL_ERRORS" -eq 0 ]; then

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "contract_version": "v2",
+  "contract_version": "v3",
   "agent_name": "education-framework-agent-child",
   "alias": "Nubi",
   "status": "approved",
@@ -24,11 +24,11 @@
       "version": { "type": "string", "pattern": "^v\\d+$" },
       "event_type": {
         "type": "string",
-        "enum": ["activity_completed", "activity_started", "activity_failed", "help_requested", "out_of_scope_query"]
+        "enum": ["activity_completed", "activity_started", "activity_failed", "help_requested", "out_of_scope_query", "curiosity_requested"]
       },
       "event_payload": {
         "type": "object",
-        "description": "Event-specific data. Backend must redact PII before sending.",
+        "description": "Event-specific data. Backend must redact PII before sending. For curiosity_requested events the payload must include a 'curiosity' object with fields: id (string), text (string, the curiosity content already age-appropriate), locale (string, e.g. 'es-ES'), and phonetic_hint (string, optional, for TTS backends).",
         "additionalProperties": true
       },
       "child_profile": {
@@ -176,7 +176,8 @@
       "Tone or wording adjustments in system prompt",
       "Adding few-shot examples to context/examples.md",
       "Parameter tuning (temperature, top_p) within approved ranges",
-      "Adding optional fields to child_profile (e.g. agent_name, preferred_tone)"
+      "Adding optional fields to child_profile (e.g. agent_name, preferred_tone)",
+      "Adding new optional event_payload fields within an existing event_type"
     ]
   }
 }

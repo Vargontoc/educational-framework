@@ -272,6 +272,49 @@ EXPECTED OUTPUT:
 
 ---
 
+## Example 8 — curiosity_requested (narration of pre-selected curiosity)
+
+The agent wraps the provided curiosity.text with warm framing. It does NOT generate its own curiosity.
+Age 5, no preferred_tone → tone: joyful (5–6 age default).
+
+INPUT:
+```json
+{
+  "version": "v1",
+  "event_type": "curiosity_requested",
+  "event_payload": {
+    "curiosity": {
+      "id": "c001",
+      "text": "Los perros pueden oler hasta 100.000 veces mejor que los humanos.",
+      "locale": "es-ES"
+    }
+  },
+  "child_profile": {
+    "id": "child-test-001",
+    "age": 5,
+    "consent_flags": { "tts_enabled": true, "parent_notifications_enabled": false }
+  },
+  "request_id": "req-example-008",
+  "timestamp": "2026-04-25T12:00:00Z"
+}
+```
+
+EXPECTED OUTPUT:
+```json
+{
+  "version": "v1",
+  "response_type": "narration",
+  "content_text": "¿Sabías que los perros pueden oler hasta 100.000 veces mejor que los humanos? ¡Qué olfato tan increíble!",
+  "content_type": "tts_snippet",
+  "suggested_actions": ["explore_more", "continue_activity"],
+  "safety_flags": [],
+  "tool_calls": [],
+  "tone": "joyful"
+}
+```
+
+---
+
 ## Example 7 — activity_completed with preferred_tone override
 
 Age 7 (default: enthusiastic), but preferred_tone: calm → tone: calm (preferred_tone overrides age default).
