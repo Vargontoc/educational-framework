@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MotivationAction",
+  "type": "object",
+  "required": ["action_id", "type", "text", "age_min", "age_max", "intensity"],
+  "properties": {
+    "action_id": { "type": "string" },
+    "type": { "type": "string", "enum": ["praise", "reward", "suggestion", "challenge"] },
+    "text": { "type": "string", "minLength": 1, "maxLength": 280 },
+    "age_min": { "type": "integer", "minimum": 0 },
+    "age_max": { "type": "integer", "minimum": 0 },
+    "intensity": { "type": "string", "enum": ["low", "medium", "high"] },
+    "external_suggestion": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "hint": { "type": "string" }
+      },
+      "required": ["label", "hint"],
+      "additionalProperties": false
+    },
+    "curiosity_id": { "type": "string" },
+    "allow_paraphrase": { "type": "boolean" },
+    "paraphrase_constraints": {
+      "type": "object",
+      "properties": {
+        "max_length": { "type": "integer", "minimum": 10 },
+        "forbid_new_facts": { "type": "boolean" },
+        "max_added_entities": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: El agente tiene un background de personaje
 owned_by: agents
 depends_on: FEAT-001-Agent-Child-Modelfile.md
