@@ -1,0 +1,102 @@
+[
+  {
+    "id": "c001",
+    "text": "¿Sabías que las mariposas \"prueban\" con sus patas para encontrar comida?",
+    "age_min": 3,
+    "age_max": 6,
+    "tags": ["animales", "insectos"],
+    "locale": "es-ES",
+    "phonetic_hint": "mariposas (mah-ree-POH-sas)",
+    "length_chars": 72
+  },
+  {
+    "id": "c002",
+    "text": "La Luna no tiene luz propia; refleja la luz del Sol.",
+    "age_min": 4,
+    "age_max": 8,
+    "tags": ["espacio", "ciencia"],
+    "locale": "es-ES",
+    "phonetic_hint": "Luna (LOO-nah)",
+    "length_chars": 57
+  },
+  {
+    "id": "c003",
+    "text": "Los pulpos tienen tres corazones y sangre de color azul.",
+    "age_min": 5,
+    "age_max": 10,
+    "tags": ["animales", "océano"],
+    "locale": "es-ES",
+    "phonetic_hint": "pulpo (POOL-poh)",
+    "length_chars": 63
+  },
+  {
+    "id": "c004",
+    "text": "Las semillas viajan con el viento, el agua o pegándose al pelaje de los animales.",
+    "age_min": 4,
+    "age_max": 9,
+    "tags": ["plantas", "naturaleza"],
+    "locale": "es-ES",
+    "phonetic_hint": "semillas (seh-MEE-yas)",
+    "length_chars": 93
+  },
+  {
+    "id": "c005",
+    "text": "La miel no se estropea: en antiguas tumbas egipcias se encontró miel comestible.",
+    "age_min": 6,
+    "age_max": 12,
+    "tags": ["historia", "alimentos"],
+    "locale": "es-ES",
+    "phonetic_hint": "miel (MYEL)",
+    "length_chars": 94
+  },
+  {
+    "id": "c006",
+    "text": "Las plantas 'hablan' entre sí con señales químicas cuando están en peligro.",
+    "age_min": 7,
+    "age_max": 12,
+    "tags": ["plantas", "ciencia"],
+    "locale": "es-ES",
+    "phonetic_hint": "señales (seh-NYA-les)",
+    "length_chars": 81
+  },
+  {
+    "id": "c007",
+    "text": "Un colibrí puede batir sus alas hasta 80 veces por segundo.",
+    "age_min": 5,
+    "age_max": 10,
+    "tags": ["animales", "aves"],
+    "locale": "es-ES",
+    "phonetic_hint": "colibrí (koh-lee-BREE)",
+    "length_chars": 67
+  },
+  {
+    "id": "c008",
+    "text": "El fuego necesita tres cosas: calor, oxígeno y algo que arda (combustible).",
+    "age_min": 6,
+    "age_max": 12,
+    "tags": ["ciencia", "seguridad"],
+    "locale": "es-ES",
+    "phonetic_hint": "combustible (kohm-boos-TEE-ble)",
+    "length_chars": 94
+  },
+  {
+    "id": "c009",
+    "text": "Las huellas dactilares humanas son únicas, incluso entre gemelos idénticos.",
+    "age_min": 7,
+    "age_max": 12,
+    "tags": ["cuerpo humano", "biología"],
+    "locale": "es-ES",
+    "phonetic_hint": "dactilares (dak-tee-LA-res)",
+    "length_chars": 86
+  },
+  {
+    "id": "c010",
+    "text": "La Tierra es el único planeta del sistema solar conocido con agua líquida en su superficie.",
+    "age_min": 6,
+    "age_max": 12,
+    "tags": ["geografía", "espacio"],
+    "locale": "es-ES",
+    "phonetic_hint": "Tierra (TYE-rra)",
+    "length_chars": 105
+  }
+]

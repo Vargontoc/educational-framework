@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: El agente puede ser configurado con distintos tonos de voz, e incluso proponer tono de resultado
 owned_by: agents
 depends_on: FEAT-001-Agent-Child-Modelfile.md
