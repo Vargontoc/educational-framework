@@ -1,0 +1,291 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Coqui TTS Server API",
+    "description": "Contrato de la API del servidor Coqui TTS corriendo en educational-coqui:5002. Todos los endpoints son internos a educational-network y no están expuestos al host en producción.",
+    "version": "1.0.0",
+    "x-model": "tts_models/multilingual/multi-dataset/xtts_v2",
+    "x-internal-base-url": "http://educational-coqui:5002",
+    "x-local-base-url": "http://localhost:5002"
+  },
+  "servers": [
+    {
+      "url": "http://educational-coqui:5002",
+      "description": "Servidor interno Docker (backend → coqui dentro de educational-network)"
+    },
+    {
+      "url": "http://localhost:5002",
+      "description": "Acceso local para desarrollo y pruebas"
+    }
+  ],
+  "paths": {
+    "/api/tts": {
+      "get": {
+        "summary": "Síntesis de voz (endpoint nativo)",
+        "description": "Endpoint nativo de Coqui TTS. Devuelve audio WAV. Para XTTS v2 el parámetro speaker_id acepta el path a un fichero WAV de referencia montado en el contenedor.",
+        "operationId": "synthesiseNative",
+        "parameters": [
+          {
+            "name": "text",
+            "in": "query",
+            "required": true,
+            "description": "Texto a sintetizar. Máximo 300 caracteres según contrato del agente (FEAT-001).",
+            "schema": {
+              "type": "string",
+              "maxLength": 300,
+              "example": "¿Sabías que los elefantes pueden recordar caminos de hace muchos años?"
+            }
+          },
+          {
+            "name": "speaker_id",
+            "in": "query",
+            "required": false,
+            "description": "Para XTTS v2: path al fichero WAV de referencia dentro del contenedor (ej. /references/calm.wav). Define la voz y el tono emocional.",
+            "schema": {
+              "type": "string",
+              "example": "/references/calm.wav"
+            }
+          },
+          {
+            "name": "language_id",
+            "in": "query",
+            "required": false,
+            "description": "Código de idioma. Para este proyecto siempre es 'es'.",
+            "schema": {
+              "type": "string",
+              "default": "es",
+              "enum": ["es", "en", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh-cn", "ja", "hu", "ko", "hi"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audio sintetizado en formato WAV",
+            "content": {
+              "audio/wav": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error de síntesis — el servidor devuelve texto plano con el mensaje de error"
+          }
+        }
+      }
+    },
+    "/v1/audio/speech": {
+      "post": {
+        "summary": "Síntesis de voz (compatible OpenAI)",
+        "description": "Endpoint compatible con la API de OpenAI TTS. Recomendado para el backend Spring Boot ya que Spring AI tiene soporte nativo para este contrato. Devuelve audio en el formato especificado (por defecto MP3).",
+        "operationId": "synthesiseOpenAI",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeechRequest"
+              },
+              "examples": {
+                "calm_3_4": {
+                  "summary": "Tono calmado — ages 3-4",
+                  "value": {
+                    "input": "Vamos despacito, tómate tu tiempo.",
+                    "voice": "/references/calm.wav",
+                    "language": "es",
+                    "speed": 0.85,
+                    "response_format": "mp3"
+                  }
+                },
+                "joyful_5_6": {
+                  "summary": "Tono alegre — ages 5-6",
+                  "value": {
+                    "input": "¡Muy bien! ¡Lo has conseguido!",
+                    "voice": "/references/joyful.wav",
+                    "language": "es",
+                    "speed": 1.0,
+                    "response_format": "mp3"
+                  }
+                },
+                "enthusiastic_7_8": {
+                  "summary": "Tono entusiasta — ages 7-8",
+                  "value": {
+                    "input": "¡Increíble! ¡Has superado el reto más difícil!",
+                    "voice": "/references/enthusiastic.wav",
+                    "language": "es",
+                    "speed": 1.1,
+                    "response_format": "mp3"
+                  }
+                },
+                "playful": {
+                  "summary": "Tono juguetón — muletilla personaje (FEAT-005)",
+                  "value": {
+                    "input": "¡Canasta! ¡Eso estuvo genial, vamos a por otra!",
+                    "voice": "/references/playful.wav",
+                    "language": "es",
+                    "speed": 1.0,
+                    "response_format": "mp3"
+                  }
+                },
+                "serious_safety": {
+                  "summary": "Tono serio — safety override (FEAT-003)",
+                  "value": {
+                    "input": "Esa pregunta la debe responder un adulto. He avisado a los padres.",
+                    "voice": "/references/serious.wav",
+                    "language": "es",
+                    "speed": 0.95,
+                    "response_format": "mp3"
+                  }
+                },
+                "curiosity": {
+                  "summary": "Curiosidad del catálogo (FEAT-004)",
+                  "value": {
+                    "input": "¿Sabías que los perros son conocidos como el mejor amigo del hombre?",
+                    "voice": "/references/joyful.wav",
+                    "language": "es",
+                    "speed": 0.95,
+                    "response_format": "mp3"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Audio sintetizado en el formato solicitado",
+            "content": {
+              "audio/mpeg": {
+                "schema": { "type": "string", "format": "binary" }
+              },
+              "audio/wav": {
+                "schema": { "type": "string", "format": "binary" }
+              },
+              "audio/ogg": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros inválidos"
+          },
+          "500": {
+            "description": "Error de síntesis"
+          }
+        }
+      }
+    },
+    "/locales": {
+      "get": {
+        "summary": "Idioma activo del modelo cargado",
+        "description": "Endpoint de compatibilidad MaryTTS. Devuelve el idioma del modelo actualmente cargado en el servidor. Para este proyecto siempre devuelve 'multilingual'.",
+        "operationId": "getLocales",
+        "responses": {
+          "200": {
+            "description": "Idioma activo en texto plano",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "multilingual"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voices": {
+      "get": {
+        "summary": "Voces disponibles",
+        "description": "Endpoint de compatibilidad MaryTTS. Para XTTS v2 devuelve el nombre del modelo cargado como voz activa. Las voces reales son los ficheros WAV de referencia montados en el contenedor.",
+        "operationId": "getVoices",
+        "responses": {
+          "200": {
+            "description": "Lista de voces en texto plano con formato: nombre locale género",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "xtts_v2 multilingual u"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SpeechRequest": {
+        "type": "object",
+        "required": ["input"],
+        "properties": {
+          "input": {
+            "type": "string",
+            "maxLength": 300,
+            "description": "Texto a sintetizar. Máximo 300 caracteres (contrato FEAT-001).",
+            "example": "¡Muy bien! ¡Lo has conseguido!"
+          },
+          "model": {
+            "type": "string",
+            "description": "Ignorado por el servidor — el modelo se fija en el arranque del contenedor.",
+            "example": "tts_models/multilingual/multi-dataset/xtts_v2"
+          },
+          "voice": {
+            "type": "string",
+            "description": "Path al fichero WAV de referencia dentro del contenedor. Define la voz y el tono emocional. El tono NO se controla con parámetros numéricos sino con el audio de referencia grabado para cada emoción.",
+            "example": "/references/calm.wav",
+            "x-reference-files": {
+              "description": "Ficheros WAV de referencia disponibles en el contenedor",
+              "values": [
+                "/references/calm.wav",
+                "/references/joyful.wav",
+                "/references/enthusiastic.wav",
+                "/references/playful.wav",
+                "/references/serious.wav"
+              ]
+            }
+          },
+          "language": {
+            "type": "string",
+            "description": "Código de idioma ISO. Para este proyecto siempre 'es'.",
+            "default": "es",
+            "example": "es"
+          },
+          "speed": {
+            "type": "number",
+            "format": "float",
+            "description": "Velocidad de síntesis. Es el ÚNICO parámetro numérico que afecta al resultado en XTTS v2. Rango recomendado: 0.8–1.1 según edad.",
+            "default": 1.0,
+            "minimum": 0.5,
+            "maximum": 2.0,
+            "x-speed-presets": {
+              "ages_3_4": 0.85,
+              "ages_5_6": 1.0,
+              "ages_7_8": 1.05,
+              "serious_override": 0.95
+            }
+          },
+          "response_format": {
+            "type": "string",
+            "description": "Formato de audio de la respuesta.",
+            "default": "mp3",
+            "enum": ["mp3", "wav", "ogg", "aac", "flac", "pcm"]
+          }
+        }
+      }
+    }
+  },
+  "x-notes": {
+    "tone_model": "En XTTS v2 el tono emocional NO se controla con parámetros numéricos (pitch, rate). Se controla exclusivamente mediante el audio de referencia pasado en 'voice'. Cada tono requiere un fichero WAV de referencia grabado con esa emoción.",
+    "speed_only": "El único parámetro numérico con efecto real en XTTS v2 es 'speed'. pitch y volume no están soportados.",
+    "reference_files": "Los ficheros WAV de referencia se montan en el contenedor via volumen Docker. Ver docker-compose.yml servicio educational-coqui.",
+    "cache": "El backend implementa caché de audio keyed por hash(input + voice + language + speed). Las peticiones de catálogo (curiosidades, muletillas) son pre-sintetizadas en el arranque y nunca llegan al servidor Coqui en runtime.",
+    "pii": "Este servidor corre on-premise dentro de educational-network. Ningún texto enviado sale del servidor local.",
+    "related_features": "FEAT-001 (contrato agente), FEAT-003 (tonos), FEAT-004 (curiosidades), FEAT-005 (muletillas), ADR-007 (decisión arquitectural TTS)"
+  }
+}
