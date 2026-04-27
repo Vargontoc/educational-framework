@@ -10,6 +10,12 @@ services:
       - OLLAMA_GPU_DEVICES=${OLLAMA_GPU_DEVICES:-all}
     networks:
       - educational-network-dev
+    ports:
+     - "11435:11434"
+    deploy:
+      restart_policy:
+        condition: on-failure
+
     restart: unless-stopped
     # GPU access: use Docker device_requests where supported, otherwise
     # fallback to the legacy runtime field. If your Docker Compose
@@ -34,6 +40,8 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - educational-network-dev
+    ports:
+      - "5432:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edu} -d ${POSTGRES_DB:-edu_db}"]
@@ -41,9 +49,31 @@ services:
       timeout: 10s
       retries: 5
 
+  coqui-educational:
+    image: ghcr.io/coqui-ai/tts
+    command: --model_name tts_models/es/css10/vits --use_cuda true
+    container_name: coqui-educational
+    env_file:
+      - envs/coqui.env
+    networks:
+      - educational-network-dev
+    ports:
+      - "5002:5002"
+    runtime: nvidia
+    volumes:
+      - coqui_models:/root/.local/share/tts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5002/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
 volumes:
   pgdata:
   ollama_models:
+  coqui_models:
 
 networks:
   educational-network-dev:

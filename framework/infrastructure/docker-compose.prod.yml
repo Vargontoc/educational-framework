@@ -1,20 +1,28 @@
 services:
-  # Production overrides: keep Ollama internal, expose only required app ports elsewhere
   ollama-educational:
     deploy:
       restart_policy:
         condition: on-failure
-    # Fallback for GPU access in environments where device_requests is unsupported
     runtime: nvidia
     volumes:
       - ollama_models:/models
+    ports: !reset []
 
   postgres:
     volumes:
       - pgdata:/var/lib/postgresql/data
+    ports: !reset []
+
+  coqui-educational:
+    runtime: nvidia
+    volumes:
+      - coqui_models:/root/.local/share/tts
+    ports: !reset []
 
 volumes:
   pgdata:
     driver: local
   ollama_models:
+    driver: local
+  coqui_models:
     driver: local
