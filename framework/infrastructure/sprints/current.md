@@ -56,6 +56,7 @@ completed_tasks:
     - Updated coqui-educational command: model changed to tts_models/multilingual/multi-dataset/xtts_v2, --language_idx es added.
     - healthcheck.start_period extended from 120s to 300s for XTTS v2 download (~1.8 GB first start).
     - envs/coqui.env.example updated with new COQUI_MODEL_NAME and new COQUI_LANGUAGE_IDX=es variable.
+    - Fixed entrypoint: image default is the batch CLI (tts), not the HTTP server. Added entrypoint: tts-server and --port 5002 to command. Without this fix the container prints help and exits immediately.
     - Both docker compose config and prod stack config exit 0; no ports published in prod.
 
 incomplete_tasks:
@@ -65,8 +66,9 @@ contract_changes:
     none — endpoint contract (http://coqui-educational:5002/api/tts vs /v1/audio/speech) must be confirmed by backend layer after testing XTTS v2 server response.
 
 learnings:
+    - ghcr.io/coqui-ai/tts default ENTRYPOINT is the batch CLI `tts`, not the server. To start the HTTP server, entrypoint must be overridden to `tts-server` in docker-compose. This applies to any model, not just XTTS v2.
     - XTTS v2 healthcheck start_period must be at least 5 min on first start due to model download; subsequent starts are fast (model is cached in coqui_models volume).
-    - --language_idx es must be passed at server startup, not per-request, in the Coqui TTS Docker image CLI mode.
+    - --language_idx es and --port 5002 must be passed as tts-server startup flags.
 
 next_sprint_suggestions:
     - Backend layer: update TTS client endpoint and request schema for XTTS v2; invalidate and rebuild audio cache.
