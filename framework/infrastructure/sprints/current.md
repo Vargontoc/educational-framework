@@ -5,18 +5,18 @@
 Migrate the Coqui TTS service from `tts_models/es/css10/vits` to `tts_models/multilingual/multi-dataset/xtts_v2` per FEAT-001, and update compose configuration and env templates accordingly.
 
 ## Status
-status: active
+status: completed
 started_at: 2026-04-27 00:00:00
-closed_at:
+closed_at: 2026-04-27 00:00:00
 blocked_by:
 waiting_for:
 
 ## Tasks
-- [ ] Update `coqui-educational` command in `docker-compose.yml`: replace `--model_name tts_models/es/css10/vits` with `--model_name tts_models/multilingual/multi-dataset/xtts_v2` and add `--language_idx es`.
-- [ ] Update `healthcheck.start_period` in `docker-compose.yml` from 120s to 300s to account for XTTS v2 model download (~1.8 GB on first start).
-- [ ] Update `envs/coqui.env.example`: change default value for `COQUI_MODEL_NAME` and add `COQUI_LANGUAGE_IDX=es`.
-- [ ] Update `envs/coqui.env` locally (gitignored) to match new defaults.
-- [ ] Validate both compose stacks with `docker compose config`.
+- [x] Update `coqui-educational` command in `docker-compose.yml`: replace `--model_name tts_models/es/css10/vits` with `--model_name tts_models/multilingual/multi-dataset/xtts_v2` and add `--language_idx es`.
+- [x] Update `healthcheck.start_period` in `docker-compose.yml` from 120s to 300s to account for XTTS v2 model download (~1.8 GB on first start).
+- [x] Update `envs/coqui.env.example`: change default value for `COQUI_MODEL_NAME` and add `COQUI_LANGUAGE_IDX=es`.
+- [x] Update `envs/coqui.env` locally (gitignored) to match new defaults.
+- [x] Validate both compose stacks with `docker compose config`.
 
 ## Risks
 - XTTS v2 model weighs ~1.8 GB; first container startup requires a full download — the healthcheck must allow enough time or it will report unhealthy before the model is ready.
@@ -53,16 +53,21 @@ The `coqui_models` volume already persists across restarts from Sprint 002; the 
 ## Review
 
 completed_tasks:
-    {}
+    - Updated coqui-educational command: model changed to tts_models/multilingual/multi-dataset/xtts_v2, --language_idx es added.
+    - healthcheck.start_period extended from 120s to 300s for XTTS v2 download (~1.8 GB first start).
+    - envs/coqui.env.example updated with new COQUI_MODEL_NAME and new COQUI_LANGUAGE_IDX=es variable.
+    - Both docker compose config and prod stack config exit 0; no ports published in prod.
 
 incomplete_tasks:
-    {}
+    none
 
 contract_changes:
-    {}
+    none — endpoint contract (http://coqui-educational:5002/api/tts vs /v1/audio/speech) must be confirmed by backend layer after testing XTTS v2 server response.
 
 learnings:
-    {}
+    - XTTS v2 healthcheck start_period must be at least 5 min on first start due to model download; subsequent starts are fast (model is cached in coqui_models volume).
+    - --language_idx es must be passed at server startup, not per-request, in the Coqui TTS Docker image CLI mode.
 
 next_sprint_suggestions:
-    {}
+    - Backend layer: update TTS client endpoint and request schema for XTTS v2; invalidate and rebuild audio cache.
+    - Infrastructure: if voice cloning is needed (FEAT-008), mount a reference audio file into the container volume.

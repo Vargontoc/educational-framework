@@ -51,7 +51,7 @@ services:
 
   coqui-educational:
     image: ghcr.io/coqui-ai/tts
-    command: --model_name tts_models/es/css10/vits --use_cuda true
+    command: --model_name tts_models/multilingual/multi-dataset/xtts_v2 --language_idx es --use_cuda true
     container_name: coqui-educational
     env_file:
       - envs/coqui.env
@@ -68,7 +68,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s
+      start_period: 300s
 
 volumes:
   pgdata:
