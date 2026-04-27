@@ -52,7 +52,7 @@ services:
   coqui-educational:
     image: ghcr.io/coqui-ai/tts
     entrypoint: tts-server
-    command: --model_name tts_models/multilingual/multi-dataset/xtts_v2 --language_idx es --use_cuda true --port 5002
+    command: --model_name tts_models/multilingual/multi-dataset/xtts_v2 --use_cuda true --port 5002
     container_name: coqui-educational
     env_file:
       - envs/coqui.env

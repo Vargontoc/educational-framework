@@ -67,8 +67,9 @@ contract_changes:
 
 learnings:
     - ghcr.io/coqui-ai/tts default ENTRYPOINT is the batch CLI `tts`, not the server. To start the HTTP server, entrypoint must be overridden to `tts-server` in docker-compose. This applies to any model, not just XTTS v2.
+    - tts-server does NOT accept --language_idx; that flag is CLI-only. Language is passed per-request by the backend when calling the API endpoint.
+    - tts-server accepted flags: --model_name, --port, --use_cuda, --config_path, --vocoder_name, --debug, --show_details.
     - XTTS v2 healthcheck start_period must be at least 5 min on first start due to model download; subsequent starts are fast (model is cached in coqui_models volume).
-    - --language_idx es and --port 5002 must be passed as tts-server startup flags.
 
 next_sprint_suggestions:
     - Backend layer: update TTS client endpoint and request schema for XTTS v2; invalidate and rebuild audio cache.
