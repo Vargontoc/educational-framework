@@ -51,10 +51,16 @@ services:
 
   coqui-educational:
     image: ghcr.io/coqui-ai/tts
-    command: --model_name tts_models/es/css10/vits --use_cuda true
+    entrypoint: tts-server
+    command: --model_name tts_models/multilingual/multi-dataset/xtts_v2 --use_cuda true --port 5002
     container_name: coqui-educational
     env_file:
       - envs/coqui.env
+    environment:
+      # Auto-accept Coqui license in non-interactive container environment.
+      # By setting this you confirm you have read and agree to the CPML:
+      # https://coqui.ai/cpml
+      - COQUI_TOS_AGREED=1
     networks:
       - educational-network-dev
     ports:
@@ -68,7 +74,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s
+      start_period: 300s
 
 volumes:
   pgdata:
