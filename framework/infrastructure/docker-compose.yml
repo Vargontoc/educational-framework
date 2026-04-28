@@ -68,6 +68,8 @@ services:
     volumes:
       - coqui_models:/root/.local/share/tts
       - ../agents/tts/references:/references:ro
+      - ./patches/server.py:/root/TTS/server/server.py:ro
+      - ./patches/xtts.py:/root/TTS/tts/models/xtts.py:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/').read()"]
