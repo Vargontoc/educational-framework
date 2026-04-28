@@ -5,18 +5,18 @@
 Create the eSpeak NG reference WAV generation infrastructure per ADR-005: directory structure, versioned generation script, and the 5 character voice WAV files committed to the repository.
 
 ## Status
-status: active
+status: completed
 started_at: 2026-04-28 00:00:00
-closed_at:
+closed_at: 2026-04-28 00:00:00
 blocked_by:
 waiting_for:
 
 ## Tasks
-- [ ] Create directory `framework/agents/tts/references/` and `framework/agents/tts/scripts/`.
-- [ ] Write `framework/agents/tts/scripts/generate_references.sh` with the exact eSpeak NG parameters from ADR-005 for all 5 tones.
-- [ ] Run `generate_references.sh` to produce `calm.wav`, `joyful.wav`, `enthusiastic.wav`, `playful.wav`, `serious.wav` in `framework/agents/tts/references/`.
-- [ ] Verify each WAV is non-empty and playable.
-- [ ] Commit WAV files and script to git.
+- [x] Create directory `framework/agents/tts/references/` and `framework/agents/tts/scripts/`.
+- [x] Write `framework/agents/tts/scripts/generate_references.sh` with the exact eSpeak NG parameters from ADR-005 for all 5 tones.
+- [x] Run `generate_references.sh` to produce `calm.wav`, `joyful.wav`, `enthusiastic.wav`, `playful.wav`, `serious.wav` in `framework/agents/tts/references/`.
+- [x] Verify each WAV is non-empty and playable.
+- [x] Commit WAV files and script to git.
 
 ## Risks
 - eSpeak NG must be installed on the developer's machine (`espeak-ng` command available). If not installed, WAV generation is blocked.
@@ -51,16 +51,25 @@ The tones map to the agent's `tone` output field: calm → ages 3-4, joyful → 
 ## Review
 
 completed_tasks:
-    {}
+    - Created framework/agents/tts/references/ and framework/agents/tts/scripts/.
+    - Wrote generate_references.sh with ADR-005 eSpeak NG parameters for all 5 tones.
+    - Extended reference text vs ADR-005 draft to ensure all tones produce ≥6s WAVs (XTTS v2 minimum). Original text produced ~5.2s at 175wpm (enthusiastic); extended text produces 8.3s-11.9s across all tones.
+    - Generated and committed 5 WAV files: calm(~11.3s), joyful(~9.1s), enthusiastic(~8.3s), playful(~8.9s), serious(~11.9s).
+    - eSpeak NG 1.52.0 installed via winget; not in system PATH — script auto-detects Windows install path as fallback.
 
 incomplete_tasks:
-    {}
+    none
 
 contract_changes:
-    {}
+    none — WAV files are an internal asset consumed by infrastructure/backend. No agent output contract changed.
 
 learnings:
-    {}
+    - ADR-005 reference text produced <6s for faster tones. Extended text required to meet XTTS v2 minimum. ADR-005 text should be updated to reflect the actual text used.
+    - eSpeak NG outputs 22050 Hz 16-bit mono WAV. Duration formula: (file_bytes - 44_header) / 44100 bytes_per_sec.
+    - Script auto-detects eSpeak NG: prefers PATH, falls back to Windows install at /c/Program Files/eSpeak NG/espeak-ng.exe.
+    - Parameters in ADR-005 are v1 starting points — require validation with child user before being fixed as definitive.
 
 next_sprint_suggestions:
-    {}
+    - Infrastructure Sprint 004: add bind-mount ../agents/tts/references:/references:ro to coqui-educational (now unblocked).
+    - Backend: pass speaker_wav=/references/{tone}.wav in XTTS v2 synthesis requests.
+    - Future: validate voice character with end user (child) and iterate parameters in generate_references.sh if needed.
