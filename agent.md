@@ -10,17 +10,27 @@ languague: All code and comments must be in English
 
 ## Layer Structure
 
-analysis/           -> read-only agent: observes, plans, reports
-docs/               -> architecture decisions, contractsm sprint management
+analysis/                   -> read-only agent: observes, plans, reports
+docs/                       -> architecture decisions, contractsm sprint management
+framework/infrastructure    -> environment orchertration, docker compose files, etc
+framework/agents            -> domiain AI agents for application
+framework/backend           -> Spring Boot API, bussiness logic, persistence
+framework/frontend          -> Vue3 SPS, UI Components, API Conssumption
 
 ## Contracts
 
 Single source of truth for all inter-layer arguments
 No layer duplicates contract files locally
 
+- docs/contracts/api/openapi_tts.json     -> API contracts between layers (backend -> TTS Container)
+- docs/contracts/api/agents/education-framework-agent-chind,json -> API contracts between layers (backend <-> Agent Child)
+- docs/contracts/schemas/curiosities_catalog_sample_es.json -> Sample schema for Curiosities Catalog JSON Schema
+- docs/contracts/schemas/motivation_actions_sample.json -> Sample schema for Motivation Actions JSON Schema
+- docs/contracts/schemas/motivation_action.schema.json -> JSON Schema for Motivation Action JSON Schema
+
 ## Sprint Structure
 
-Sprints are managed pewr layer to reflect independent progress.
+Sprints are managed per layer to reflect independent progress.
 
 docs/sprints/sprint_template.md     -> global reusable template for all layers
 docs/sprints/history/               -> closed sprints archive (global)
@@ -43,6 +53,9 @@ If a layer is blocked by another, current.md must declare
 
 ## Available Agents
 
+- framework/infrastructure/agent.md -> manages Docker environments and service configuration
+- framework/backend/agent.md -> handles API develpment, bussiness logic, persistence, security
+- framework/frontend/agent.md -> handles UI development, state management and routing integration
 
 ## Workflow
 
@@ -62,7 +75,10 @@ If a layer is blocked by another, current.md must declare
 
 base_branch: develop
 protected: true - no direct push allowed
-rule: Bever push directly to develop
+
+## Agent Git Rules
+
+rule: Never push directly to develop
 rule: Always pull develop before starting a new sprint branch
 rule: Branch name must follow {layer}/type/short-description
 rule: One branch per sprint task - do not mix layer changes in one branch

@@ -2,7 +2,7 @@
 
 This is a project for an AI education app web monousuario that provides an funny experiencie for childs 3-8 years old. The app includes a variety of educational games, interactive activities, and quizzes that help children learn while having fun. The project contains two domain agents, one for childs and other for adults. The app also includes a progress tracking system that allows parents to monitor their child's progress in the app.
 
-App web is not a videogame, it's a web app that runs on any device with web browser and invites childs explore outside the app, and make questions to the parents. It is not a sustitutive education but a complement for their parents, they have all controlls. The app is designed to be used in conjunction with traditional education, not as a replacement.
+It's a web app that runs on any device with web browser and invites childs explore outside the app, and make questions to the parents. It is not a sustitutive education but a complement for their parents, they have all controlls. The app is designed to be used in conjunction with traditional education, not as a replacement.
 
 ## Stack
 
@@ -88,8 +88,8 @@ framework/agents/               → domain AI agents (Ollama Modelfiles and cont
 
 ## Working with agents
 # Before starting any task, read the relevant AGENT.md:
-AGENT.md                    → global context and git workflow
-{layer}/AGENT.md            → layer-specific context and rules
+agent.md                    → global context and git workflow
+{layer}/agent.md            → layer-specific context and rules
 {layer}/sprints/current.md  → active sprint status and tasks
 {layer}/skills/{type}/SKILL.md → how to execute that type of task
 
