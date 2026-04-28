@@ -89,7 +89,9 @@ contract_changes:
 
 learnings:
     - Docker Compose env_file loads variables into the container at runtime. Using ${VAR} in the environment block resolves at compose parse time from the host shell, not from env_file. For secrets that must come from env_file, use only env_file and name the variable exactly as the consuming process expects it (TUNNEL_TOKEN for cloudflared).
-    - cloudflared reads TUNNEL_TOKEN from the container environment automatically when running tunnel run. No --token flag needed in the command.
+    - cloudflared reads TUNNEL_TOKEN from the container environment automatically when running `tunnel run`. No --token flag needed in the command; the plain command ["tunnel", "--no-autoupdate", "run"] is sufficient when TUNNEL_TOKEN is loaded via env_file.
+    - The cloudflared Docker image is distroless — it has no shell (sh/bash). Never use entrypoint: ["sh", "-c"] with this image; always pass arguments directly as a JSON array command.
+    - Variable name in env_file must match exactly what the process expects. cloudflared expects TUNNEL_TOKEN (not CF_TUNNEL_TOKEN or similar).
 
 next_sprint_suggestions:
     - Frontend/backend layers: expose ports 80 and 8080 respectively in their service definitions so cloudflared can route to them.

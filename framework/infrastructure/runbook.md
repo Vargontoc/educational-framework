@@ -57,7 +57,7 @@ without opening inbound ports on the host router. All other services remain inte
 2. **Set the token on the production host**
    ```bash
    cp framework/infrastructure/envs/cloudflare.env.example framework/infrastructure/envs/cloudflare.env
-   # Edit cloudflare.env and set CF_TUNNEL_TOKEN=<token>
+   # Edit cloudflare.env and set TUNNEL_TOKEN=<token>
    ```
 
 3. **Configure public hostnames (ingress rules)**

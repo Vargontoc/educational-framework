@@ -23,7 +23,7 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared-educational
-    command: tunnel --no-autoupdate run
+    command: ["tunnel", "--no-autoupdate", "run"]
     env_file:
       - envs/cloudflare.env
     networks:
