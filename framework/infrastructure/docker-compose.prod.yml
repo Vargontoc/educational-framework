@@ -20,6 +20,16 @@ services:
       - ../agents/tts/references:/references:ro
     ports: !reset []
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-educational
+    command: tunnel --no-autoupdate run
+    env_file:
+      - envs/cloudflare.env
+    networks:
+      - educational-network-dev
+    restart: unless-stopped
+
 volumes:
   pgdata:
     driver: local

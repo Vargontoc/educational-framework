@@ -40,3 +40,56 @@ Restore:
 ## Network / Firewall
 
 - Ollama must not be exposed to public internet. Use Docker network or host loopback. Apply firewall rules to restrict access to Ollama host in production.
+
+## Cloudflare Tunnel — Production Setup (ADR-006)
+
+Cloudflare Tunnel routes public traffic to frontend (port 80) and backend (port 8080)
+without opening inbound ports on the host router. All other services remain internal.
+
+### One-time setup (manual — Cloudflare Dashboard)
+
+1. **Create the tunnel**
+   - Cloudflare Dashboard → Zero Trust → Networks → Tunnels → Create a tunnel
+   - Name: `educational-framework-prod`
+   - Connector: Docker
+   - Copy the token from the install command shown on screen
+
+2. **Set the token on the production host**
+   ```bash
+   cp framework/infrastructure/envs/cloudflare.env.example framework/infrastructure/envs/cloudflare.env
+   # Edit cloudflare.env and set CF_TUNNEL_TOKEN=<token>
+   ```
+
+3. **Configure public hostnames (ingress rules)**
+   - In the tunnel's "Public Hostname" tab, add two entries:
+     | Subdomain       | Service              |
+     |-----------------|----------------------|
+     | app.yourdomain.com  | http://frontend:80   |
+     | api.yourdomain.com  | http://backend:8080  |
+   - These hostnames must match your Cloudflare-managed DNS zone.
+
+4. **Set SSL mode to Full (strict)**
+   - Cloudflare Dashboard → your domain → SSL/TLS → Overview
+   - Select **Full (strict)** — prevents SSL stripping attacks.
+
+5. **Start the tunnel**
+   ```bash
+   cd framework/infrastructure
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d cloudflared
+   docker logs cloudflared-educational
+   # Expected: "Connection ... registered with protocol: quic"
+   ```
+
+6. **Verify in dashboard**
+   - Cloudflare Dashboard → Zero Trust → Networks → Tunnels
+   - Tunnel status must show **Healthy** (green).
+
+### Cloudflared container unavailable
+
+Symptoms: public hostnames return 502 or "Tunnel not found".
+
+1. Check container: `docker ps --filter name=cloudflared-educational`
+2. Check logs: `docker logs cloudflared-educational --tail 50`
+3. Verify token: confirm `CF_TUNNEL_TOKEN` in `cloudflare.env` matches the token in the dashboard.
+4. Restart: `docker compose -f docker-compose.yml -f docker-compose.prod.yml restart cloudflared`
+5. If issue persists, regenerate the tunnel token in the dashboard and update `cloudflare.env`.
