@@ -12,17 +12,17 @@ blocked_by:
 waiting_for:
 
 ## Tasks
-- [ ] Initialize Maven project: create `pom.xml` with Spring Boot 3.3.x BOM and dependencies (web, data-jpa, postgresql, liquibase, actuator, security, springdoc-openapi, spring-ai-ollama-spring-boot-starter)
-- [ ] Create Maven wrapper (`mvnw` + `.mvn/wrapper/`) so the Dockerfile can build without a host Maven installation
-- [ ] Create main application class `EducationalFrameworkApplication.java` under `es.vargontoc.educational.framework`
-- [ ] Create `src/main/resources/application.yml` with externalized config for datasource, server port, actuator exposure, Liquibase, and Spring AI
-- [ ] Set up Liquibase: `src/main/resources/db/changelog/db.changelog-master.xml` + first migration `migrations/001__init_schema.xml` (empty schema baseline)
-- [ ] Create root package skeleton matching hexagonal layout (empty placeholder packages for first domain)
-- [ ] Configure Spring Security: permit `/actuator/health` without authentication; lock all other endpoints by default
-- [ ] Verify root `.gitignore` covers `framework/backend/target/` and `framework/backend/.mvn/wrapper/maven-wrapper.jar` (already added in sprint prep — confirm entries are present after scaffolding)
-- [ ] Create `src/main/resources/application-dev.yml` — dev profile overrides: SQL logging enabled, actuator `show-details: always`, Liquibase `drop-first: false`, verbose Spring AI logging
-- [ ] Create `src/main/resources/application-prod.yml` — prod profile overrides: SQL logging disabled, actuator `show-details: never`, Hikari pool tuned, Spring AI logging at WARN
-- [ ] Set active profile via env var: `SPRING_PROFILES_ACTIVE=dev` in `backend.env.example`; infrastructure sets `SPRING_PROFILES_ACTIVE=prod` in the prod environment
+- [x] Initialize Maven project: create `pom.xml` with Spring Boot 3.3.5 + Spring AI 1.0.0 BOM and all required dependencies
+- [x] Create Maven wrapper (`mvnw` + `mvnw.cmd` + `.mvn/wrapper/maven-wrapper.properties`) — Maven 3.9.8
+- [x] Create main application class `EducationalFrameworkApplication.java` under `es.vargontoc.educational.framework`
+- [x] Create `src/main/resources/application.yml` with externalized config for datasource, server port, actuator, Liquibase, and Spring AI
+- [x] Set up Liquibase: `db/changelog/db.changelog-master.xml` + `migrations/001__init_schema.xml` (empty schema baseline)
+- [x] Create root package skeleton: `shared/config/SecurityConfig.java` + `shared/config/OpenApiConfig.java`
+- [x] Configure Spring Security: permit `/actuator/health` + Swagger UI; lock all other endpoints by default (STATELESS)
+- [x] Verify root `.gitignore` covers `framework/backend/target/` and `.mvn/` (entries present)
+- [x] Create `src/main/resources/application-dev.yml` — SQL logging, actuator verbose, verbose Spring AI + Hibernate logging
+- [x] Create `src/main/resources/application-prod.yml` — SQL off, Hikari pool tuned, actuator show-details: never, Spring AI at WARN
+- [x] Set active profile via env var: `SPRING_PROFILES_ACTIVE=dev` added to `backend.env.example`
 - [ ] Copy `envs/backend.env.example` → `envs/backend.env` (gitignored) and fill real values for local dev
 - [ ] Verify: `./mvnw spring-boot:run` starts with profile `dev`, connects to postgres, and `GET /actuator/health` returns `{"status":"UP"}`
 - [ ] Verify Docker build: `docker build -t edu-backend .` succeeds from `framework/backend/`

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!--
+        Schema baseline — Liquibase owns all DDL from this point forward.
+        Add new migrations as separate files and register them in db.changelog-master.xml.
+        Never modify this file after it has been applied.
+    -->
+    <changeSet id="001__init_schema" author="vargontoc">
+        <comment>Schema baseline — empty changeset to mark the Liquibase starting point.</comment>
+    </changeSet>
+
+</databaseChangeLog>

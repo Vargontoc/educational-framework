@@ -15,7 +15,7 @@ npm-debug.log*
 
 # ── Backend (Spring Boot / Maven) ────────────
 framework/backend/target/
-framework/backend/.mvn/wrapper/maven-wrapper.jar
+framework/backend/.mvn/
 
 # ── Docker ───────────────────────────────────
 # Never commit generated docker volumes or override files
