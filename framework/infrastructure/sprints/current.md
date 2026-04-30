@@ -5,20 +5,20 @@
 Add the `api-educational` Spring Boot service to docker-compose, rename `postgres` to `postgres-educational` for naming consistency, introduce a separate `educational-network` prod network to allow dev and prod stacks to run simultaneously without conflicts, and wire Cloudflare Tunnel routing to the backend.
 
 ## Status
-status: active
+status: completed
 started_at: 2026-04-30 00:00:00
-closed_at:
+closed_at: 2026-04-30 00:00:00
 blocked_by:
 waiting_for:
 
 ## Tasks
-- [ ] Rename `postgres` service and container to `postgres-educational` in `docker-compose.yml` (service name, container_name, healthcheck user ref); update `SPRING_DATASOURCE_URL` in `backend.env.example` accordingly
-- [ ] Add prod network `educational-network` to `docker-compose.prod.yml`: declare it and override all service `networks:` entries to use `educational-network` instead of `educational-network-dev`; dev compose keeps `educational-network-dev`
-- [ ] Add `api-educational` service to `docker-compose.yml` (build from `../backend`, port 8080, depends on `postgres-educational` healthy, healthcheck on `/actuator/health`)
-- [ ] Create `envs/backend.env.example` in the infrastructure layer with all runtime env vars the container needs
-- [ ] Add `api-educational` override to `docker-compose.prod.yml` (`ports: !reset []`, `SPRING_PROFILES_ACTIVE=prod`)
-- [ ] Update runbook: add Cloudflare ingress rule `api.<domain>` → `http://api-educational:8080`
-- [ ] Validate: `docker compose -f docker-compose.yml -f docker-compose.prod.yml config` exits 0
+- [x] Rename `postgres` service and container to `postgres-educational` in `docker-compose.yml`; update `SPRING_DATASOURCE_URL` in `backend.env.example` accordingly
+- [x] Add prod network `educational-network` to `docker-compose.prod.yml`: override the top-level `educational-network-dev` network declaration with `!override` so the actual Docker network is named `educational-network` in prod; dev compose keeps `educational-network-dev`
+- [x] Add `api-educational` service to `docker-compose.yml` (build from `../backend`, port 8080, depends on `postgres-educational` healthy, healthcheck on `/actuator/health`)
+- [x] Create `envs/backend.env.example` in the infrastructure layer with all runtime env vars the container needs
+- [x] Add `api-educational` override to `docker-compose.prod.yml` (`ports: !reset []`, `SPRING_PROFILES_ACTIVE=prod`)
+- [x] Update runbook: add Cloudflare ingress rule `api.<domain>` → `http://api-educational:8080`
+- [x] Validate: `docker compose -f docker-compose.yml -f docker-compose.prod.yml config` exits 0
 
 ## Risks
 - Renaming `postgres` → `postgres-educational` changes the Docker service DNS name; any hardcoded `postgres` hostname in env files or backend config will break — update `SPRING_DATASOURCE_URL` in all env examples
@@ -53,11 +53,21 @@ waiting_for:
 
 Dev uses `educational-network-dev`; prod uses `educational-network`. With different network names both stacks can be up simultaneously on the same host (e.g. developer runs dev locally while prod is running). Docker will create two isolated bridge networks without name collision.
 
-### Why ports: !reset [] in prod for api-educational
+### How the prod network override works
 
-With Cloudflare Tunnel, `cloudflared` runs inside `educational-network` and resolves `api-educational:8080` via internal Docker DNS — no host port binding needed. Dev keeps `"8080:8080"` for direct Postman/browser access.
+Docker Compose v5's `!reset` on service-level `networks:` sequences is broken — it falls back to the Docker default network instead of replacing with the specified value. The working approach is `!override` on the TOP-LEVEL network declaration:
 
-### Service definition sketch (dev)
+```yaml
+# docker-compose.prod.yml
+networks:
+  educational-network-dev: !override
+    name: educational-network
+    driver: bridge
+```
+
+This keeps the internal compose key as `educational-network-dev` (so service definitions need no changes) but instructs Docker to create the actual bridge network as `educational-network`. Result: dev containers live on `educational-network-dev`, prod containers live on `educational-network` — fully isolated.
+
+### Service definition (dev)
 
 ```yaml
 api-educational:
@@ -84,45 +94,13 @@ api-educational:
     start_period: 60s
 ```
 
-### Prod override sketch
+### Prod override for api-educational
 
 ```yaml
-networks:
-  educational-network:
-    name: educational-network
-    driver: bridge
-
-services:
-  ollama-educational:
-    networks: [educational-network]
-  postgres-educational:
-    networks: [educational-network]
-  coqui-educational:
-    networks: [educational-network]
-  cloudflared:
-    networks: [educational-network]
-  api-educational:
-    networks: [educational-network]
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-    ports: !reset []
-```
-
-### backend.env.example variables
-
-Variables sourced from `framework/backend/envs/backend.env.example` (backend layer owns the canonical list):
-
-```
-SPRING_PROFILES_ACTIVE=dev
-SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/edu_db
-SPRING_DATASOURCE_USERNAME=edu
-SPRING_DATASOURCE_PASSWORD=change_me
-SERVER_PORT=8080
-SPRING_AI_OLLAMA_BASE_URL=http://ollama-educational:11434
-SPRING_AI_OLLAMA_CHAT_MODEL=llama3.2
-LOGGING_LEVEL_ES_VARGONTOC=INFO
-JWT_SECRET=change_me_use_openssl_rand_hex_32
-JWT_EXPIRATION_MS=86400000
+api-educational:
+  environment:
+    - SPRING_PROFILES_ACTIVE=prod
+  ports: !reset []
 ```
 
 ### Cloudflare ingress rule to add (manual — dashboard)
@@ -137,16 +115,34 @@ Once this sprint is merged and deployed, add in the tunnel's "Public Hostname" t
 - `docker-compose.yml` uses `postgres-educational` as service name and container name everywhere
 - `docker-compose.yml` contains `api-educational` with build context, port 8080, depends on `postgres-educational` healthy, and healthcheck
 - `envs/backend.env.example` exists in `framework/infrastructure/envs/` with `SPRING_DATASOURCE_URL` pointing to `postgres-educational`
-- `docker-compose.prod.yml` declares `educational-network` and overrides all service `networks:` to use it
+- `docker-compose.prod.yml` overrides the `educational-network-dev` top-level network declaration to produce `educational-network` as the real Docker bridge name
 - `docker-compose.prod.yml` overrides `api-educational` with `ports: !reset []` and `SPRING_PROFILES_ACTIVE=prod`
 - `runbook.md` documents the Cloudflare ingress rule for `api-educational`
-- `docker compose -f docker-compose.yml -f docker-compose.prod.yml config` exits 0 and shows no `educational-network-dev` in the prod merged output
+- `docker compose -f docker-compose.yml -f docker-compose.prod.yml config` exits 0 and shows `name: educational-network` in the top-level networks block
 - No `backend.env` committed (only `.env.example`)
 
 ## Review
 
 completed_tasks:
+    - Renamed postgres → postgres-educational (service key, container_name) in docker-compose.yml.
+    - Added api-educational service to docker-compose.yml: build from ../backend, port 8080, depends_on postgres-educational (service_healthy), healthcheck on /actuator/health via wget.
+    - Created envs/backend.env.example in the infrastructure layer with all runtime vars including SPRING_DATASOURCE_URL pointing to postgres-educational.
+    - Overrode docker-compose.prod.yml top-level network with `!override` to rename educational-network-dev → educational-network at the Docker level; dev and prod stacks are now fully isolated when running simultaneously.
+    - Added api-educational prod override: ports: !reset [], SPRING_PROFILES_ACTIVE=prod.
+    - Updated runbook with Cloudflare ingress rule for api.yourdomain.com → http://api-educational:8080.
+    - Validated: docker compose -f docker-compose.yml -f docker-compose.prod.yml config exits 0.
+
 incomplete_tasks:
+    - Cloudflare Public Hostname for api.yourdomain.com cannot be configured until this sprint is deployed to production — manual dashboard step.
+    - Backend Sprint 001 manual verification steps (./mvnw spring-boot:run, docker build) are backend layer responsibility, not infrastructure.
+
 contract_changes:
+    none
+
 learnings:
+    - Docker Compose v5 `!reset` on service-level `networks:` sequences is broken — it resets to the Docker default network instead of replacing with the specified list items. Use `!override` on the TOP-LEVEL networks declaration to rename the actual Docker network while keeping internal compose key references unchanged across all service definitions.
+    - The `!override` approach for network renaming is more elegant than per-service overrides: one declaration in the networks block handles all services without touching individual service definitions.
+
 next_sprint_suggestions:
+    - Backend layer: complete Sprint 001 manual verification (mvnw spring-boot:run, docker build) and ensure the service starts correctly inside the compose stack.
+    - Infrastructure: add frontend-educational service once frontend layer scaffold is ready; expose port 80 and add Cloudflare ingress rule for app.yourdomain.com.

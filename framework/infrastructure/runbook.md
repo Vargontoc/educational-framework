@@ -61,11 +61,11 @@ without opening inbound ports on the host router. All other services remain inte
    ```
 
 3. **Configure public hostnames (ingress rules)**
-   - In the tunnel's "Public Hostname" tab, add two entries:
-     | Subdomain       | Service              |
-     |-----------------|----------------------|
-     | app.yourdomain.com  | http://frontend:80   |
-     | api.yourdomain.com  | http://backend:8080  |
+   - In the tunnel's "Public Hostname" tab, add entries as services become available:
+     | Subdomain           | Service                       | Available from   |
+     |---------------------|-------------------------------|------------------|
+     | api.yourdomain.com  | http://api-educational:8080   | Sprint 006       |
+     | app.yourdomain.com  | http://frontend-educational:80 | future sprint   |
    - These hostnames must match your Cloudflare-managed DNS zone.
 
 4. **Set SSL mode to Full (strict)**
