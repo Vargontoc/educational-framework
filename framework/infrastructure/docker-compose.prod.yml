@@ -1,3 +1,12 @@
+networks:
+  # In prod, rename the internal network so dev and prod stacks can run
+  # simultaneously on the same host without network name collision.
+  # Services still reference 'educational-network-dev' as the compose key;
+  # Docker creates the actual bridge as 'educational-network'.
+  educational-network-dev: !override
+    name: educational-network
+    driver: bridge
+
 services:
   ollama-educational:
     deploy:
@@ -8,7 +17,7 @@ services:
       - ollama_models:/models
     ports: !reset []
 
-  postgres:
+  postgres-educational:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports: !reset []
@@ -18,6 +27,11 @@ services:
     volumes:
       - coqui_models:/root/.local/share/tts
       - ../agents/tts/references:/references:ro
+    ports: !reset []
+
+  api-educational:
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
     ports: !reset []
 
   cloudflared:

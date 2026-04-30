@@ -31,9 +31,9 @@ services:
       timeout: 10s
       retries: 3
 
-  postgres:
+  postgres-educational:
     image: postgres:15
-    container_name: edu-postgres
+    container_name: postgres-educational
     env_file:
       - envs/postgres.env
     volumes:
@@ -48,6 +48,29 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  api-educational:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: api-educational:latest
+    container_name: api-educational
+    env_file:
+      - envs/backend.env
+    networks:
+      - educational-network-dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres-educational:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   coqui-educational:
     image: ghcr.io/coqui-ai/tts
