@@ -3,7 +3,7 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/edu_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc}
     username: ${SPRING_DATASOURCE_USERNAME:edu}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
   jpa:
@@ -14,7 +14,7 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.xml
   ai:
     ollama:
-      base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://ollama-educational:11434}
+      base-url: ${SPRING_AI_OLLAMA_BASE_URL}
       chat:
         model: ${SPRING_AI_OLLAMA_CHAT_MODEL:llama3.2}
       init:
