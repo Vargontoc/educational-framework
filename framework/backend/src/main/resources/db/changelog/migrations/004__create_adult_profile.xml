@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="004__create_adult_profile" author="vargontoc">
+        <createTable tableName="adult_profile">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="family_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="birthday" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="avatar" type="VARCHAR(100)" defaultValue="default-adult">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="adult_profile"
+            baseColumnNames="family_id"
+            constraintName="fk_adult_profile_family"
+            referencedTableName="family"
+            referencedColumnNames="id"
+            onDelete="RESTRICT"/>
+
+        <createIndex
+            indexName="idx_adult_profile_family_id"
+            tableName="adult_profile">
+            <column name="family_id"/>
+        </createIndex>
+
+        <addCheckConstraint
+            tableName="adult_profile"
+            constraintName="chk_adult_profile_birthday_past"
+            constraintBody="birthday <= CURRENT_DATE"/>
+    </changeSet>
+
+</databaseChangeLog>
