@@ -1,138 +1,141 @@
-# Sprint 002 - backend
+# Sprint 004 - backend
 # -----------------------------------------------
 
 ## Goal
-Implement the `shared` module per ADR-008: `BaseEntity`, exception hierarchy, `IValidator`/`AbstractValidator`, and `ApiResponse` — zero business logic, consumed by all future domain modules.
+Implement the Family domain layer for FEAT-001: Liquibase migrations for the three tables, pure domain models, hexagonal ports (use cases + repository interfaces), service implementations with PIN hashing and flag propagation, validators, and full unit test coverage — no HTTP layer in this sprint.
 
 ## Status
-status: completed
-started_at: 2026-04-30 00:00:00
-closed_at: 2026-04-30 00:00:00
+status: active
+started_at: 2026-05-01 00:00:00
+closed_at:
 blocked_by:
 waiting_for:
 
 ## Tasks
-- [x] Enable JPA Auditing: add `@EnableJpaAuditing` to `EducationalFrameworkApplication.java`
-- [x] Create `shared/model/BaseEntity.java` — abstract `@MappedSuperclass` with `id` (Long, sequence), `createdAt`, `updatedAt` via `@CreatedDate` / `@LastModifiedDate`
-- [x] Create `shared/exception/AppException.java` — base `RuntimeException` holding `HttpStatus`
-- [x] Create `shared/exception/ResourceNotFoundException.java` — extends `AppException`, HTTP 404
-- [x] Create `shared/exception/ValidationException.java` — extends `AppException`, HTTP 400
-- [x] Create `shared/exception/SessionException.java` — extends `AppException`, HTTP 401
-- [x] Create `shared/exception/ConflictException.java` — extends `AppException`, HTTP 409
-- [x] Create `shared/validation/IValidator.java` — `@FunctionalInterface`, single method `validate(T target)`
-- [x] Create `shared/validation/AbstractValidator.java` — implements `IValidator<T>`; guard methods: `requireNonNull`, `requireNonBlank`, `requireMaxLength`, `requirePositive`
-- [x] Create `shared/api/ApiResponse.java` — generic record with static factories: `ok(T data)`, `created(T data)`, `error(String message)`, `error(String message, List<String> errors)`
-- [x] Unit test: `AppExceptionTest` — verify each subclass sets the correct `HttpStatus`
-- [x] Unit test: `AbstractValidatorTest` — verify each guard method throws `ValidationException` on invalid input and passes on valid input
-- [x] Unit test: `ApiResponseTest` — verify factory methods produce correct `success`, `data`, `message` state
+
+### Liquibase Migrations
+- [ ] Create `migrations/002__create_family.xml` — table `family`: columns `id` (bigserial PK), `name` (varchar 100 NOT NULL), `pin_hash` (varchar 255 NOT NULL), `tts_enabled` (boolean NOT NULL DEFAULT true), `agent_enabled` (boolean NOT NULL DEFAULT true), `created_at` (timestamptz NOT NULL), `updated_at` (timestamptz); add `UNIQUE` constraint on `(id)` is implicit — add a `CHECK (id = 1)` constraint to enforce single-row invariant at DB level
+- [ ] Create `migrations/003__create_child_profile.xml` — table `child_profile`: columns `id` (bigserial PK), `family_id` (bigint NOT NULL), `name` (varchar 100 NOT NULL), `active` (boolean NOT NULL DEFAULT true), `birthday` (date NOT NULL), `avatar` (varchar 100 NOT NULL DEFAULT 'default-child'), `tts_enabled` (boolean NOT NULL DEFAULT true), `agent_enabled` (boolean NOT NULL DEFAULT true), `created_at` (timestamptz NOT NULL), `updated_at` (timestamptz); FK `family_id → family(id) ON DELETE RESTRICT`; index on `family_id`; CHECK `birthday <= CURRENT_DATE AND birthday >= CURRENT_DATE - INTERVAL '18 years'`
+- [ ] Create `migrations/004__create_adult_profile.xml` — table `adult_profile`: columns `id` (bigserial PK), `family_id` (bigint NOT NULL), `name` (varchar 100 NOT NULL), `birthday` (date NOT NULL), `avatar` (varchar 100 NOT NULL DEFAULT 'default-adult'), `created_at` (timestamptz NOT NULL), `updated_at` (timestamptz); FK `family_id → family(id) ON DELETE RESTRICT`; index on `family_id`; CHECK `birthday <= CURRENT_DATE`
+- [ ] Register the three new changeSets in `db.changelog-master.xml`
+
+### Domain Models
+- [ ] Create `family/model/Family.java` — plain Java class (no JPA), fields: `Long id`, `String name`, `String pinHash`, `boolean ttsEnabled`, `boolean agentEnabled`, `LocalDateTime createdAt`, `LocalDateTime updatedAt`
+- [ ] Create `family/model/ChildProfile.java` — plain Java class, fields: `Long id`, `Long familyId`, `String name`, `boolean active`, `LocalDate birthday`, `String avatar`, `boolean ttsEnabled`, `boolean agentEnabled`, `LocalDateTime createdAt`, `LocalDateTime updatedAt`
+- [ ] Create `family/model/AdultProfile.java` — plain Java class, fields: `Long id`, `Long familyId`, `String name`, `LocalDate birthday`, `String avatar`, `LocalDateTime createdAt`, `LocalDateTime updatedAt`
+
+### Ports — In (Use Cases)
+- [ ] Create `family/ports/in/FamilyUseCase.java` — interface: `Family createFamily(String name, String rawPin, boolean ttsEnabled, boolean agentEnabled)`, `Family getFamily()`, `Family updateFamily(String name, String rawPin, boolean ttsEnabled, boolean agentEnabled)`, `boolean familyExists()`
+- [ ] Create `family/ports/in/ChildProfileUseCase.java` — interface: `ChildProfile createChild(Long familyId, String name, LocalDate birthday, String avatar, boolean ttsEnabled, boolean agentEnabled)`, `ChildProfile getChild(Long id)`, `List<ChildProfile> getAllChildren()`, `ChildProfile updateChild(Long id, String name, LocalDate birthday, String avatar, boolean ttsEnabled, boolean agentEnabled)`, `void deactivateChild(Long id)`
+- [ ] Create `family/ports/in/AdultProfileUseCase.java` — interface: `AdultProfile createAdult(Long familyId, String name, LocalDate birthday, String avatar)`, `AdultProfile getAdult(Long id)`, `List<AdultProfile> getAllAdults()`, `AdultProfile updateAdult(Long id, String name, LocalDate birthday, String avatar)`, `void deleteAdult(Long id)`
+
+### Ports — Out (Repository Interfaces)
+- [ ] Create `family/ports/out/FamilyRepository.java` — interface: `Optional<Family> findFamily()`, `boolean exists()`, `Family save(Family family)`
+- [ ] Create `family/ports/out/ChildProfileRepository.java` — interface: `Optional<ChildProfile> findById(Long id)`, `List<ChildProfile> findAll()`, `ChildProfile save(ChildProfile child)`, `void deleteById(Long id)`
+- [ ] Create `family/ports/out/AdultProfileRepository.java` — interface: `Optional<AdultProfile> findById(Long id)`, `List<AdultProfile> findAll()`, `AdultProfile save(AdultProfile adult)`, `void deleteById(Long id)`
+
+### Validators
+- [ ] Create `family/validation/FamilyValidator.java` — extends `AbstractValidator<FamilyUseCase parameters>` or implements `IValidator`; validates: `name` non-blank, max 100 chars; `rawPin` exactly 4 digits (`\d{4}`)
+- [ ] Create `family/validation/ChildProfileValidator.java` — validates: `name` non-blank max 100; `birthday` non-null, not in future, not before `LocalDate.now().minusYears(18)`; `avatar` max 100 chars (nullable, defaults applied in service)
+- [ ] Create `family/validation/AdultProfileValidator.java` — validates: `name` non-blank max 100; `birthday` non-null, not in future
+
+### Services
+- [ ] Create `family/service/FamilyService.java` — `@Service`, implements `FamilyUseCase`; `createFamily`: check `familyRepository.exists()` → throw `ConflictException` if true; validate via `FamilyValidator`; hash rawPin with `BCryptPasswordEncoder`; save and return; `updateFamily`: load existing (404 if not found), validate, hash new PIN if provided, propagate flag changes to all `ChildProfile` records in the same `@Transactional` call; `getFamily`: `findFamily()` or throw `ResourceNotFoundException`
+- [ ] Create `family/service/ChildProfileService.java` — `@Service`, implements `ChildProfileUseCase`; `createChild`: load family (404 if missing), validate, apply flag ceiling (if `family.ttsEnabled == false` then force `ttsEnabled = false`; same for `agentEnabled`), save; `updateChild`: load child (404 if missing), re-apply flag ceiling against current family state, save; `deactivateChild`: load child (404), set `active = false`, save
+- [ ] Create `family/service/AdultProfileService.java` — `@Service`, implements `AdultProfileUseCase`; standard CRUD with 404 on missing records; no flag logic
+
+### Unit Tests
+- [ ] Unit test: `FamilyServiceTest` — mock `FamilyRepository` and `ChildProfileRepository`; test: createFamily happy path, createFamily throws `ConflictException` when family exists, updateFamily propagates `ttsEnabled=false` to all children, updateFamily does NOT re-enable children when family re-enables flag, getFamily throws `ResourceNotFoundException` when no family
+- [ ] Unit test: `ChildProfileServiceTest` — mock `FamilyRepository` and `ChildProfileRepository`; test: createChild applies flag ceiling (family disabled → child forced false), createChild passes enabled flag when family allows, deactivateChild sets active=false, updateChild re-applies ceiling after family change
+- [ ] Unit test: `AdultProfileServiceTest` — mock `AdultProfileRepository`; test: createAdult happy path, getAdult 404, deleteAdult 404
+- [ ] Unit test: `FamilyValidatorTest` — test: valid name+PIN pass, blank name throws `ValidationException`, PIN not 4 digits throws `ValidationException`, PIN with letters throws `ValidationException`
+- [ ] Unit test: `ChildProfileValidatorTest` — test: valid inputs pass, birthday in future throws, birthday older than 18 years throws, blank name throws
+- [ ] Unit test: `AdultProfileValidatorTest` — test: valid inputs pass, birthday in future throws, blank name throws
 
 ## Risks
-- `@EnableJpaAuditing` must be present before any entity using `@CreatedDate`/`@LastModifiedDate` is persisted — missing annotation causes a silent null in auditing columns.
-- `BaseEntity` must NOT be annotated with `@Entity` — it is a `@MappedSuperclass`; adding `@Entity` would try to create a `base_entity` table.
-- `ApiResponse` as a Java record cannot be subclassed — design it as complete and final from the start.
+- `CHECK (id = 1)` on `family` is the simplest DB-level single-row guard; the service also rejects duplicates via `ConflictException` — both layers enforce the invariant independently.
+- `birthday` CHECK constraint in Liquibase uses `CURRENT_DATE` which is evaluated at insert/update time — this is correct for PostgreSQL.
+- PIN hashing: `BCryptPasswordEncoder` is already on the classpath via Spring Security. Never log or store the `rawPin`.
+- Flag ceiling logic: when `Family.ttsEnabled` is set to `true`, existing children keep their own value — enabling the family does not automatically re-enable children. Only disabling the family forces children to false.
+- `@Transactional` on `FamilyService.updateFamily` is mandatory — the child flag propagation and the family update must succeed or fail together.
+- Domain models are plain Java classes — they must not import any JPA or Spring annotation. Mappers in the persistence adapter handle the JPA ↔ domain conversion.
 
 ## Dependencies
-- Sprint 001 completed: Spring Boot context starts, Liquibase baseline applied.
-- No new Liquibase migrations needed — `BaseEntity` is a `@MappedSuperclass`, not a table.
-- No contract changes — this sprint adds no REST endpoints.
+- Sprint 003 completed: `GlobalExceptionHandler` must exist so services can throw `AppException` subclasses freely.
+- Sprint 002 completed: `BaseEntity`, `AppException` hierarchy, `AbstractValidator`, `ApiResponse` all required.
+- No changes to `docs/contracts/api/openapi.json` in this sprint — no REST endpoints are added.
 
 ## Agent Instruction
-- All new classes go under `es.vargontoc.educational.framework.shared`.
-- Domain model rule: `BaseEntity` must not import Spring Web or Spring Security annotations — JPA Auditing only.
-- `AppException` and subclasses must not reference Spring MVC — HTTP status is stored as `org.springframework.http.HttpStatus` but no web layer dependency is introduced (HttpStatus is in `spring-web`, already a transitive dependency).
-- `AbstractValidator` guard methods must throw `ValidationException`, never return boolean — callers get a clean exception instead of a null-check chain.
-- `ApiResponse` must be the only class returned from all REST controllers in future sprints — never expose domain models or JPA entities directly.
-- Every new class requires at least one unit test (JUnit 5, no Mockito needed for pure logic).
-- No Spring context needed for unit tests in this sprint — use plain `@Test` without `@SpringBootTest`.
+- All classes go under `es.vargontoc.educational.framework.family`.
+- Domain models (`Family`, `ChildProfile`, `AdultProfile`) must be plain Java — no `@Entity`, no `@Component`, no Spring imports.
+- Ports (`ports/in/`, `ports/out/`) are Java interfaces only — no implementation code.
+- Services are annotated `@Service` and `@Transactional` (class-level); use constructor injection, never `@Autowired` field injection.
+- `FamilyService.updateFamily` must update child flags inside the same transaction using `ChildProfileRepository.findAll()` and saving each updated child — do not call `ChildProfileService` from `FamilyService` (avoid circular dependencies between services).
+- Validators extend `AbstractValidator` or implement `IValidator` using guard methods from `AbstractValidator` — never throw raw `IllegalArgumentException`.
+- PIN validation regex: `^\d{4}$` — exactly 4 digits, no letters, no spaces.
+- Use `new BCryptPasswordEncoder()` directly in `FamilyService` — do not declare it as a Spring Bean in this sprint (avoid touching `SecurityConfig`).
+- Unit tests use Mockito (`@ExtendWith(MockitoExtension.class)`) — no Spring context.
+- Liquibase changeSet IDs must follow the pattern `{file-name-without-xml}` (e.g., `002__create_family`).
+- Never modify existing migration files (`001__init_schema.xml`).
 - After completing all tasks, mark status as `completed` and fill the Review section.
 
 ## Notes
-Sprint triggered by ADR-008 (`docs/architecture/decisions/ADR-008-Shared-Module.md`).
+FEAT-001 domain decisions applied here:
+- Single-row family enforced at two levels: DB CHECK + service ConflictException.
+- Flag propagation is business logic only — no DB triggers.
+- PIN: 4 digits, BCrypt hash, never stored in plain text.
+- ChildProfile deactivation is soft-delete (`active = false`), not physical delete.
+- AdultProfile is physically deleted.
+- Birthday range for children: [today − 18y, today]. Adults: any past date.
 
 ### Package layout after this sprint
 ```
-shared/
-  api/
-    ApiResponse.java
-  config/
-    OpenApiConfig.java         (Sprint 001)
-    SecurityConfig.java        (Sprint 001)
-  exception/
-    AppException.java
-    ConflictException.java
-    ResourceNotFoundException.java
-    SessionException.java
-    ValidationException.java
+family/
   model/
-    BaseEntity.java
+    Family.java
+    ChildProfile.java
+    AdultProfile.java
+  ports/
+    in/
+      FamilyUseCase.java
+      ChildProfileUseCase.java
+      AdultProfileUseCase.java
+    out/
+      FamilyRepository.java
+      ChildProfileRepository.java
+      AdultProfileRepository.java
+  service/
+    FamilyService.java
+    ChildProfileService.java
+    AdultProfileService.java
   validation/
-    AbstractValidator.java
-    IValidator.java
+    FamilyValidator.java
+    ChildProfileValidator.java
+    AdultProfileValidator.java
 ```
 
-### BaseEntity design
+### Flag ceiling logic (FamilyService.updateFamily)
 ```java
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
-public abstract class BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "default_seq")
-    @SequenceGenerator(name = "default_seq", allocationSize = 1)
-    private Long id;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+if (!request.ttsEnabled()) {
+    childProfileRepository.findAll().stream()
+        .filter(ChildProfile::isTtsEnabled)
+        .map(c -> { c.setTtsEnabled(false); return c; })
+        .forEach(childProfileRepository::save);
 }
+// same block for agentEnabled
 ```
 
-### Exception hierarchy
-```
-RuntimeException
-  └── AppException(message, HttpStatus)
-        ├── ResourceNotFoundException  → 404
-        ├── ValidationException        → 400
-        ├── SessionException           → 401
-        └── ConflictException          → 409
-```
-
-### ApiResponse shape
+### PIN hashing
 ```java
-public record ApiResponse<T>(boolean success, T data, String message, List<String> errors) {
-    public static <T> ApiResponse<T> ok(T data) { ... }
-    public static <T> ApiResponse<T> created(T data) { ... }
-    public static <T> ApiResponse<T> error(String message) { ... }
-    public static <T> ApiResponse<T> error(String message, List<String> errors) { ... }
-}
+private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+// in createFamily / updateFamily:
+String pinHash = encoder.encode(rawPin);
 ```
 
 ## Review
 
 completed_tasks:
-    - @EnableJpaAuditing added to EducationalFrameworkApplication.
-    - BaseEntity: abstract @MappedSuperclass, Long id (sequence, allocationSize=1), LocalDateTime createdAt/updatedAt via JPA Auditing.
-    - Exception hierarchy: AppException (base, holds HttpStatus) + ResourceNotFoundException (404), ValidationException (400), SessionException (401), ConflictException (409).
-    - IValidator<T>: @FunctionalInterface with single validate(T) method.
-    - AbstractValidator<T>: implements IValidator<T>, guard methods requireNonNull, requireNonBlank, requireMaxLength, requirePositive — all throw ValidationException on failure.
-    - ApiResponse<T>: Java record with static factories ok, created, error (message only), error (message + errors list).
-    - Unit tests: AppExceptionTest (4 assertions), AbstractValidatorTest (10 assertions), ApiResponseTest (4 assertions). No Spring context required.
-
 incomplete_tasks:
-    none
-
 contract_changes:
-    none — no REST endpoints added; openapi.json not affected.
-
 learnings:
-    - AbstractValidator uses a private static inner class in tests to expose protected methods without subclassing overhead in production code.
-    - ApiResponse as a Java record is immutable and non-extensible by design — all variations covered by static factories.
-    - BaseEntity uses @SequenceGenerator with allocationSize=1 to keep IDs sequential and predictable in single-node deployments.
-
 next_sprint_suggestions:
-    - Sprint 003: Global exception handler (@RestControllerAdvice) that maps AppException subclasses to ApiResponse error responses.
-    - Sprint 004: First domain implementation (TTS or agent child) using BaseEntity, validators, and ApiResponse.

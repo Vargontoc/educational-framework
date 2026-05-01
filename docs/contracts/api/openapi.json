@@ -1,0 +1,70 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Educational Framework Backend API",
+    "description": "Baseline OpenAPI contract with standard error response shape.",
+    "version": "0.0.1"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "data": {
+            "nullable": true,
+            "description": "Always null on error responses."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "example": "Validation failed"
+          },
+          "errors": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "example": ["field is required"]
+          }
+        }
+      },
+      "Error400": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ApiResponse" }
+        ],
+        "description": "Bad Request error response."
+      },
+      "Error401": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ApiResponse" }
+        ],
+        "description": "Unauthorized error response."
+      },
+      "Error404": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ApiResponse" }
+        ],
+        "description": "Not Found error response."
+      },
+      "Error409": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ApiResponse" }
+        ],
+        "description": "Conflict error response."
+      },
+      "Error500": {
+        "allOf": [
+          { "$ref": "#/components/schemas/ApiResponse" }
+        ],
+        "description": "Internal Server Error response."
+      }
+    }
+  }
+}
