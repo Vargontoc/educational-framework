@@ -13,7 +13,8 @@ import org.springframework.test.context.ActiveProfiles;
     "spring.datasource.username=sa",
     "spring.datasource.password=",
     "spring.datasource.driver-class-name=org.h2.Driver",
-    "spring.liquibase.enabled=false"
+    "spring.liquibase.enabled=false",
+    "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @ActiveProfiles("test")
 class EducationalFrameworkApplicationTests {
