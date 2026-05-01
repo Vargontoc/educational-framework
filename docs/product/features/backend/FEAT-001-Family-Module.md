@@ -8,9 +8,9 @@ depends_on:
 owned_by: backend
 test: Solo se puede crear una unica familia
 sprints:
-    - backend/sprints/current.md (Sprint 003 — prerequisite: GlobalExceptionHandler)
-    - backend/sprints/backlog/004-family-module-domain.md (Sprint 004 — domain layer)
-    - backend/sprints/backlog/005-family-module-web.md (Sprint 005 — web layer + integration tests)
+    - backend/sprints/history/003-exception-handler-cors-2026-05-01.md (Sprint 003 — completed)
+    - backend/sprints/history/004-family-module-domain-2026-05-01.md (Sprint 004 — completed)
+    - backend/sprints/current.md (Sprint 005 — active: web layer + integration tests)
 
 # Description
 
