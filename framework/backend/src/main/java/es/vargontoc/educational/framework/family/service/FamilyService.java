@@ -1,0 +1,109 @@
+package es.vargontoc.educational.framework.family.service;
+
+import es.vargontoc.educational.framework.family.model.ChildProfile;
+import es.vargontoc.educational.framework.family.model.Family;
+import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
+import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
+import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
+import es.vargontoc.educational.framework.family.validation.FamilyValidator;
+import es.vargontoc.educational.framework.shared.exception.ConflictException;
+import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Service
+@Transactional
+public class FamilyService implements FamilyUseCase {
+
+    private final FamilyRepository familyRepository;
+    private final ChildProfileRepository childProfileRepository;
+    private final FamilyValidator familyValidator;
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    public FamilyService(FamilyRepository familyRepository, ChildProfileRepository childProfileRepository) {
+        this.familyRepository = familyRepository;
+        this.childProfileRepository = childProfileRepository;
+        this.familyValidator = new FamilyValidator();
+        this.passwordEncoder = new BCryptPasswordEncoder();
+    }
+
+    @Override
+    public Family createFamily(String name, String rawPin, boolean ttsEnabled, boolean agentEnabled) {
+        if (familyRepository.exists()) {
+            throw new ConflictException("Family already exists");
+        }
+        familyValidator.validateForCreate(name, rawPin);
+
+        var family = new Family();
+        family.setName(name);
+        family.setPinHash(passwordEncoder.encode(rawPin));
+        family.setTtsEnabled(ttsEnabled);
+        family.setAgentEnabled(agentEnabled);
+        family.setCreatedAt(LocalDateTime.now());
+
+        return familyRepository.save(family);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Family getFamily() {
+        return familyRepository.findFamily()
+            .orElseThrow(() -> new ResourceNotFoundException("Family not found"));
+    }
+
+    @Override
+    public Family updateFamily(String name, String rawPin, boolean ttsEnabled, boolean agentEnabled) {
+        var existing = familyRepository.findFamily()
+            .orElseThrow(() -> new ResourceNotFoundException("Family not found"));
+
+        familyValidator.validateForUpdate(name, rawPin);
+
+        existing.setName(name);
+        if (rawPin != null && !rawPin.isBlank()) {
+            existing.setPinHash(passwordEncoder.encode(rawPin));
+        }
+
+        if (!ttsEnabled) {
+            disableChildFlags(existing.getId(), true, false);
+        }
+        if (!agentEnabled) {
+            disableChildFlags(existing.getId(), false, true);
+        }
+
+        existing.setTtsEnabled(ttsEnabled);
+        existing.setAgentEnabled(agentEnabled);
+        existing.setUpdatedAt(LocalDateTime.now());
+
+        return familyRepository.save(existing);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean familyExists() {
+        return familyRepository.exists();
+    }
+
+    private void disableChildFlags(Long familyId, boolean disableTts, boolean disableAgent) {
+        for (ChildProfile child : childProfileRepository.findAll()) {
+            if (familyId != null && !familyId.equals(child.getFamilyId())) {
+                continue;
+            }
+            boolean changed = false;
+            if (disableTts && child.isTtsEnabled()) {
+                child.setTtsEnabled(false);
+                changed = true;
+            }
+            if (disableAgent && child.isAgentEnabled()) {
+                child.setAgentEnabled(false);
+                changed = true;
+            }
+            if (changed) {
+                child.setUpdatedAt(LocalDateTime.now());
+                childProfileRepository.save(child);
+            }
+        }
+    }
+}

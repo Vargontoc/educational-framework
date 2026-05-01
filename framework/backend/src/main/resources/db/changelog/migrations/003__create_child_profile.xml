@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="003__create_child_profile" author="vargontoc">
+        <createTable tableName="child_profile">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="family_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="birthday" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="avatar" type="VARCHAR(100)" defaultValue="default-child">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tts_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="agent_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="child_profile"
+            baseColumnNames="family_id"
+            constraintName="fk_child_profile_family"
+            referencedTableName="family"
+            referencedColumnNames="id"
+            onDelete="RESTRICT"/>
+
+        <createIndex
+            indexName="idx_child_profile_family_id"
+            tableName="child_profile">
+            <column name="family_id"/>
+        </createIndex>
+
+        <addCheckConstraint
+            tableName="child_profile"
+            constraintName="chk_child_profile_birthday_range"
+            constraintBody="birthday <= CURRENT_DATE AND birthday >= CURRENT_DATE - INTERVAL '18 years'"/>
+    </changeSet>
+
+</databaseChangeLog>
