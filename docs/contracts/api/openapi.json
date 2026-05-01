@@ -2,67 +2,330 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Educational Framework Backend API",
-    "description": "Baseline OpenAPI contract with standard error response shape.",
+    "description": "Family module API contract.",
     "version": "0.0.1"
   },
-  "paths": {},
+  "paths": {
+    "/api/v1/family": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateFamilyRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseFamily" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error409" } } } }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseFamily" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "patch": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateFamilyRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseFamily" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/family/children": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateChildProfileRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseChildProfile" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseChildProfileList" } } } }
+        }
+      }
+    },
+    "/api/v1/family/children/{id}": {
+      "get": {
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseChildProfile" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "patch": {
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateChildProfileRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseChildProfile" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "delete": {
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/family/adults": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateAdultProfileRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAdultProfile" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAdultProfileList" } } } }
+        }
+      }
+    },
+    "/api/v1/family/adults/{id}": {
+      "get": {
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAdultProfile" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "patch": {
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateAdultProfileRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAdultProfile" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "delete": {
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    }
+  },
   "components": {
     "schemas": {
       "ApiResponse": {
         "type": "object",
         "required": ["success"],
         "properties": {
-          "success": {
-            "type": "boolean",
-            "example": false
-          },
-          "data": {
-            "nullable": true,
-            "description": "Always null on error responses."
-          },
-          "message": {
-            "type": "string",
-            "nullable": true,
-            "example": "Validation failed"
-          },
-          "errors": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            },
-            "example": ["field is required"]
-          }
+          "success": { "type": "boolean", "example": false },
+          "data": { "nullable": true },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseFamily": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/FamilyResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseChildProfile": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/ChildProfileResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseAdultProfile": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/AdultProfileResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseChildProfileList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ChildProfileResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseAdultProfileList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/AdultProfileResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateFamilyRequest": {
+        "type": "object",
+        "required": ["name", "pin", "ttsEnabled", "agentEnabled"],
+        "properties": {
+          "name": { "type": "string" },
+          "pin": { "type": "string" },
+          "ttsEnabled": { "type": "boolean" },
+          "agentEnabled": { "type": "boolean" }
+        }
+      },
+      "UpdateFamilyRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "pin": { "type": "string", "nullable": true },
+          "ttsEnabled": { "type": "boolean", "nullable": true },
+          "agentEnabled": { "type": "boolean", "nullable": true }
+        }
+      },
+      "FamilyResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "ttsEnabled": { "type": "boolean" },
+          "agentEnabled": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "CreateChildProfileRequest": {
+        "type": "object",
+        "required": ["name", "birthday", "ttsEnabled", "agentEnabled"],
+        "properties": {
+          "name": { "type": "string" },
+          "birthday": { "type": "string", "format": "date" },
+          "avatar": { "type": "string", "nullable": true },
+          "ttsEnabled": { "type": "boolean" },
+          "agentEnabled": { "type": "boolean" }
+        }
+      },
+      "UpdateChildProfileRequest": {
+        "type": "object",
+        "required": ["name", "birthday"],
+        "properties": {
+          "name": { "type": "string" },
+          "birthday": { "type": "string", "format": "date" },
+          "avatar": { "type": "string", "nullable": true },
+          "ttsEnabled": { "type": "boolean", "nullable": true },
+          "agentEnabled": { "type": "boolean", "nullable": true }
+        }
+      },
+      "ChildProfileResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "familyId": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean" },
+          "birthday": { "type": "string", "format": "date" },
+          "avatar": { "type": "string" },
+          "ttsEnabled": { "type": "boolean" },
+          "agentEnabled": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "CreateAdultProfileRequest": {
+        "type": "object",
+        "required": ["name", "birthday"],
+        "properties": {
+          "name": { "type": "string" },
+          "birthday": { "type": "string", "format": "date" },
+          "avatar": { "type": "string", "nullable": true }
+        }
+      },
+      "UpdateAdultProfileRequest": {
+        "type": "object",
+        "required": ["name", "birthday"],
+        "properties": {
+          "name": { "type": "string" },
+          "birthday": { "type": "string", "format": "date" },
+          "avatar": { "type": "string", "nullable": true }
+        }
+      },
+      "AdultProfileResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "familyId": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "birthday": { "type": "string", "format": "date" },
+          "avatar": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
         }
       },
       "Error400": {
-        "allOf": [
-          { "$ref": "#/components/schemas/ApiResponse" }
-        ],
+        "allOf": [{ "$ref": "#/components/schemas/ApiResponse" }],
         "description": "Bad Request error response."
       },
       "Error401": {
-        "allOf": [
-          { "$ref": "#/components/schemas/ApiResponse" }
-        ],
+        "allOf": [{ "$ref": "#/components/schemas/ApiResponse" }],
         "description": "Unauthorized error response."
       },
       "Error404": {
-        "allOf": [
-          { "$ref": "#/components/schemas/ApiResponse" }
-        ],
+        "allOf": [{ "$ref": "#/components/schemas/ApiResponse" }],
         "description": "Not Found error response."
       },
       "Error409": {
-        "allOf": [
-          { "$ref": "#/components/schemas/ApiResponse" }
-        ],
+        "allOf": [{ "$ref": "#/components/schemas/ApiResponse" }],
         "description": "Conflict error response."
       },
       "Error500": {
-        "allOf": [
-          { "$ref": "#/components/schemas/ApiResponse" }
-        ],
+        "allOf": [{ "$ref": "#/components/schemas/ApiResponse" }],
         "description": "Internal Server Error response."
       }
     }
