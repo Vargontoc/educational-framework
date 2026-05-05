@@ -6,6 +6,8 @@
     https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
 
     <changeSet id="002__create_family" author="vargontoc">
+        <createSequence sequenceName="default_seq" startValue="1" incrementBy="1"/>
+
         <createTable tableName="family">
             <column name="id" type="BIGSERIAL">
                 <constraints nullable="false" primaryKey="true"/>
@@ -28,10 +30,7 @@
             <column name="updated_at" type="TIMESTAMPTZ"/>
         </createTable>
 
-        <addCheckConstraint
-            tableName="family"
-            constraintName="chk_family_single_row"
-            constraintBody="id = 1"/>
+        <sql>ALTER TABLE family ADD CONSTRAINT chk_family_single_row CHECK (id = 1);</sql>
     </changeSet>
 
 </databaseChangeLog>
