@@ -40,7 +40,6 @@ services:
       - PGDATA=/var/lib/postgresql/data
     volumes:
       - pgdata_educational:/var/lib/postgresql/data
-      - ./initdb:/docker-entrypoint-initdb.d:ro
     networks:
       - educational-network-dev
     ports:

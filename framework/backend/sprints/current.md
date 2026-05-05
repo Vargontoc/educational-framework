@@ -1,87 +1,75 @@
-# Sprint 005 - backend
+# Sprint 006 - backend
 # -----------------------------------------------
 
 ## Goal
-Complete FEAT-001 (Family Module) by implementing the infrastructure layer: JPA entities, persistence adapters, DTOs, REST controllers, and integration tests - delivering a fully working REST API for Family, ChildProfile, and AdultProfile.
+Lay the foundations for FEAT-002 (Session Module): add the WebSocket dependency, document decisions in ADR-009, create the two DB migrations, update security to expose the auth endpoint, and publish the WebSocket contract baseline — no domain logic in this sprint.
 
 ## Status
-status: completed
-started_at: 2026-05-01 00:00:00
-closed_at: 2026-05-01 17:52:00
+status: active
+started_at: 2026-05-05 00:00:00
+closed_at:
 blocked_by:
 waiting_for:
 
 ## Tasks
 
-### Security - permit family endpoints
-- [x] Update `shared/config/SecurityConfig.java` - add `.requestMatchers("/api/v1/family/**").permitAll()` before `anyRequest().authenticated()` so that family endpoints are reachable without JWT; JWT authentication is planned for a future sprint
+### Dependency
+- [ ] Add `spring-boot-starter-websocket` to `pom.xml` inside the `<dependencies>` block (no version — managed by Spring Boot BOM)
 
-### JPA Entities
-- [x] Create `family/infrastructure/persistence/FamilyJpaEntity.java` - `@Entity @Table(name = "family")`, extends `BaseEntity`; fields: `name` (varchar 100), `pinHash` (`@Column(name = "pin_hash")`), `ttsEnabled` (`@Column(name = "tts_enabled")`), `agentEnabled` (`@Column(name = "agent_enabled")`); no `@OneToMany` - children loaded via their own repository
-- [x] Create `family/infrastructure/persistence/ChildProfileJpaEntity.java` - `@Entity @Table(name = "child_profile")`, extends `BaseEntity`; fields: `familyId` (`@Column(name = "family_id")`), `name`, `active`, `birthday` (`LocalDate`), `avatar`, `ttsEnabled` (`@Column(name = "tts_enabled")`), `agentEnabled` (`@Column(name = "agent_enabled")`)
-- [x] Create `family/infrastructure/persistence/AdultProfileJpaEntity.java` - `@Entity @Table(name = "adult_profile")`, extends `BaseEntity`; fields: `familyId` (`@Column(name = "family_id")`), `name`, `birthday` (`LocalDate`), `avatar`
+### ADR
+- [ ] `docs/architecture/decisions/ADR-009-Session-Module.md` is already written — verify content reflects the decisions below and update if needed
 
-### Spring Data Repositories
-- [x] Create `family/infrastructure/persistence/FamilyJpaRepository.java` - `JpaRepository<FamilyJpaEntity, Long>`
-- [x] Create `family/infrastructure/persistence/ChildProfileJpaRepository.java` - `JpaRepository<ChildProfileJpaEntity, Long>` with `List<ChildProfileJpaEntity> findByFamilyId(Long familyId)`
-- [x] Create `family/infrastructure/persistence/AdultProfileJpaRepository.java` - `JpaRepository<AdultProfileJpaEntity, Long>` with `List<AdultProfileJpaEntity> findByFamilyId(Long familyId)`
+### Liquibase Migrations
+- [ ] Create `migrations/005__create_family_session.xml` — table `family_session`: `id` (bigserial PK), `token_hash` (varchar 64 NOT NULL UNIQUE — SHA-256 hex), `token_type` (varchar 10 NOT NULL DEFAULT 'opaque'), `family_id` (bigint NOT NULL FK → family(id) ON DELETE CASCADE), `created_at` (timestamptz NOT NULL), `expires_at` (timestamptz nullable), `revoked` (boolean NOT NULL DEFAULT false), `created_by_ip` (varchar 45), `device_id` (varchar 255), `status` (varchar 20 NOT NULL DEFAULT 'active'); indexes on `family_id`, `status`, `token_hash` (unique already covers this), `created_at`
+- [ ] Create `migrations/006__create_child_session.xml` — table `child_session`: `id` (bigserial PK), `child_profile_id` (bigint NOT NULL FK → child_profile(id) ON DELETE CASCADE), `family_id` (bigint NOT NULL FK → family(id) ON DELETE CASCADE), `started_at` (timestamptz NOT NULL), `ended_at` (timestamptz nullable), `duration_seconds` (integer nullable — computed at close), `status` (varchar 20 NOT NULL DEFAULT 'active'), `last_activity_at` (timestamptz NOT NULL), `heartbeat_interval_seconds` (integer NOT NULL DEFAULT 30), `connection_meta` (text nullable — JSON string: ip, deviceId, userAgent), `persisted_game_state_ref` (varchar 255 nullable); indexes on `child_profile_id`, `family_id`, `status`, `last_activity_at`
+- [ ] Register both changeSets in `db.changelog-master.xml`
 
-### Persistence Adapters
-- [x] Create `family/infrastructure/persistence/FamilyPersistenceAdapter.java` - `@Repository`, implements `FamilyRepository` with `findAll().stream().findFirst()` strategy and static mappers
-- [x] Create `family/infrastructure/persistence/ChildProfilePersistenceAdapter.java` - `@Repository`, implements `ChildProfileRepository`; includes existence check in `deleteById`
-- [x] Create `family/infrastructure/persistence/AdultProfilePersistenceAdapter.java` - `@Repository`, implements `AdultProfileRepository`; includes existence check in `deleteById`
+### Security
+- [ ] Update `shared/config/SecurityConfig.java` — add `.requestMatchers("/api/v1/auth/**").permitAll()` alongside the existing `/api/v1/family/**` permit; all other endpoints remain `anyRequest().authenticated()` (the token filter is added in Sprint 008)
 
-### DTOs
-- [x] Create `family/infrastructure/dto/CreateFamilyRequest.java`
-- [x] Create `family/infrastructure/dto/UpdateFamilyRequest.java`
-- [x] Create `family/infrastructure/dto/FamilyResponse.java`
-- [x] Create `family/infrastructure/dto/CreateChildProfileRequest.java`
-- [x] Create `family/infrastructure/dto/UpdateChildProfileRequest.java`
-- [x] Create `family/infrastructure/dto/ChildProfileResponse.java`
-- [x] Create `family/infrastructure/dto/CreateAdultProfileRequest.java`
-- [x] Create `family/infrastructure/dto/UpdateAdultProfileRequest.java`
-- [x] Create `family/infrastructure/dto/AdultProfileResponse.java`
+### WebSocket contract baseline
+- [ ] Create `docs/contracts/api/websocket.json` — include `info`, an empty `channels: {}` placeholder, and a `components.events` section with the seven stable event names from ADR-009 (`GAME_STATE_UPDATE`, `SESSION_EXPIRED`, `SESSION_INVALIDATED`, `CHILD_EXPELLED`, `PARENT_BLOCK`, `HEARTBEAT_ACK`) and their direction/description
 
-### REST Controllers
-- [x] Create `family/infrastructure/web/FamilyController.java` with POST/GET/PATCH and response mapping
-- [x] Create `family/infrastructure/web/ChildProfileController.java` with POST/GET all/GET by id/PATCH/DELETE
-- [x] Create `family/infrastructure/web/AdultProfileController.java` with POST/GET all/GET by id/PATCH/DELETE
-
-### Integration Tests
-- [x] Create shared test base `AbstractIntegrationTest.java` with `@SpringBootTest`, `@AutoConfigureMockMvc`, Testcontainers setup and transactional rollback
-- [x] Integration test: `FamilyControllerTest`
-- [x] Integration test: `ChildProfileControllerTest`
-- [x] Integration test: `AdultProfileControllerTest`
-
-### Contract Update
-- [x] Update `docs/contracts/api/openapi.json` with Family, ChildProfile, and AdultProfile paths/schemas and error responses
+### Application config
+- [ ] Add session defaults to `application.yml` under `app.session`:
+    ```yaml
+    app:
+      session:
+        default-heartbeat-interval-seconds: 30
+        heartbeat-grace-multiplier: 2
+        retention-days: 30
+    ```
 
 ## Risks
-- Docker is unavailable in this environment; integration tests are configured with `@Testcontainers(disabledWithoutDocker = true)` so they run where Docker exists and skip otherwise.
+- `spring-boot-starter-websocket` transitively pulls `spring-messaging` and `spring-websocket`; verify no version conflicts with the existing Spring Boot 3.3.5 BOM after adding the dependency.
+- `family_session.token_hash` is VARCHAR(64) — SHA-256 hex output is exactly 64 characters; do not use a shorter type.
+- `ON DELETE CASCADE` on `family_id` in `family_session` means deleting the family also deletes all sessions — intentional for a single-family private app.
+- `child_session.connection_meta` stored as TEXT (JSON string) avoids a JSONB dependency on Liquibase XML and is sufficient for a private app; parse it at the service layer when needed.
 
 ## Dependencies
-- Sprint 004 completed.
-- Sprint 003 completed.
-- Sprint 002 completed.
+- Sprint 005 completed: family module REST API is live; `default_seq` sequence exists.
+- ADR-009 accepted: token strategy (opaque), WebSocket channel split, and heartbeat defaults are decided.
+- No domain or infrastructure code changes in this sprint.
 
 ## Agent Instruction
-Implemented according to sprint constraints: controllers use use-case interfaces, adapters map domain/JPA with static methods, responses use `ApiResponse`, and family ID resolution for child/adult creates is done via `familyUseCase.getFamily().getId()`.
+- `pom.xml` change: add the dependency block immediately after the `spring-boot-starter-security` block for grouping clarity.
+- Migrations must follow the same XML format as 002–004: `dbchangelog-4.27.xsd`, changeSet id equals filename without extension.
+- `websocket.json` format: use AsyncAPI 2.x or a simple custom JSON structure consistent with `openapi_tts.json` in the same folder — check the existing TTS contract for the format in use.
+- `SecurityConfig` change: the new `requestMatchers` line must come before `anyRequest().authenticated()` — order matters in Spring Security.
+- Do not create any Java source files in this sprint — foundations only.
+- After completing all tasks, mark status as `completed` and fill the Review section.
+
+## Notes
+This sprint unblocks Sprint 007 (domain) and Sprint 008 (infrastructure). No service or controller code is written here.
+
+Suggested sequence:
+- Sprint 007: Session domain layer (FamilySession + ChildSession models, ports, services, token utility, unit tests)
+- Sprint 008: Session REST infrastructure (JPA entities, adapters, DTOs, REST controllers, token security filter, integration tests)
 
 ## Review
 
 completed_tasks:
-  - Implemented all infrastructure persistence entities, repositories, and adapters for Family module.
-  - Implemented all DTOs and REST controllers for family, children, and adults endpoints.
-  - Updated security configuration to permit `/api/v1/family/**`.
-  - Updated OpenAPI contract with all Family module paths and schemas.
-  - Added integration test suite with Testcontainers base and endpoint scenarios.
 incomplete_tasks:
-  - None.
 contract_changes:
-  - `docs/contracts/api/openapi.json` now includes Family module endpoints and schemas.
 learnings:
-  - `BaseEntity` required setters to support explicit domain-to-JPA mapping without introducing mapping libraries.
-  - In environments without Docker, using `@Testcontainers(disabledWithoutDocker = true)` keeps CI/local developer flow stable.
 next_sprint_suggestions:
-  - Add JWT auth and endpoint-level authorization for family resources.
-  - Add profile-specific integration test stage with Docker required to enforce non-skipped integration coverage.

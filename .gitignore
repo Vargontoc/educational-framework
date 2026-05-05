@@ -20,3 +20,5 @@ framework/backend/.mvn/
 # ── Docker ───────────────────────────────────
 # Never commit generated docker volumes or override files
 docker-compose.override.yml
+
+backlog/

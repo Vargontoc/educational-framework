@@ -1,8 +1,8 @@
-# Feat-001 - Agent Child: build modelfile
+# Feat-001 - Family Module
 
 ## Status
 
-state: scheduled
+state: finished
 user_history: Configuración módulo familia
 depends_on:
 owned_by: backend
@@ -10,7 +10,7 @@ test: Solo se puede crear una unica familia
 sprints:
     - backend/sprints/history/003-exception-handler-cors-2026-05-01.md (Sprint 003 — completed)
     - backend/sprints/history/004-family-module-domain-2026-05-01.md (Sprint 004 — completed)
-    - backend/sprints/current.md (Sprint 005 — active: web layer + integration tests)
+    - backend/sprints/history/005-family-module-web-2026-05-01.md (Sprint 005 — completed)
 
 # Description
 
