@@ -42,10 +42,7 @@
             <column name="family_id"/>
         </createIndex>
 
-        <addCheckConstraint
-            tableName="adult_profile"
-            constraintName="chk_adult_profile_birthday_past"
-            constraintBody="birthday <= CURRENT_DATE"/>
+        <sql>ALTER TABLE adult_profile ADD CONSTRAINT chk_adult_profile_birthday_past CHECK (birthday &lt;= CURRENT_DATE);</sql>
     </changeSet>
 
 </databaseChangeLog>

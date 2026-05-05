@@ -51,10 +51,7 @@
             <column name="family_id"/>
         </createIndex>
 
-        <addCheckConstraint
-            tableName="child_profile"
-            constraintName="chk_child_profile_birthday_range"
-            constraintBody="birthday <= CURRENT_DATE AND birthday >= CURRENT_DATE - INTERVAL '18 years'"/>
+        <sql>ALTER TABLE child_profile ADD CONSTRAINT chk_child_profile_birthday_range CHECK (birthday &lt;= CURRENT_DATE AND birthday &gt;= CURRENT_DATE - INTERVAL '18 years');</sql>
     </changeSet>
 
 </databaseChangeLog>

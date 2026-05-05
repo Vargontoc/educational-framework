@@ -11,7 +11,7 @@ services:
     networks:
       - educational-network-dev
     ports:
-     - "11435:11434"
+      - "${OLLAMA_BIND_IP:-127.0.0.1}:${OLLAMA_HOST_PORT:-11434}:11434"
     deploy:
       restart_policy:
         condition: on-failure
@@ -32,22 +32,26 @@ services:
       retries: 3
 
   postgres-educational:
-    image: postgres:15
+    image: postgres:latest
     container_name: postgres-educational
     env_file:
       - envs/postgres.env
+    environment:
+      - PGDATA=/var/lib/postgresql/data
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_educational:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
     networks:
       - educational-network-dev
     ports:
-      - "5432:5432"
+      - "${POSTGRES_BIND_IP:-127.0.0.1}:${POSTGRES_HOST_PORT:-5432}:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edu} -d ${POSTGRES_DB:-edu_db}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 10s
 
   api-educational:
     build:
@@ -60,7 +64,7 @@ services:
     networks:
       - educational-network-dev
     ports:
-      - "8080:8080"
+      - "${API_BIND_IP:-127.0.0.1}:${API_HOST_PORT:-8080}:8080"
     depends_on:
       postgres-educational:
         condition: service_healthy
@@ -87,7 +91,8 @@ services:
     networks:
       - educational-network-dev
     ports:
-      - "5002:5002"
+      - "${COQUI_BIND_IP:-127.0.0.1}:${COQUI_HOST_PORT:-5002}:5002"
+    
     volumes:
       - coqui_models:/root/.local/share/tts
       - ../agents/tts/references:/references:ro
@@ -102,7 +107,7 @@ services:
       start_period: 10s
 
 volumes:
-  pgdata:
+  pgdata_educational:
   ollama_models:
   coqui_models:
 
