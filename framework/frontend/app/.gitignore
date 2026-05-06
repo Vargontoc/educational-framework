@@ -1,6 +1,6 @@
 node_modules/
 dist/
 dist-ssr/
-*.local
-.env*.local
 .vite/
+envs/.env*
+!envs/app.env.example
