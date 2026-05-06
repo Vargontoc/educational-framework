@@ -9,8 +9,8 @@ owned_by: backend
 test: Verify WebSocket connection, reconnection and session lifecycle
 adr: docs/architecture/decisions/ADR-009-Session-Module.md
 sprints:
-    - backend/sprints/current.md (Sprint 006 — active: foundations, migrations, WebSocket dep)
-    - backend/sprints/backlog/007-session-module-domain.md (Sprint 007 — domain layer)
+    - backend/sprints/history/006-session-module-foundations-2026-05-05.md (Sprint 006 — completed)
+    - backend/sprints/current.md (Sprint 007 — active: domain layer + updated_at migration fix)
     - backend/sprints/backlog/008-session-module-infrastructure.md (Sprint 008 — REST + jobs + security filter)
 
 # Description

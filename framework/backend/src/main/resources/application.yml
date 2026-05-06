@@ -36,3 +36,7 @@ logging:
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  session:
+    default-heartbeat-interval-seconds: 30
+    heartbeat-grace-multiplier: 2
+    retention-days: 30

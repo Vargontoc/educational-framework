@@ -1,0 +1,37 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "Educational Framework WebSocket Contract",
+    "description": "Baseline real-time contract for FEAT-002 session events.",
+    "version": "1.0.0"
+  },
+  "channels": {},
+  "components": {
+    "events": {
+      "GAME_STATE_UPDATE": {
+        "direction": "server_to_client",
+        "description": "State restore payload sent to game clients after reconnect."
+      },
+      "SESSION_EXPIRED": {
+        "direction": "server_to_client",
+        "description": "Child session expired because inactivity grace window was exceeded."
+      },
+      "SESSION_INVALIDATED": {
+        "direction": "server_to_client",
+        "description": "Family session was revoked externally, usually after a PIN change."
+      },
+      "CHILD_EXPELLED": {
+        "direction": "server_to_client",
+        "description": "Parent or admin explicitly expelled the child from the active session."
+      },
+      "PARENT_BLOCK": {
+        "direction": "server_to_client",
+        "description": "Child is blocked by parental control and cannot reconnect until unblocked."
+      },
+      "HEARTBEAT_ACK": {
+        "direction": "server_to_client",
+        "description": "Acknowledgement emitted by server after receiving heartbeat."
+      }
+    }
+  }
+}

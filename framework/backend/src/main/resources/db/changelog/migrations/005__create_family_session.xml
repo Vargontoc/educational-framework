@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="005__create_family_session" author="vargontoc">
+        <createTable tableName="family_session">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="token_hash" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_family_session_token_hash"/>
+            </column>
+            <column name="token_type" type="VARCHAR(10)" defaultValue="opaque">
+                <constraints nullable="false"/>
+            </column>
+            <column name="family_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMPTZ"/>
+            <column name="revoked" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by_ip" type="VARCHAR(45)"/>
+            <column name="device_id" type="VARCHAR(255)"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="family_session"
+            baseColumnNames="family_id"
+            constraintName="fk_family_session_family"
+            referencedTableName="family"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <createIndex
+            indexName="idx_family_session_family_id"
+            tableName="family_session">
+            <column name="family_id"/>
+        </createIndex>
+
+        <createIndex
+            indexName="idx_family_session_status"
+            tableName="family_session">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex
+            indexName="idx_family_session_created_at"
+            tableName="family_session">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

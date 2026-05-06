@@ -5,9 +5,11 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
 
-    
+    <include file="db/changelog/migrations/001__init_schema.xml"/>
     <include file="db/changelog/migrations/002__create_family.xml"/>
     <include file="db/changelog/migrations/003__create_child_profile.xml"/>
     <include file="db/changelog/migrations/004__create_adult_profile.xml"/>
+    <include file="db/changelog/migrations/005__create_family_session.xml"/>
+    <include file="db/changelog/migrations/006__create_child_session.xml"/>
 
 </databaseChangeLog>
