@@ -1,6 +1,0 @@
-node_modules/
-dist/
-dist-ssr/
-.vite/
-envs/.env*
-!envs/app.env.example
