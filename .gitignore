@@ -22,3 +22,11 @@ framework/backend/.mvn/
 docker-compose.override.yml
 
 backlog/
+
+# ── Frontend (Vue 3 / Typescript) ────────────
+framework/frontend/app/node_modules/
+framework/frontend/app/dist/
+framework/frontend/app/dist-ssr/
+framework/frontend/app/.vite/
+framework/frontend/node_modules/
+framework/frontend/dist/
