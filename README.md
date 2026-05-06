@@ -1,8 +1,35 @@
 # AI Education Platform
 
-This is a project for an AI education app web monousuario that provides an funny experiencie for childs 3-8 years old. The app includes a variety of educational games, interactive activities, and quizzes that help children learn while having fun. The project contains two domain agents, one for childs and other for adults. The app also includes a progress tracking system that allows parents to monitor their child's progress in the app.
+Plataforma educativa basada en agentes de IA diseñada como complemento lúdico para niños de 3 a 8 años. La aplicación ofrece juegos educativos, actividades interactivas y elementos de seguimiento que permiten a las familias acompañar el progreso infantil.
 
-It's a web app that runs on any device with web browser and invites childs explore outside the app, and make questions to the parents. It is not a sustitutive education but a complement for their parents, they have all controlls. The app is designed to be used in conjunction with traditional education, not as a replacement.
+## Qué se ha hecho (resumen)
+
+- Arquitectura y decisiones importantes: el repositorio incluye registros de decisiones arquitectónicas (ADRs) que recogen las decisiones tomadas durante el diseño e implementación. Entre los ADRs presentes están:
+  - [ADR-001-Infrastructure-setup.md](docs/architecture/decisions/ADR-001-Infrastructure-setup.md)
+  - [ADR-002-education-framework-agent-child.md](docs/architecture/decisions/ADR-002-education-framework-agent-child.md)
+  - [ADR-003-education-framework-agent-adult.md](docs/architecture/decisions/ADR-003-education-framework-agent-adult.md)
+  - [ADR-004-TTS-Service.md](docs/architecture/decisions/ADR-004-TTS-Service.md)
+  - [ADR-005-Voice-Reference.md](docs/architecture/decisions/ADR-005-Voice-Reference.md)
+  - [ADR-006-Cloudflare-service.md](docs/architecture/decisions/ADR-006-Cloudflare-service.md)
+  - [ADR-007-backend-layer.md](docs/architecture/decisions/ADR-007-backend-layer.md)
+  - [ADR-008-Shared-Module.md](docs/architecture/decisions/ADR-008-Shared-Module.md)
+  - [ADR-009-Session-Module.md](docs/architecture/decisions/ADR-009-Session-Module.md)
+
+- Features y contenidos ya definidos en la carpeta de producto:
+  - Agentes:
+    - [FEAT-001-Agent-Child-Modelfile.md](docs/product/features/agents/FEAT-001-Agent-Child-Modelfile.md)
+    - [FEAT-002-Agent-Name-bot.md](docs/product/features/agents/FEAT-002-Agent-Name-bot.md)
+    - [FEAT-003-Agent-Tone.md](docs/product/features/agents/FEAT-003-Agent-Tone.md)
+    - [FEAT-004-Agent-Tell-Curiosities.md](docs/product/features/agents/FEAT-004-Agent-Tell-Curiosities.md)
+    - [FEAT-005-Agent-Character.md](docs/product/features/agents/FEAT-005-Agent-Character.md)
+    - [FEAT-006-Agent-Motivation-Scope.md](docs/product/features/agents/FEAT-006-Agent-Motivation-Scope.md)
+  - Backend:
+    - [FEAT-001-Family-Module.md](docs/product/features/backend/FEAT-001-Family-Module.md)
+    - [FEAT-002-Session-Module.md](docs/product/features/backend/FEAT-002-Session-Module.md)
+  - TTS:
+    - [FEAT-001-XTTS-Model.md](docs/product/features/tts/FEAT-001-XTTS-Model.md)
+
+Estos documentos describen las decisiones, el comportamiento de los agentes y las funcionalidades que ya se han acordado y preparado en el repositorio.
 
 ## Stack
 
@@ -10,98 +37,57 @@ Java 21 + Spring Boot 3 + SpringAI · Vue 3 + TypeScript · PostgreSQL · Docker
 
 ## Quick start — Development
 
-**Prerequisites:** Docker Desktop, Docker Compose, Git.
+Requisitos: `Docker Desktop`, `docker compose` y `git`.
+
+1. Clona el repositorio y entra en la carpeta:
 
 ```bash
-# 1. Clone and move into the project
 git clone <repo-url> educational-framework
 cd educational-framework
+```
 
-# 2. Create env files from examples (edit secrets before starting)
+2. Crea los archivos de entorno a partir de los ejemplos y edita secretos según corresponda:
+
+```bash
 cp framework/infrastructure/envs/ollama.env.example framework/infrastructure/envs/ollama.env
 cp framework/infrastructure/envs/postgres.env.example framework/infrastructure/envs/postgres.env
+```
 
-# 3. Start all services (Ollama + PostgreSQL)
+3. Inicia los servicios principales (Ollama + PostgreSQL):
+
+```bash
 docker compose -f framework/infrastructure/docker-compose.yml up -d
-
-# 4. Verify services are healthy
 docker compose -f framework/infrastructure/docker-compose.yml ps
 ```
 
-**Load AI agents after the Ollama container is healthy:**
+4. Carga los agentes en Ollama (cuando el contenedor esté listo):
 
 ```powershell
-# Run in PowerShell (Git Bash translates Linux paths incorrectly on Windows)
-docker cp "framework/agents/education-framework-agent-child/Modelfile" `
-    ollama-educational:/root/Modelfile
-
-docker exec ollama-educational ollama create education-framework-agent-child `
-    -f /root/Modelfile
-
-# Verify the model is loaded
-docker exec ollama-educational ollama list
-```
-
-**Data** persists in named volumes `pgdata` and `ollama_models`.
-Use `docker compose down -v` to also remove the volumes.
-
-## Quick start — Production
-
-**Prerequisites:** Docker, Docker Compose, NVIDIA drivers (for GPU), access to secret manager or CI secrets.
-
-```bash
-# 1. Create and configure env files with real secrets (never commit these)
-cp framework/infrastructure/envs/ollama.env.example framework/infrastructure/envs/ollama.env
-cp framework/infrastructure/envs/postgres.env.example framework/infrastructure/envs/postgres.env
-# Edit both files: replace all placeholder values with production secrets
-
-# 2. Start with production overrides (stricter restart policy, no host port exposure)
-docker compose \
-  -f framework/infrastructure/docker-compose.yml \
-  -f framework/infrastructure/docker-compose.prod.yml \
-  up -d
-
-# 3. Load AI agents (same as development, run in PowerShell)
-docker cp framework/agents/education-framework-agent-child/Modelfile \
+docker cp "framework/agents/education-framework-agent-child/Modelfile" \
     ollama-educational:/root/Modelfile
 docker exec ollama-educational ollama create education-framework-agent-child \
     -f /root/Modelfile
+docker exec ollama-educational ollama list
 ```
 
-> Ollama is **not exposed to the host** in production — it is accessible only within `educational-network-dev`.
+Los datos persisten en los volúmenes `pgdata` y `ollama_models`.
 
+## Estructura principal
 
-## Project structure
-AGENT.md              → global agent context and workflow rules
-analysis/             → read-only analysis agent (planning, reviews, ADRs)
-docs/
-  architecture/       → Architecture Decision Records (ADR-001 … ADR-006)
-  contracts/          → inter-layer contracts (openapi.json, websocket.json, agent contracts, ddl)
-  sprints/            → global sprint template and history
-  product/            → vision, feature map and roadmap
+- `framework/backend/`: servicio backend (Java + Spring Boot)
+- `framework/frontend/`: aplicación cliente (Vue 3 + TypeScript)
+- `framework/agents/`: Modelfiles y contexto de agentes de dominio
+- `docs/architecture/decisions/`: ADRs (decisiones arquitectónicas)
+- `docs/product/features/`: especificaciones de features ya acordadas
 
- 
-framework/infrastructure/       → Docker Compose, environment configuration
-framework/backend/              → Java 21 + Spring Boot 3 (hexagonal architecture)
-framework/frontend/             → Vue 3 + TypeScript + Pinia + Axios
-framework/agents/               → domain AI agents (Ollama Modelfiles and context)
+## Trabajar con los agentes
 
-## Working with agents
-# Before starting any task, read the relevant AGENT.md:
-agent.md                    → global context and git workflow
-{layer}/agent.md            → layer-specific context and rules
-{layer}/sprints/current.md  → active sprint status and tasks
-{layer}/skills/{type}/SKILL.md → how to execute that type of task
+Antes de trabajar con cualquier tarea relacionada con los agentes, consulte los archivos `agent.md` y las guías en `framework/agents/*` o en `analysis/skills/*` según corresponda.
 
-# Agent tool: Continue.dev (VS Code / JetBrains)
-# Analysis model: qwen3:14b via Ollama (http://localhost:11434)
-# Domain agents: qwen2.5:7b-instruct-q5_K_M via Ollama
+## Rama principal y flujo de trabajo
 
-## Branch strategy
-develop                          ← protected base branch
-{layer}/type/short-description   ← working branches
-# All changes arrive via PR — no direct push to develop
-# See .github/BRANCH_PROTECTION.md for GitHub settings
+La rama `develop` actúa como base protegida; los cambios se incorporan mediante PRs desde ramas de trabajo específicas.
 
-## Key decisions
-See docs/architecture/ for all Architecture Decision Records.
+---
+
+Enlaces directos a los ADRs y a las features incluidos arriba para facilitar la navegación.
