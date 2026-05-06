@@ -65,7 +65,7 @@ without opening inbound ports on the host router. All other services remain inte
      | Subdomain           | Service                       | Available from   |
      |---------------------|-------------------------------|------------------|
      | api.yourdomain.com  | http://api-educational:8080   | Sprint 006       |
-     | app.yourdomain.com  | http://frontend-educational:80 | future sprint   |
+     | app.yourdomain.com  | http://app-educational:80     | Sprint 002 (frontend) |
    - These hostnames must match your Cloudflare-managed DNS zone.
 
 4. **Set SSL mode to Full (strict)**
