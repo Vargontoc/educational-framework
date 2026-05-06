@@ -1,167 +1,139 @@
-# Sprint 007 - backend
+# Sprint 008 - backend
 # -----------------------------------------------
 
 ## Goal
-Implement the Session domain layer for FEAT-002: fix the missing `updated_at` migration, pure domain models for FamilySession and ChildSession, hexagonal ports, token generation utility, services (PIN auth, session lifecycle, single-session enforcement, heartbeat, revocation), SessionProperties config binding, and full unit test coverage â€” no persistence or HTTP layer.
+Complete FEAT-002 (Session Module) REST layer: JPA entities, persistence adapters, DTOs, REST controllers for auth and child session management, opaque token security filter, scheduled jobs for session expiration and archival, and integration tests.
 
 ## Status
-status: completed
+status: active
 started_at: 2026-05-06 00:00:00
-closed_at: 2026-05-06 00:00:00
+closed_at:
 blocked_by:
 waiting_for:
 
 ## Tasks
 
-### Migration fix (deferred from Sprint 006)
-- [x] Create `migrations/007__add_updated_at_to_session_tables.xml` â€” add `updated_at` (TIMESTAMPTZ nullable) to both `family_session` and `child_session` tables; `BaseEntity` maps `@LastModifiedDate` to `updated_at` and Hibernate schema validation will fail without it
-- [x] Register `007__add_updated_at_to_session_tables.xml` in `db.changelog-master.xml` after `006__create_child_session.xml`
+### JPA Entities
+- [ ] Create `session/infrastructure/persistence/FamilySessionJpaEntity.java` — `@Entity @Table(name = "family_session")`, extends `BaseEntity`; fields: `tokenHash` (`@Column(name = "token_hash", unique = true)`), `tokenType`, `familyId` (`@Column(name = "family_id")`), `expiresAt`, `revoked`, `createdByIp` (`@Column(name = "created_by_ip")`), `deviceId` (`@Column(name = "device_id")`), `status` (String — map from `FamilySessionStatus` enum as string)
+- [ ] Create `session/infrastructure/persistence/ChildSessionJpaEntity.java` — `@Entity @Table(name = "child_session")`, extends `BaseEntity`; fields: `childProfileId` (`@Column(name = "child_profile_id")`), `familyId`, `startedAt`, `endedAt`, `durationSeconds`, `status`, `lastActivityAt` (`@Column(name = "last_activity_at")`), `heartbeatIntervalSeconds` (`@Column(name = "heartbeat_interval_seconds")`), `connectionMeta` (`@Column(name = "connection_meta", columnDefinition = "TEXT")`), `persistedGameStateRef`
 
-### Token utility
-- [x] Create `shared/security/TokenGenerator.java` â€” plain utility class, static methods only, no `@Component`; `generateRawToken()` â†’ `SecureRandom` 32 bytes â†’ Base64url (43 chars, no padding); `hashToken(String rawToken)` â†’ `MessageDigest("SHA-256")` â†’ lowercase hex (64 chars); must never log or return the raw token from `hashToken`
+### Spring Data Repositories
+- [ ] Create `session/infrastructure/persistence/FamilySessionJpaRepository.java` — `JpaRepository<FamilySessionJpaEntity, Long>` with:
+    - `Optional<FamilySessionJpaEntity> findByTokenHash(String tokenHash)`
+    - `List<FamilySessionJpaEntity> findByFamilyIdAndStatus(Long familyId, String status)`
+- [ ] Create `session/infrastructure/persistence/ChildSessionJpaRepository.java` — `JpaRepository<ChildSessionJpaEntity, Long>` with:
+    - `Optional<ChildSessionJpaEntity> findByChildProfileIdAndStatus(Long childProfileId, String status)`
+    - `List<ChildSessionJpaEntity> findByFamilyIdAndStatus(Long familyId, String status)`
+    - `List<ChildSessionJpaEntity> findByStatusAndLastActivityAtBefore(String status, LocalDateTime cutoff)`
 
-### Domain Models
-- [x] Create `session/model/FamilySessionStatus.java` â€” enum: `ACTIVE, EXPIRED, CLOSED, REVOKED`
-- [x] Create `session/model/FamilySession.java` â€” plain Java class; fields: `Long id`, `String tokenHash`, `String tokenType` (default `"opaque"`), `Long familyId`, `LocalDateTime createdAt`, `LocalDateTime updatedAt`, `LocalDateTime expiresAt` (nullable), `boolean revoked`, `String createdByIp`, `String deviceId`, `FamilySessionStatus status`
-- [x] Create `session/model/FamilySessionResult.java` â€” Java record: `String rawToken`, `FamilySession session` â€” sole transient holder of the raw token; never persisted or logged
-- [x] Create `session/model/ChildSessionStatus.java` â€” enum: `ACTIVE, EXPIRED, EXPELLED, CLOSED`
-- [x] Create `session/model/ChildSession.java` â€” plain Java class; fields: `Long id`, `Long childProfileId`, `Long familyId`, `LocalDateTime startedAt`, `LocalDateTime endedAt` (nullable), `Integer durationSeconds` (nullable â€” computed at close), `ChildSessionStatus status`, `LocalDateTime lastActivityAt`, `int heartbeatIntervalSeconds`, `String connectionMeta` (JSON string, nullable), `String persistedGameStateRef` (nullable)
+### Persistence Adapters
+- [ ] Create `session/infrastructure/persistence/FamilySessionPersistenceAdapter.java` — `@Repository`, implements `FamilySessionRepository`; static `toDomain` / `toJpa` mappers; `findActiveByFamilyId` passes `"ACTIVE"` as status string; `saveAll` calls `jpaRepository.saveAll()` then maps back to domain
+- [ ] Create `session/infrastructure/persistence/ChildSessionPersistenceAdapter.java` — `@Repository`, implements `ChildSessionRepository`; `findActiveByChildProfileId` passes `"ACTIVE"`; `findExpirableSessions(cutoff)` calls `findByStatusAndLastActivityAtBefore("ACTIVE", cutoff)`
 
-### Ports â€” In (Use Cases)
-- [x] Create `session/ports/in/FamilySessionUseCase.java` â€” interface:
-    - `FamilySessionResult authenticate(Long familyId, String rawPin)`
-    - `void logout(String rawToken)`
-    - `void revokeAllByFamily(Long familyId)`
-    - `FamilySession getByToken(String rawToken)` â€” throws `SessionException` if not found or revoked
-- [x] Create `session/ports/in/ChildSessionUseCase.java` â€” interface:
-    - `ChildSession openSession(Long childProfileId, Long familyId, int heartbeatInterval, String connectionMeta)`
-    - `ChildSession closeSession(Long id)`
-    - `ChildSession expelChild(Long id)`
-    - `void recordHeartbeat(Long id)` â€” throws `SessionException` if session not ACTIVE
-    - `List<ChildSession> getActiveSessions(Long familyId)`
-    - `void expireInactiveSessions(LocalDateTime cutoff)`
+### DTOs
+- [ ] Create `session/infrastructure/dto/LoginRequest.java` — record: `String pin`
+- [ ] Create `session/infrastructure/dto/LoginResponse.java` — record: `String token`, `Long sessionId`, `Long familyId`, `LocalDateTime createdAt` — `token` is the raw opaque token; this is the **only** response that ever contains it
+- [ ] Create `session/infrastructure/dto/LogoutRequest.java` — record: `String token` (optional — if null, token is taken from `Authorization` header in controller)
+- [ ] Create `session/infrastructure/dto/OpenChildSessionRequest.java` — record: `Long childProfileId`, `Integer heartbeatIntervalSeconds` (nullable — defaults to `SessionProperties.defaultHeartbeatIntervalSeconds`)
+- [ ] Create `session/infrastructure/dto/ChildSessionResponse.java` — record: `Long id`, `Long childProfileId`, `Long familyId`, `String status`, `LocalDateTime startedAt`, `LocalDateTime endedAt` (nullable), `Integer durationSeconds` (nullable), `LocalDateTime lastActivityAt`
+- [ ] Create `session/infrastructure/dto/FamilySessionResponse.java` — record: `Long id`, `Long familyId`, `String status`, `LocalDateTime createdAt`, `LocalDateTime expiresAt` (nullable) — never includes `tokenHash`
 
-### Ports â€” Out (Repository Interfaces)
-- [x] Create `session/ports/out/FamilySessionRepository.java` â€” interface:
-    - `Optional<FamilySession> findByTokenHash(String tokenHash)`
-    - `List<FamilySession> findActiveByFamilyId(Long familyId)`
-    - `FamilySession save(FamilySession session)`
-    - `void saveAll(List<FamilySession> sessions)`
-- [x] Create `session/ports/out/ChildSessionRepository.java` â€” interface:
-    - `Optional<ChildSession> findById(Long id)`
-    - `Optional<ChildSession> findActiveByChildProfileId(Long childProfileId)`
-    - `List<ChildSession> findActiveByFamilyId(Long familyId)`
-    - `List<ChildSession> findExpirableSessions(LocalDateTime cutoff)`
-    - `ChildSession save(ChildSession session)`
-    - `void saveAll(List<ChildSession> sessions)`
+### REST Controllers
+- [ ] Create `session/infrastructure/web/AuthController.java` — `@RestController @RequestMapping("/api/v1/auth")`; inject `FamilyUseCase` (to load family by checking it exists) and `FamilySessionUseCase`:
+    - `POST /login` — `@RequestBody LoginRequest`; load family via `familyUseCase.getFamily()`; call `familySessionUseCase.authenticate(family.getId(), req.pin())`; return `201 ApiResponse<LoginResponse>` with the raw token; **this is the only endpoint that returns a raw token**
+    - `POST /logout` — extract raw token from `Authorization: Bearer <token>` header; call `familySessionUseCase.logout(rawToken)`; return `204`
+- [ ] Create `session/infrastructure/web/ChildSessionController.java` — `@RestController @RequestMapping("/api/v1/sessions/children")`; inject `ChildSessionUseCase` and `SessionProperties`:
+    - `POST /` — open child session; resolve heartbeat interval from request or `SessionProperties` default; extract `connectionMeta` from `HttpServletRequest` (IP + `User-Agent` header); return `201 ApiResponse<ChildSessionResponse>`
+    - `GET /` — get active sessions for logged-in family (family resolved via token filter); return `200 ApiResponse<List<ChildSessionResponse>>`
+    - `DELETE /{id}` — close session; return `204`
+    - `DELETE /{id}/expel` — expel child; return `204`
+    - `POST /{id}/heartbeat` — record heartbeat; return `204`
 
-### Services
-- [x] Create `session/service/FamilySessionService.java` â€” `@Service @Transactional`, implements `FamilySessionUseCase`:
-    - `authenticate(familyId, rawPin)`: load `Family` via `FamilyRepository.findFamily()` (throw `ResourceNotFoundException` if missing); `BCryptPasswordEncoder.matches(rawPin, family.getPinHash())` â€” throw `SessionException("Invalid PIN")` on mismatch; generate `rawToken`, hash it, build `FamilySession` (status=ACTIVE, revoked=false, createdAt=now), save, return `new FamilySessionResult(rawToken, session)`
-    - `logout(rawToken)`: hash token, `findByTokenHash` (throw `SessionException` if empty or revoked), set `status=REVOKED`, `revoked=true`, `updatedAt=now`, save
-    - `revokeAllByFamily(familyId)`: `findActiveByFamilyId`, set each to `REVOKED` + `revoked=true` + `updatedAt=now`, `saveAll`
-    - `getByToken(rawToken)`: hash, find, throw `SessionException` if not found or `revoked=true`, return session
-- [x] Create `session/service/ChildSessionService.java` â€” `@Service @Transactional`, implements `ChildSessionUseCase`:
-    - `openSession(childProfileId, familyId, heartbeatInterval, connectionMeta)`: `findActiveByChildProfileId` â€” if present, close it (`durationSeconds = seconds(startedAt, now)`, `endedAt=now`, `status=CLOSED`, save) in same transaction; create new session (`status=ACTIVE`, `startedAt=now`, `lastActivityAt=now`), save
-    - `closeSession(id)`: find by id (throw `ResourceNotFoundException` if missing), compute `durationSeconds`, set `endedAt=now`, `status=CLOSED`, save
-    - `expelChild(id)`: find, compute duration, `endedAt=now`, `status=EXPELLED`, save
-    - `recordHeartbeat(id)`: find, throw `SessionException` if `status != ACTIVE`, set `lastActivityAt=now`, save
-    - `getActiveSessions(familyId)`: delegate to `findActiveByFamilyId`
-    - `expireInactiveSessions(cutoff)`: `findExpirableSessions(cutoff)`, set each to `EXPIRED`, `saveAll`
+### Token Security Filter
+- [ ] Create `shared/security/TokenAuthenticationFilter.java` — extends `OncePerRequestFilter`; extracts `Authorization: Bearer <token>` header; hashes the token via `TokenGenerator.hashToken()`; calls `FamilySessionUseCase.getByToken(rawToken)` to validate; if valid, sets a `UsernamePasswordAuthenticationToken` in `SecurityContextHolder` with `familyId` as principal; if not valid or header absent, continues the filter chain without setting auth (Spring Security's `anyRequest().authenticated()` will reject it)
+- [ ] Register `TokenAuthenticationFilter` in `SecurityConfig` — add `.addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)` to the `HttpSecurity` builder; add `/api/v1/auth/login` to `permitAll()` list alongside existing public paths
 
-### Application config binding
-- [x] Create `shared/config/SessionProperties.java` â€” `@ConfigurationProperties(prefix = "app.session")` + `@Component`; fields: `int defaultHeartbeatIntervalSeconds` (default 30), `int heartbeatGraceMultiplier` (default 2), `int retentionDays` (default 30)
+### Scheduled Jobs
+- [ ] Create `session/infrastructure/scheduler/SessionExpirationJob.java` — `@Component`; `@Scheduled(cron = "0 */5 * * * *")`; inject `ChildSessionUseCase` and `SessionProperties`; compute `cutoff = now - (defaultHeartbeatIntervalSeconds * heartbeatGraceMultiplier) seconds`; call `expireInactiveSessions(cutoff)`; log at INFO level: how many sessions expired
+- [ ] Create `session/infrastructure/scheduler/SessionArchivalJob.java` — `@Component`; `@Scheduled(cron = "0 0 2 * * *")`; inject `ChildSessionRepository` and `FamilySessionRepository`; delete or archive sessions with `ended_at < now - retentionDays`; log structured event at INFO; idempotent (safe to run multiple times)
+- [ ] Add `@EnableScheduling` to `EducationalFrameworkApplication.java`
 
-### Unit Tests
-- [x] Unit test: `TokenGeneratorTest` â€” `generateRawToken()` returns 43-char string; `hashToken()` returns 64-char lowercase hex; two consecutive calls to `generateRawToken()` differ; `hashToken(hashToken(x))` â‰  `hashToken(x)` (non-idempotent â€” raw token and its hash produce different hashes)
-- [x] Unit test: `FamilySessionServiceTest` â€” mock `FamilyRepository` + `FamilySessionRepository`; test: authenticate happy path returns non-null rawToken; authenticate wrong PIN â†’ `SessionException`; authenticate no family â†’ `ResourceNotFoundException`; logout valid token â†’ session `REVOKED`; logout already-revoked token â†’ `SessionException`; `revokeAllByFamily` marks all active sessions `REVOKED`
-- [x] Unit test: `ChildSessionServiceTest` â€” mock `ChildSessionRepository`; test: `openSession` no prior session â†’ new ACTIVE session; `openSession` with prior ACTIVE â†’ prior CLOSED, new ACTIVE; `closeSession` computes positive `durationSeconds`; `expelChild` â†’ `EXPELLED`; `recordHeartbeat` updates `lastActivityAt`; `recordHeartbeat` on non-ACTIVE â†’ `SessionException`; `expireInactiveSessions` marks all results EXPIRED
+### Integration Tests
+- [ ] Create `AuthControllerTest` — `@SpringBootTest` + Testcontainers; set up family first; test: POST /login with correct PIN → 201 + token in body; POST /login with wrong PIN → 401; POST /logout with valid token → 204; POST /logout with invalid token → 401; second call to POST /login returns a **different** token
+- [ ] Create `ChildSessionControllerTest` — set up family + child profile; test: POST /sessions/children → 201; second POST for same child closes old session and creates new one; DELETE /{id} → 204 with status=CLOSED; DELETE /{id}/expel → 204 with status=EXPELLED; POST /{id}/heartbeat → 204; GET / returns active sessions
+
+### Contract Updates
+- [ ] Update `docs/contracts/api/openapi.json` — add `/api/v1/auth/login`, `/api/v1/auth/logout`, `/api/v1/sessions/children` paths with request/response schemas; include `LoginResponse` schema noting that `token` is only present on login
+- [ ] Update `docs/contracts/api/websocket.json` — add the STOMP channel configuration (topic/channel names from ADR-009) even if the WebSocket handler itself is deferred to a future sprint
 
 ## Risks
-- `007__add_updated_at_to_session_tables.xml` must be applied before Sprint 008 creates JPA entities that extend `BaseEntity`; skipping it causes immediate `SchemaManagementException` on app startup.
-- `TokenGenerator.hashToken` uses `MessageDigest` which is not thread-safe when shared as an instance â€” use a new instance per call or use the static factory `MessageDigest.getInstance("SHA-256")` inside the method body.
-- `FamilySessionService.authenticate` uses `BCryptPasswordEncoder.matches` â€” the encoder is instantiated inline (`new BCryptPasswordEncoder()`) as in `FamilyService`; do not declare it as a Bean to avoid touching `SecurityConfig` this sprint.
-- `revokeAllByFamily` is `@Transactional` and calls `saveAll` â€” if called from `FamilyService.updateFamily` (PIN change), the outer `@Transactional` propagates, keeping both operations in one transaction.
-- `FamilySessionResult.rawToken` must not appear in `toString()` output â€” if using a Java record, override `toString()` to omit the field, or use a plain class.
+- `TokenAuthenticationFilter` must not throw on missing `Authorization` header — it should continue the filter chain and let Spring Security reject unauthenticated requests to protected endpoints. Throwing in the filter causes a 500 instead of a 401.
+- `ChildSessionController` needs the `familyId` of the authenticated user. The `TokenAuthenticationFilter` sets `familyId` as principal in the `SecurityContextHolder` — controllers retrieve it via `(Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal()`.
+- `SessionArchivalJob` runs nightly and deletes rows — verify it handles the case where `ended_at` is null (sessions that never closed) gracefully; exclude ACTIVE sessions from archival.
+- `@EnableScheduling` enables all `@Scheduled` beans globally — if test profiles run scheduled jobs, they may interfere with test data. Consider a `@ConditionalOnProperty(name = "app.session.scheduling.enabled", matchIfMissing = true)` guard on the scheduler beans.
+- `LoginResponse.token` is the only place the raw token appears — assert in `AuthControllerTest` that GET /family does NOT return any session token.
+- Existing `AbstractIntegrationTest` uses mock session repositories — remove those mocks once real adapters are wired in this sprint.
 
 ## Dependencies
-- Sprint 006 completed: migrations 005/006 applied; `spring-boot-starter-websocket` on classpath; `app.session.*` in `application.yml`.
-- Sprint 002 completed: `SessionException` (HTTP 401), `ResourceNotFoundException` (HTTP 404), `AbstractValidator` available.
-- `FamilyRepository` port (Sprint 004) injectable into `FamilySessionService`.
+- Sprint 007 completed: `FamilySessionService`, `ChildSessionService`, `TokenGenerator`, `SessionProperties`, all ports implemented.
+- Sprint 006 completed: migrations 005/006 applied; `spring-boot-starter-websocket` on classpath.
+- Sprint 003 completed: `GlobalExceptionHandler` maps `SessionException` → 401 automatically.
 
 ## Agent Instruction
-- All session classes go under `es.vargontoc.educational.framework.session`.
-- `TokenGenerator` in `es.vargontoc.educational.framework.shared.security` â€” plain static utility, no Spring annotations.
-- `SessionProperties` in `es.vargontoc.educational.framework.shared.config`.
-- Domain models are pure Java: no `@Entity`, no Spring imports. Enums are standalone classes in `session/model/`.
-- Services use constructor injection. Unit tests use `@ExtendWith(MockitoExtension.class)` â€” no Spring context.
-- Migration `007__add_updated_at_to_session_tables.xml` uses `<addColumn>` tag (valid in XSD 4.27) â€” do NOT use `addCheckConstraint` (lessons from Sprint 004).
-- After completing all tasks, mark status as `completed` and fill the Review section.
+- `TokenAuthenticationFilter` must call `filterChain.doFilter(request, response)` in the `finally` block — never swallow the chain.
+- `AuthController.login` must NOT log the raw token — only log `session.id` and `session.familyId`.
+- `ChildSessionController` extracts `familyId` from `SecurityContextHolder`, not from the request body.
+- Persistence adapters use the same static mapper pattern as the family module — `toDomain(entity)` and `toJpa(domain)`.
+- `SessionArchivalJob` must be idempotent: running it twice in the same window must not fail or double-delete.
+- Integration tests: authenticate before each protected endpoint call; use the token from `LoginResponse` in the `Authorization: Bearer` header of subsequent requests.
+- JPA entities extend `BaseEntity` — do NOT re-declare `id`, `createdAt`, or `updatedAt` (inherited); migration 007 already added `updated_at` to both tables.
+- Status columns are stored as `VARCHAR` strings in the DB; mappers convert between `FamilySessionStatus`/`ChildSessionStatus` enum and their `.name()` string.
+- After all tasks, update both contract files and mark sprint as `completed`.
 
 ## Notes
-Migration fix added to this sprint because:
-- `005` and `006` are already applied without `updated_at`.
-- Sprint 008 JPA entities extend `BaseEntity` â†’ Hibernate `validate` will fail without the column.
-- A corrective migration is the right approach (never modify applied migrations).
-
-### Migration 007 shape
-```xml
-<changeSet id="007__add_updated_at_to_session_tables" author="vargontoc">
-    <addColumn tableName="family_session">
-        <column name="updated_at" type="TIMESTAMPTZ"/>
-    </addColumn>
-    <addColumn tableName="child_session">
-        <column name="updated_at" type="TIMESTAMPTZ"/>
-    </addColumn>
-</changeSet>
-```
-
 ### Package layout after this sprint
 ```
 session/
-  model/
-    FamilySession.java
-    FamilySessionResult.java
-    FamilySessionStatus.java
-    ChildSession.java
-    ChildSessionStatus.java
-  ports/
-    in/
-      FamilySessionUseCase.java
-      ChildSessionUseCase.java
-    out/
-      FamilySessionRepository.java
-      ChildSessionRepository.java
-  service/
-    FamilySessionService.java
-    ChildSessionService.java
+  infrastructure/
+    persistence/
+      FamilySessionJpaEntity.java
+      ChildSessionJpaEntity.java
+      FamilySessionJpaRepository.java
+      ChildSessionJpaRepository.java
+      FamilySessionPersistenceAdapter.java
+      ChildSessionPersistenceAdapter.java
+    web/
+      AuthController.java
+      ChildSessionController.java
+    dto/
+      LoginRequest.java
+      LoginResponse.java
+      LogoutRequest.java
+      OpenChildSessionRequest.java
+      ChildSessionResponse.java
+      FamilySessionResponse.java
+    scheduler/
+      SessionExpirationJob.java
+      SessionArchivalJob.java
 shared/
-  config/
-    SessionProperties.java
   security/
-    TokenGenerator.java
+    TokenAuthenticationFilter.java
 ```
+
+### SecurityConfig public paths after this sprint
+```
+/actuator/health
+/v3/api-docs/**
+/swagger-ui/**
+/api/v1/family/**
+/api/v1/auth/login
+```
+All other requests require a valid `Authorization: Bearer <token>` header.
 
 ## Review
 
 completed_tasks:
-- Added corrective migration `007__add_updated_at_to_session_tables.xml` and registered it in the master changelog.
-- Added pure session domain models, standalone status enums, and raw-token-safe `FamilySessionResult`.
-- Added inbound and outbound hexagonal ports for family and child session use cases.
-- Added `TokenGenerator` with SecureRandom Base64url raw tokens and SHA-256 lowercase hex hashing.
-- Added `FamilySessionService` for PIN authentication, token lookup, logout, and family-wide revocation.
-- Added `ChildSessionService` for single-active-session enforcement, close, expel, heartbeat, lookup, and expiration.
-- Added `SessionProperties` binding for `app.session` defaults.
-- Added unit tests for token generation and both session services.
-- Updated Spring context tests with mock session ports until Sprint 008 provides persistence adapters.
 incomplete_tasks:
-- None.
 contract_changes:
-- None. No REST or WebSocket endpoints were added or modified in this sprint.
 learnings:
-- Session services are Spring beans before persistence adapters exist, so Spring context tests need mocked session ports during the domain-only sprint.
-- `FamilySessionResult.toString()` intentionally omits the raw token to avoid accidental log exposure.
-- Full test run passes; Testcontainers integration tests are skipped when Docker is unavailable.
 next_sprint_suggestions:
-- Implement Sprint 008 persistence adapters, JPA entities, DTOs, REST controllers, token filter, and integration coverage.
-- Replace temporary test-only session repository mocks once real adapters exist.

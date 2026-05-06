@@ -10,8 +10,8 @@ test: Verify WebSocket connection, reconnection and session lifecycle
 adr: docs/architecture/decisions/ADR-009-Session-Module.md
 sprints:
     - backend/sprints/history/006-session-module-foundations-2026-05-05.md (Sprint 006 — completed)
-    - backend/sprints/current.md (Sprint 007 — active: domain layer + updated_at migration fix)
-    - backend/sprints/backlog/008-session-module-infrastructure.md (Sprint 008 — REST + jobs + security filter)
+    - backend/sprints/history/007-session-module-domain-2026-05-06.md (Sprint 007 — completed: domain layer + updated_at migration fix)
+    - backend/sprints/current.md (Sprint 008 — active: REST layer + jobs + security filter)
 
 # Description
 
