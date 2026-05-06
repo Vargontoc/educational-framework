@@ -36,6 +36,7 @@ public class ChildSessionService implements ChildSessionUseCase {
         var session = new ChildSession();
         session.setChildProfileId(childProfileId);
         session.setFamilyId(familyId);
+        session.setCreatedAt(now);
         session.setStartedAt(now);
         session.setStatus(ChildSessionStatus.ACTIVE);
         session.setLastActivityAt(now);
@@ -78,7 +79,7 @@ public class ChildSessionService implements ChildSessionUseCase {
     }
 
     @Override
-    public void expireInactiveSessions(LocalDateTime cutoff) {
+    public int expireInactiveSessions(LocalDateTime cutoff) {
         var sessions = childSessionRepository.findExpirableSessions(cutoff);
 
         for (ChildSession session : sessions) {
@@ -86,6 +87,7 @@ public class ChildSessionService implements ChildSessionUseCase {
         }
 
         childSessionRepository.saveAll(sessions);
+        return sessions.size();
     }
 
     private ChildSession findById(Long id) {

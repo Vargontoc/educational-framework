@@ -1,29 +1,45 @@
-package es.vargontoc.educational.framework.session.model;
+package es.vargontoc.educational.framework.session.infrastructure.persistence;
+
+import es.vargontoc.educational.framework.shared.model.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
-public class ChildSession {
+@Entity
+@Table(name = "child_session")
+public class ChildSessionJpaEntity extends BaseEntity {
 
-    private Long id;
+    @Column(name = "child_profile_id", nullable = false)
     private Long childProfileId;
+
+    @Column(name = "family_id", nullable = false)
     private Long familyId;
-    private LocalDateTime createdAt;
+
+    @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
+
+    @Column(name = "ended_at")
     private LocalDateTime endedAt;
+
+    @Column(name = "duration_seconds")
     private Integer durationSeconds;
-    private ChildSessionStatus status = ChildSessionStatus.ACTIVE;
+
+    @Column(nullable = false, length = 20)
+    private String status;
+
+    @Column(name = "last_activity_at", nullable = false)
     private LocalDateTime lastActivityAt;
-    private int heartbeatIntervalSeconds = 30;
+
+    @Column(name = "heartbeat_interval_seconds", nullable = false)
+    private int heartbeatIntervalSeconds;
+
+    @Column(name = "connection_meta", columnDefinition = "TEXT")
     private String connectionMeta;
+
+    @Column(name = "persisted_game_state_ref", length = 255)
     private String persistedGameStateRef;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Long getChildProfileId() {
         return childProfileId;
@@ -39,14 +55,6 @@ public class ChildSession {
 
     public void setFamilyId(Long familyId) {
         this.familyId = familyId;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     public LocalDateTime getStartedAt() {
@@ -73,11 +81,11 @@ public class ChildSession {
         this.durationSeconds = durationSeconds;
     }
 
-    public ChildSessionStatus getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(ChildSessionStatus status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 

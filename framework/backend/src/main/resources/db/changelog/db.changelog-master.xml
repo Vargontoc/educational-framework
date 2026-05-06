@@ -12,5 +12,6 @@
     <include file="db/changelog/migrations/005__create_family_session.xml"/>
     <include file="db/changelog/migrations/006__create_child_session.xml"/>
     <include file="db/changelog/migrations/007__add_updated_at_to_session_tables.xml"/>
+    <include file="db/changelog/migrations/008__add_created_at_to_child_session.xml"/>
 
 </databaseChangeLog>

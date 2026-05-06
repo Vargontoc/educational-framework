@@ -5,8 +5,70 @@
     "description": "Baseline real-time contract for FEAT-002 session events.",
     "version": "1.0.0"
   },
-  "channels": {},
+  "channels": {
+    "/ws/parent": {
+      "protocol": "stomp",
+      "description": "Parental control STOMP over WebSocket endpoint. Connections require Authorization: Bearer <token> during handshake.",
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/SessionEvent"
+        }
+      }
+    },
+    "/topic/family/{familyId}/sessions": {
+      "protocol": "stomp",
+      "description": "Family-scoped topic for server-to-client parental session events.",
+      "parameters": {
+        "familyId": {
+          "description": "Authenticated family identifier from the opaque token."
+        }
+      },
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/SessionEvent"
+        }
+      }
+    },
+    "/ws/game": {
+      "protocol": "ws",
+      "description": "Native game WebSocket endpoint. Connections require Authorization: Bearer <token> during handshake.",
+      "subscribe": {
+        "message": {
+          "$ref": "#/components/messages/SessionEvent"
+        }
+      }
+    }
+  },
   "components": {
+    "messages": {
+      "SessionEvent": {
+        "name": "SessionEvent",
+        "payload": {
+          "type": "object",
+          "required": ["event"],
+          "properties": {
+            "event": {
+              "type": "string",
+              "enum": [
+                "GAME_STATE_UPDATE",
+                "SESSION_EXPIRED",
+                "SESSION_INVALIDATED",
+                "CHILD_EXPELLED",
+                "PARENT_BLOCK",
+                "HEARTBEAT_ACK"
+              ]
+            },
+            "sessionId": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "payload": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
     "events": {
       "GAME_STATE_UPDATE": {
         "direction": "server_to_client",

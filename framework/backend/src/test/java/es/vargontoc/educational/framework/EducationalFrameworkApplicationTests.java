@@ -3,8 +3,6 @@ package es.vargontoc.educational.framework;
 import es.vargontoc.educational.framework.family.ports.out.AdultProfileRepository;
 import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
 import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
-import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
-import es.vargontoc.educational.framework.session.ports.out.FamilySessionRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -29,12 +27,6 @@ class EducationalFrameworkApplicationTests {
 
     @MockBean
     private AdultProfileRepository adultProfileRepository;
-
-    @MockBean
-    private FamilySessionRepository familySessionRepository;
-
-    @MockBean
-    private ChildSessionRepository childSessionRepository;
 
     @Test
     void contextLoads() {

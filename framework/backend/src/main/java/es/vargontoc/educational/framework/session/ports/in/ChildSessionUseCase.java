@@ -17,5 +17,5 @@ public interface ChildSessionUseCase {
 
     List<ChildSession> getActiveSessions(Long familyId);
 
-    void expireInactiveSessions(LocalDateTime cutoff);
+    int expireInactiveSessions(LocalDateTime cutoff);
 }

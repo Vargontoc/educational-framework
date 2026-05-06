@@ -1,10 +1,7 @@
 package es.vargontoc.educational.framework.family.infrastructure.web;
 
-import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
-import es.vargontoc.educational.framework.session.ports.out.FamilySessionRepository;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +14,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers(disabledWithoutDocker = true)
 @Transactional
 public abstract class AbstractIntegrationTest {
-
-    @MockBean
-    private FamilySessionRepository familySessionRepository;
-
-    @MockBean
-    private ChildSessionRepository childSessionRepository;
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");

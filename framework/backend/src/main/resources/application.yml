@@ -40,3 +40,5 @@ app:
     default-heartbeat-interval-seconds: 30
     heartbeat-grace-multiplier: 2
     retention-days: 30
+    scheduling:
+      enabled: ${APP_SESSION_SCHEDULING_ENABLED:true}

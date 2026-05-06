@@ -6,6 +6,89 @@
     "version": "0.0.1"
   },
   "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created. The raw opaque token is only returned by this endpoint.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLogin" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error401" } } } }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error401" } } } }
+        }
+      }
+    },
+    "/api/v1/sessions/children": {
+      "post": {
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OpenChildSessionRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseChildSession" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error401" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseChildSessionList" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error401" } } } }
+        }
+      }
+    },
+    "/api/v1/sessions/children/{id}": {
+      "delete": {
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error401" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/sessions/children/{id}/expel": {
+      "delete": {
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error401" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/sessions/children/{id}/heartbeat": {
+      "post": {
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error401" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
     "/api/v1/family": {
       "post": {
         "requestBody": {
@@ -154,6 +237,13 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Opaque family session token returned only by POST /api/v1/auth/login."
+      }
+    },
     "schemas": {
       "ApiResponse": {
         "type": "object",
@@ -208,6 +298,71 @@
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/AdultProfileResponse" } },
           "message": { "type": "string", "nullable": true },
           "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseLogin": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/LoginResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseChildSession": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/ChildSessionResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseChildSessionList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ChildSessionResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["pin"],
+        "properties": {
+          "pin": { "type": "string", "example": "1234" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "description": "Login response. `token` is the raw opaque token and is only returned by POST /api/v1/auth/login.",
+        "properties": {
+          "token": { "type": "string", "description": "Raw opaque bearer token. Never returned by any other endpoint." },
+          "sessionId": { "type": "integer", "format": "int64" },
+          "familyId": { "type": "integer", "format": "int64" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OpenChildSessionRequest": {
+        "type": "object",
+        "required": ["childProfileId"],
+        "properties": {
+          "childProfileId": { "type": "integer", "format": "int64" },
+          "heartbeatIntervalSeconds": { "type": "integer", "nullable": true, "default": 30 }
+        }
+      },
+      "ChildSessionResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "childProfileId": { "type": "integer", "format": "int64" },
+          "familyId": { "type": "integer", "format": "int64" },
+          "status": { "type": "string", "enum": ["ACTIVE", "EXPIRED", "EXPELLED", "CLOSED"] },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "endedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "durationSeconds": { "type": "integer", "nullable": true },
+          "lastActivityAt": { "type": "string", "format": "date-time" }
         }
       },
       "CreateFamilyRequest": {
