@@ -22,6 +22,12 @@ const router = createRouter({
       component: () => import('@/views/GameView.vue')
     },
     {
+      path: '/design-system',
+      name: 'design-system',
+      component: () => import('@/views/DesignSystemView.vue'),
+      beforeEnter: () => import.meta.env.DEV || '/'
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/'
     }

@@ -14,33 +14,33 @@ waiting_for:
 ## Tasks
 
 ### Design Tokens
-- [ ] Create `src/styles/variables.css` — CSS custom properties:
+- [x] Create `src/styles/variables.css` — CSS custom properties:
       colors: --color-primary, --color-primary-dark, --color-secondary, --color-neutral;
       typography: --font-size-sm (14px), --font-size-md (18px), --font-size-lg (24px);
       spacing: --space-sm (8px), --space-md (16px), --space-lg (32px);
       radii: --radius-sm (8px), --radius-md (16px), --radius-lg (32px).
-- [ ] Create `src/styles/global.css` — base reset, body font, box-sizing rule, and prefers-reduced-motion override.
-- [ ] Import both files in `src/main.ts` before app mount.
+- [x] Create `src/styles/global.css` — base reset, body font, box-sizing rule, and prefers-reduced-motion override.
+- [x] Import both files in `src/main.ts` before app mount.
 
 ### UI Components
-- [ ] Create `src/components/ui/Button.vue` — props: `variant` (primary | secondary), `disabled`; min touch target 44x44px; WCAG contrast >= 4.5:1 for text.
-- [ ] Create `src/components/ui/Card.vue` — props: `variant` (primary | secondary), `disabled`; uses CSS variables for colors and radii.
-- [ ] Create `src/components/ui/Badge.vue` — props: `variant` (primary | secondary), `disabled`; inline/compact display; uses CSS variables.
+- [x] Create `src/components/ui/Button.vue` — props: `variant` (primary | secondary), `disabled`; min touch target 44x44px; WCAG contrast >= 4.5:1 for text.
+- [x] Create `src/components/ui/Card.vue` — props: `variant` (primary | secondary), `disabled`; uses CSS variables for colors and radii.
+- [x] Create `src/components/ui/Badge.vue` — props: `variant` (primary | secondary), `disabled`; inline/compact display; uses CSS variables.
 
 ### Mock Data
-- [ ] Create `src/mock/index.ts` — export sample data arrays used only by DesignSystemView; no network calls; no business logic.
+- [x] Create `src/mock/index.ts` — export sample data arrays used only by DesignSystemView; no network calls; no business logic.
 
 ### Dev-Only Demo Route
-- [ ] Add route to `src/router/index.ts`:
+- [x] Add route to `src/router/index.ts`:
       path: '/design-system', name: 'design-system',
       component: lazy import of DesignSystemView,
       guarded by `beforeEnter: () => import.meta.env.DEV || '/'`.
-- [ ] Create `src/views/DesignSystemView.vue` — renders Button, Card and Badge in all states (primary, secondary, disabled) using mock data from `src/mock/index.ts`; no real API calls.
+- [x] Create `src/views/DesignSystemView.vue` — renders Button, Card and Badge in all states (primary, secondary, disabled) using mock data from `src/mock/index.ts`; no real API calls.
 
 ### Accessibility Checklist
-- [ ] Verify color contrast >= 4.5:1 for all text on component backgrounds (browser DevTools or axe).
-- [ ] Verify all interactive elements have touch target >= 44x44px.
-- [ ] Confirm `prefers-reduced-motion` override is present in global.css and disables transitions.
+- [x] Verify color contrast >= 4.5:1 for all text on component backgrounds (browser DevTools or axe).
+- [x] Verify all interactive elements have touch target >= 44x44px.
+- [x] Confirm `prefers-reduced-motion` override is present in global.css and disables transitions.
 
 ## Risks
 - **Demo route exposed in production**: guarded by `import.meta.env.DEV` in beforeEnter — Vite strips the dead branch at build time.

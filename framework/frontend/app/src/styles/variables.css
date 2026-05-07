@@ -1,0 +1,35 @@
+:root {
+  /* Colors */
+  --color-primary: #7c3aed;
+  --color-primary-dark: #6d28d9;
+  --color-secondary: #f59e0b;
+  --color-secondary-dark: #d97706;
+  --color-neutral: #e5e7eb;
+  --color-neutral-dark: #9ca3af;
+
+  /* Text on colored surfaces */
+  --color-text-on-primary: #ffffff;
+  --color-text-on-secondary: #1f2937;
+
+  /* Typography */
+  --font-size-sm: 14px;
+  --font-size-md: 18px;
+  --font-size-lg: 24px;
+  --font-family-base: 'Nunito', 'Rounded Mplus 1c', system-ui, sans-serif;
+
+  /* Spacing */
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 32px;
+
+  /* Border radii */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 32px;
+
+  /* Touch target minimum (FEAT-001 accessibility) */
+  --touch-target-min: 44px;
+
+  /* Transitions */
+  --transition-base: 150ms ease;
+}
