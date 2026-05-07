@@ -1,10 +1,15 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, resolve(__dirname, 'envs'), '')
+  const port = parseInt(env.PORT ?? '5173', 10)
+
+  return {
   envDir: './envs',
+  server: { port },
   plugins: [
     vue(),
     VitePWA({
@@ -29,5 +34,6 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src')
     }
+  }
   }
 })

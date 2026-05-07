@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT}
 
 spring:
   datasource:
@@ -15,8 +15,6 @@ spring:
   ai:
     ollama:
       base-url: ${SPRING_AI_OLLAMA_BASE_URL}
-      chat:
-        model: ${SPRING_AI_OLLAMA_CHAT_MODEL:llama3.2}
       init:
         pull-model-strategy: never
 
@@ -31,14 +29,14 @@ management:
 
 logging:
   level:
-    "[es.vargontoc]": ${LOGGING_LEVEL_ES_VARGONTOC:INFO}
+    "[es.vargontoc]": ${LOGGING_LEVEL_ES_VARGONTOC}
 
 app:
   cors:
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS}
   session:
     default-heartbeat-interval-seconds: 30
     heartbeat-grace-multiplier: 2
     retention-days: 30
     scheduling:
-      enabled: ${APP_SESSION_SCHEDULING_ENABLED:true}
+      enabled: ${APP_SESSION_SCHEDULING_ENABLED}
