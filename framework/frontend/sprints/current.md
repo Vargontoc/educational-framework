@@ -1,74 +1,174 @@
-# Sprint 003 - frontend
+# Sprint 004 - frontend
 # -----------------------------------------------
 
 ## Goal
-Establish the base visual design system: CSS variables, global styles, and core UI components (Button, Card, Badge) with a dev-only demo route. Derived from FEAT-001.
+Implement the Home View: family state detection, family registration modal, parental PIN
+login, child selector with add-child flow, and child session opening — fully wired to
+docs/contracts/api/openapi.json.
 
 ## Status
 status: active
-started_at: 2026-05-06 00:00:00
+started_at: 2026-05-09 00:00:00
 closed_at:
 blocked_by:
 waiting_for:
 
+## Pre-conditions (product/backend must resolve before implementing flagged tasks)
+- [x] P-1: `ttsEnabled: true`, `agentEnabled: true` as fixed defaults — not shown in modal.
+- [x] P-2: Visible fields in add-child modal: `name` (required), `birthday` (required),
+           `avatar` (optional). `ttsEnabled` and `agentEnabled` sent as `true` (same default as P-1).
+- [x] P-3: Help button (?) redirects to documentation. No URL defined yet — implement as
+           a stub button (visible, no navigation) until URL or route is confirmed by product.
+- [x] P-4: POST /api/v1/sessions/children does NOT require parental auth for MVP.
+           Note: openapi.json currently declares bearerAuth on this endpoint — contract
+           should be updated by backend to reflect the no-auth decision.
+
 ## Tasks
 
-### Design Tokens
-- [x] Create `src/styles/variables.css` — CSS custom properties:
-      colors: --color-primary, --color-primary-dark, --color-secondary, --color-neutral;
-      typography: --font-size-sm (14px), --font-size-md (18px), --font-size-lg (24px);
-      spacing: --space-sm (8px), --space-md (16px), --space-lg (32px);
-      radii: --radius-sm (8px), --radius-md (16px), --radius-lg (32px).
-- [x] Create `src/styles/global.css` — base reset, body font, box-sizing rule, and prefers-reduced-motion override.
-- [x] Import both files in `src/main.ts` before app mount.
+### TypeScript Contract Types
+- [x] Create `src/shared/types/api.ts` — derive interfaces from openapi.json:
+      ApiResponse<T>, FamilyResponse, CreateFamilyRequest, LoginRequest, LoginResponse,
+      ChildProfileResponse, CreateChildProfileRequest, OpenChildSessionRequest,
+      ChildSessionResponse.
 
-### UI Components
-- [x] Create `src/components/ui/Button.vue` — props: `variant` (primary | secondary), `disabled`; min touch target 44x44px; WCAG contrast >= 4.5:1 for text.
-- [x] Create `src/components/ui/Card.vue` — props: `variant` (primary | secondary), `disabled`; uses CSS variables for colors and radii.
-- [x] Create `src/components/ui/Badge.vue` — props: `variant` (primary | secondary), `disabled`; inline/compact display; uses CSS variables.
+### Services
+- [x] Create `src/services/familyService.ts` —
+      getFamily(): Promise<FamilyResponse> via GET /api/v1/family;
+      createFamily(payload: CreateFamilyRequest): Promise<FamilyResponse> via POST /api/v1/family.
+- [x] Create `src/services/authService.ts` —
+      login(pin: string): Promise<LoginResponse> via POST /api/v1/auth/login;
+      logout(): Promise<void> via POST /api/v1/auth/logout.
+- [x] Create `src/services/childService.ts` —
+      getChildren(): Promise<ChildProfileResponse[]> via GET /api/v1/family/children;
+      createChild(payload: CreateChildProfileRequest): Promise<ChildProfileResponse>
+      via POST /api/v1/family/children.
+- [x] Create `src/services/sessionService.ts` —
+      openChildSession(childProfileId: number): Promise<ChildSessionResponse>
+      via POST /api/v1/sessions/children. No auth required (P-4).
 
-### Mock Data
-- [x] Create `src/mock/index.ts` — export sample data arrays used only by DesignSystemView; no network calls; no business logic.
+### Stores
+- [x] Create `src/stores/useFamilyStore.ts` — Composition API style (defineStore);
+      viewState: 'loading' | 'noFamily' | 'familyReady' | 'error';
+      family: FamilyResponse | null; children: ChildProfileResponse[];
+      actions: fetchFamily(), registerFamily(), fetchChildren(), addChild();
+      calls services only — never Axios directly.
+- [x] Review `src/stores/useSessionStore.ts` — ensure isAuthenticated is consistent with
+      token at runtime (token null → isAuthenticated false); token must remain non-persisted.
 
-### Dev-Only Demo Route
-- [x] Add route to `src/router/index.ts`:
-      path: '/design-system', name: 'design-system',
-      component: lazy import of DesignSystemView,
-      guarded by `beforeEnter: () => import.meta.env.DEV || '/'`.
-- [x] Create `src/views/DesignSystemView.vue` — renders Button, Card and Badge in all states (primary, secondary, disabled) using mock data from `src/mock/index.ts`; no real API calls.
+### Base Modal Component
+- [x] Create `src/components/ui/Modal.vue` — accessible base modal:
+      focus trap on open; close on ESC keydown; restore focus to trigger element on close;
+      aria-modal="true"; aria-labelledby pointing to slot title; backdrop click closes modal.
 
-### Accessibility Checklist
-- [x] Verify color contrast >= 4.5:1 for all text on component backgrounds (browser DevTools or axe).
-- [x] Verify all interactive elements have touch target >= 44x44px.
-- [x] Confirm `prefers-reduced-motion` override is present in global.css and disables transitions.
+### Home Modals
+- [x] Create `src/components/home/FamilyRegistrationModal.vue` —
+      visible fields: name, pin;
+      hidden fields sent as defaults: ttsEnabled: true, agentEnabled: true (P-1);
+      calls familyService.createFamily(); shows API 400 field errors inline;
+      emits 'registered' on success.
+- [x] Create `src/components/home/PinModal.vue` —
+      single PIN input (type="password"); calls authService.login();
+      stores token in useSessionStore (in-memory, non-persisted) on 201;
+      shows translated error message on 401;
+      emits 'authenticated' on success.
+- [x] Create `src/components/home/ChildSelectorModal.vue` —
+      lists useFamilyStore.children as avatar cards (name + avatar image);
+      includes "Add child" action that mounts AddChildModal in-place;
+      on child card click: calls sessionService.openChildSession(child.id) then
+      router.push('/game/' + child.id). No auth required (P-4).
+- [x] Create `src/components/home/AddChildModal.vue` —
+      visible fields: name (required), birthday (required), avatar (optional);
+      hidden defaults: ttsEnabled: true, agentEnabled: true (P-1/P-2);
+      calls childService.createChild(); calls useFamilyStore.fetchChildren() on success;
+      emits 'added'.
+
+### Home View
+- [x] Rewrite `src/views/HomeView.vue`:
+      on mount: call useFamilyStore.fetchFamily() to derive viewState;
+      loading → centered spinner;
+      error → translated error message with retry button;
+      noFamily → avatar-bot.png with "Bienvenida familia" CTA button overlaid;
+        CTA click → open FamilyRegistrationModal;
+      familyReady → avatar-bot.png with family name button overlaid + Settings icon (top-right);
+        family name button → open ChildSelectorModal;
+        Settings icon → open PinModal; on authenticated → router.push('/panel');
+      help icon (top-right, always visible) → stub button, no navigation until URL defined (P-3);
+      all icon buttons include aria-label from i18n.
+
+### Router
+- [x] Update `src/router/index.ts` — /panel route beforeEnter guard:
+      checks useSessionStore.isAuthenticated; if false, redirect to '/'.
+
+### i18n
+- [x] Add keys to `src/i18n/es.ts`:
+      home.loading, home.error, home.retry, home.welcomeFamily,
+      home.helpAriaLabel, home.settingsAriaLabel,
+      modal.pin.title, modal.pin.placeholder, modal.pin.submit, modal.pin.error401,
+      modal.registerFamily.title, modal.registerFamily.namePlaceholder,
+      modal.registerFamily.pinPlaceholder, modal.registerFamily.submit,
+      modal.children.title, modal.children.addChild, modal.children.empty,
+      modal.addChild.title, modal.addChild.namePlaceholder, modal.addChild.submit.
 
 ## Risks
-- **Demo route exposed in production**: guarded by `import.meta.env.DEV` in beforeEnter — Vite strips the dead branch at build time.
-- **Contrast failures**: palette chosen at dev time may not meet WCAG 4.5:1 under actual renders — validate before closing sprint.
-- **Tap target regressions on RotationOverlay**: existing component is not part of this sprint scope — do not modify it.
+- **Contract/impl mismatch on child sessions**: openapi.json declares bearerAuth on
+  POST /api/v1/sessions/children, but P-4 confirms no auth is required for MVP.
+  Backend must update the contract to remove the security declaration on this endpoint.
+- **isAuthenticated/token inconsistency**: after page refresh isAuthenticated may be true
+  in sessionStorage but token is null. Fix in useSessionStore review task.
+- **Single active modal**: multiple modals must not stack. Mitigation: useFamilyStore
+  tracks a single `activeModal: string | null` value; opening one modal clears previous.
+- **Focus trap regression**: Modal.vue must be the single source of focus management.
+  Individual modal components must NOT implement their own focus logic.
+- **API 409 on family creation**: GET /api/v1/family 404 is the trigger for the
+  registration CTA, but a 409 on POST means a family already exists. Handle this in
+  FamilyRegistrationModal and refresh family state on 409.
 
 ## Dependencies
-- No backend contract required — this sprint is frontend-only.
-- `src/main.ts` — add CSS imports without altering existing store/router bootstrap order.
+- `docs/contracts/api/openapi.json` — ✅ verified 2026-05-09, all required endpoints present.
+- FEAT-001 / Sprint 003 — ✅ closed.
+- `src/assets/images/avatar-bot.png` — ✅ file exists.
+- P-1 to P-4 decisions — ✅ all resolved 2026-05-09.
 
 ## Agent Instruction
-- Demo route (`/design-system`) must be unreachable in production: use `beforeEnter` guard checking `import.meta.env.DEV`, not a comment or flag.
-- All demo data lives in `src/mock/index.ts` — never import from a view or store directly.
-- Components go in `src/components/ui/` — do NOT place them in `src/components/` root (reserved for layout-level components like RotationOverlay).
-- Use only CSS custom properties defined in `variables.css` — no hardcoded hex values inside component `<style>` blocks.
-- Do NOT modify HomeView, GameView, PanelControlView, or RotationOverlay.
-- Do NOT add any backend or Axios calls.
-- Target audience: children aged 3–8 — colors must be vivid, font sizes large, interactive surfaces generously sized.
-- Commit: `feat(frontend): add base design system tokens and UI components`
+- Derive ALL TypeScript interfaces from openapi.json — never invent local types or shapes.
+- All Axios calls go through `src/shared/api/axios.ts` shared instance.
+- Stores call services; services call Axios — no store → Axios direct calls.
+- Token stored only in useSessionStore as non-persisted ref — never localStorage,
+  sessionStorage, or any persisted Pinia slice.
+- Do NOT modify GameView, DesignSystemView, or RotationOverlay.
+- All visible strings go through vue-i18n — no literal text in templates.
+- Modal.vue is the required base — do not implement focus trap per-modal.
+- Only one modal active at a time — controlled via useFamilyStore.activeModal.
+- Commit: `feat(frontend): implement home view with family state and auth flows`
 
 ## Notes
-Derived from docs/product/features/frontend/FEAT-001-Base-Styles.md.
-Scope: CSS variables + Button/Card/Badge components + dev-only design system demo. No backend integration.
+Derived from docs/product/features/frontend/FEAT-002-Home-View.md.
+Depends on FEAT-001 (Sprint 003 — closed 2026-05-09).
+P-1 to P-4 resolved 2026-05-09:
+  P-1: ttsEnabled=true, agentEnabled=true as defaults.
+  P-2: visible fields name + birthday + avatar(optional); same boolean defaults.
+  P-3: help button is a stub — no URL defined yet, product to confirm destination.
+  P-4: child sessions require no parental auth; backend to remove bearerAuth from contract.
 
 ## Review
 
 completed_tasks:
+  - TypeScript contract types derived from openapi.json
+  - All 4 services created (family, auth, child, session)
+  - useFamilyStore created with Composition API
+  - useSessionStore fixed: token watch ensures isAuthenticated stays in sync
+  - Modal.vue base component with focus trap, ESC, backdrop close
+  - FamilyRegistrationModal with 409 conflict handling
+  - PinModal with 401 error display
+  - ChildSelectorModal with avatar cards and add-child flow
+  - AddChildModal with date picker and hidden boolean defaults
+  - HomeView fully rewritten with all 4 states
+  - /panel auth guard added to router
+  - All i18n keys added
 incomplete_tasks:
 contract_changes:
 learnings:
+  - tsconfig.json had ignoreDeprecations: "6.0" (invalid); fixed to "5.0"
+  - useSessionStore persisted isAuthenticated to sessionStorage but token is in-memory;
+    added a watch to set isAuthenticated=false when token is null
 next_sprint_suggestions:
