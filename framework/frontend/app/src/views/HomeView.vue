@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useFamilyStore } from '@/stores/useFamilyStore'
@@ -12,7 +12,8 @@ const { t } = useI18n()
 const router = useRouter()
 const familyStore = useFamilyStore()
 
-onMounted(() => {
+onMounted(async () => {
+  await nextTick()
   familyStore.fetchFamily()
 })
 
@@ -93,6 +94,7 @@ function handleRetry() {
 <style scoped>
 .home {
   position: relative;
+  min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
   display: flex;

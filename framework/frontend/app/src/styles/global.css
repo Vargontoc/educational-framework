@@ -7,12 +7,14 @@
 }
 
 html {
+  height: 100%;
   font-size: var(--font-size-md);
   font-family: var(--font-family-base);
   -webkit-font-smoothing: antialiased;
 }
 
 body {
+  height: 100%;
   background-color: #f9fafb;
   color: #1f2937;
   line-height: 1.5;

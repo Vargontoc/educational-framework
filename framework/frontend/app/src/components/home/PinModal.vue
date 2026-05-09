@@ -17,6 +17,15 @@ const submitting = ref(false)
 
 const TITLE_ID = 'pin-title'
 
+function filterNumeric(event: Event) {
+  const input = event.target as HTMLInputElement
+  const digits = input.value.replace(/[^0-9]/g, '')
+  if (digits !== input.value) {
+    pin.value = digits
+    input.value = digits
+  }
+}
+
 async function handleSubmit() {
   errorMsg.value = null
   submitting.value = true
@@ -57,7 +66,7 @@ function handleClose() {
         <input
           id="pin-input"
           v-model="pin"
-          type="tel"
+          type="text"
           inputmode="numeric"
           pattern="[0-9]*"
           maxlength="6"
@@ -65,6 +74,7 @@ function handleClose() {
           :placeholder="t('modal.pin.placeholder')"
           required
           class="form-input"
+          @input="filterNumeric"
         />
       </div>
 
