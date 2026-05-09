@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Interfaz visual básica para la aplicación
 depends_on:
 owned_by: frontend
@@ -17,7 +17,7 @@ La demo será una ruta/colección de vistas incluida solamente en builds de desa
 
 ## Alcance (aclaración)
 
-- Solo estilos y componentes visuales (CSS/SCSS, variables, componentes Vue). 
+- Solo estilos y componentes visuales (CSS/SCSS, variables, componentes Vue).
 - Mock data local para la demo; no crear o modificar lógica backend.
 - Incluir controles de accesibilidad y ajustes para targets táctiles.
 
@@ -32,11 +32,11 @@ La demo será una ruta/colección de vistas incluida solamente en builds de desa
 
 - Backend: N/A para esta feature (no hay cambios ni dependencias). Si en el futuro se añade integración, aplicar restricciones de entorno para endpoints de demo.
 - Frontend:
-	- Incluir la demo solo cuando `import.meta.env.MODE === 'development'`.
-	- Mantener todos los datos de demo en un módulo `mock` (no llamadas a red).
-	- Definir variables CSS para colores, tamaños y espaciados; usar SVGs optimizados y `loading=lazy` donde proceda.
-	- Aplicar buenas prácticas WCAG básicas: contraste >= 4.5:1 para texto, targets táctiles >= 44x44px.
-	- Evitar animaciones largas; ofrecer opción de reducir movimiento.
+ 	- Incluir la demo solo cuando `import.meta.env.MODE === 'development'`.
+ 	- Mantener todos los datos de demo en un módulo `mock` (no llamadas a red).
+ 	- Definir variables CSS para colores, tamaños y espaciados; usar SVGs optimizados y `loading=lazy` donde proceda.
+ 	- Aplicar buenas prácticas WCAG básicas: contraste >= 4.5:1 para texto, targets táctiles >= 44x44px.
+ 	- Evitar animaciones largas; ofrecer opción de reducir movimiento.
 - Agents (si los usan en el futuro): restringir vocabulario, aplicar filtros y usar respuestas preaprobadas para demo; no permitir generación libre de texto para usuarios menores.
 
 ## Criterios de aceptación
