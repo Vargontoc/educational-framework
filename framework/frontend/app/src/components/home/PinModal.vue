@@ -57,7 +57,11 @@ function handleClose() {
         <input
           id="pin-input"
           v-model="pin"
-          type="password"
+          type="tel"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="6"
+          autocomplete="one-time-code"
           :placeholder="t('modal.pin.placeholder')"
           required
           class="form-input"
