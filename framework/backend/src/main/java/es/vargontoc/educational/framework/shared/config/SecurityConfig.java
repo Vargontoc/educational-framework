@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/api/v1/family/**").permitAll()
                 .requestMatchers("/api/v1/auth/login").permitAll()
+                .requestMatchers("/api/v1/sessions/children/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
