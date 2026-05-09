@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useSessionStore = defineStore(
@@ -7,7 +7,7 @@ export const useSessionStore = defineStore(
     const familyId = ref<number | null>(null)
     const selectedChildId = ref<number | null>(null)
     const isAuthenticated = ref(false)
-    // in-memory only — never persisted, cleared on page refresh by design (ADR-010 §3.3)
+    // in-memory only — never persisted, cleared on page refresh by design (ADR-010 section 3.3)
     const token = ref<string | null>(null)
 
     function $reset() {
@@ -16,6 +16,14 @@ export const useSessionStore = defineStore(
       isAuthenticated.value = false
       token.value = null
     }
+
+    // Fix isAuthenticated/token inconsistency after page refresh:
+    // token is in-memory (lost on refresh), so if it is null, isAuthenticated must be false.
+    watch(token, (newToken) => {
+      if (newToken === null) {
+        isAuthenticated.value = false
+      }
+    }, { immediate: true })
 
     return { familyId, selectedChildId, isAuthenticated, token, $reset }
   },

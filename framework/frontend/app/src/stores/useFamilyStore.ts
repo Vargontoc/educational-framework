@@ -1,0 +1,70 @@
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
+import type { FamilyResponse, ChildProfileResponse, CreateFamilyRequest, CreateChildProfileRequest } from '@/shared/types/api'
+import * as familyService from '@/services/familyService'
+import * as childService from '@/services/childService'
+
+export type ViewState = 'loading' | 'noFamily' | 'familyReady' | 'error'
+
+export const useFamilyStore = defineStore('family', () => {
+  const viewState = ref<ViewState>('loading')
+  const family = ref<FamilyResponse | null>(null)
+  const children = ref<ChildProfileResponse[]>([])
+  const activeModal = ref<string | null>(null)
+  const errorMessage = ref<string | null>(null)
+
+  function setActiveModal(modal: string | null) {
+    activeModal.value = modal
+  }
+
+  async function fetchFamily() {
+    viewState.value = 'loading'
+    errorMessage.value = null
+    try {
+      family.value = await familyService.getFamily()
+      viewState.value = 'familyReady'
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response?.status
+      if (status === 404) {
+        family.value = null
+        viewState.value = 'noFamily'
+      } else {
+        errorMessage.value = (error as Error).message ?? 'Error loading family'
+        viewState.value = 'error'
+      }
+    }
+  }
+
+  async function registerFamily(payload: CreateFamilyRequest) {
+    family.value = await familyService.createFamily(payload)
+    viewState.value = 'familyReady'
+    activeModal.value = null
+  }
+
+  async function fetchChildren() {
+    try {
+      children.value = await childService.getChildren()
+    } catch {
+      children.value = []
+    }
+  }
+
+  async function addChild(payload: CreateChildProfileRequest) {
+    await childService.createChild(payload)
+    await fetchChildren()
+    activeModal.value = null
+  }
+
+  return {
+    viewState,
+    family,
+    children,
+    activeModal,
+    errorMessage,
+    setActiveModal,
+    fetchFamily,
+    registerFamily,
+    fetchChildren,
+    addChild
+  }
+})

@@ -4,7 +4,13 @@ export const messages = {
     error: 'Ha ocurrido un error'
   },
   home: {
-    title: 'Inicio'
+    title: 'Inicio',
+    loading: 'Cargando...',
+    error: 'Ha ocurrido un error al cargar la familia',
+    retry: 'Reintentar',
+    welcomeFamily: 'Bienvenida familia',
+    helpAriaLabel: 'Ayuda',
+    settingsAriaLabel: 'Configuración'
   },
   panel: {
     title: 'Panel de Control'
@@ -14,5 +20,32 @@ export const messages = {
   },
   rotation: {
     message: 'Por favor, gira el dispositivo a modo horizontal para continuar'
+  },
+  modal: {
+    close: 'Cerrar',
+    pin: {
+      title: 'Acceso parental',
+      placeholder: 'Ingresa tu PIN',
+      submit: 'Entrar',
+      error401: 'PIN incorrecto'
+    },
+    registerFamily: {
+      title: 'Registrar familia',
+      namePlaceholder: 'Nombre de la familia',
+      pinPlaceholder: 'Crea un PIN de acceso',
+      submit: 'Crear familia'
+    },
+    children: {
+      title: '¿Quién eres?',
+      addChild: 'Agregar niño',
+      empty: 'No hay perfiles aún'
+    },
+    addChild: {
+      title: 'Agregar perfil de niño',
+      namePlaceholder: 'Nombre del niño',
+      birthdayPlaceholder: 'Fecha de nacimiento',
+      avatarPlaceholder: 'URL del avatar (opcional)',
+      submit: 'Crear perfil'
+    }
   }
 }

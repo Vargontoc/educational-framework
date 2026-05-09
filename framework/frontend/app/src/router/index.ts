@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import { useSessionStore } from '@/stores/useSessionStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,13 +13,17 @@ const router = createRouter({
     {
       path: '/panel',
       name: 'panel',
-      // guard stub — real PIN auth added in the auth sprint
-      component: () => import('@/views/PanelControlView.vue')
+      component: () => import('@/views/PanelControlView.vue'),
+      beforeEnter: () => {
+        const session = useSessionStore()
+        if (!session.isAuthenticated) {
+          return '/'
+        }
+      }
     },
     {
       path: '/game/:childId',
       name: 'game',
-      // guard stub — active child session check added in the auth sprint
       component: () => import('@/views/GameView.vue')
     },
     {
@@ -36,7 +41,7 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   if (import.meta.env.DEV) {
-    console.log(`[router] → ${String(to.name ?? to.path)}`)
+    console.log(`[router] -> ${String(to.name ?? to.path)}`)
   }
 })
 
