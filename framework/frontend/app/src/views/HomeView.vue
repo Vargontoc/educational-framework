@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useFamilyStore } from '@/stores/useFamilyStore'
@@ -12,7 +12,8 @@ const { t } = useI18n()
 const router = useRouter()
 const familyStore = useFamilyStore()
 
-onMounted(() => {
+onMounted(async () => {
+  await nextTick()
   familyStore.fetchFamily()
 })
 
@@ -50,10 +51,12 @@ function handleRetry() {
 
     <!-- No family state -->
     <div v-else-if="familyStore.viewState === 'noFamily'" class="home__center">
-      <img src="@/assets/images/avatar-bot.png" alt="" class="home__avatar" />
-      <button class="home__cta" @click="familyStore.setActiveModal('familyRegistration')">
-        {{ t('home.welcomeFamily') }}
-      </button>
+      <div class="home__avatar-container">
+        <img src="@/assets/images/avatar-bot.png" alt="" class="home__avatar" />
+        <button class="home__cta" @click="familyStore.setActiveModal('familyRegistration')">
+          {{ t('home.welcomeFamily') }}
+        </button>
+      </div>
     </div>
 
     <!-- Family ready state -->
@@ -72,10 +75,12 @@ function handleRetry() {
       >
         &#9881;
       </button>
-      <img src="@/assets/images/avatar-bot.png" alt="" class="home__avatar" />
-      <button class="home__family-btn" @click="openChildSelector">
-        {{ familyStore.family?.name }}
-      </button>
+      <div class="home__avatar-container">
+        <img src="@/assets/images/avatar-bot.png" alt="" class="home__avatar" />
+        <button class="home__family-btn" @click="openChildSelector">
+          {{ familyStore.family?.name }}
+        </button>
+      </div>
     </div>
 
     <!-- Modals -->
@@ -90,9 +95,12 @@ function handleRetry() {
 .home {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: auto;
 }
 
 .home__center {
@@ -104,6 +112,13 @@ function handleRetry() {
   position: relative;
 }
 
+.home__avatar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .home__avatar {
   width: 200px;
   height: 200px;
@@ -111,9 +126,11 @@ function handleRetry() {
 }
 
 .home__cta {
-  min-width: 200px;
+  position: absolute;
+  bottom: var(--space-md);
+  min-width: 180px;
   min-height: var(--touch-target-min);
-  padding: var(--space-sm) var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
   border: none;
   border-radius: var(--radius-md);
   background-color: var(--color-primary);
@@ -123,6 +140,7 @@ function handleRetry() {
   font-weight: 700;
   cursor: pointer;
   transition: background-color var(--transition-base);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
 }
 
 .home__cta:hover {
@@ -130,9 +148,11 @@ function handleRetry() {
 }
 
 .home__family-btn {
-  min-width: 200px;
+  position: absolute;
+  bottom: var(--space-md);
+  min-width: 180px;
   min-height: var(--touch-target-min);
-  padding: var(--space-sm) var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
   border: none;
   border-radius: var(--radius-md);
   background-color: var(--color-secondary);
@@ -142,6 +162,7 @@ function handleRetry() {
   font-weight: 700;
   cursor: pointer;
   transition: background-color var(--transition-base);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
 }
 
 .home__family-btn:hover {

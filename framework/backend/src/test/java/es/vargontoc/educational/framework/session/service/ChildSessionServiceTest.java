@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.session.service;
 
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
 import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
@@ -27,6 +28,9 @@ class ChildSessionServiceTest {
 
     @Mock
     private ChildSessionRepository childSessionRepository;
+
+    @Mock
+    private SessionEventPublisher sessionEventPublisher;
 
     @InjectMocks
     private ChildSessionService childSessionService;

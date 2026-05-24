@@ -3,7 +3,6 @@ package es.vargontoc.educational.framework.session.infrastructure.web;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import es.vargontoc.educational.framework.session.infrastructure.dto.LoginRequest;
 import es.vargontoc.educational.framework.session.infrastructure.dto.LoginResponse;
-import es.vargontoc.educational.framework.session.infrastructure.dto.LogoutRequest;
 import es.vargontoc.educational.framework.session.model.FamilySessionResult;
 import es.vargontoc.educational.framework.session.ports.in.FamilySessionUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
@@ -44,10 +43,12 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
-        @RequestHeader(value = "Authorization", required = false) String authorization,
-        @RequestBody(required = false) LogoutRequest request
+        @RequestHeader(value = "Authorization", required = false) String authorization
     ) {
-        familySessionUseCase.logout(resolveRawToken(authorization, request));
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new SessionException("Missing bearer token");
+        }
+        familySessionUseCase.logout(authorization.substring("Bearer ".length()));
         return ResponseEntity.noContent().build();
     }
 
@@ -59,15 +60,5 @@ public class AuthController {
             session.getFamilyId(),
             session.getCreatedAt()
         );
-    }
-
-    private static String resolveRawToken(String authorization, LogoutRequest request) {
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            return authorization.substring("Bearer ".length());
-        }
-        if (request != null && request.token() != null && !request.token().isBlank()) {
-            return request.token();
-        }
-        throw new SessionException("Missing bearer token");
     }
 }
