@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -39,6 +40,12 @@ public class ChildSessionService implements ChildSessionUseCase {
             .ifPresent(existing -> {
                 closeExistingSession(existing, now, ChildSessionStatus.CLOSED);
                 childSessionRepository.save(existing);
+                sessionEventPublisher.notifyChildAndParent(
+                    existing.getId(),
+                    existing.getFamilyId(),
+                    SessionEvent.of(SessionEventType.SESSION_EXPIRED, existing.getId(),
+                        Map.of("reason", "new_session_opened"))
+                );
             });
 
         var session = new ChildSession();
@@ -109,7 +116,8 @@ public class ChildSessionService implements ChildSessionUseCase {
             sessionEventPublisher.notifyChildAndParent(
                 session.getId(),
                 session.getFamilyId(),
-                SessionEvent.of(SessionEventType.SESSION_EXPIRED, session.getId())
+                SessionEvent.of(SessionEventType.SESSION_EXPIRED, session.getId(),
+                    Map.of("reason", "inactivity"))
             );
         }
 

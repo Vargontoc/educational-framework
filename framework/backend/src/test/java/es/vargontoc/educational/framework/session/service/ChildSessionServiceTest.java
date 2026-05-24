@@ -1,18 +1,22 @@
 package es.vargontoc.educational.framework.session.service;
 
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
 import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
 import es.vargontoc.educational.framework.shared.exception.SessionException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +54,7 @@ class ChildSessionServiceTest {
         assertEquals(30, result.getHeartbeatIntervalSeconds());
         assertNotNull(result.getStartedAt());
         assertNotNull(result.getLastActivityAt());
+        verify(sessionEventPublisher, never()).notifyChildAndParent(any(), any(), any());
     }
 
     @Test
@@ -65,6 +72,27 @@ class ChildSessionServiceTest {
         assertTrue(priorSession.getDurationSeconds() > 0);
         assertEquals(ChildSessionStatus.ACTIVE, result.getStatus());
         verify(childSessionRepository).save(priorSession);
+    }
+
+    @Test
+    void openSession_withPriorActiveSendsSessionExpiredEvent() {
+        var priorSession = activeSession();
+        priorSession.setId(99L);
+        priorSession.setFamilyId(1L);
+        priorSession.setStartedAt(LocalDateTime.now().minusSeconds(5));
+
+        when(childSessionRepository.findActiveByChildProfileId(10L)).thenReturn(Optional.of(priorSession));
+        when(childSessionRepository.save(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        childSessionService.openSession(10L, 1L, 30, null);
+
+        var eventCaptor = ArgumentCaptor.forClass(SessionEvent.class);
+        verify(sessionEventPublisher).notifyChildAndParent(eq(99L), eq(1L), eventCaptor.capture());
+
+        var event = eventCaptor.getValue();
+        assertEquals(SessionEventType.SESSION_EXPIRED, event.event());
+        assertEquals(99L, event.sessionId());
+        assertEquals("new_session_opened", event.payload().get("reason"));
     }
 
     @Test
@@ -135,6 +163,26 @@ class ChildSessionServiceTest {
         assertEquals(ChildSessionStatus.EXPIRED, second.getStatus());
 
         verify(childSessionRepository).saveAll(List.of(first, second));
+    }
+
+    @Test
+    void expireInactiveSessions_sendsSessionExpiredEventWithInactivityReason() {
+        var session = activeSession();
+        session.setId(55L);
+        session.setFamilyId(1L);
+        var cutoff = LocalDateTime.now().minusMinutes(1);
+
+        when(childSessionRepository.findExpirableSessions(cutoff)).thenReturn(List.of(session));
+
+        childSessionService.expireInactiveSessions(cutoff);
+
+        var eventCaptor = ArgumentCaptor.forClass(SessionEvent.class);
+        verify(sessionEventPublisher).notifyChildAndParent(eq(55L), eq(1L), eventCaptor.capture());
+
+        var event = eventCaptor.getValue();
+        assertEquals(SessionEventType.SESSION_EXPIRED, event.event());
+        assertEquals(55L, event.sessionId());
+        assertEquals("inactivity", event.payload().get("reason"));
     }
 
     private ChildSession activeSession() {

@@ -6,6 +6,12 @@ import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
 import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
 import es.vargontoc.educational.framework.family.validation.FamilyValidator;
+import es.vargontoc.educational.framework.session.model.FamilySession;
+import es.vargontoc.educational.framework.session.model.FamilySessionStatus;
+import es.vargontoc.educational.framework.session.ports.out.FamilySessionRepository;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
 import es.vargontoc.educational.framework.shared.exception.ConflictException;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,12 +26,21 @@ public class FamilyService implements FamilyUseCase {
 
     private final FamilyRepository familyRepository;
     private final ChildProfileRepository childProfileRepository;
+    private final FamilySessionRepository familySessionRepository;
+    private final SessionEventPublisher sessionEventPublisher;
     private final FamilyValidator familyValidator;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public FamilyService(FamilyRepository familyRepository, ChildProfileRepository childProfileRepository) {
+    public FamilyService(
+        FamilyRepository familyRepository,
+        ChildProfileRepository childProfileRepository,
+        FamilySessionRepository familySessionRepository,
+        SessionEventPublisher sessionEventPublisher
+    ) {
         this.familyRepository = familyRepository;
         this.childProfileRepository = childProfileRepository;
+        this.familySessionRepository = familySessionRepository;
+        this.sessionEventPublisher = sessionEventPublisher;
         this.familyValidator = new FamilyValidator();
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
@@ -62,8 +77,10 @@ public class FamilyService implements FamilyUseCase {
         familyValidator.validateForUpdate(name, rawPin);
 
         existing.setName(name);
-        if (rawPin != null && !rawPin.isBlank()) {
+        boolean pinChanged = rawPin != null && !rawPin.isBlank();
+        if (pinChanged) {
             existing.setPinHash(passwordEncoder.encode(rawPin));
+            revokeFamilySessions(existing.getId());
         }
 
         if (!ttsEnabled) {
@@ -104,6 +121,28 @@ public class FamilyService implements FamilyUseCase {
                 child.setUpdatedAt(LocalDateTime.now());
                 childProfileRepository.save(child);
             }
+        }
+    }
+
+    private void revokeFamilySessions(Long familyId) {
+        var activeSessions = familySessionRepository.findActiveByFamilyId(familyId);
+        if (activeSessions.isEmpty()) {
+            return;
+        }
+
+        var now = LocalDateTime.now();
+        for (FamilySession session : activeSessions) {
+            session.setStatus(FamilySessionStatus.REVOKED);
+            session.setRevoked(true);
+            session.setUpdatedAt(now);
+        }
+        familySessionRepository.saveAll(activeSessions);
+
+        for (FamilySession session : activeSessions) {
+            sessionEventPublisher.notifyParent(
+                familyId,
+                SessionEvent.of(SessionEventType.SESSION_INVALIDATED, session.getId())
+            );
         }
     }
 }
