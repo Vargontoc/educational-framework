@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="009__create_content_catalog" author="vargontoc">
+        <!-- Category table -->
+        <createTable tableName="category">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_order" type="INTEGER" defaultValueNumeric="0"/>
+            <column name="icon_url" type="VARCHAR(500)"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createIndex indexName="idx_category_status" tableName="category">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_category_name" tableName="category">
+            <column name="name"/>
+        </createIndex>
+
+        <!-- Topic table -->
+        <createTable tableName="topic">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="category_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_age" type="INTEGER"/>
+            <column name="max_age" type="INTEGER"/>
+            <column name="compatible_variants" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="topic"
+            baseColumnNames="category_id"
+            constraintName="fk_topic_category"
+            referencedTableName="category"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_topic_category_id" tableName="topic">
+            <column name="category_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_topic_status" tableName="topic">
+            <column name="status"/>
+        </createIndex>
+
+        <!-- Activity table -->
+        <createTable tableName="activity">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="game_engine_type" type="VARCHAR(100)"/>
+            <column name="min_age" type="INTEGER"/>
+            <column name="max_age" type="INTEGER"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createIndex indexName="idx_activity_status" tableName="activity">
+            <column name="status"/>
+        </createIndex>
+
+        <!-- Activity-Topic join table -->
+        <createTable tableName="activity_topic">
+            <column name="activity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="topic_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey
+            tableName="activity_topic"
+            columnNames="activity_id, topic_id"
+            constraintName="pk_activity_topic"/>
+
+        <addForeignKeyConstraint
+            baseTableName="activity_topic"
+            baseColumnNames="activity_id"
+            constraintName="fk_activity_topic_activity"
+            referencedTableName="activity"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableName="activity_topic"
+            baseColumnNames="topic_id"
+            constraintName="fk_activity_topic_topic"
+            referencedTableName="topic"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_activity_topic_topic_id" tableName="activity_topic">
+            <column name="topic_id"/>
+        </createIndex>
+
+        <!-- Difficulty Level table -->
+        <createTable tableName="difficulty_level">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="activity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty_code" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="engine_params" type="JSONB"/>
+            <column name="adaptive_threshold_config" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="difficulty_level"
+            baseColumnNames="activity_id"
+            constraintName="fk_difficulty_level_activity"
+            referencedTableName="activity"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_difficulty_level_activity_id" tableName="difficulty_level">
+            <column name="activity_id"/>
+        </createIndex>
+
+        <!-- Activity Resource table -->
+        <createTable tableName="activity_resource">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="activity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="topic_id" type="BIGINT"/>
+            <column name="resource_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="path" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="JSONB"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="activity_resource"
+            baseColumnNames="activity_id"
+            constraintName="fk_activity_resource_activity"
+            referencedTableName="activity"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableName="activity_resource"
+            baseColumnNames="topic_id"
+            constraintName="fk_activity_resource_topic"
+            referencedTableName="topic"
+            referencedColumnNames="id"
+            onDelete="SET NULL"/>
+
+        <createIndex indexName="idx_activity_resource_activity_id" tableName="activity_resource">
+            <column name="activity_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_activity_resource_topic_id" tableName="activity_resource">
+            <column name="topic_id"/>
+        </createIndex>
+
+        <!-- Content Locale table -->
+        <createTable tableName="content_locale">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="entity_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locale_code" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addUniqueConstraint
+            tableName="content_locale"
+            columnNames="entity_type, entity_id, locale_code"
+            constraintName="uk_content_locale_entity_locale"/>
+
+        <createIndex indexName="idx_content_locale_entity" tableName="content_locale">
+            <column name="entity_type"/>
+            <column name="entity_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
