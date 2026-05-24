@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/family/**").permitAll()
                 .requestMatchers("/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/sessions/children/**").permitAll()
+                .requestMatchers("/api/v1/dev/content/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -55,6 +56,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of(
             HttpMethod.GET.name(),
             HttpMethod.POST.name(),
+            HttpMethod.PUT.name(),
             HttpMethod.PATCH.name(),
             HttpMethod.DELETE.name(),
             HttpMethod.OPTIONS.name()

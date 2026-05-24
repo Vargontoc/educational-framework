@@ -5,6 +5,12 @@
     "description": "Family module API contract.",
     "version": "0.0.1"
   },
+  "tags": [
+    {
+      "name": "dev-content",
+      "description": "[DEV ONLY] Content catalog administrative API. Available only with Spring profile 'dev'. Not part of the production API surface. All endpoints under /api/v1/dev/content/** return 404 outside profile 'dev'."
+    }
+  ],
   "paths": {
     "/api/v1/auth/login": {
       "post": {
@@ -200,6 +206,270 @@
       "get": {
         "responses": {
           "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAdultProfileList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/categories": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create category",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateCategoryRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseCategory" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error409" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List all categories",
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseCategoryList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/categories/{id}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get category by id",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseCategory" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update category",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateCategoryRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseCategory" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/topics": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create topic",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateTopicRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseTopic" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found (category not found)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error409" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List topics, optionally filtered by category",
+        "parameters": [{ "name": "categoryId", "in": "query", "required": false, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseTopicList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/topics/{id}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get topic by id",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseTopic" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update topic",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateTopicRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseTopic" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/activities": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create activity",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateActivityRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseActivity" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error409" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List activities, optionally filtered by topic",
+        "parameters": [{ "name": "topicId", "in": "query", "required": false, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseActivityList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/activities/{id}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get activity by id",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseActivity" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update activity",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateActivityRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseActivity" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/difficulty-levels": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create difficulty level for an activity",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateDifficultyLevelRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseDifficultyLevel" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found (activity not found)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List difficulty levels for an activity",
+        "parameters": [{ "name": "activityId", "in": "query", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseDifficultyLevelList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/difficulty-levels/{id}": {
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update difficulty level",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateDifficultyLevelRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseDifficultyLevel" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/activity-resources": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create activity resource",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateActivityResourceRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseActivityResource" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found (activity not found)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List resources for an activity",
+        "parameters": [{ "name": "activityId", "in": "query", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseActivityResourceList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/activity-resources/{id}": {
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update activity resource",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateActivityResourceRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseActivityResource" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/locales": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create content locale",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateContentLocaleRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseContentLocale" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "409": { "description": "Conflict (locale already exists for entity)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error409" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List locales for an entity",
+        "parameters": [
+          { "name": "entityType", "in": "query", "required": true, "schema": { "type": "string", "enum": ["CATEGORY", "TOPIC", "ACTIVITY", "DIFFICULTY_LEVEL", "ACTIVITY_RESOURCE"] } },
+          { "name": "entityId", "in": "query", "required": true, "schema": { "type": "integer", "format": "int64" } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseContentLocaleList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/locales/{id}": {
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update content locale",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateContentLocaleRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseContentLocale" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
         }
       }
     },
@@ -461,6 +731,328 @@
           "avatar": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "CreateCategoryRequest": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "displayOrder": { "type": "integer", "nullable": true },
+          "iconUrl": { "type": "string", "nullable": true }
+        }
+      },
+      "UpdateCategoryRequest": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "displayOrder": { "type": "integer", "nullable": true },
+          "iconUrl": { "type": "string", "nullable": true }
+        }
+      },
+      "CategoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "displayOrder": { "type": "integer", "nullable": true },
+          "iconUrl": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseCategory": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/CategoryResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseCategoryList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/CategoryResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateTopicRequest": {
+        "type": "object",
+        "required": ["name", "categoryId", "status"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "categoryId": { "type": "integer", "format": "int64" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "compatibleVariants": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "UpdateTopicRequest": {
+        "type": "object",
+        "required": ["name", "categoryId", "status"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "categoryId": { "type": "integer", "format": "int64" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "compatibleVariants": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "TopicResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "categoryId": { "type": "integer", "format": "int64" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "compatibleVariants": { "type": "array", "items": { "type": "string" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseTopic": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/TopicResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseTopicList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/TopicResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateActivityRequest": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "gameEngineType": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "topicIds": { "type": "array", "nullable": true, "items": { "type": "integer", "format": "int64" } }
+        }
+      },
+      "UpdateActivityRequest": {
+        "type": "object",
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "gameEngineType": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "topicIds": { "type": "array", "nullable": true, "items": { "type": "integer", "format": "int64" } }
+        }
+      },
+      "ActivityResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "gameEngineType": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "topicIds": { "type": "array", "items": { "type": "integer", "format": "int64" } },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseActivity": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/ActivityResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseActivityList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ActivityResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateDifficultyLevelRequest": {
+        "type": "object",
+        "required": ["activityId", "difficultyCode"],
+        "properties": {
+          "activityId": { "type": "integer", "format": "int64" },
+          "difficultyCode": { "type": "string", "enum": ["EASY", "MEDIUM", "HARD"] },
+          "engineParams": { "type": "string", "nullable": true, "description": "JSON string with engine-specific parameters." },
+          "adaptiveThresholdConfig": { "type": "string", "nullable": true, "description": "JSON string with adaptive threshold configuration." }
+        }
+      },
+      "UpdateDifficultyLevelRequest": {
+        "type": "object",
+        "required": ["difficultyCode"],
+        "properties": {
+          "difficultyCode": { "type": "string", "enum": ["EASY", "MEDIUM", "HARD"] },
+          "engineParams": { "type": "string", "nullable": true },
+          "adaptiveThresholdConfig": { "type": "string", "nullable": true }
+        }
+      },
+      "DifficultyLevelResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "activityId": { "type": "integer", "format": "int64" },
+          "difficultyCode": { "type": "string", "enum": ["EASY", "MEDIUM", "HARD"] },
+          "engineParams": { "type": "string", "nullable": true },
+          "adaptiveThresholdConfig": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseDifficultyLevel": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/DifficultyLevelResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseDifficultyLevelList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/DifficultyLevelResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateActivityResourceRequest": {
+        "type": "object",
+        "required": ["activityId", "resourceType", "path"],
+        "properties": {
+          "activityId": { "type": "integer", "format": "int64" },
+          "topicId": { "type": "integer", "format": "int64", "nullable": true },
+          "resourceType": { "type": "string", "enum": ["IMAGE", "AUDIO", "VIDEO"] },
+          "path": { "type": "string", "maxLength": 500 },
+          "metadata": { "type": "string", "nullable": true, "description": "JSON string with size, format, duration, dimensions, alt text." }
+        }
+      },
+      "UpdateActivityResourceRequest": {
+        "type": "object",
+        "required": ["resourceType", "path"],
+        "properties": {
+          "topicId": { "type": "integer", "format": "int64", "nullable": true },
+          "resourceType": { "type": "string", "enum": ["IMAGE", "AUDIO", "VIDEO"] },
+          "path": { "type": "string", "maxLength": 500 },
+          "metadata": { "type": "string", "nullable": true }
+        }
+      },
+      "ActivityResourceResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "activityId": { "type": "integer", "format": "int64" },
+          "topicId": { "type": "integer", "format": "int64", "nullable": true },
+          "resourceType": { "type": "string", "enum": ["IMAGE", "AUDIO", "VIDEO"] },
+          "path": { "type": "string" },
+          "metadata": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseActivityResource": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/ActivityResourceResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseActivityResourceList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ActivityResourceResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateContentLocaleRequest": {
+        "type": "object",
+        "required": ["entityType", "entityId", "localeCode", "name"],
+        "properties": {
+          "entityType": { "type": "string", "enum": ["CATEGORY", "TOPIC", "ACTIVITY", "DIFFICULTY_LEVEL", "ACTIVITY_RESOURCE"] },
+          "entityId": { "type": "integer", "format": "int64" },
+          "localeCode": { "type": "string", "example": "es-ES", "description": "Only es-ES is supported in v1." },
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true }
+        }
+      },
+      "UpdateContentLocaleRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true }
+        }
+      },
+      "ContentLocaleResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "entityType": { "type": "string" },
+          "entityId": { "type": "integer", "format": "int64" },
+          "localeCode": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseContentLocale": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/ContentLocaleResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseContentLocaleList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ContentLocaleResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
         }
       },
       "Error400": {

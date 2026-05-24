@@ -1,69 +1,67 @@
-# Sprint 010 - backend
+# Sprint 011 - backend
 # -----------------------------------------------
 
 ## Goal
-Implement persistence and dev-only administrative CRUD APIs for the core content catalog: categories, topics, activities, difficulty levels, and activity resources.
+Add curiosity and avatar fallback message catalogs as static content, with dev-only CRUD and no TTS or agent execution.
 
 ## Status
 status: active
-started_at: 2026-05-24 19:45:00
+started_at: 2026-05-24 21:55:00
 closed_at:
 blocked_by:
 waiting_for:
 
 ## Tasks
 
-### Persistence
-- [x] Create JPA entities for `Category`, `Topic`, `Activity`, `DifficultyLevel`, and `ActivityResource` if not already created. **Done in Sprint 009**
-- [x] Create Spring Data repositories for the core catalog entities. **Done in Sprint 009**
-- [x] Create persistence adapters implementing the content output ports. **Done in Sprint 009**
-- [ ] Add static mapper methods following the existing backend adapter style.
+### Domain Model
+- [ ] Create `Curiosity` domain model referencing `Topic`.
+- [ ] Create `AvatarEventCatalog` domain model with event type, tone, locale, message text, and status.
+- [ ] Validate curiosity text for TTS-friendly length and simple structure.
+- [ ] Validate avatar fallback message text with the existing agent/TTS `content_text` maximum length of 300 characters.
 
-### Application Services
-- [x] Implement use cases for category create, update, get, and list. **Done in Sprint 009**
-- [x] Implement use cases for topic create, update, get, and list. **Done in Sprint 009**
-- [x] Implement use cases for activity create, update, get, and list. **Done in Sprint 009**
-- [x] Implement use cases for difficulty level create, update, get, and list by activity. **Done in Sprint 009**
-- [x] Implement use cases for activity resource create, update, get, and list by activity. **Done in Sprint 009**
+### Migration
+- [ ] Add a new Liquibase migration for curiosity and avatar event catalog tables.
+- [ ] Add foreign keys to topics where applicable.
+- [ ] Add indexes for topic ID, event type, tone, locale, status, and age range.
+- [ ] Include the migration in `db.changelog-master.xml`.
 
-### Dev-Only DTOs And Controllers
-- [ ] Create request/response DTOs for core catalog admin operations.
-- [ ] Create dev-only controller for `/api/v1/dev/content/categories`.
-- [ ] Create dev-only controller for `/api/v1/dev/content/topics`.
-- [ ] Create dev-only controller for `/api/v1/dev/content/activities`.
-- [ ] Create dev-only controller for `/api/v1/dev/content/activities/{id}/difficulty-levels` if needed for admin management.
-- [ ] Create dev-only controller for `/api/v1/dev/content/activities/{id}/resources` if needed for admin management.
-- [ ] Register all development administrative controllers only with Spring profile `dev`.
+### Persistence And Services
+- [ ] Create JPA entities, Spring Data repositories, and persistence adapters.
+- [ ] Implement use cases for curiosity create, update, get, and list.
+- [ ] Implement use cases for avatar event create, update, get, and list.
+- [ ] Implement service query for active curiosities by topic, age, locale, and status.
+- [ ] Implement service query for active avatar fallback messages by event type, tone, and locale.
 
-### Contract Updates
-- [ ] Update `docs/contracts/api/openapi.json` with dev-only core catalog endpoints if the project documents dev endpoints in the shared contract.
-- [ ] Mark dev-only endpoints clearly in operation descriptions.
+### Dev-Only APIs
+- [ ] Create dev-only CRUD endpoints under `/api/v1/dev/content/curiosities`.
+- [ ] Create dev-only CRUD endpoints under `/api/v1/dev/content/avatar-events`.
+- [ ] Register controllers only with Spring profile `dev`.
 
 ### Tests
-- [ ] Add integration tests with active profile `dev` proving `/api/v1/dev/content/**` endpoints are available.
-- [ ] Add integration tests without profile `dev` proving `/api/v1/dev/content/**` endpoints are unavailable.
-- [ ] Add positive and negative tests for required validation rules.
-- [ ] Add persistence adapter tests where mappings are non-trivial.
+- [ ] Add unit tests for curiosity validation.
+- [ ] Add unit tests for avatar fallback validation.
+- [ ] Add integration tests for dev-only endpoints with profile `dev`.
+- [ ] Add integration tests proving dev-only endpoints are unavailable outside profile `dev`.
+- [ ] Add tests for filtering active curiosity and avatar fallback records.
 
 ## Risks
-- Dev-only endpoints could accidentally become available in production if controllers are not profile-gated.
-- Admin APIs must not be treated as product APIs by frontend or runtime game flows.
-- OpenAPI may become confusing if dev endpoints are mixed with production endpoints without clear descriptions.
+- This catalog may be confused with agent-generated text; it is only fallback/static content.
+- Long or complex text can increase TTS latency and reduce child comprehension.
+- Adding `CuriosityViewed` here would violate the tracking boundary.
 
 ## Dependencies
-- Sprint 009 completed.
-- Existing Spring profile/test profile setup.
-- Existing security configuration reviewed for `/api/v1/dev/content/**` behavior.
+- Sprint 010 completed.
+- FEAT-001 agent/TTS content length constraint remains valid.
+- Topic catalog is available for curiosity references.
 
 ## Agent Instruction
-- Use `/api/v1/dev/content/**`, not `/api/v1/admin/content/**`.
-- Annotate or configure development administrative controllers so they exist only under Spring profile `dev`.
-- Do not implement production read APIs in this sprint except where strictly necessary for tests.
-- Do not add child progress, viewed flags, scores, attempts, or runtime state to content entities.
-- All responses should use `ApiResponse<T>` where applicable.
+- Do not call agents or TTS from this sprint.
+- Do not create `CuriosityViewed` or any child-specific runtime state.
+- Keep avatar fallback messages deterministic and catalog-owned.
+- Ensure all dev CRUD endpoints use `/api/v1/dev/content/**` and profile `dev` only.
 
 ## Notes
-This sprint validates the administrative workflow for the core catalog while keeping production surface clean.
+This sprint prepares fallback content for future avatar/agent resilience without integrating those runtime layers.
 
 ## Review
 
