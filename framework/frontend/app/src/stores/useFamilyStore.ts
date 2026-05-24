@@ -17,6 +17,16 @@ export const useFamilyStore = defineStore('family', () => {
     activeModal.value = modal
   }
 
+  function getHttpStatus(error: unknown): number | undefined {
+    const maybeAxiosError = error as {
+      status?: number
+      response?: { status?: number }
+      request?: { status?: number }
+    }
+
+    return maybeAxiosError.response?.status ?? maybeAxiosError.status ?? maybeAxiosError.request?.status
+  }
+
   async function fetchFamily() {
     viewState.value = 'loading'
     errorMessage.value = null
@@ -24,7 +34,7 @@ export const useFamilyStore = defineStore('family', () => {
       family.value = await familyService.getFamily()
       viewState.value = 'familyReady'
     } catch (error: unknown) {
-      const status = (error as { response?: { status?: number } })?.response?.status
+      const status = getHttpStatus(error)
       if (status === 404) {
         family.value = null
         viewState.value = 'noFamily'

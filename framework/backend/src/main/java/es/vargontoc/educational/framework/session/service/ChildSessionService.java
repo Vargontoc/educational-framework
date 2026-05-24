@@ -1,11 +1,15 @@
 package es.vargontoc.educational.framework.session.service;
 
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
 import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import es.vargontoc.educational.framework.shared.exception.SessionException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +22,13 @@ import java.util.List;
 public class ChildSessionService implements ChildSessionUseCase {
 
     private final ChildSessionRepository childSessionRepository;
+    private final SessionEventPublisher sessionEventPublisher;
 
-    public ChildSessionService(ChildSessionRepository childSessionRepository) {
+    public ChildSessionService(
+            ChildSessionRepository childSessionRepository,
+            @Lazy SessionEventPublisher sessionEventPublisher) {
         this.childSessionRepository = childSessionRepository;
+        this.sessionEventPublisher = sessionEventPublisher;
     }
 
     @Override
@@ -50,14 +58,23 @@ public class ChildSessionService implements ChildSessionUseCase {
     public ChildSession closeSession(Long id) {
         var session = findById(id);
         closeExistingSession(session, LocalDateTime.now(), ChildSessionStatus.CLOSED);
-        return childSessionRepository.save(session);
+        var saved = childSessionRepository.save(session);
+        return saved;
     }
 
     @Override
     public ChildSession expelChild(Long id) {
         var session = findById(id);
         closeExistingSession(session, LocalDateTime.now(), ChildSessionStatus.EXPELLED);
-        return childSessionRepository.save(session);
+        var saved = childSessionRepository.save(session);
+
+        sessionEventPublisher.notifyChildAndParent(
+            saved.getId(),
+            saved.getFamilyId(),
+            SessionEvent.of(SessionEventType.CHILD_EXPELLED, saved.getId())
+        );
+
+        return saved;
     }
 
     @Override
@@ -87,6 +104,15 @@ public class ChildSessionService implements ChildSessionUseCase {
         }
 
         childSessionRepository.saveAll(sessions);
+
+        for (ChildSession session : sessions) {
+            sessionEventPublisher.notifyChildAndParent(
+                session.getId(),
+                session.getFamilyId(),
+                SessionEvent.of(SessionEventType.SESSION_EXPIRED, session.getId())
+            );
+        }
+
         return sessions.size();
     }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFamilyStore } from '@/stores/useFamilyStore'
 import { useSessionStore } from '@/stores/useSessionStore'
@@ -17,12 +17,17 @@ const submitting = ref(false)
 
 const TITLE_ID = 'pin-title'
 
-function filterNumeric(event: Event) {
-  const input = event.target as HTMLInputElement
-  const digits = input.value.replace(/[^0-9]/g, '')
-  if (digits !== input.value) {
-    pin.value = digits
-    input.value = digits
+const numericPin = computed({
+  get: () => pin.value,
+  set: (value: string) => {
+    pin.value = value.replace(/\D/g, '').slice(0, 6)
+  }
+})
+
+function blockNonDigit(event: KeyboardEvent) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return
+  if (event.key.length === 1 && !/\d/.test(event.key)) {
+    event.preventDefault()
   }
 }
 
@@ -65,7 +70,7 @@ function handleClose() {
         <label for="pin-input" class="sr-only">{{ t('modal.pin.placeholder') }}</label>
         <input
           id="pin-input"
-          v-model="pin"
+          v-model="numericPin"
           type="text"
           inputmode="numeric"
           pattern="[0-9]*"
@@ -74,7 +79,7 @@ function handleClose() {
           :placeholder="t('modal.pin.placeholder')"
           required
           class="form-input"
-          @input="filterNumeric"
+          @keydown="blockNonDigit"
         />
       </div>
 

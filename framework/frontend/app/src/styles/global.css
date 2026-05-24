@@ -20,6 +20,10 @@ body {
   line-height: 1.5;
 }
 
+#app {
+  min-height: 100%;
+}
+
 img,
 svg {
   display: block;
