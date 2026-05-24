@@ -1,74 +1,69 @@
-# Sprint 009 - backend
+# Sprint 010 - backend
 # -----------------------------------------------
 
 ## Goal
-Create the FEAT-003 content module foundation: hexagonal package structure, core domain model, validators, ports, and the initial content core catalog schema.
+Implement persistence and dev-only administrative CRUD APIs for the core content catalog: categories, topics, activities, difficulty levels, and activity resources.
 
 ## Status
 status: active
-started_at: 2026-05-24 11:06:49
+started_at: 2026-05-24 19:45:00
 closed_at:
 blocked_by:
 waiting_for:
 
 ## Tasks
 
-### Module Structure
-- [ ] Create `content/model/`, `content/ports/in/`, `content/ports/out/`, `content/service/`, `content/application/`, `content/infrastructure/` package structure.
-- [ ] Keep the module independent from `tracking`, `game`, `avatar`, and `agent` runtime code.
+### Persistence
+- [x] Create JPA entities for `Category`, `Topic`, `Activity`, `DifficultyLevel`, and `ActivityResource` if not already created. **Done in Sprint 009**
+- [x] Create Spring Data repositories for the core catalog entities. **Done in Sprint 009**
+- [x] Create persistence adapters implementing the content output ports. **Done in Sprint 009**
+- [ ] Add static mapper methods following the existing backend adapter style.
 
-### Domain Enums
-- [ ] Create `ContentStatus` with `ACTIVE`, `INACTIVE`, `DRAFT`.
-- [ ] Create `DifficultyCode` with `EASY`, `MEDIUM`, `HARD`.
-- [ ] Create `ResourceType` with `IMAGE`, `AUDIO`, `VIDEO`.
-- [ ] Create `AvatarEventType` with `GREET`, `REWARD`, `HELP`, `ENCOURAGE` if needed by model references.
-- [ ] Create `Tone` with `FUN`, `ENERGETIC`, `CALM`, `SERIOUS` if needed by model references.
-- [ ] Create content locale handling for v1 `es-ES`.
+### Application Services
+- [x] Implement use cases for category create, update, get, and list. **Done in Sprint 009**
+- [x] Implement use cases for topic create, update, get, and list. **Done in Sprint 009**
+- [x] Implement use cases for activity create, update, get, and list. **Done in Sprint 009**
+- [x] Implement use cases for difficulty level create, update, get, and list by activity. **Done in Sprint 009**
+- [x] Implement use cases for activity resource create, update, get, and list by activity. **Done in Sprint 009**
 
-### Core Domain Model
-- [ ] Create `Category` domain model.
-- [ ] Create `Topic` domain model with category reference and compatible variants.
-- [ ] Create `Activity` domain model with game engine type, age range, status, and related topics.
-- [ ] Create `DifficultyLevel` domain model with static engine parameters and adaptive threshold configuration.
-- [ ] Create `ActivityResource` domain model with resource type, opaque path/URL, and metadata.
+### Dev-Only DTOs And Controllers
+- [ ] Create request/response DTOs for core catalog admin operations.
+- [ ] Create dev-only controller for `/api/v1/dev/content/categories`.
+- [ ] Create dev-only controller for `/api/v1/dev/content/topics`.
+- [ ] Create dev-only controller for `/api/v1/dev/content/activities`.
+- [ ] Create dev-only controller for `/api/v1/dev/content/activities/{id}/difficulty-levels` if needed for admin management.
+- [ ] Create dev-only controller for `/api/v1/dev/content/activities/{id}/resources` if needed for admin management.
+- [ ] Register all development administrative controllers only with Spring profile `dev`.
 
-### Validation
-- [ ] Add validators for required names, status values, age ranges, locale, and required relationships.
-- [ ] Validate `DifficultyLevel` thresholds as configuration only; do not implement adaptive runtime decisions.
-- [ ] Validate `ActivityResource` metadata as opaque JSON/text when engine-specific.
-
-### Ports
-- [ ] Define core catalog input ports for create/update/list operations without REST DTO dependencies.
-- [ ] Define output ports for persistence of category, topic, activity, difficulty level, and activity resource.
-
-### Migration
-- [ ] Add a new Liquibase migration after the current latest migration for core content catalog tables.
-- [ ] Include foreign keys and indexes for status, category ID, topic ID, activity ID, locale, and age range where applicable.
-- [ ] Include the new migration in `db.changelog-master.xml`.
+### Contract Updates
+- [ ] Update `docs/contracts/api/openapi.json` with dev-only core catalog endpoints if the project documents dev endpoints in the shared contract.
+- [ ] Mark dev-only endpoints clearly in operation descriptions.
 
 ### Tests
-- [ ] Add unit tests for core domain validation.
-- [ ] Add unit tests for service-level create/update/list rules using mocked output ports.
+- [ ] Add integration tests with active profile `dev` proving `/api/v1/dev/content/**` endpoints are available.
+- [ ] Add integration tests without profile `dev` proving `/api/v1/dev/content/**` endpoints are unavailable.
+- [ ] Add positive and negative tests for required validation rules.
+- [ ] Add persistence adapter tests where mappings are non-trivial.
 
 ## Risks
-- Scope creep into runtime game/tracking logic would make this sprint too large.
-- Flexible JSON/text fields can hide invalid structures; validate only stable fields here and leave engine-specific validation to later modules.
-- Migration must use existing `BaseEntity` expectations with `Long` IDs and audit columns.
+- Dev-only endpoints could accidentally become available in production if controllers are not profile-gated.
+- Admin APIs must not be treated as product APIs by frontend or runtime game flows.
+- OpenAPI may become confusing if dev endpoints are mixed with production endpoints without clear descriptions.
 
 ## Dependencies
-- FEAT-003 accepted content module plan.
-- Completed `shared` module with `BaseEntity`, exceptions, validators, and `ApiResponse`.
-- Existing Liquibase changelog in `framework/backend/src/main/resources/db/changelog/`.
+- Sprint 009 completed.
+- Existing Spring profile/test profile setup.
+- Existing security configuration reviewed for `/api/v1/dev/content/**` behavior.
 
 ## Agent Instruction
-- Do not create REST controllers in this sprint.
-- Do not create tracking tables or child-specific progress fields.
-- Do not reference game, avatar, agent, or tracking implementation packages.
-- JPA entities, if introduced in this sprint, must extend `BaseEntity` and not redeclare `id`, `createdAt`, or `updatedAt`.
-- Keep all code and comments in English.
+- Use `/api/v1/dev/content/**`, not `/api/v1/admin/content/**`.
+- Annotate or configure development administrative controllers so they exist only under Spring profile `dev`.
+- Do not implement production read APIs in this sprint except where strictly necessary for tests.
+- Do not add child progress, viewed flags, scores, attempts, or runtime state to content entities.
+- All responses should use `ApiResponse<T>` where applicable.
 
 ## Notes
-This sprint prepares the smallest testable foundation for FEAT-003. Runtime consumption and dev-only administrative APIs are handled in later sprints.
+This sprint validates the administrative workflow for the core catalog while keeping production surface clean.
 
 ## Review
 
