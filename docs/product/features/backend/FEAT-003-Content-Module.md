@@ -122,8 +122,8 @@ Agent owns:
     - [ ] Status: ACTIVE, INACTIVE, DRAFT.
 
 - [ ] AvatarEventCatalog: extensible catalog of predefined avatar fallback messages.
-    - [ ] Event type: GREET, REWARD, HELP, ENCOURAGE.
-    - [ ] Tone: FUN, ENERGETIC, CALM, SERIOUS, aligned with the family/avatar design.
+    - [ ] Event type: ACTIVITY_COMPLETED, ACTIVITY_STARTED, ACTIVITY_FAILED, HELP_REQUESTED, OUT_OF_SCOPE_QUERY, CURIOSITY_REQUESTED. Aligned with agent contract event_type enum in docs/contracts/agents/.
+    - [ ] Tone: CALM, JOYFUL, ENTHUSIASTIC, SERIOUS, NEUTRAL.
     - [ ] Locale: es-ES for v1.
     - [ ] Message text optimized for TTS.
     - [ ] Status: ACTIVE, INACTIVE, DRAFT.
@@ -177,8 +177,8 @@ Agent owns:
 - [ ] ContentStatus: ACTIVE, INACTIVE, DRAFT.
 - [ ] DifficultyCode: EASY, MEDIUM, HARD.
 - [ ] ResourceType: IMAGE, AUDIO, VIDEO.
-- [ ] AvatarEventType: GREET, REWARD, HELP, ENCOURAGE.
-- [ ] Tone: FUN, ENERGETIC, CALM, SERIOUS.
+- [ ] AvatarEventType: ACTIVITY_COMPLETED, ACTIVITY_STARTED, ACTIVITY_FAILED, HELP_REQUESTED, OUT_OF_SCOPE_QUERY, CURIOSITY_REQUESTED.
+- [ ] AvatarTone: CALM, JOYFUL, ENTHUSIASTIC, SERIOUS, NEUTRAL.
 - [ ] Locale: es-ES in v1.
 
 ## Seed Loading Order

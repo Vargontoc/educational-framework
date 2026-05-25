@@ -15,6 +15,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -175,6 +176,105 @@ class DevContentControllerTest {
         ));
 
         mockMvc.perform(post("/api/v1/dev/content/activities")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
+
+    // --- Curiosity tests ---
+
+    @Test
+    void curiosities_list_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/dev/content/curiosities"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success", is(true)));
+    }
+
+    @Test
+    void curiosities_create_thenList() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "text", "Las mariposas prueban con sus patas",
+            "minAge", 3,
+            "maxAge", 6,
+            "tags", List.of("animales", "insectos"),
+            "locale", "es-ES",
+            "phoneticHint", "mariposas (mah-ree-POH-sas)",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/curiosities")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success", is(true)))
+            .andExpect(jsonPath("$.data.text", is("Las mariposas prueban con sus patas")))
+            .andExpect(jsonPath("$.data.status", is("ACTIVE")));
+
+        mockMvc.perform(get("/api/v1/dev/content/curiosities"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data", hasSize(1)));
+    }
+
+    @Test
+    void curiosities_create_blankText_returns400() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "text", "  ",
+            "locale", "es-ES",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/curiosities")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
+
+    // --- Avatar Event Catalog tests ---
+
+    @Test
+    void avatarEvents_list_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/dev/content/avatar-events"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success", is(true)));
+    }
+
+    @Test
+    void avatarEvents_create_thenList() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "eventType", "ACTIVITY_COMPLETED",
+            "tone", "JOYFUL",
+            "locale", "es-ES",
+            "messageText", "Has completado la actividad!",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/avatar-events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success", is(true)))
+            .andExpect(jsonPath("$.data.eventType", is("ACTIVITY_COMPLETED")))
+            .andExpect(jsonPath("$.data.tone", is("JOYFUL")))
+            .andExpect(jsonPath("$.data.status", is("ACTIVE")));
+
+        mockMvc.perform(get("/api/v1/dev/content/avatar-events"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data", hasSize(1)));
+    }
+
+    @Test
+    void avatarEvents_create_blankMessage_returns400() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "eventType", "ACTIVITY_COMPLETED",
+            "tone", "JOYFUL",
+            "locale", "es-ES",
+            "messageText", "  ",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/avatar-events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())

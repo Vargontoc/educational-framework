@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="010__create_curiosity_and_avatar_event_catalog" author="vargontoc">
+        <!-- Curiosity table -->
+        <createTable tableName="curiosity">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="topic_id" type="BIGINT"/>
+            <column name="text" type="VARCHAR(300)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_age" type="INTEGER"/>
+            <column name="max_age" type="INTEGER"/>
+            <column name="tags" type="TEXT"/>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phonetic_hint" type="VARCHAR(200)"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="curiosity"
+            baseColumnNames="topic_id"
+            constraintName="fk_curiosity_topic"
+            referencedTableName="topic"
+            referencedColumnNames="id"
+            onDelete="SET NULL"/>
+
+        <createIndex indexName="idx_curiosity_topic_id" tableName="curiosity">
+            <column name="topic_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_curiosity_status" tableName="curiosity">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_curiosity_locale" tableName="curiosity">
+            <column name="locale"/>
+        </createIndex>
+
+        <createIndex indexName="idx_curiosity_min_age" tableName="curiosity">
+            <column name="min_age"/>
+        </createIndex>
+
+        <createIndex indexName="idx_curiosity_max_age" tableName="curiosity">
+            <column name="max_age"/>
+        </createIndex>
+
+        <!-- Avatar Event Catalog table -->
+        <createTable tableName="avatar_event_catalog">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="event_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tone" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message_text" type="VARCHAR(300)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createIndex indexName="idx_avatar_event_catalog_event_type" tableName="avatar_event_catalog">
+            <column name="event_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_avatar_event_catalog_tone" tableName="avatar_event_catalog">
+            <column name="tone"/>
+        </createIndex>
+
+        <createIndex indexName="idx_avatar_event_catalog_locale" tableName="avatar_event_catalog">
+            <column name="locale"/>
+        </createIndex>
+
+        <createIndex indexName="idx_avatar_event_catalog_status" tableName="avatar_event_catalog">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

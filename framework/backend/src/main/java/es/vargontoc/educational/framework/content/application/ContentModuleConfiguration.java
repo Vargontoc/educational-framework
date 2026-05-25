@@ -2,14 +2,18 @@ package es.vargontoc.educational.framework.content.application;
 
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityResourceRepository;
+import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.ContentLocaleRepository;
+import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.service.ActivityResourceService;
 import es.vargontoc.educational.framework.content.service.ActivityService;
+import es.vargontoc.educational.framework.content.service.AvatarEventCatalogService;
 import es.vargontoc.educational.framework.content.service.CategoryService;
 import es.vargontoc.educational.framework.content.service.ContentLocaleService;
+import es.vargontoc.educational.framework.content.service.CuriosityService;
 import es.vargontoc.educational.framework.content.service.DifficultyLevelService;
 import es.vargontoc.educational.framework.content.service.TopicService;
 import org.springframework.context.annotation.Bean;
@@ -46,5 +50,15 @@ class ContentModuleConfiguration {
     @Bean
     ContentLocaleService contentLocaleService(ContentLocaleRepository contentLocaleRepository) {
         return new ContentLocaleService(contentLocaleRepository);
+    }
+
+    @Bean
+    CuriosityService curiosityService(CuriosityRepository curiosityRepository, TopicRepository topicRepository) {
+        return new CuriosityService(curiosityRepository, topicRepository);
+    }
+
+    @Bean
+    AvatarEventCatalogService avatarEventCatalogService(AvatarEventCatalogRepository avatarEventCatalogRepository) {
+        return new AvatarEventCatalogService(avatarEventCatalogRepository);
     }
 }

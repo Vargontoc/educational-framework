@@ -457,6 +457,109 @@
         }
       }
     },
+    "/api/v1/dev/content/curiosities": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create curiosity",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateCuriosityRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseCuriosity" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found (topic not found)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List curiosities. When age and/or locale are provided returns only ACTIVE records matching the age range and locale. When only topicId is provided returns all curiosities for that topic. Without filters returns all curiosities.",
+        "parameters": [
+          { "name": "topicId", "in": "query", "required": false, "schema": { "type": "integer", "format": "int64" } },
+          { "name": "age", "in": "query", "required": false, "schema": { "type": "integer" } },
+          { "name": "locale", "in": "query", "required": false, "schema": { "type": "string", "example": "es-ES" } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseCuriosityList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/curiosities/{id}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get curiosity by id",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseCuriosity" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update curiosity",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateCuriosityRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseCuriosity" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/avatar-events": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create avatar event catalog entry",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateAvatarEventCatalogRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAvatarEventCatalog" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List avatar event catalog entries. When eventType, tone, and locale are all provided returns only ACTIVE matching records. When only eventType is provided returns all entries of that type. Without filters returns all entries.",
+        "parameters": [
+          { "name": "eventType", "in": "query", "required": false, "schema": { "type": "string", "enum": ["ACTIVITY_COMPLETED", "ACTIVITY_STARTED", "ACTIVITY_FAILED", "HELP_REQUESTED", "OUT_OF_SCOPE_QUERY", "CURIOSITY_REQUESTED"] } },
+          { "name": "tone", "in": "query", "required": false, "schema": { "type": "string", "enum": ["CALM", "JOYFUL", "ENTHUSIASTIC", "SERIOUS", "NEUTRAL"] } },
+          { "name": "locale", "in": "query", "required": false, "schema": { "type": "string", "example": "es-ES" } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAvatarEventCatalogList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/avatar-events/{id}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get avatar event catalog entry by id",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAvatarEventCatalog" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update avatar event catalog entry",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateAvatarEventCatalogRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAvatarEventCatalog" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
     "/api/v1/dev/content/locales/{id}": {
       "put": {
         "tags": ["dev-content"],
@@ -1001,6 +1104,121 @@
         "properties": {
           "success": { "type": "boolean" },
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/ActivityResourceResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateCuriosityRequest": {
+        "type": "object",
+        "required": ["text", "locale", "status"],
+        "properties": {
+          "text": { "type": "string", "maxLength": 300, "description": "TTS-friendly text. Max 300 characters." },
+          "topicId": { "type": "integer", "format": "int64", "nullable": true },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "tags": { "type": "array", "nullable": true, "items": { "type": "string" } },
+          "locale": { "type": "string", "example": "es-ES", "description": "Only es-ES is supported in v1." },
+          "phoneticHint": { "type": "string", "nullable": true, "description": "Optional TTS phonetic hint for difficult words." },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "UpdateCuriosityRequest": {
+        "type": "object",
+        "required": ["text", "locale", "status"],
+        "properties": {
+          "text": { "type": "string", "maxLength": 300 },
+          "topicId": { "type": "integer", "format": "int64", "nullable": true },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "tags": { "type": "array", "nullable": true, "items": { "type": "string" } },
+          "locale": { "type": "string" },
+          "phoneticHint": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "CuriosityResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "text": { "type": "string" },
+          "topicId": { "type": "integer", "format": "int64", "nullable": true },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "locale": { "type": "string" },
+          "phoneticHint": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseCuriosity": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/CuriosityResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseCuriosityList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/CuriosityResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateAvatarEventCatalogRequest": {
+        "type": "object",
+        "required": ["eventType", "tone", "locale", "messageText", "status"],
+        "properties": {
+          "eventType": { "type": "string", "enum": ["ACTIVITY_COMPLETED", "ACTIVITY_STARTED", "ACTIVITY_FAILED", "HELP_REQUESTED", "OUT_OF_SCOPE_QUERY", "CURIOSITY_REQUESTED"] },
+          "tone": { "type": "string", "enum": ["CALM", "JOYFUL", "ENTHUSIASTIC", "SERIOUS", "NEUTRAL"] },
+          "locale": { "type": "string", "example": "es-ES", "description": "Only es-ES is supported in v1." },
+          "messageText": { "type": "string", "maxLength": 300, "description": "TTS-optimized fallback message text. Max 300 characters." },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "UpdateAvatarEventCatalogRequest": {
+        "type": "object",
+        "required": ["eventType", "tone", "locale", "messageText", "status"],
+        "properties": {
+          "eventType": { "type": "string", "enum": ["ACTIVITY_COMPLETED", "ACTIVITY_STARTED", "ACTIVITY_FAILED", "HELP_REQUESTED", "OUT_OF_SCOPE_QUERY", "CURIOSITY_REQUESTED"] },
+          "tone": { "type": "string", "enum": ["CALM", "JOYFUL", "ENTHUSIASTIC", "SERIOUS", "NEUTRAL"] },
+          "locale": { "type": "string" },
+          "messageText": { "type": "string", "maxLength": 300 },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "AvatarEventCatalogResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "eventType": { "type": "string", "enum": ["ACTIVITY_COMPLETED", "ACTIVITY_STARTED", "ACTIVITY_FAILED", "HELP_REQUESTED", "OUT_OF_SCOPE_QUERY", "CURIOSITY_REQUESTED"] },
+          "tone": { "type": "string", "enum": ["CALM", "JOYFUL", "ENTHUSIASTIC", "SERIOUS", "NEUTRAL"] },
+          "locale": { "type": "string" },
+          "messageText": { "type": "string" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseAvatarEventCatalog": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/AvatarEventCatalogResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseAvatarEventCatalogList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/AvatarEventCatalogResponse" } },
           "message": { "type": "string", "nullable": true },
           "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
         }

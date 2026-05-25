@@ -54,4 +54,16 @@ class DevContentControllerDisabledTest {
         mockMvc.perform(get("/api/v1/dev/content/activities"))
             .andExpect(status().isNotFound());
     }
+
+    @Test
+    void curiosities_endpoint_notAvailable_withoutDevProfile() throws Exception {
+        mockMvc.perform(get("/api/v1/dev/content/curiosities"))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void avatarEvents_endpoint_notAvailable_withoutDevProfile() throws Exception {
+        mockMvc.perform(get("/api/v1/dev/content/avatar-events"))
+            .andExpect(status().isNotFound());
+    }
 }
