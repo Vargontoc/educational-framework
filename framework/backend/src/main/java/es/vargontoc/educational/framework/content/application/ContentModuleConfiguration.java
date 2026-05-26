@@ -9,6 +9,8 @@ import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
+import es.vargontoc.educational.framework.content.ports.out.StoryPageRepository;
+import es.vargontoc.educational.framework.content.ports.out.StoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
 import es.vargontoc.educational.framework.content.service.ActivityResourceService;
@@ -20,6 +22,8 @@ import es.vargontoc.educational.framework.content.service.CuriosityService;
 import es.vargontoc.educational.framework.content.service.DifficultyLevelService;
 import es.vargontoc.educational.framework.content.service.LearningPathService;
 import es.vargontoc.educational.framework.content.service.LearningPathStepService;
+import es.vargontoc.educational.framework.content.service.StoryPageService;
+import es.vargontoc.educational.framework.content.service.StoryService;
 import es.vargontoc.educational.framework.content.service.TopicService;
 import es.vargontoc.educational.framework.content.service.TracingPatternService;
 import org.springframework.context.annotation.Bean;
@@ -81,5 +85,15 @@ class ContentModuleConfiguration {
     @Bean
     TracingPatternService tracingPatternService(TracingPatternRepository tracingPatternRepository, TopicRepository topicRepository) {
         return new TracingPatternService(tracingPatternRepository, topicRepository);
+    }
+
+    @Bean
+    StoryService storyService(StoryRepository storyRepository) {
+        return new StoryService(storyRepository);
+    }
+
+    @Bean
+    StoryPageService storyPageService(StoryPageRepository storyPageRepository, StoryRepository storyRepository) {
+        return new StoryPageService(storyPageRepository, storyRepository);
     }
 }

@@ -36,6 +36,7 @@ In scope:
 - Añadir estados visuales de carga y error.
 - Añadir i18n para textos visibles.
 - Respetar el diseño base existente de la aplicación.
+- Permitir uso en horizontal y vertical; esta mini-app de desarrollo no debe forzar landscape.
 
 Out of scope:
 
@@ -55,12 +56,14 @@ Out of scope:
 - Todos los textos visibles pasan por Vue i18n.
 - No se requiere PIN parental ni sesión de usuario para usar la mini-app cuando está habilitada.
 - No se realizan llamadas directas con Axios desde componentes; cualquier integración futura debe pasar por servicios.
+- La mini-app no muestra el overlay de rotación ni bloquea la interfaz en orientación vertical.
 
 ## Technical Notes
 
 - El flag `VITE_ENABLE_DEV_CONTENT` debe tratarse como opt-in estricto: cualquier valor distinto de `true` significa deshabilitado.
 - El código puede existir en assets compartidos, pero la disponibilidad funcional depende de configuración frontend y perfil backend.
 - La navegación debe mantenerse simple; no crear un router secundario si no es necesario.
+- La restricción landscape del aplicativo base no aplica a esta herramienta interna; el layout debe ser responsive para desktop, tablet y móvil en ambas orientaciones.
 - Preferir componentes pequeños solo cuando eviten duplicación real.
 
 ## Risks and Mitigations

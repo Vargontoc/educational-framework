@@ -16,5 +16,6 @@
     <include file="db/changelog/migrations/009__create_content_catalog.xml"/>
     <include file="db/changelog/migrations/010__create_curiosity_and_avatar_event_catalog.xml"/>
     <include file="db/changelog/migrations/011__create_learning_path_and_tracing_pattern.xml"/>
+    <include file="db/changelog/migrations/012__create_story_and_story_page.xml"/>
 
 </databaseChangeLog>

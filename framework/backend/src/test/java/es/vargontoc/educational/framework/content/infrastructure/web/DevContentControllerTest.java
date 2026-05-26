@@ -513,4 +513,130 @@ class DevContentControllerTest {
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.success", is(false)));
     }
+
+    // --- Story tests ---
+
+    @Test
+    void stories_list_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/dev/content/stories"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success", is(true)));
+    }
+
+    @Test
+    void stories_create_thenList() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "title", "The Little Star",
+            "description", "A story about a star",
+            "minAge", 3,
+            "maxAge", 6,
+            "estimatedDurationMinutes", 5,
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/stories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success", is(true)))
+            .andExpect(jsonPath("$.data.title", is("The Little Star")))
+            .andExpect(jsonPath("$.data.status", is("ACTIVE")));
+
+        mockMvc.perform(get("/api/v1/dev/content/stories"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data", hasSize(1)));
+    }
+
+    @Test
+    void stories_create_blankTitle_returns400() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "title", "  ",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/stories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
+
+    @Test
+    void storyPages_create_thenList() throws Exception {
+        var storyCreateResult = mockMvc.perform(post("/api/v1/dev/content/stories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "title", "Test Story",
+                    "status", "ACTIVE"
+                ))))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        var storyId = objectMapper.readTree(storyCreateResult.getResponse().getContentAsString())
+            .path("data").path("id").asLong();
+
+        var pageBody = objectMapper.writeValueAsString(Map.of(
+            "pageOrder", 1,
+            "text", "Once upon a time...",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/stories/" + storyId + "/pages")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(pageBody))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success", is(true)))
+            .andExpect(jsonPath("$.data.pageOrder", is(1)));
+
+        mockMvc.perform(get("/api/v1/dev/content/stories/" + storyId + "/pages"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data", hasSize(1)));
+    }
+
+    @Test
+    void storyPages_create_duplicateOrder_returns409() throws Exception {
+        var storyCreateResult = mockMvc.perform(post("/api/v1/dev/content/stories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "title", "Test Story 2",
+                    "status", "ACTIVE"
+                ))))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        var storyId = objectMapper.readTree(storyCreateResult.getResponse().getContentAsString())
+            .path("data").path("id").asLong();
+
+        var pageBody = objectMapper.writeValueAsString(Map.of(
+            "pageOrder", 1,
+            "text", "Page text",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/stories/" + storyId + "/pages")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(pageBody))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/dev/content/stories/" + storyId + "/pages")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(pageBody))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
+
+    @Test
+    void storyPages_create_storyNotFound_returns404() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "pageOrder", 1,
+            "text", "Text",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/stories/9999/pages")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
 }

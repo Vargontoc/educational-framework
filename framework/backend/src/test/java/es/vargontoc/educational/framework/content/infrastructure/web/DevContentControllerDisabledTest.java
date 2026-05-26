@@ -78,4 +78,10 @@ class DevContentControllerDisabledTest {
         mockMvc.perform(get("/api/v1/dev/content/tracing-patterns"))
             .andExpect(status().isNotFound());
     }
+
+    @Test
+    void stories_endpoint_notAvailable_withoutDevProfile() throws Exception {
+        mockMvc.perform(get("/api/v1/dev/content/stories"))
+            .andExpect(status().isNotFound());
+    }
 }

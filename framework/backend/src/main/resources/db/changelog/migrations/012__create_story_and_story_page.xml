@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="012__create_story_and_story_page" author="vargontoc">
+        <!-- Story table -->
+        <createTable tableName="story">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="min_age" type="INTEGER"/>
+            <column name="max_age" type="INTEGER"/>
+            <column name="estimated_duration_minutes" type="INTEGER"/>
+            <column name="topic_ids" type="TEXT"/>
+            <column name="background_music_resource_ref" type="VARCHAR(500)"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createIndex indexName="idx_story_status" tableName="story">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_story_min_age" tableName="story">
+            <column name="min_age"/>
+        </createIndex>
+
+        <createIndex indexName="idx_story_max_age" tableName="story">
+            <column name="max_age"/>
+        </createIndex>
+
+        <!-- Story Page table -->
+        <createTable tableName="story_page">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="story_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="page_order" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="text" type="VARCHAR(1000)"/>
+            <column name="image_resource_ref" type="VARCHAR(500)"/>
+            <column name="audio_resource_ref" type="VARCHAR(500)"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="story_page"
+            baseColumnNames="story_id"
+            constraintName="fk_story_page_story"
+            referencedTableName="story"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <addUniqueConstraint
+            tableName="story_page"
+            constraintName="uk_story_page_order"
+            columnNames="story_id, page_order"/>
+
+        <createIndex indexName="idx_story_page_story_id" tableName="story_page">
+            <column name="story_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_story_page_status" tableName="story_page">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
