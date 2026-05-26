@@ -10,6 +10,7 @@ public class LearningPathStep {
     private Integer stepOrder;
     private String unlockCondition;
     private String visualMetadata;
+    private ContentStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -59,6 +60,14 @@ public class LearningPathStep {
 
     public void setVisualMetadata(String visualMetadata) {
         this.visualMetadata = visualMetadata;
+    }
+
+    public ContentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ContentStatus status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreatedAt() {

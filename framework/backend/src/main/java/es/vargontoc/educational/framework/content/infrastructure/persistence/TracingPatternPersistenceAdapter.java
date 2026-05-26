@@ -51,7 +51,10 @@ public class TracingPatternPersistenceAdapter implements TracingPatternRepositor
         target.setTopicId(source.getTopicId());
         target.setName(source.getName());
         target.setDescription(source.getDescription());
+        target.setPatternType(source.getPatternType());
         target.setPoints(parsePoints(source.getPoints()));
+        target.setMinAge(source.getMinAge());
+        target.setMaxAge(source.getMaxAge());
         target.setStatus(ContentStatus.valueOf(source.getStatus()));
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
@@ -64,7 +67,10 @@ public class TracingPatternPersistenceAdapter implements TracingPatternRepositor
         target.setTopicId(source.getTopicId());
         target.setName(source.getName());
         target.setDescription(source.getDescription());
+        target.setPatternType(source.getPatternType());
         target.setPoints(serializePoints(source.getPoints()));
+        target.setMinAge(source.getMinAge());
+        target.setMaxAge(source.getMaxAge());
         target.setStatus(source.getStatus().name());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());

@@ -18,8 +18,17 @@ public class TracingPatternJpaEntity extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "pattern_type", length = 50)
+    private String patternType;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String points;
+
+    @Column(name = "min_age")
+    private Integer minAge;
+
+    @Column(name = "max_age")
+    private Integer maxAge;
 
     @Column(nullable = false, length = 20)
     private String status;
@@ -48,12 +57,36 @@ public class TracingPatternJpaEntity extends BaseEntity {
         this.description = description;
     }
 
+    public String getPatternType() {
+        return patternType;
+    }
+
+    public void setPatternType(String patternType) {
+        this.patternType = patternType;
+    }
+
     public String getPoints() {
         return points;
     }
 
     public void setPoints(String points) {
         this.points = points;
+    }
+
+    public Integer getMinAge() {
+        return minAge;
+    }
+
+    public void setMinAge(Integer minAge) {
+        this.minAge = minAge;
+    }
+
+    public Integer getMaxAge() {
+        return maxAge;
+    }
+
+    public void setMaxAge(Integer maxAge) {
+        this.maxAge = maxAge;
     }
 
     public String getStatus() {

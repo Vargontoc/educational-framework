@@ -27,6 +27,9 @@ public class LearningPathStepJpaEntity extends BaseEntity {
     @Column(name = "visual_metadata", columnDefinition = "TEXT")
     private String visualMetadata;
 
+    @Column(nullable = false, length = 20)
+    private String status;
+
     public Long getLearningPathId() {
         return learningPathId;
     }
@@ -65,5 +68,13 @@ public class LearningPathStepJpaEntity extends BaseEntity {
 
     public void setVisualMetadata(String visualMetadata) {
         this.visualMetadata = visualMetadata;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

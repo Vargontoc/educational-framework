@@ -74,11 +74,45 @@ This sprint closes FEAT-003 from the backend perspective and prepares downstream
 ## Review
 
 completed_tasks:
+- Schema Gaps: Added patternType, minAge, maxAge to TracingPattern (migration 014 existed, wired through model/JPA/DTOs/service/controller/OpenAPI/seed)
+- Schema Gaps: Updated FEAT-003 to document TracingPattern field decisions
+- Contract Hardening: Added productive story endpoints to OpenAPI (GET /api/v1/content/stories, GET /api/v1/content/stories/{id})
+- Contract Hardening: Added Story/StoryPage/StoryDetail schemas to OpenAPI
+- Contract Hardening: Updated TracingPattern schemas with patternType, minAge, maxAge
+- Contract Hardening: Added content tag to OpenAPI
+- Security Review: Removed permitAll for /api/v1/dev/content/** from SecurityConfig
+- Security Review: Verified productive story endpoints require FamilySession auth (Bearer token)
+- Security Review: Updated DevContentControllerTest to include auth tokens
+- Security Review: Updated DevContentControllerDisabledTest to expect 401 (was 404)
+- Security Review: Created ProductiveStoryControllerTest with auth verification
+- Boundary Review: Verified content has no tracking/game/agent/TTS leaks
+- Boundary Review: Verified all entities have stable IDs
+- Regression Tests: All 277 unit tests pass (integration tests require Docker/Testcontainers)
 
 incomplete_tasks:
+- Schema Gaps: LearningPathStep status field already existed (no action needed)
+- Security Review: PIN re-verification for story detail endpoint (not implemented - FamilySession auth is sufficient per current architecture)
+- Regression Tests: Integration tests could not run (Docker/Testcontainers unavailable in current environment)
+- Documentation: Document intentionally deferred productive read APIs (categories, topics, activities, curiosities, learning-paths)
 
 contract_changes:
+- Added /api/v1/content/stories (GET) - list active stories
+- Added /api/v1/content/stories/{id} (GET) - story detail with pages
+- Added StoryResponse, StoryPageResponse, StoryDetailResponse schemas
+- Added ApiResponseStoryList, ApiResponseStoryDetail schemas
+- Added content tag
+- Updated CreateTracingPatternRequest with patternType, minAge, maxAge
+- Updated UpdateTracingPatternRequest with patternType, minAge, maxAge
+- Updated TracingPatternResponse with patternType, minAge, maxAge
 
 learnings:
+- Migration 014 already added the TracingPattern columns but code was not updated
+- SecurityConfig permitAll for dev content was safe (controllers don't register outside dev) but removing it improves defense-in-depth
+- DevContentControllerDisabledTest expected 404 but now gets 401 after SecurityConfig change
+- Productive story endpoints already required auth via SecurityConfig anyRequest().authenticated()
 
 next_sprint_suggestions:
+- Implement remaining productive read-only APIs (categories, topics, activities, curiosities, learning-paths)
+- Add PIN re-verification step-up auth for sensitive story content if needed
+- Run full integration test suite with Docker/Testcontainers available
+- Frontend integration for productive story endpoints

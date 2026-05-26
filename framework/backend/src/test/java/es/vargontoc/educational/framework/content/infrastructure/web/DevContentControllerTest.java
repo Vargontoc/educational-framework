@@ -1,6 +1,9 @@
 package es.vargontoc.educational.framework.content.infrastructure.web;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -10,6 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -22,6 +26,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -53,9 +58,45 @@ class DevContentControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private FamilyUseCase familyUseCase;
+
+    private String token;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        if (!familyUseCase.familyExists()) {
+            familyUseCase.createFamily("Test Family", "1234", true, true);
+        }
+        token = loginAndReturnToken();
+    }
+
+    private String loginAndReturnToken() throws Exception {
+        var result = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("pin", "1234"))))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
+        return root.path("data").path("token").asText();
+    }
+
+    private MockHttpServletRequestBuilder authGet(String url) {
+        return get(url).header("Authorization", "Bearer " + token);
+    }
+
+    private MockHttpServletRequestBuilder authPost(String url) {
+        return post(url).header("Authorization", "Bearer " + token);
+    }
+
+    private MockHttpServletRequestBuilder authPut(String url) {
+        return put(url).header("Authorization", "Bearer " + token);
+    }
+
     @Test
     void categories_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/categories"))
+        mockMvc.perform(authGet("/api/v1/dev/content/categories"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)))
             .andExpect(jsonPath("$.data", hasSize(0)));
@@ -70,7 +111,7 @@ class DevContentControllerTest {
             "displayOrder", 1
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/categories")
+        mockMvc.perform(authPost("/api/v1/dev/content/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated())
@@ -78,42 +119,42 @@ class DevContentControllerTest {
             .andExpect(jsonPath("$.data.name", is("Mathematics")))
             .andExpect(jsonPath("$.data.status", is("ACTIVE")));
 
-        mockMvc.perform(get("/api/v1/dev/content/categories"))
+        mockMvc.perform(authGet("/api/v1/dev/content/categories"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data", hasSize(1)));
     }
 
     @Test
     void topics_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/topics"))
+        mockMvc.perform(authGet("/api/v1/dev/content/topics"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
 
     @Test
     void activities_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/activities"))
+        mockMvc.perform(authGet("/api/v1/dev/content/activities"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
 
     @Test
     void difficultyLevels_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/difficulty-levels?activityId=1"))
+        mockMvc.perform(authGet("/api/v1/dev/content/difficulty-levels?activityId=1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
 
     @Test
     void activityResources_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/activity-resources?activityId=1"))
+        mockMvc.perform(authGet("/api/v1/dev/content/activity-resources?activityId=1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
 
     @Test
     void locales_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/locales?entityType=CATEGORY&entityId=1"))
+        mockMvc.perform(authGet("/api/v1/dev/content/locales?entityType=CATEGORY&entityId=1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
@@ -127,7 +168,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/categories")
+        mockMvc.perform(authPost("/api/v1/dev/content/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())
@@ -142,12 +183,12 @@ class DevContentControllerTest {
             "displayOrder", 1
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/categories")
+        mockMvc.perform(authPost("/api/v1/dev/content/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/v1/dev/content/categories")
+        mockMvc.perform(authPost("/api/v1/dev/content/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isConflict())
@@ -162,7 +203,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/topics")
+        mockMvc.perform(authPost("/api/v1/dev/content/topics")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isNotFound())
@@ -176,7 +217,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/activities")
+        mockMvc.perform(authPost("/api/v1/dev/content/activities")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())
@@ -187,7 +228,7 @@ class DevContentControllerTest {
 
     @Test
     void curiosities_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/curiosities"))
+        mockMvc.perform(authGet("/api/v1/dev/content/curiosities"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
@@ -204,7 +245,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/curiosities")
+        mockMvc.perform(authPost("/api/v1/dev/content/curiosities")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated())
@@ -212,7 +253,7 @@ class DevContentControllerTest {
             .andExpect(jsonPath("$.data.text", is("Las mariposas prueban con sus patas")))
             .andExpect(jsonPath("$.data.status", is("ACTIVE")));
 
-        mockMvc.perform(get("/api/v1/dev/content/curiosities"))
+        mockMvc.perform(authGet("/api/v1/dev/content/curiosities"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data", hasSize(1)));
     }
@@ -225,7 +266,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/curiosities")
+        mockMvc.perform(authPost("/api/v1/dev/content/curiosities")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())
@@ -236,7 +277,7 @@ class DevContentControllerTest {
 
     @Test
     void avatarEvents_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/avatar-events"))
+        mockMvc.perform(authGet("/api/v1/dev/content/avatar-events"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
@@ -251,7 +292,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/avatar-events")
+        mockMvc.perform(authPost("/api/v1/dev/content/avatar-events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated())
@@ -260,7 +301,7 @@ class DevContentControllerTest {
             .andExpect(jsonPath("$.data.tone", is("JOYFUL")))
             .andExpect(jsonPath("$.data.status", is("ACTIVE")));
 
-        mockMvc.perform(get("/api/v1/dev/content/avatar-events"))
+        mockMvc.perform(authGet("/api/v1/dev/content/avatar-events"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data", hasSize(1)));
     }
@@ -275,7 +316,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/avatar-events")
+        mockMvc.perform(authPost("/api/v1/dev/content/avatar-events")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())
@@ -286,7 +327,7 @@ class DevContentControllerTest {
 
     @Test
     void learningPaths_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/learning-paths"))
+        mockMvc.perform(authGet("/api/v1/dev/content/learning-paths"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
@@ -302,7 +343,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/learning-paths")
+        mockMvc.perform(authPost("/api/v1/dev/content/learning-paths")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated())
@@ -310,7 +351,7 @@ class DevContentControllerTest {
             .andExpect(jsonPath("$.data.name", is("Math Basics")))
             .andExpect(jsonPath("$.data.status", is("ACTIVE")));
 
-        mockMvc.perform(get("/api/v1/dev/content/learning-paths"))
+        mockMvc.perform(authGet("/api/v1/dev/content/learning-paths"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data", hasSize(1)));
     }
@@ -323,7 +364,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/learning-paths")
+        mockMvc.perform(authPost("/api/v1/dev/content/learning-paths")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())
@@ -334,7 +375,7 @@ class DevContentControllerTest {
 
     @Test
     void tracingPatterns_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/tracing-patterns"))
+        mockMvc.perform(authGet("/api/v1/dev/content/tracing-patterns"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
@@ -346,12 +387,12 @@ class DevContentControllerTest {
             "status", "ACTIVE",
             "displayOrder", 1
         ));
-        mockMvc.perform(post("/api/v1/dev/content/categories")
+        mockMvc.perform(authPost("/api/v1/dev/content/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(categoryBody))
             .andExpect(status().isCreated());
 
-        var topicCreateResult = mockMvc.perform(post("/api/v1/dev/content/topics")
+        var topicCreateResult = mockMvc.perform(authPost("/api/v1/dev/content/topics")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of(
                     "name", "Dog",
@@ -368,19 +409,25 @@ class DevContentControllerTest {
             "topicId", topicId,
             "name", "Circulo basico",
             "description", "Patron circular simple",
+            "patternType", "CURVE",
             "points", List.of(List.of(0.0, 0.5), List.of(0.5, 1.0), List.of(1.0, 0.5)),
+            "minAge", 3,
+            "maxAge", 6,
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/tracing-patterns")
+        mockMvc.perform(authPost("/api/v1/dev/content/tracing-patterns")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.success", is(true)))
             .andExpect(jsonPath("$.data.name", is("Circulo basico")))
+            .andExpect(jsonPath("$.data.patternType", is("CURVE")))
+            .andExpect(jsonPath("$.data.minAge", is(3)))
+            .andExpect(jsonPath("$.data.maxAge", is(6)))
             .andExpect(jsonPath("$.data.status", is("ACTIVE")));
 
-        mockMvc.perform(get("/api/v1/dev/content/tracing-patterns"))
+        mockMvc.perform(authGet("/api/v1/dev/content/tracing-patterns"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data", hasSize(1)));
     }
@@ -394,7 +441,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/tracing-patterns")
+        mockMvc.perform(authPost("/api/v1/dev/content/tracing-patterns")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())
@@ -410,12 +457,12 @@ class DevContentControllerTest {
             "status", "ACTIVE",
             "displayOrder", 1
         ));
-        mockMvc.perform(post("/api/v1/dev/content/categories")
+        mockMvc.perform(authPost("/api/v1/dev/content/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(categoryBody))
             .andExpect(status().isCreated());
 
-        var activityCreateResult = mockMvc.perform(post("/api/v1/dev/content/activities")
+        var activityCreateResult = mockMvc.perform(authPost("/api/v1/dev/content/activities")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of(
                     "name", "Counting",
@@ -427,7 +474,7 @@ class DevContentControllerTest {
         var activityId = objectMapper.readTree(activityCreateResult.getResponse().getContentAsString())
             .path("data").path("id").asLong();
 
-        var pathCreateResult = mockMvc.perform(post("/api/v1/dev/content/learning-paths")
+        var pathCreateResult = mockMvc.perform(authPost("/api/v1/dev/content/learning-paths")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of(
                     "name", "Numbers Path",
@@ -445,21 +492,21 @@ class DevContentControllerTest {
             "stepOrder", 1
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
+        mockMvc.perform(authPost("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(stepBody))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.success", is(true)))
             .andExpect(jsonPath("$.data.stepOrder", is(1)));
 
-        mockMvc.perform(get("/api/v1/dev/content/learning-paths/" + pathId + "/steps"))
+        mockMvc.perform(authGet("/api/v1/dev/content/learning-paths/" + pathId + "/steps"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data", hasSize(1)));
     }
 
     @Test
     void learningPathSteps_create_duplicateOrder_returns409() throws Exception {
-        var activityCreateResult = mockMvc.perform(post("/api/v1/dev/content/activities")
+        var activityCreateResult = mockMvc.perform(authPost("/api/v1/dev/content/activities")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of(
                     "name", "Drawing",
@@ -471,7 +518,7 @@ class DevContentControllerTest {
         var activityId = objectMapper.readTree(activityCreateResult.getResponse().getContentAsString())
             .path("data").path("id").asLong();
 
-        var pathCreateResult = mockMvc.perform(post("/api/v1/dev/content/learning-paths")
+        var pathCreateResult = mockMvc.perform(authPost("/api/v1/dev/content/learning-paths")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of(
                     "name", "Art Path",
@@ -489,12 +536,12 @@ class DevContentControllerTest {
             "stepOrder", 1
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
+        mockMvc.perform(authPost("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(stepBody))
             .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
+        mockMvc.perform(authPost("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(stepBody))
             .andExpect(status().isConflict())
@@ -508,7 +555,7 @@ class DevContentControllerTest {
             "stepOrder", 1
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/learning-paths/9999/steps")
+        mockMvc.perform(authPost("/api/v1/dev/content/learning-paths/9999/steps")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isNotFound())
@@ -519,7 +566,7 @@ class DevContentControllerTest {
 
     @Test
     void stories_list_returns200() throws Exception {
-        mockMvc.perform(get("/api/v1/dev/content/stories"))
+        mockMvc.perform(authGet("/api/v1/dev/content/stories"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success", is(true)));
     }
@@ -535,7 +582,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/stories")
+        mockMvc.perform(authPost("/api/v1/dev/content/stories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated())
@@ -543,7 +590,7 @@ class DevContentControllerTest {
             .andExpect(jsonPath("$.data.title", is("The Little Star")))
             .andExpect(jsonPath("$.data.status", is("ACTIVE")));
 
-        mockMvc.perform(get("/api/v1/dev/content/stories"))
+        mockMvc.perform(authGet("/api/v1/dev/content/stories"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data", hasSize(1)));
     }
@@ -555,7 +602,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/stories")
+        mockMvc.perform(authPost("/api/v1/dev/content/stories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())
@@ -564,7 +611,7 @@ class DevContentControllerTest {
 
     @Test
     void storyPages_create_thenList() throws Exception {
-        var storyCreateResult = mockMvc.perform(post("/api/v1/dev/content/stories")
+        var storyCreateResult = mockMvc.perform(authPost("/api/v1/dev/content/stories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of(
                     "title", "Test Story",
@@ -582,21 +629,21 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/stories/" + storyId + "/pages")
+        mockMvc.perform(authPost("/api/v1/dev/content/stories/" + storyId + "/pages")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(pageBody))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.success", is(true)))
             .andExpect(jsonPath("$.data.pageOrder", is(1)));
 
-        mockMvc.perform(get("/api/v1/dev/content/stories/" + storyId + "/pages"))
+        mockMvc.perform(authGet("/api/v1/dev/content/stories/" + storyId + "/pages"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data", hasSize(1)));
     }
 
     @Test
     void storyPages_create_duplicateOrder_returns409() throws Exception {
-        var storyCreateResult = mockMvc.perform(post("/api/v1/dev/content/stories")
+        var storyCreateResult = mockMvc.perform(authPost("/api/v1/dev/content/stories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(Map.of(
                     "title", "Test Story 2",
@@ -614,12 +661,12 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/stories/" + storyId + "/pages")
+        mockMvc.perform(authPost("/api/v1/dev/content/stories/" + storyId + "/pages")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(pageBody))
             .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/v1/dev/content/stories/" + storyId + "/pages")
+        mockMvc.perform(authPost("/api/v1/dev/content/stories/" + storyId + "/pages")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(pageBody))
             .andExpect(status().isConflict())
@@ -634,7 +681,7 @@ class DevContentControllerTest {
             "status", "ACTIVE"
         ));
 
-        mockMvc.perform(post("/api/v1/dev/content/stories/9999/pages")
+        mockMvc.perform(authPost("/api/v1/dev/content/stories/9999/pages")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isNotFound())

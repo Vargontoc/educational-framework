@@ -6,6 +6,9 @@ public record UpdateTracingPatternRequest(
     Long topicId,
     String name,
     String description,
+    String patternType,
     List<List<Double>> points,
+    Integer minAge,
+    Integer maxAge,
     String status
 ) {}

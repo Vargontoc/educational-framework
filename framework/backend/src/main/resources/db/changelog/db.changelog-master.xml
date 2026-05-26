@@ -18,5 +18,6 @@
     <include file="db/changelog/migrations/011__create_learning_path_and_tracing_pattern.xml"/>
     <include file="db/changelog/migrations/012__create_story_and_story_page.xml"/>
     <include file="db/changelog/migrations/013__create_dev_seed_state.xml"/>
+    <include file="db/changelog/migrations/014__add_missing_content_fields.xml"/>
 
 </databaseChangeLog>

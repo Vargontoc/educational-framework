@@ -41,48 +41,48 @@ class DevContentControllerDisabledTest {
     @Test
     void categories_endpoint_notAvailable_withoutDevProfile() throws Exception {
         mockMvc.perform(get("/api/v1/dev/content/categories"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void topics_endpoint_notAvailable_withoutDevProfile() throws Exception {
         mockMvc.perform(get("/api/v1/dev/content/topics"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void activities_endpoint_notAvailable_withoutDevProfile() throws Exception {
         mockMvc.perform(get("/api/v1/dev/content/activities"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void curiosities_endpoint_notAvailable_withoutDevProfile() throws Exception {
         mockMvc.perform(get("/api/v1/dev/content/curiosities"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void avatarEvents_endpoint_notAvailable_withoutDevProfile() throws Exception {
         mockMvc.perform(get("/api/v1/dev/content/avatar-events"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void learningPaths_endpoint_notAvailable_withoutDevProfile() throws Exception {
         mockMvc.perform(get("/api/v1/dev/content/learning-paths"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void tracingPatterns_endpoint_notAvailable_withoutDevProfile() throws Exception {
         mockMvc.perform(get("/api/v1/dev/content/tracing-patterns"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void stories_endpoint_notAvailable_withoutDevProfile() throws Exception {
         mockMvc.perform(get("/api/v1/dev/content/stories"))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isUnauthorized());
     }
 }

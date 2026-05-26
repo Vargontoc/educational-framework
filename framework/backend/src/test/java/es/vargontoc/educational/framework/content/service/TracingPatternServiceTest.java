@@ -45,11 +45,14 @@ class TracingPatternServiceTest {
         when(topicRepository.findById(1L)).thenReturn(Optional.of(new Topic()));
         when(tracingPatternRepository.save(any(TracingPattern.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = tracingPatternService.createTracingPattern(1L, "Square", "A square pattern", points, ContentStatus.ACTIVE);
+        var result = tracingPatternService.createTracingPattern(1L, "Square", "A square pattern", "POLYGON", points, 3, 8, ContentStatus.ACTIVE);
 
         assertEquals(1L, result.getTopicId());
         assertEquals("Square", result.getName());
+        assertEquals("POLYGON", result.getPatternType());
         assertEquals(3, result.getPoints().size());
+        assertEquals(3, result.getMinAge());
+        assertEquals(8, result.getMaxAge());
         assertEquals(ContentStatus.ACTIVE, result.getStatus());
         assertNotNull(result.getCreatedAt());
     }
@@ -60,20 +63,20 @@ class TracingPatternServiceTest {
         when(topicRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () ->
-            tracingPatternService.createTracingPattern(99L, "Pattern", null, points, ContentStatus.ACTIVE));
+            tracingPatternService.createTracingPattern(99L, "Pattern", null, null, points, null, null, ContentStatus.ACTIVE));
     }
 
     @Test
     void createTracingPattern_emptyPoints_throwsValidation() {
         assertThrows(ValidationException.class, () ->
-            tracingPatternService.createTracingPattern(1L, "Pattern", null, Collections.emptyList(), ContentStatus.ACTIVE));
+            tracingPatternService.createTracingPattern(1L, "Pattern", null, null, Collections.emptyList(), null, null, ContentStatus.ACTIVE));
     }
 
     @Test
     void createTracingPattern_blankName_throwsValidation() {
         var points = List.of(List.of(0.0, 0.0), List.of(1.0, 1.0));
         assertThrows(ValidationException.class, () ->
-            tracingPatternService.createTracingPattern(1L, " ", null, points, ContentStatus.ACTIVE));
+            tracingPatternService.createTracingPattern(1L, " ", null, null, points, null, null, ContentStatus.ACTIVE));
     }
 
     @Test
@@ -112,9 +115,12 @@ class TracingPatternServiceTest {
         when(topicRepository.findById(1L)).thenReturn(Optional.of(new Topic()));
         when(tracingPatternRepository.save(any(TracingPattern.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = tracingPatternService.updateTracingPattern(1L, 1L, "New Name", "New Desc", points, ContentStatus.DRAFT);
+        var result = tracingPatternService.updateTracingPattern(1L, 1L, "New Name", "New Desc", "CURVE", points, 4, 7, ContentStatus.DRAFT);
 
         assertEquals("New Name", result.getName());
+        assertEquals("CURVE", result.getPatternType());
+        assertEquals(4, result.getMinAge());
+        assertEquals(7, result.getMaxAge());
         assertNotNull(result.getUpdatedAt());
     }
 
@@ -124,6 +130,6 @@ class TracingPatternServiceTest {
         when(tracingPatternRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () ->
-            tracingPatternService.updateTracingPattern(99L, 1L, "Name", null, points, ContentStatus.ACTIVE));
+            tracingPatternService.updateTracingPattern(99L, 1L, "Name", null, null, points, null, null, ContentStatus.ACTIVE));
     }
 }

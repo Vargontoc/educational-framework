@@ -26,7 +26,7 @@ public class TracingPatternService implements TracingPatternUseCase {
     }
 
     @Override
-    public TracingPattern createTracingPattern(Long topicId, String name, String description, List<List<Double>> points, ContentStatus status) {
+    public TracingPattern createTracingPattern(Long topicId, String name, String description, String patternType, List<List<Double>> points, Integer minAge, Integer maxAge, ContentStatus status) {
         tracingPatternValidator.validateForCreate(topicId, name, points, status);
 
         if (topicRepository.findById(topicId).isEmpty()) {
@@ -37,7 +37,10 @@ public class TracingPatternService implements TracingPatternUseCase {
         tracingPattern.setTopicId(topicId);
         tracingPattern.setName(name);
         tracingPattern.setDescription(description);
+        tracingPattern.setPatternType(patternType);
         tracingPattern.setPoints(points);
+        tracingPattern.setMinAge(minAge);
+        tracingPattern.setMaxAge(maxAge);
         tracingPattern.setStatus(status);
         tracingPattern.setCreatedAt(LocalDateTime.now());
 
@@ -64,7 +67,7 @@ public class TracingPatternService implements TracingPatternUseCase {
     }
 
     @Override
-    public TracingPattern updateTracingPattern(Long id, Long topicId, String name, String description, List<List<Double>> points, ContentStatus status) {
+    public TracingPattern updateTracingPattern(Long id, Long topicId, String name, String description, String patternType, List<List<Double>> points, Integer minAge, Integer maxAge, ContentStatus status) {
         tracingPatternValidator.validateForUpdate(topicId, name, points, status);
 
         var existing = tracingPatternRepository.findById(id)
@@ -77,7 +80,10 @@ public class TracingPatternService implements TracingPatternUseCase {
         existing.setTopicId(topicId);
         existing.setName(name);
         existing.setDescription(description);
+        existing.setPatternType(patternType);
         existing.setPoints(points);
+        existing.setMinAge(minAge);
+        existing.setMaxAge(maxAge);
         existing.setStatus(status);
         existing.setUpdatedAt(LocalDateTime.now());
 

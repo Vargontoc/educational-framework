@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="014__add_missing_content_fields" author="vargontoc">
+        <!-- Add status to learning_path_step -->
+        <addColumn tableName="learning_path_step">
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- Add pattern_type, min_age, max_age to tracing_pattern -->
+        <addColumn tableName="tracing_pattern">
+            <column name="pattern_type" type="VARCHAR(50)"/>
+        </addColumn>
+
+        <addColumn tableName="tracing_pattern">
+            <column name="min_age" type="INTEGER"/>
+        </addColumn>
+
+        <addColumn tableName="tracing_pattern">
+            <column name="max_age" type="INTEGER"/>
+        </addColumn>
+
+        <createIndex indexName="idx_learning_path_step_status" tableName="learning_path_step">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tracing_pattern_min_age" tableName="tracing_pattern">
+            <column name="min_age"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tracing_pattern_max_age" tableName="tracing_pattern">
+            <column name="max_age"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

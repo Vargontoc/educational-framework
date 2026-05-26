@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface TracingPatternUseCase {
 
-    TracingPattern createTracingPattern(Long topicId, String name, String description, List<List<Double>> points, ContentStatus status);
+    TracingPattern createTracingPattern(Long topicId, String name, String description, String patternType, List<List<Double>> points, Integer minAge, Integer maxAge, ContentStatus status);
 
     TracingPattern getTracingPattern(Long id);
 
@@ -15,5 +15,5 @@ public interface TracingPatternUseCase {
 
     List<TracingPattern> listTracingPatternsByTopic(Long topicId);
 
-    TracingPattern updateTracingPattern(Long id, Long topicId, String name, String description, List<List<Double>> points, ContentStatus status);
+    TracingPattern updateTracingPattern(Long id, Long topicId, String name, String description, String patternType, List<List<Double>> points, Integer minAge, Integer maxAge, ContentStatus status);
 }

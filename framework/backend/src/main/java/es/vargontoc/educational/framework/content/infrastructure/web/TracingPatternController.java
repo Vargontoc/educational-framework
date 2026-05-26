@@ -37,7 +37,10 @@ public class TracingPatternController {
             request.topicId(),
             request.name(),
             request.description(),
+            request.patternType(),
             request.points(),
+            request.minAge(),
+            request.maxAge(),
             ContentStatus.valueOf(request.status())
         );
         return ResponseEntity.status(201).body(ApiResponse.created(toResponse(tracingPattern)));
@@ -76,7 +79,10 @@ public class TracingPatternController {
             request.topicId(),
             request.name(),
             request.description(),
+            request.patternType(),
             request.points(),
+            request.minAge(),
+            request.maxAge(),
             ContentStatus.valueOf(request.status())
         );
         return ResponseEntity.ok(ApiResponse.ok(toResponse(tracingPattern)));
@@ -88,7 +94,10 @@ public class TracingPatternController {
             tracingPattern.getTopicId(),
             tracingPattern.getName(),
             tracingPattern.getDescription(),
+            tracingPattern.getPatternType(),
             tracingPattern.getPoints(),
+            tracingPattern.getMinAge(),
+            tracingPattern.getMaxAge(),
             tracingPattern.getStatus().name(),
             tracingPattern.getCreatedAt(),
             tracingPattern.getUpdatedAt()

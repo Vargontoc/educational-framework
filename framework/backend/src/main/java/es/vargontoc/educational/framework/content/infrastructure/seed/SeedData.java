@@ -76,7 +76,10 @@ public final class SeedData {
         String topicName,
         String name,
         String description,
+        String patternType,
         List<List<Double>> points,
+        Integer minAge,
+        Integer maxAge,
         String status
     ) {}
 

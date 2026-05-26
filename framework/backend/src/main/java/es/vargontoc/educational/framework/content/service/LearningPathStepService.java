@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.content.service;
 
+import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.LearningPathStep;
 import es.vargontoc.educational.framework.content.ports.in.LearningPathStepUseCase;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
@@ -48,6 +49,7 @@ public class LearningPathStepService implements LearningPathStepUseCase {
         step.setStepOrder(stepOrder);
         step.setUnlockCondition(unlockCondition);
         step.setVisualMetadata(visualMetadata);
+        step.setStatus(ContentStatus.DRAFT);
         step.setCreatedAt(LocalDateTime.now());
 
         return stepRepository.save(step);

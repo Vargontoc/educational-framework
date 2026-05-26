@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
+import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.LearningPathStep;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
 import org.springframework.stereotype.Repository;
@@ -48,6 +49,7 @@ public class LearningPathStepPersistenceAdapter implements LearningPathStepRepos
         target.setStepOrder(source.getStepOrder());
         target.setUnlockCondition(source.getUnlockCondition());
         target.setVisualMetadata(source.getVisualMetadata());
+        target.setStatus(ContentStatus.valueOf(source.getStatus()));
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -61,6 +63,7 @@ public class LearningPathStepPersistenceAdapter implements LearningPathStepRepos
         target.setStepOrder(source.getStepOrder());
         target.setUnlockCondition(source.getUnlockCondition());
         target.setVisualMetadata(source.getVisualMetadata());
+        target.setStatus(source.getStatus().name());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;

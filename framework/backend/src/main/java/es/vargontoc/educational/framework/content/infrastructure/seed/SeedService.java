@@ -348,6 +348,7 @@ public class SeedService {
             step.setActivityId(activityId);
             step.setStepOrder(seed.stepOrder());
             step.setUnlockCondition(seed.unlockCondition());
+            step.setStatus(ContentStatus.ACTIVE);
             step.setCreatedAt(LocalDateTime.now());
             learningPathStepRepository.save(step);
             markLoaded(key, file);
@@ -376,7 +377,10 @@ public class SeedService {
             pattern.setTopicId(topicId);
             pattern.setName(seed.name());
             pattern.setDescription(seed.description());
+            pattern.setPatternType(seed.patternType());
             pattern.setPoints(seed.points() != null ? seed.points() : Collections.emptyList());
+            pattern.setMinAge(seed.minAge());
+            pattern.setMaxAge(seed.maxAge());
             pattern.setStatus(ContentStatus.valueOf(seed.status()));
             pattern.setCreatedAt(LocalDateTime.now());
             tracingPatternRepository.save(pattern);

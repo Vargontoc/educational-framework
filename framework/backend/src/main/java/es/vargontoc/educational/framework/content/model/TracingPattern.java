@@ -10,7 +10,10 @@ public class TracingPattern {
     private Long topicId;
     private String name;
     private String description;
+    private String patternType;
     private List<List<Double>> points = new ArrayList<>();
+    private Integer minAge;
+    private Integer maxAge;
     private ContentStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -47,12 +50,36 @@ public class TracingPattern {
         this.description = description;
     }
 
+    public String getPatternType() {
+        return patternType;
+    }
+
+    public void setPatternType(String patternType) {
+        this.patternType = patternType;
+    }
+
     public List<List<Double>> getPoints() {
         return points;
     }
 
     public void setPoints(List<List<Double>> points) {
         this.points = points != null ? points : new ArrayList<>();
+    }
+
+    public Integer getMinAge() {
+        return minAge;
+    }
+
+    public void setMinAge(Integer minAge) {
+        this.minAge = minAge;
+    }
+
+    public Integer getMaxAge() {
+        return maxAge;
+    }
+
+    public void setMaxAge(Integer maxAge) {
+        this.maxAge = maxAge;
     }
 
     public ContentStatus getStatus() {

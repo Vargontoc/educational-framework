@@ -16,6 +16,36 @@ sprints:
 - framework/backend/sprints/planned/014-seeds-and-runtime-content-read-services.md
 - framework/backend/sprints/planned/015-contract-hardening-and-integration-readiness.md
 
+## Implementation Notes
+
+### TracingPattern Fields (Sprint 015)
+
+The following fields were added to TracingPattern as specified in the schema:
+- `patternType` (VARCHAR(50), nullable): Pattern type identifier (e.g. CURVE, POLYGON, LINE)
+- `minAge` (INTEGER, nullable): Minimum recommended age
+- `maxAge` (INTEGER, nullable): Maximum recommended age
+
+These columns were added in migration 014 and wired through the full stack (model, JPA entity, DTOs, service, controller, OpenAPI contract, seed data) in sprint 015.
+
+### Security Hardening (Sprint 015)
+
+- Removed `permitAll()` for `/api/v1/dev/content/**` from SecurityConfig. Dev endpoints now require FamilySession authentication when the `dev` profile is active.
+- Outside the `dev` profile, requests to `/api/v1/dev/content/**` return 401 (no controller registered).
+- Productive story endpoints (`/api/v1/content/stories`) require FamilySession authentication (Bearer token from PIN login).
+
+### Deferred Read-Only APIs
+
+The following read-only APIs specified in FEAT-003 are NOT yet implemented:
+- `GET /api/v1/content/categories`
+- `GET /api/v1/content/topics`
+- `GET /api/v1/content/activities`
+- `GET /api/v1/content/activities/{id}`
+- `GET /api/v1/content/activities/{id}/difficulty-levels`
+- `GET /api/v1/content/topics/{id}/curiosities`
+- `GET /api/v1/content/learning-paths`
+
+These are deferred to a future sprint as they are not required by current frontend flows. The productive story endpoints are the only read-only APIs implemented.
+
 ## Description
 
 The content module centralizes the static and administrative catalog required by the application: activities, topics, resources, avatar event fallback messages, curiosities, learning paths, tracing patterns, and stories.
