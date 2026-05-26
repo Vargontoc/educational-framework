@@ -120,3 +120,69 @@ export interface AdultProfileResponse {
   createdAt: string
   updatedAt?: string | null
 }
+
+// ── Dev Content: Categories ──────────────────────────────────────────────
+
+export type ContentStatus = 'ACTIVE' | 'INACTIVE' | 'DRAFT'
+
+export interface CreateCategoryRequest {
+  name: string
+  description?: string | null
+  status: ContentStatus
+  displayOrder?: number | null
+  iconUrl?: string | null
+}
+
+export interface UpdateCategoryRequest {
+  name: string
+  description?: string | null
+  status: ContentStatus
+  displayOrder?: number | null
+  iconUrl?: string | null
+}
+
+export interface CategoryResponse {
+  id: number
+  name: string
+  description?: string | null
+  status: ContentStatus
+  displayOrder?: number | null
+  iconUrl?: string | null
+  createdAt: string
+  updatedAt?: string | null
+}
+
+// ── Dev Content: Topics ──────────────────────────────────────────────────
+
+export interface CreateTopicRequest {
+  name: string
+  description?: string | null
+  categoryId: number
+  status: ContentStatus
+  minAge?: number | null
+  maxAge?: number | null
+  compatibleVariants?: string[] | null
+}
+
+export interface UpdateTopicRequest {
+  name: string
+  description?: string | null
+  categoryId: number
+  status: ContentStatus
+  minAge?: number | null
+  maxAge?: number | null
+  compatibleVariants?: string[] | null
+}
+
+export interface TopicResponse {
+  id: number
+  name: string
+  description?: string | null
+  categoryId: number
+  status: ContentStatus
+  minAge?: number | null
+  maxAge?: number | null
+  compatibleVariants: string[]
+  createdAt: string
+  updatedAt?: string | null
+}

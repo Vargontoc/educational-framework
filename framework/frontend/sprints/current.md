@@ -1,10 +1,10 @@
-# Sprint 005 - frontend
+# Sprint 006 - frontend
 # -----------------------------------------------
 
 ## Goal
-Implement the development Content Manager app shell: opt-in route, responsive layout, internal
-section navigation, and base empty/loading/error states derived from
-`docs/product/features/frontend/dev-app/FEAT-001-Dev-Content-App-Shell.md`.
+Implement the Dev Content Catalog Core: categories and topics list/create/edit flows, category-based
+topic filtering, inline API errors, and OpenAPI-derived types from
+`docs/product/features/frontend/dev-app/FEAT-002-Dev-Content-Catalog-Core.md`.
 
 ## Status
 status: active
@@ -15,68 +15,82 @@ waiting_for:
 
 ## Tasks
 
-### Environment Activation
-- [ ] Add `VITE_ENABLE_DEV_CONTENT` documentation/example with default disabled behavior.
-- [ ] Implement a strict opt-in check: only `VITE_ENABLE_DEV_CONTENT === 'true'` enables the mini-app.
-- [ ] Ensure missing, empty, `false`, or any other value disables the mini-app.
+### Contract Types
+- [ ] Review `docs/contracts/api/openapi.json` for dev-content category and topic schemas.
+- [ ] Add OpenAPI-derived types for categories and topics in the existing frontend API types module.
+- [ ] Include request and response types for create/update/list operations.
 
-### Routing
-- [ ] Add `/dev/content` route to `src/router/index.ts`.
-- [ ] Guard `/dev/content` with the strict opt-in check.
-- [ ] Redirect direct access to `/` when the feature is disabled.
-- [ ] Do not require parental PIN or authenticated session for this development-only tool.
+### Services
+- [ ] Create or extend `src/services/devContentService.ts` for `/api/v1/dev/content/**`.
+- [ ] Add `listCategories()` using `GET /api/v1/dev/content/categories`.
+- [ ] Add `getCategoryById(id)` using `GET /api/v1/dev/content/categories/{id}`.
+- [ ] Add `createCategory(payload)` using `POST /api/v1/dev/content/categories`.
+- [ ] Add `updateCategory(id, payload)` using `PUT /api/v1/dev/content/categories/{id}`.
+- [ ] Add `listTopics(categoryId?)` using `GET /api/v1/dev/content/topics` with optional `categoryId`.
+- [ ] Add `getTopicById(id)` using `GET /api/v1/dev/content/topics/{id}`.
+- [ ] Add `createTopic(payload)` using `POST /api/v1/dev/content/topics`.
+- [ ] Add `updateTopic(id, payload)` using `PUT /api/v1/dev/content/topics/{id}`.
+- [ ] Ensure all calls use `src/shared/api/axios.ts`.
 
-### App Shell View
-- [ ] Create `src/views/DevContentView.vue`.
-- [ ] Create a responsive shell with sidebar navigation and main content area.
-- [ ] Add sections for categories, topics, activities, difficulty levels, resources, locales,
-      curiosities, and avatar events.
-- [ ] Show a base empty state for each section until CRUD integrations are implemented.
-- [ ] Include base loading and error states for future service integration.
+### State Management
+- [ ] Create or extend a dev content Pinia store if shared state is needed.
+- [ ] Track categories, topics, selected category, loading state, and error state.
+- [ ] Stores must call services only; stores must not call Axios directly.
 
-### Orientation and Layout
-- [ ] Do not apply the base app landscape-only constraint to the dev content mini-app.
-- [ ] Ensure the mini-app works in horizontal and vertical orientations.
-- [ ] Ensure the mini-app does not show or depend on the rotation overlay.
-- [ ] Verify layout responsiveness for desktop, tablet, and mobile widths.
+### Categories UI
+- [ ] Implement category listing in the dev content app shell.
+- [ ] Add create category form with fields required by contract.
+- [ ] Add edit category flow: fetch fresh data via `getCategoryById(id)` before opening the form.
+- [ ] Show API validation errors inline for `400`, `404`, and `409` cases where applicable.
+- [ ] Show loading, empty, and error states.
 
-### i18n
-- [ ] Add all visible strings to `src/i18n/es.ts`.
+### Topics UI
+- [ ] Implement topic listing in the dev content app shell.
+- [ ] Add category filter for topics using real category data.
+- [ ] Add create topic form with category selector populated from loaded categories.
+- [ ] Add edit topic flow: fetch fresh data via `getTopicById(id)` before opening the form.
+- [ ] Show API validation errors inline for `400`, `404`, and `409` cases where applicable.
+- [ ] Show loading, empty, and error states.
+
+### i18n and UX
+- [ ] Add all visible labels and messages to `src/i18n/es.ts`.
 - [ ] Do not hardcode visible labels in Vue templates.
+- [ ] Keep the UI responsive in portrait and landscape.
+- [ ] Do not add delete operations.
 
 ## Risks
-- **Accidental production exposure**: route may appear if the frontend flag is misconfigured.
-  Mitigation: default disabled; only exact `VITE_ENABLE_DEV_CONTENT=true` enables it.
-- **Confusing Vite dev mode with deployed develop profile**: `import.meta.env.DEV` is not enough.
-  Mitigation: use explicit environment flag, not local dev mode, as the availability switch.
-- **Landscape overlay leakage**: the base app targets landscape, but this internal tool must be usable
-  in both orientations. Mitigation: keep the dev content view responsive and independent from the
-  rotation overlay behavior.
-- **Scope creep into CRUD**: FEAT-001 is only the shell. Mitigation: do not implement entity forms or
-  API writes in this sprint.
+- **Contract drift**: frontend models may diverge from backend OpenAPI schemas.
+  Mitigation: derive types from `docs/contracts/api/openapi.json` and do not invent local shapes.
+- **Invalid topic/category relationships**: topic forms may reference missing categories.
+  Mitigation: populate category selectors only from real categories loaded through the API.
+- **Duplicated backend validation**: frontend may over-encode domain rules.
+  Mitigation: validate only basic required fields for UX; backend remains source of truth.
+- **Scope creep into activities/resources/locales**: FEAT-002 covers only categories and topics.
+  Mitigation: leave activities, difficulty levels, resources, locales, curiosities, and avatar events as shell sections.
 
 ## Dependencies
-- `docs/product/features/frontend/dev-app/FEAT-001-Dev-Content-App-Shell.md` — source feature.
-- `docs/architecture/decisions/ADR-011-Dev-Content-Manager.md` — activation and production safety decision.
-- `framework/frontend/app` existing Vue 3 + TypeScript + Vite + Pinia + Vue Router app.
-- No backend endpoints are required for shell-only implementation.
+- `docs/product/features/frontend/dev-app/FEAT-002-Dev-Content-Catalog-Core.md` — source feature.
+- `docs/product/features/frontend/dev-app/FEAT-001-Dev-Content-App-Shell.md` — previous shell feature.
+- `docs/architecture/decisions/ADR-011-Dev-Content-Manager.md` — dev app activation decision.
+- `docs/contracts/api/openapi.json` — source of truth for request/response shapes.
+- Backend content endpoints under `/api/v1/dev/content/categories` and `/api/v1/dev/content/topics` must exist in dev profile.
 
 ## Agent Instruction
-- Implement only FEAT-001 shell behavior; do not implement CRUD from FEAT-002+.
-- Use `VITE_ENABLE_DEV_CONTENT === 'true'` as the only enabling condition.
-- The default behavior must be disabled.
-- Do not use `import.meta.env.DEV` as the only route guard.
-- Do not require parental PIN or `useSessionStore.isAuthenticated` for `/dev/content`.
-- Do not modify GameView behavior.
-- Do not couple the dev content view to `RotationOverlay`; the mini-app must work in portrait and landscape.
+- Implement only FEAT-002 catalog core behavior: categories and topics.
+- Do not implement activities, difficulty levels, resources, locales, curiosities, avatar events, or delete operations.
+- Derive all TypeScript request/response types from `docs/contracts/api/openapi.json`.
+- All Axios calls must go through `src/shared/api/axios.ts`.
+- Stores call services; services call Axios.
+- Keep `VITE_ENABLE_DEV_CONTENT === 'true'` as the route activation rule from Sprint 005.
+- Do not require parental PIN or authenticated session for `/dev/content`.
+- Do not add frontend domain validation beyond basic required-field UX.
 - All visible strings must go through vue-i18n.
-- All future API calls must go through services and the shared Axios client, but this sprint should avoid CRUD/API writes.
-- Commit: `feat(frontend): add dev content app shell`
+- Commit: `feat(frontend): add dev content catalog core`
 
 ## Notes
-Derived from `docs/product/features/frontend/dev-app/FEAT-001-Dev-Content-App-Shell.md`.
-This sprint starts the dev-app track created by ADR-011. The shell is intentionally separate from
-catalog CRUD, which is planned in FEAT-002 and later.
+Derived from `docs/product/features/frontend/dev-app/FEAT-002-Dev-Content-Catalog-Core.md`.
+This sprint assumes the FEAT-001 shell exists and focuses on the first real dev-content API
+integration: categories and topics.
 
 ## Review
 

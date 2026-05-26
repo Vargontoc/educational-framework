@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import DevSidebar from '@/components/dev-content/DevSidebar.vue'
 import DevSection from '@/components/dev-content/DevSection.vue'
+import CategoryList from '@/components/dev-content/CategoryList.vue'
+import TopicList from '@/components/dev-content/TopicList.vue'
 
 const activeSection = ref('categories')
 
@@ -17,7 +19,9 @@ function handleNavigate(section: string) {
       @navigate="handleNavigate"
     />
     <main class="dev-content__main">
-      <DevSection :section-id="activeSection" />
+      <CategoryList v-if="activeSection === 'categories'" />
+      <TopicList v-else-if="activeSection === 'topics'" />
+      <DevSection v-else :section-id="activeSection" />
     </main>
   </div>
 </template>

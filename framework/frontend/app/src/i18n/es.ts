@@ -72,6 +72,68 @@ export const messages = {
     },
     loading: 'Cargando sección...',
     error: 'Error al cargar la sección',
-    retry: 'Reintentar'
+    retry: 'Reintentar',
+    categories: {
+      title: 'Categorías',
+      create: 'Crear Categoría',
+      edit: 'Editar Categoría',
+      name: 'Nombre',
+      description: 'Descripción',
+      status: 'Estado',
+      displayOrder: 'Orden',
+      iconUrl: 'URL del Icono',
+      namePlaceholder: 'Ingrese el nombre de la categoría',
+      descriptionPlaceholder: 'Ingrese una descripción (opcional)',
+      iconUrlPlaceholder: 'URL del icono (opcional)',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      noCategories: 'No hay categorías registradas',
+      errorLoading: 'Error al cargar las categorías',
+      errorCreate: 'Error al crear la categoría',
+      errorUpdate: 'Error al actualizar la categoría',
+      conflictError: 'Ya existe una categoría con ese nombre'
+    },
+    topics: {
+      title: 'Temas',
+      create: 'Crear Tema',
+      edit: 'Editar Tema',
+      name: 'Nombre',
+      description: 'Descripción',
+      category: 'Categoría',
+      status: 'Estado',
+      minAge: 'Edad Mínima',
+      maxAge: 'Edad Máxima',
+      compatibleVariants: 'Variantes Compatibles',
+      namePlaceholder: 'Ingrese el nombre del tema',
+      descriptionPlaceholder: 'Ingrese una descripción (opcional)',
+      selectCategory: 'Seleccione una categoría',
+      allCategories: 'Todas las categorías',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      noTopics: 'No hay temas registrados',
+      errorLoading: 'Error al cargar los temas',
+      errorCreate: 'Error al crear el tema',
+      errorUpdate: 'Error al actualizar el tema',
+      categoryNotFound: 'La categoría seleccionada no existe',
+      conflictError: 'Ya existe un tema con ese nombre en la categoría'
+    },
+    status: {
+      ACTIVE: 'Activo',
+      INACTIVE: 'Inactivo',
+      DRAFT: 'Borrador'
+    },
+    form: {
+      required: 'Este campo es obligatorio',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      create: 'Crear',
+      edit: 'Editar'
+    },
+    errors: {
+      badRequest: 'Solicitud incorrecta',
+      notFound: 'Recurso no encontrado',
+      conflict: 'Conflicto: el recurso ya existe',
+      serverError: 'Error del servidor'
+    }
   }
 }
