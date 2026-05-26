@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import { useSessionStore } from '@/stores/useSessionStore'
+import { isDevContentEnabled } from '@/utils/devContentEnabled'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +32,16 @@ const router = createRouter({
       name: 'design-system',
       component: () => import('@/views/DesignSystemView.vue'),
       beforeEnter: () => import.meta.env.DEV || '/'
+    },
+    {
+      path: '/dev/content',
+      name: 'dev-content',
+      component: () => import('@/views/DevContentView.vue'),
+      beforeEnter: () => {
+        if (!isDevContentEnabled()) {
+          return '/'
+        }
+      }
     },
     {
       path: '/:pathMatch(.*)*',

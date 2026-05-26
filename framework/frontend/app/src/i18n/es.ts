@@ -47,5 +47,31 @@ export const messages = {
       avatarPlaceholder: 'URL del avatar (opcional)',
       submit: 'Crear perfil'
     }
+  },
+  devContent: {
+    title: 'Gestor de Contenido',
+    nav: {
+      categories: 'Categorías',
+      topics: 'Temas',
+      activities: 'Actividades',
+      difficultyLevels: 'Niveles de Dificultad',
+      resources: 'Recursos',
+      locales: 'Locales',
+      curiosities: 'Curiosidades',
+      avatarEvents: 'Eventos de Avatar'
+    },
+    empty: {
+      categories: 'No hay categorías registradas',
+      topics: 'No hay temas registrados',
+      activities: 'No hay actividades registradas',
+      difficultyLevels: 'No hay niveles de dificultad registrados',
+      resources: 'No hay recursos registrados',
+      locales: 'No hay locales registrados',
+      curiosities: 'No hay curiosidades registradas',
+      avatarEvents: 'No hay eventos de avatar registrados'
+    },
+    loading: 'Cargando sección...',
+    error: 'Error al cargar la sección',
+    retry: 'Reintentar'
   }
 }
