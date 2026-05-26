@@ -1,0 +1,20 @@
+[
+  {
+    "storyTitle": "El Pequeño Grillo",
+    "pageOrder": 1,
+    "text": "Había una vez un pequeño grillo que vivía en un prado verde. Cada mañana saltaba de hoja en hoja buscando el sol.",
+    "status": "ACTIVE"
+  },
+  {
+    "storyTitle": "El Pequeño Grillo",
+    "pageOrder": 2,
+    "text": "Un día, el grillo decidió explorar el bosque. Encontró mariposas, abejas y una simpática mariquita.",
+    "status": "ACTIVE"
+  },
+  {
+    "storyTitle": "El Pequeño Grillo",
+    "pageOrder": 3,
+    "text": "Al caer la noche, el grillo cantó su canción favorita. Todos los animales del bosque escucharon y aplaudieron. ¡Fin!",
+    "status": "ACTIVE"
+  }
+]

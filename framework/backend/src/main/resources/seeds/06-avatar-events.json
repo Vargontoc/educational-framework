@@ -1,0 +1,44 @@
+[
+  {
+    "eventType": "ACTIVITY_COMPLETED",
+    "tone": "JOYFUL",
+    "locale": "es-ES",
+    "messageText": "¡Has completado la actividad! ¡Muy bien!",
+    "status": "ACTIVE"
+  },
+  {
+    "eventType": "ACTIVITY_STARTED",
+    "tone": "ENTHUSIASTIC",
+    "locale": "es-ES",
+    "messageText": "¡Vamos a jugar! ¡Prepárate!",
+    "status": "ACTIVE"
+  },
+  {
+    "eventType": "ACTIVITY_FAILED",
+    "tone": "CALM",
+    "locale": "es-ES",
+    "messageText": "No te preocupes, ¡inténtalo de nuevo!",
+    "status": "ACTIVE"
+  },
+  {
+    "eventType": "HELP_REQUESTED",
+    "tone": "NEUTRAL",
+    "locale": "es-ES",
+    "messageText": "¡Claro! Voy a ayudarte.",
+    "status": "ACTIVE"
+  },
+  {
+    "eventType": "OUT_OF_SCOPE_QUERY",
+    "tone": "CALM",
+    "locale": "es-ES",
+    "messageText": "Esa es una buena pregunta, pero no es parte de esta actividad.",
+    "status": "ACTIVE"
+  },
+  {
+    "eventType": "CURIOSITY_REQUESTED",
+    "tone": "ENTHUSIASTIC",
+    "locale": "es-ES",
+    "messageText": "¡Sabías que...!",
+    "status": "ACTIVE"
+  }
+]

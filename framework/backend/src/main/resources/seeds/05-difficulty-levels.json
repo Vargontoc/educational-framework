@@ -1,0 +1,62 @@
+[
+  {
+    "activityName": "Contar Animales",
+    "difficultyCode": "EASY",
+    "engineParams": "{\"maxCount\": 5, \"timeLimit\": 60}"
+  },
+  {
+    "activityName": "Contar Animales",
+    "difficultyCode": "MEDIUM",
+    "engineParams": "{\"maxCount\": 10, \"timeLimit\": 45}"
+  },
+  {
+    "activityName": "Contar Animales",
+    "difficultyCode": "HARD",
+    "engineParams": "{\"maxCount\": 15, \"timeLimit\": 30}"
+  },
+  {
+    "activityName": "Formas del Bosque",
+    "difficultyCode": "EASY",
+    "engineParams": "{\"shapes\": [\"circle\", \"square\"], \"timeLimit\": 60}"
+  },
+  {
+    "activityName": "Formas del Bosque",
+    "difficultyCode": "MEDIUM",
+    "engineParams": "{\"shapes\": [\"circle\", \"square\", \"triangle\"], \"timeLimit\": 45}"
+  },
+  {
+    "activityName": "Formas del Bosque",
+    "difficultyCode": "HARD",
+    "engineParams": "{\"shapes\": [\"circle\", \"square\", \"triangle\", \"star\"], \"timeLimit\": 30}"
+  },
+  {
+    "activityName": "Memoria de Animales",
+    "difficultyCode": "EASY",
+    "engineParams": "{\"pairs\": 3, \"timeLimit\": 60}"
+  },
+  {
+    "activityName": "Memoria de Animales",
+    "difficultyCode": "MEDIUM",
+    "engineParams": "{\"pairs\": 6, \"timeLimit\": 45}"
+  },
+  {
+    "activityName": "Memoria de Animales",
+    "difficultyCode": "HARD",
+    "engineParams": "{\"pairs\": 8, \"timeLimit\": 30}"
+  },
+  {
+    "activityName": "Líneas de Números",
+    "difficultyCode": "EASY",
+    "engineParams": "{\"maxNumber\": 5, \"timeLimit\": 60}"
+  },
+  {
+    "activityName": "Líneas de Números",
+    "difficultyCode": "MEDIUM",
+    "engineParams": "{\"maxNumber\": 10, \"timeLimit\": 45}"
+  },
+  {
+    "activityName": "Líneas de Números",
+    "difficultyCode": "HARD",
+    "engineParams": "{\"maxNumber\": 20, \"timeLimit\": 30}"
+  }
+]

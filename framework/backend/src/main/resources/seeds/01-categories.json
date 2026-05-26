@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Naturaleza",
+    "description": "El mundo natural: animales, plantas y fenómenos",
+    "status": "ACTIVE",
+    "displayOrder": 1
+  },
+  {
+    "name": "Matemáticas",
+    "description": "Números, formas y operaciones básicas",
+    "status": "ACTIVE",
+    "displayOrder": 2
+  }
+]

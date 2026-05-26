@@ -4,6 +4,8 @@ import es.vargontoc.educational.framework.shared.model.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "difficulty_level")
@@ -16,9 +18,11 @@ public class DifficultyLevelJpaEntity extends BaseEntity {
     private String difficultyCode;
 
     @Column(name = "engine_params", columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String engineParams;
 
     @Column(name = "adaptive_threshold_config", columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String adaptiveThresholdConfig;
 
     public Long getActivityId() {

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Animales",
+    "categoryName": "Naturaleza",
+    "description": "Criaturas del mundo animal",
+    "status": "ACTIVE",
+    "minAge": 3,
+    "maxAge": 8
+  },
+  {
+    "name": "Plantas",
+    "categoryName": "Naturaleza",
+    "description": "Flora y vegetación",
+    "status": "ACTIVE",
+    "minAge": 3,
+    "maxAge": 7
+  },
+  {
+    "name": "Números",
+    "categoryName": "Matemáticas",
+    "description": "Contar y calcular",
+    "status": "ACTIVE",
+    "minAge": 3,
+    "maxAge": 6
+  },
+  {
+    "name": "Formas",
+    "categoryName": "Matemáticas",
+    "description": "Figuras geométricas básicas",
+    "status": "ACTIVE",
+    "minAge": 3,
+    "maxAge": 6
+  }
+]

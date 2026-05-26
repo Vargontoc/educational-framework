@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Contar Animales",
+    "description": "Cuenta los animales que aparecen en pantalla",
+    "gameEngineType": "COUNTER",
+    "minAge": 3,
+    "maxAge": 6,
+    "status": "ACTIVE",
+    "topicNames": ["Animales", "Números"]
+  },
+  {
+    "name": "Formas del Bosque",
+    "description": "Identifica las formas geométricas en la naturaleza",
+    "gameEngineType": "SHAPE_MATCHER",
+    "minAge": 3,
+    "maxAge": 6,
+    "status": "ACTIVE",
+    "topicNames": ["Plantas", "Formas"]
+  },
+  {
+    "name": "Memoria de Animales",
+    "description": "Encuentra las parejas de animales",
+    "gameEngineType": "MEMORY_GAME",
+    "minAge": 3,
+    "maxAge": 7,
+    "status": "ACTIVE",
+    "topicNames": ["Animales"]
+  },
+  {
+    "name": "Líneas de Números",
+    "description": "Ordena los números de menor a mayor",
+    "gameEngineType": "SORTING",
+    "minAge": 4,
+    "maxAge": 7,
+    "status": "ACTIVE",
+    "topicNames": ["Números"]
+  }
+]

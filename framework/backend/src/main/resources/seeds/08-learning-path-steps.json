@@ -1,0 +1,20 @@
+[
+  {
+    "learningPathName": "Primeros Pasos",
+    "activityName": "Contar Animales",
+    "stepOrder": 1,
+    "unlockCondition": null
+  },
+  {
+    "learningPathName": "Primeros Pasos",
+    "activityName": "Formas del Bosque",
+    "stepOrder": 2,
+    "unlockCondition": "PREVIOUS_COMPLETED"
+  },
+  {
+    "learningPathName": "Primeros Pasos",
+    "activityName": "Memoria de Animales",
+    "stepOrder": 3,
+    "unlockCondition": "PREVIOUS_COMPLETED"
+  }
+]

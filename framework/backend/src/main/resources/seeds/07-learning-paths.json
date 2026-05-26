@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Primeros Pasos",
+    "description": "Un camino de aprendizaje para los más pequeños",
+    "minAge": 3,
+    "maxAge": 5,
+    "locale": "es-ES",
+    "status": "ACTIVE"
+  }
+]

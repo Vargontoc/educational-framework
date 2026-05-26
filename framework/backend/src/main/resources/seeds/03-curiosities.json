@@ -1,0 +1,74 @@
+[
+  {
+    "text": "¿Sabías que las mariposas prueban con sus patas para encontrar comida?",
+    "topicName": "Animales",
+    "minAge": 3,
+    "maxAge": 6,
+    "tags": ["animales", "insectos"],
+    "locale": "es-ES",
+    "phoneticHint": "mariposas (mah-ree-POH-sas)"
+  },
+  {
+    "text": "Los pulpos tienen tres corazones y sangre de color azul.",
+    "topicName": "Animales",
+    "minAge": 4,
+    "maxAge": 8,
+    "tags": ["animales", "océano"],
+    "locale": "es-ES",
+    "phoneticHint": "pulpo (POOL-poh)"
+  },
+  {
+    "text": "Las semillas viajan con el viento, el agua o pegándose al pelaje de los animales.",
+    "topicName": "Plantas",
+    "minAge": 4,
+    "maxAge": 7,
+    "tags": ["plantas", "naturaleza"],
+    "locale": "es-ES",
+    "phoneticHint": "semillas (seh-MEE-yas)"
+  },
+  {
+    "text": "El girasol siempre gira para mirar hacia el sol.",
+    "topicName": "Plantas",
+    "minAge": 3,
+    "maxAge": 6,
+    "tags": ["plantas", "sol"],
+    "locale": "es-ES",
+    "phoneticHint": "girasol (hee-rah-SOL)"
+  },
+  {
+    "text": "Las abejas pueden contar hasta cuatro.",
+    "topicName": "Números",
+    "minAge": 3,
+    "maxAge": 6,
+    "tags": ["animales", "números"],
+    "locale": "es-ES",
+    "phoneticHint": "abejas (ah-BEH-has)"
+  },
+  {
+    "text": "Los delfines duermen con un ojo abierto.",
+    "topicName": "Animales",
+    "minAge": 4,
+    "maxAge": 8,
+    "tags": ["animales", "océano"],
+    "locale": "es-ES",
+    "phoneticHint": "delfines (del-FEE-nes)"
+  },
+  {
+    "text": "Un círcolo no tiene esquinas ni lados.",
+    "topicName": "Formas",
+    "minAge": 3,
+    "maxAge": 6,
+    "tags": ["formas", "geometría"],
+    "locale": "es-ES",
+    "phoneticHint": "círculo (SEER-koo-loh)"
+  },
+  {
+    "text": "Las estrellas de mar pueden regenerar sus brazos si los pierden.",
+    "topicName": "Animales",
+    "minAge": 4,
+    "maxAge": 8,
+    "tags": ["animales", "océano"],
+    "locale": "es-ES",
+    "phoneticHint": "estrellas (es-TRE-yas)"
+  }
+]

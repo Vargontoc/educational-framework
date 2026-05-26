@@ -32,6 +32,7 @@ class DevContentControllerDisabledTest {
         registry.add("spring.datasource.driver-class-name", POSTGRES::getDriverClassName);
         registry.add("spring.liquibase.enabled", () -> true);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
+        registry.add("seed.enabled", () -> "false");
     }
 
     @Autowired

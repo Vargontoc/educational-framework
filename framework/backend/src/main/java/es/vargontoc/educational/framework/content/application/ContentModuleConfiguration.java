@@ -1,5 +1,8 @@
 package es.vargontoc.educational.framework.content.application;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedService;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityResourceRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
@@ -95,5 +98,25 @@ class ContentModuleConfiguration {
     @Bean
     StoryPageService storyPageService(StoryPageRepository storyPageRepository, StoryRepository storyRepository) {
         return new StoryPageService(storyPageRepository, storyRepository);
+    }
+
+    @Bean
+    SeedService seedService(
+            DevSeedStateJpaRepository seedStateRepository,
+            CategoryRepository categoryRepository,
+            TopicRepository topicRepository,
+            CuriosityRepository curiosityRepository,
+            ActivityRepository activityRepository,
+            DifficultyLevelRepository difficultyLevelRepository,
+            AvatarEventCatalogRepository avatarEventCatalogRepository,
+            LearningPathRepository learningPathRepository,
+            LearningPathStepRepository learningPathStepRepository,
+            TracingPatternRepository tracingPatternRepository,
+            StoryRepository storyRepository,
+            StoryPageRepository storyPageRepository,
+            ObjectMapper objectMapper) {
+        return new SeedService(seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
+            activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
+            learningPathStepRepository, tracingPatternRepository, storyRepository, storyPageRepository, objectMapper);
     }
 }

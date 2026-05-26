@@ -1,0 +1,11 @@
+[
+  {
+    "title": "El Pequeño Grillo",
+    "description": "Un grillo valiente explora el bosque",
+    "minAge": 3,
+    "maxAge": 6,
+    "estimatedDurationMinutes": 5,
+    "topicNames": ["Animales"],
+    "status": "ACTIVE"
+  }
+]
