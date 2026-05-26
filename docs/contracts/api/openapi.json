@@ -560,6 +560,162 @@
         }
       }
     },
+    "/api/v1/dev/content/learning-paths": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create learning path",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateLearningPathRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLearningPath" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List learning paths. Optionally filter by status.",
+        "parameters": [
+          { "name": "status", "in": "query", "required": false, "schema": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLearningPathList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/learning-paths/{id}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get learning path by id",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLearningPath" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update learning path",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateLearningPathRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLearningPath" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/learning-paths/{learningPathId}/steps": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create a step in a learning path",
+        "parameters": [{ "name": "learningPathId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateLearningPathStepRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLearningPathStep" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error409" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List steps for a learning path, ordered by stepOrder",
+        "parameters": [{ "name": "learningPathId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLearningPathStepList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/learning-paths/{learningPathId}/steps/{stepId}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get a learning path step by id",
+        "parameters": [
+          { "name": "learningPathId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } },
+          { "name": "stepId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLearningPathStep" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update a learning path step",
+        "parameters": [
+          { "name": "learningPathId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } },
+          { "name": "stepId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateLearningPathStepRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseLearningPathStep" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } },
+          "409": { "description": "Conflict", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error409" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/tracing-patterns": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create tracing pattern",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateTracingPatternRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseTracingPattern" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List tracing patterns. Optionally filter by topicId.",
+        "parameters": [
+          { "name": "topicId", "in": "query", "required": false, "schema": { "type": "integer", "format": "int64" } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseTracingPatternList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/tracing-patterns/{id}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get tracing pattern by id",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseTracingPattern" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update tracing pattern",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateTracingPatternRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseTracingPattern" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
     "/api/v1/dev/content/locales/{id}": {
       "put": {
         "tags": ["dev-content"],
@@ -1269,6 +1425,166 @@
         "properties": {
           "success": { "type": "boolean" },
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/ContentLocaleResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateLearningPathRequest": {
+        "type": "object",
+        "required": ["name", "locale", "status"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "locale": { "type": "string", "example": "es-ES" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "UpdateLearningPathRequest": {
+        "type": "object",
+        "required": ["name", "locale", "status"],
+        "properties": {
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "locale": { "type": "string", "example": "es-ES" },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "LearningPathResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "locale": { "type": "string" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseLearningPath": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/LearningPathResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseLearningPathList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/LearningPathResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateLearningPathStepRequest": {
+        "type": "object",
+        "required": ["activityId", "stepOrder"],
+        "properties": {
+          "activityId": { "type": "integer", "format": "int64" },
+          "stepOrder": { "type": "integer", "minimum": 1 },
+          "unlockCondition": { "type": "string", "maxLength": 100, "nullable": true },
+          "visualMetadata": { "type": "string", "nullable": true }
+        }
+      },
+      "UpdateLearningPathStepRequest": {
+        "type": "object",
+        "required": ["activityId", "stepOrder"],
+        "properties": {
+          "activityId": { "type": "integer", "format": "int64" },
+          "stepOrder": { "type": "integer", "minimum": 1 },
+          "unlockCondition": { "type": "string", "maxLength": 100, "nullable": true },
+          "visualMetadata": { "type": "string", "nullable": true }
+        }
+      },
+      "LearningPathStepResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "learningPathId": { "type": "integer", "format": "int64" },
+          "activityId": { "type": "integer", "format": "int64" },
+          "stepOrder": { "type": "integer" },
+          "unlockCondition": { "type": "string", "nullable": true },
+          "visualMetadata": { "type": "string", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseLearningPathStep": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/LearningPathStepResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseLearningPathStepList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/LearningPathStepResponse" } },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "CreateTracingPatternRequest": {
+        "type": "object",
+        "required": ["topicId", "name", "points", "status"],
+        "properties": {
+          "topicId": { "type": "integer", "format": "int64" },
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "points": { "type": "array", "items": { "type": "array", "items": { "type": "number", "format": "double" }, "minItems": 2, "maxItems": 2 }, "description": "Ordered normalized [x, y] coordinate pairs, values between 0.0 and 1.0." },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "UpdateTracingPatternRequest": {
+        "type": "object",
+        "required": ["topicId", "name", "points", "status"],
+        "properties": {
+          "topicId": { "type": "integer", "format": "int64" },
+          "name": { "type": "string", "maxLength": 200 },
+          "description": { "type": "string", "nullable": true },
+          "points": { "type": "array", "items": { "type": "array", "items": { "type": "number", "format": "double" }, "minItems": 2, "maxItems": 2 }, "description": "Ordered normalized [x, y] coordinate pairs, values between 0.0 and 1.0." },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "TracingPatternResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "topicId": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "points": { "type": "array", "items": { "type": "array", "items": { "type": "number", "format": "double" } } },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ApiResponseTracingPattern": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/TracingPatternResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseTracingPatternList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/TracingPatternResponse" } },
           "message": { "type": "string", "nullable": true },
           "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
         }

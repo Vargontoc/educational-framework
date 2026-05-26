@@ -280,4 +280,237 @@ class DevContentControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.success", is(false)));
     }
+
+    // --- Learning Path tests ---
+
+    @Test
+    void learningPaths_list_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/dev/content/learning-paths"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success", is(true)));
+    }
+
+    @Test
+    void learningPaths_create_thenList() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "name", "Math Basics",
+            "description", "Learn basic math",
+            "minAge", 3,
+            "maxAge", 6,
+            "locale", "es-ES",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/learning-paths")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success", is(true)))
+            .andExpect(jsonPath("$.data.name", is("Math Basics")))
+            .andExpect(jsonPath("$.data.status", is("ACTIVE")));
+
+        mockMvc.perform(get("/api/v1/dev/content/learning-paths"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data", hasSize(1)));
+    }
+
+    @Test
+    void learningPaths_create_blankName_returns400() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "name", "  ",
+            "locale", "es-ES",
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/learning-paths")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
+
+    // --- Tracing Pattern tests ---
+
+    @Test
+    void tracingPatterns_list_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/dev/content/tracing-patterns"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success", is(true)));
+    }
+
+    @Test
+    void tracingPatterns_create_thenList() throws Exception {
+        var categoryBody = objectMapper.writeValueAsString(Map.of(
+            "name", "Animals",
+            "status", "ACTIVE",
+            "displayOrder", 1
+        ));
+        mockMvc.perform(post("/api/v1/dev/content/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(categoryBody))
+            .andExpect(status().isCreated());
+
+        var topicCreateResult = mockMvc.perform(post("/api/v1/dev/content/topics")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "name", "Dog",
+                    "categoryId", 1,
+                    "status", "ACTIVE"
+                ))))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        var topicId = objectMapper.readTree(topicCreateResult.getResponse().getContentAsString())
+            .path("data").path("id").asLong();
+
+        var body = objectMapper.writeValueAsString(Map.of(
+            "topicId", topicId,
+            "name", "Circulo basico",
+            "description", "Patron circular simple",
+            "points", List.of(List.of(0.0, 0.5), List.of(0.5, 1.0), List.of(1.0, 0.5)),
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/tracing-patterns")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success", is(true)))
+            .andExpect(jsonPath("$.data.name", is("Circulo basico")))
+            .andExpect(jsonPath("$.data.status", is("ACTIVE")));
+
+        mockMvc.perform(get("/api/v1/dev/content/tracing-patterns"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data", hasSize(1)));
+    }
+
+    @Test
+    void tracingPatterns_create_blankName_returns400() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "topicId", 1,
+            "name", "  ",
+            "points", List.of(List.of(0.0, 0.0), List.of(1.0, 1.0)),
+            "status", "ACTIVE"
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/tracing-patterns")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
+
+    // --- Learning Path Step tests ---
+
+    @Test
+    void learningPathSteps_create_thenList() throws Exception {
+        var categoryBody = objectMapper.writeValueAsString(Map.of(
+            "name", "Math",
+            "status", "ACTIVE",
+            "displayOrder", 1
+        ));
+        mockMvc.perform(post("/api/v1/dev/content/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(categoryBody))
+            .andExpect(status().isCreated());
+
+        var activityCreateResult = mockMvc.perform(post("/api/v1/dev/content/activities")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "name", "Counting",
+                    "status", "ACTIVE"
+                ))))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        var activityId = objectMapper.readTree(activityCreateResult.getResponse().getContentAsString())
+            .path("data").path("id").asLong();
+
+        var pathCreateResult = mockMvc.perform(post("/api/v1/dev/content/learning-paths")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "name", "Numbers Path",
+                    "locale", "es-ES",
+                    "status", "ACTIVE"
+                ))))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        var pathId = objectMapper.readTree(pathCreateResult.getResponse().getContentAsString())
+            .path("data").path("id").asLong();
+
+        var stepBody = objectMapper.writeValueAsString(Map.of(
+            "activityId", activityId,
+            "stepOrder", 1
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(stepBody))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.success", is(true)))
+            .andExpect(jsonPath("$.data.stepOrder", is(1)));
+
+        mockMvc.perform(get("/api/v1/dev/content/learning-paths/" + pathId + "/steps"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data", hasSize(1)));
+    }
+
+    @Test
+    void learningPathSteps_create_duplicateOrder_returns409() throws Exception {
+        var activityCreateResult = mockMvc.perform(post("/api/v1/dev/content/activities")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "name", "Drawing",
+                    "status", "ACTIVE"
+                ))))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        var activityId = objectMapper.readTree(activityCreateResult.getResponse().getContentAsString())
+            .path("data").path("id").asLong();
+
+        var pathCreateResult = mockMvc.perform(post("/api/v1/dev/content/learning-paths")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "name", "Art Path",
+                    "locale", "es-ES",
+                    "status", "ACTIVE"
+                ))))
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        var pathId = objectMapper.readTree(pathCreateResult.getResponse().getContentAsString())
+            .path("data").path("id").asLong();
+
+        var stepBody = objectMapper.writeValueAsString(Map.of(
+            "activityId", activityId,
+            "stepOrder", 1
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(stepBody))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/dev/content/learning-paths/" + pathId + "/steps")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(stepBody))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
+
+    @Test
+    void learningPathSteps_create_learningPathNotFound_returns404() throws Exception {
+        var body = objectMapper.writeValueAsString(Map.of(
+            "activityId", 1,
+            "stepOrder", 1
+        ));
+
+        mockMvc.perform(post("/api/v1/dev/content/learning-paths/9999/steps")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.success", is(false)));
+    }
 }

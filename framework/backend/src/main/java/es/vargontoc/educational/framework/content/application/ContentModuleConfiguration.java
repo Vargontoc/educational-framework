@@ -7,7 +7,10 @@ import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.ContentLocaleRepository;
 import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
+import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
+import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
+import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
 import es.vargontoc.educational.framework.content.service.ActivityResourceService;
 import es.vargontoc.educational.framework.content.service.ActivityService;
 import es.vargontoc.educational.framework.content.service.AvatarEventCatalogService;
@@ -15,7 +18,10 @@ import es.vargontoc.educational.framework.content.service.CategoryService;
 import es.vargontoc.educational.framework.content.service.ContentLocaleService;
 import es.vargontoc.educational.framework.content.service.CuriosityService;
 import es.vargontoc.educational.framework.content.service.DifficultyLevelService;
+import es.vargontoc.educational.framework.content.service.LearningPathService;
+import es.vargontoc.educational.framework.content.service.LearningPathStepService;
 import es.vargontoc.educational.framework.content.service.TopicService;
+import es.vargontoc.educational.framework.content.service.TracingPatternService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -60,5 +66,20 @@ class ContentModuleConfiguration {
     @Bean
     AvatarEventCatalogService avatarEventCatalogService(AvatarEventCatalogRepository avatarEventCatalogRepository) {
         return new AvatarEventCatalogService(avatarEventCatalogRepository);
+    }
+
+    @Bean
+    LearningPathService learningPathService(LearningPathRepository learningPathRepository) {
+        return new LearningPathService(learningPathRepository);
+    }
+
+    @Bean
+    LearningPathStepService learningPathStepService(LearningPathStepRepository learningPathStepRepository, LearningPathRepository learningPathRepository, ActivityRepository activityRepository) {
+        return new LearningPathStepService(learningPathStepRepository, learningPathRepository, activityRepository);
+    }
+
+    @Bean
+    TracingPatternService tracingPatternService(TracingPatternRepository tracingPatternRepository, TopicRepository topicRepository) {
+        return new TracingPatternService(tracingPatternRepository, topicRepository);
     }
 }

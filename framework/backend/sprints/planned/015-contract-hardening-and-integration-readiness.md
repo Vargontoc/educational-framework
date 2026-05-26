@@ -13,6 +13,12 @@ waiting_for:
 
 ## Tasks
 
+### Schema Gaps From Sprint 012
+- [ ] Decide whether to add `status` (ACTIVE/INACTIVE/DRAFT) to `LearningPathStep` as specified in FEAT-003. If yes: new Liquibase migration, domain model update, JPA entity, DTOs, and OpenAPI schemas.
+- [ ] Decide whether to add `patternType` to `TracingPattern` as specified in FEAT-003. If yes: new Liquibase migration, domain model update, JPA entity, DTOs, and OpenAPI schemas.
+- [ ] Decide whether to add `minAge`/`maxAge` to `TracingPattern` as specified in FEAT-003. If yes: new Liquibase migration, domain model update, JPA entity, DTOs, and OpenAPI schemas.
+- [ ] Update `docs/product/features/backend/FEAT-003-Content-Module.md` to reflect any fields that are deliberately omitted.
+
 ### Contract Hardening
 - [ ] Review `docs/contracts/api/openapi.json` for all productive content endpoints.
 - [ ] Ensure productive story endpoints document parental authorization requirements.

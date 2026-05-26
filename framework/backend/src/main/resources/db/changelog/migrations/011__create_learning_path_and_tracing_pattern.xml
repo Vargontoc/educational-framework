@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="011__create_learning_path_and_tracing_pattern" author="vargontoc">
+        <!-- Learning Path table -->
+        <createTable tableName="learning_path">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="min_age" type="INTEGER"/>
+            <column name="max_age" type="INTEGER"/>
+            <column name="locale" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createIndex indexName="idx_learning_path_status" tableName="learning_path">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_learning_path_locale" tableName="learning_path">
+            <column name="locale"/>
+        </createIndex>
+
+        <createIndex indexName="idx_learning_path_min_age" tableName="learning_path">
+            <column name="min_age"/>
+        </createIndex>
+
+        <createIndex indexName="idx_learning_path_max_age" tableName="learning_path">
+            <column name="max_age"/>
+        </createIndex>
+
+        <!-- Learning Path Step table -->
+        <createTable tableName="learning_path_step">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="learning_path_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="step_order" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unlock_condition" type="VARCHAR(100)"/>
+            <column name="visual_metadata" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="learning_path_step"
+            baseColumnNames="learning_path_id"
+            constraintName="fk_learning_path_step_path"
+            referencedTableName="learning_path"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+            baseTableName="learning_path_step"
+            baseColumnNames="activity_id"
+            constraintName="fk_learning_path_step_activity"
+            referencedTableName="activity"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <addUniqueConstraint
+            tableName="learning_path_step"
+            constraintName="uk_learning_path_step_order"
+            columnNames="learning_path_id, step_order"/>
+
+        <createIndex indexName="idx_learning_path_step_path_id" tableName="learning_path_step">
+            <column name="learning_path_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_learning_path_step_activity_id" tableName="learning_path_step">
+            <column name="activity_id"/>
+        </createIndex>
+
+        <!-- Tracing Pattern table -->
+        <createTable tableName="tracing_pattern">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="topic_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="points" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="tracing_pattern"
+            baseColumnNames="topic_id"
+            constraintName="fk_tracing_pattern_topic"
+            referencedTableName="topic"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_tracing_pattern_topic_id" tableName="tracing_pattern">
+            <column name="topic_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_tracing_pattern_status" tableName="tracing_pattern">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
