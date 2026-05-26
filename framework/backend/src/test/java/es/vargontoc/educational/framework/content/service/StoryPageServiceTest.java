@@ -106,4 +106,62 @@ class StoryPageServiceTest {
 
         assertEquals(1, result.size());
     }
+
+    @Test
+    void updatePage_happyPath() {
+        var existing = new StoryPage();
+        existing.setStoryId(1L);
+        existing.setPageOrder(1);
+
+        when(storyPageRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(storyRepository.findById(1L)).thenReturn(Optional.of(new Story()));
+        when(storyPageRepository.save(any(StoryPage.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = storyPageService.updatePage(1L, 1L, 1, "Updated text", null, null, ContentStatus.ACTIVE);
+
+        assertEquals("Updated text", result.getText());
+        assertNotNull(result.getUpdatedAt());
+    }
+
+    @Test
+    void updatePage_storyNotFound_throwsResourceNotFound() {
+        var existing = new StoryPage();
+        existing.setStoryId(1L);
+        existing.setPageOrder(1);
+
+        when(storyPageRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(storyRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () ->
+            storyPageService.updatePage(1L, 99L, 1, "Text", null, null, ContentStatus.ACTIVE));
+    }
+
+    @Test
+    void updatePage_conflictOnDifferentStory_throwsConflict() {
+        var existing = new StoryPage();
+        existing.setStoryId(1L);
+        existing.setPageOrder(1);
+
+        when(storyPageRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(storyRepository.findById(2L)).thenReturn(Optional.of(new Story()));
+        when(storyPageRepository.existsByStoryIdAndPageOrder(2L, 1)).thenReturn(true);
+
+        assertThrows(ConflictException.class, () ->
+            storyPageService.updatePage(1L, 2L, 1, "Text", null, null, ContentStatus.ACTIVE));
+    }
+
+    @Test
+    void updatePage_samePositionNoConflict() {
+        var existing = new StoryPage();
+        existing.setStoryId(1L);
+        existing.setPageOrder(1);
+
+        when(storyPageRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(storyRepository.findById(1L)).thenReturn(Optional.of(new Story()));
+        when(storyPageRepository.save(any(StoryPage.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = storyPageService.updatePage(1L, 1L, 1, "Same position", null, null, ContentStatus.ACTIVE);
+
+        assertEquals("Same position", result.getText());
+    }
 }

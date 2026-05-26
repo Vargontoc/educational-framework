@@ -79,9 +79,8 @@ public class StoryPageService implements StoryPageUseCase {
             throw new ResourceNotFoundException("Story not found with id: " + storyId);
         }
 
-        boolean orderConflict = storyPageRepository.existsByStoryIdAndPageOrder(storyId, pageOrder)
-            && !existing.getPageOrder().equals(pageOrder);
-        if (orderConflict) {
+        boolean samePosition = existing.getStoryId().equals(storyId) && existing.getPageOrder().equals(pageOrder);
+        if (!samePosition && storyPageRepository.existsByStoryIdAndPageOrder(storyId, pageOrder)) {
             throw new ConflictException("Page order " + pageOrder + " already exists in story " + storyId);
         }
 

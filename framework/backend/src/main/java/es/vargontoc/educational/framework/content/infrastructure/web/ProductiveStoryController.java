@@ -9,6 +9,7 @@ import es.vargontoc.educational.framework.content.model.StoryPage;
 import es.vargontoc.educational.framework.content.ports.in.StoryPageUseCase;
 import es.vargontoc.educational.framework.content.ports.in.StoryUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
+import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,6 +42,9 @@ public class ProductiveStoryController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<StoryDetailResponse>> getStoryDetail(@PathVariable Long id) {
         var story = storyUseCase.getStory(id);
+        if (story.getStatus() != ContentStatus.ACTIVE) {
+            throw new ResourceNotFoundException("Story not found with id: " + id);
+        }
         var activePages = storyPageUseCase.listActivePagesByStory(id);
 
         var pageResponses = activePages.stream()
