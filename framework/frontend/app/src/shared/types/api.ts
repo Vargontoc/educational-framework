@@ -186,3 +186,95 @@ export interface TopicResponse {
   createdAt: string
   updatedAt?: string | null
 }
+
+// ── Dev Content: Activities ──────────────────────────────────────────────
+
+export type DifficultyCode = 'EASY' | 'MEDIUM' | 'HARD'
+
+export type ResourceType = 'IMAGE' | 'AUDIO' | 'VIDEO'
+
+export interface CreateActivityRequest {
+  name: string
+  description?: string | null
+  gameEngineType?: string | null
+  status: ContentStatus
+  minAge?: number | null
+  maxAge?: number | null
+  topicIds?: number[] | null
+}
+
+export interface UpdateActivityRequest {
+  name: string
+  description?: string | null
+  gameEngineType?: string | null
+  status: ContentStatus
+  minAge?: number | null
+  maxAge?: number | null
+  topicIds?: number[] | null
+}
+
+export interface ActivityResponse {
+  id: number
+  name: string
+  description?: string | null
+  gameEngineType?: string | null
+  status: ContentStatus
+  minAge?: number | null
+  maxAge?: number | null
+  topicIds: number[]
+  createdAt: string
+  updatedAt?: string | null
+}
+
+// ── Dev Content: Difficulty Levels ───────────────────────────────────────
+
+export interface CreateDifficultyLevelRequest {
+  activityId: number
+  difficultyCode: DifficultyCode
+  engineParams?: string | null
+  adaptiveThresholdConfig?: string | null
+}
+
+export interface UpdateDifficultyLevelRequest {
+  difficultyCode: DifficultyCode
+  engineParams?: string | null
+  adaptiveThresholdConfig?: string | null
+}
+
+export interface DifficultyLevelResponse {
+  id: number
+  activityId: number
+  difficultyCode: DifficultyCode
+  engineParams?: string | null
+  adaptiveThresholdConfig?: string | null
+  createdAt: string
+  updatedAt?: string | null
+}
+
+// ── Dev Content: Activity Resources ──────────────────────────────────────
+
+export interface CreateActivityResourceRequest {
+  activityId: number
+  topicId?: number | null
+  resourceType: ResourceType
+  path: string
+  metadata?: string | null
+}
+
+export interface UpdateActivityResourceRequest {
+  topicId?: number | null
+  resourceType: ResourceType
+  path: string
+  metadata?: string | null
+}
+
+export interface ActivityResourceResponse {
+  id: number
+  activityId: number
+  topicId?: number | null
+  resourceType: ResourceType
+  path: string
+  metadata?: string | null
+  createdAt: string
+  updatedAt?: string | null
+}

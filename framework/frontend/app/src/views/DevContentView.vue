@@ -4,6 +4,9 @@ import DevSidebar from '@/components/dev-content/DevSidebar.vue'
 import DevSection from '@/components/dev-content/DevSection.vue'
 import CategoryList from '@/components/dev-content/CategoryList.vue'
 import TopicList from '@/components/dev-content/TopicList.vue'
+import ActivityList from '@/components/dev-content/ActivityList.vue'
+import DifficultyLevelList from '@/components/dev-content/DifficultyLevelList.vue'
+import ActivityResourceList from '@/components/dev-content/ActivityResourceList.vue'
 
 const activeSection = ref('categories')
 
@@ -21,6 +24,9 @@ function handleNavigate(section: string) {
     <main class="dev-content__main">
       <CategoryList v-if="activeSection === 'categories'" />
       <TopicList v-else-if="activeSection === 'topics'" />
+      <ActivityList v-else-if="activeSection === 'activities'" />
+      <DifficultyLevelList v-else-if="activeSection === 'difficultyLevels'" />
+      <ActivityResourceList v-else-if="activeSection === 'resources'" />
       <DevSection v-else :section-id="activeSection" />
     </main>
   </div>

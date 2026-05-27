@@ -6,7 +6,16 @@ import type {
   UpdateCategoryRequest,
   TopicResponse,
   CreateTopicRequest,
-  UpdateTopicRequest
+  UpdateTopicRequest,
+  ActivityResponse,
+  CreateActivityRequest,
+  UpdateActivityRequest,
+  DifficultyLevelResponse,
+  CreateDifficultyLevelRequest,
+  UpdateDifficultyLevelRequest,
+  ActivityResourceResponse,
+  CreateActivityResourceRequest,
+  UpdateActivityResourceRequest
 } from '@/shared/types/api'
 import * as devContentService from '@/services/devContentService'
 
@@ -15,12 +24,25 @@ export const useDevContentStore = defineStore('devContent', () => {
 
   const categories = ref<CategoryResponse[]>([])
   const topics = ref<TopicResponse[]>([])
+  const activities = ref<ActivityResponse[]>([])
+  const difficultyLevels = ref<DifficultyLevelResponse[]>([])
+  const activityResources = ref<ActivityResourceResponse[]>([])
+
   const selectedCategoryId = ref<number | null>(null)
+  const selectedTopicId = ref<number | null>(null)
+  const selectedActivityId = ref<number | null>(null)
 
   const categoriesLoading = ref(false)
   const topicsLoading = ref(false)
+  const activitiesLoading = ref(false)
+  const difficultyLevelsLoading = ref(false)
+  const activityResourcesLoading = ref(false)
+
   const categoriesError = ref<string | null>(null)
   const topicsError = ref<string | null>(null)
+  const activitiesError = ref<string | null>(null)
+  const difficultyLevelsError = ref<string | null>(null)
+  const activityResourcesError = ref<string | null>(null)
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -102,16 +124,136 @@ export const useDevContentStore = defineStore('devContent', () => {
     fetchTopics(id ?? undefined)
   }
 
+  // ── Activity Actions ───────────────────────────────────────────────────
+
+  async function fetchActivities(topicId?: number) {
+    activitiesLoading.value = true
+    activitiesError.value = null
+    try {
+      activities.value = await devContentService.listActivities(topicId)
+    } catch (error: unknown) {
+      activitiesError.value = getApiErrorMessage(error)
+      activities.value = []
+    } finally {
+      activitiesLoading.value = false
+    }
+  }
+
+  async function getActivityById(id: number): Promise<ActivityResponse> {
+    return devContentService.getActivityById(id)
+  }
+
+  async function createActivity(payload: CreateActivityRequest): Promise<ActivityResponse> {
+    const activity = await devContentService.createActivity(payload)
+    await fetchActivities(selectedTopicId.value ?? undefined)
+    return activity
+  }
+
+  async function updateActivity(id: number, payload: UpdateActivityRequest): Promise<ActivityResponse> {
+    const activity = await devContentService.updateActivity(id, payload)
+    await fetchActivities(selectedTopicId.value ?? undefined)
+    return activity
+  }
+
+  function setSelectedTopicId(id: number | null) {
+    selectedTopicId.value = id
+    fetchActivities(id ?? undefined)
+  }
+
+  // ── Difficulty Level Actions ────────────────────────────────────────────
+
+  async function fetchDifficultyLevels(activityId: number) {
+    difficultyLevelsLoading.value = true
+    difficultyLevelsError.value = null
+    try {
+      difficultyLevels.value = await devContentService.listDifficultyLevels(activityId)
+    } catch (error: unknown) {
+      difficultyLevelsError.value = getApiErrorMessage(error)
+      difficultyLevels.value = []
+    } finally {
+      difficultyLevelsLoading.value = false
+    }
+  }
+
+  async function createDifficultyLevel(payload: CreateDifficultyLevelRequest): Promise<DifficultyLevelResponse> {
+    const level = await devContentService.createDifficultyLevel(payload)
+    if (selectedActivityId.value != null) {
+      await fetchDifficultyLevels(selectedActivityId.value)
+    }
+    return level
+  }
+
+  async function updateDifficultyLevel(id: number, payload: UpdateDifficultyLevelRequest): Promise<DifficultyLevelResponse> {
+    const level = await devContentService.updateDifficultyLevel(id, payload)
+    if (selectedActivityId.value != null) {
+      await fetchDifficultyLevels(selectedActivityId.value)
+    }
+    return level
+  }
+
+  // ── Activity Resource Actions ───────────────────────────────────────────
+
+  async function fetchActivityResources(activityId: number) {
+    activityResourcesLoading.value = true
+    activityResourcesError.value = null
+    try {
+      activityResources.value = await devContentService.listActivityResources(activityId)
+    } catch (error: unknown) {
+      activityResourcesError.value = getApiErrorMessage(error)
+      activityResources.value = []
+    } finally {
+      activityResourcesLoading.value = false
+    }
+  }
+
+  async function createActivityResource(payload: CreateActivityResourceRequest): Promise<ActivityResourceResponse> {
+    const resource = await devContentService.createActivityResource(payload)
+    if (selectedActivityId.value != null) {
+      await fetchActivityResources(selectedActivityId.value)
+    }
+    return resource
+  }
+
+  async function updateActivityResource(id: number, payload: UpdateActivityResourceRequest): Promise<ActivityResourceResponse> {
+    const resource = await devContentService.updateActivityResource(id, payload)
+    if (selectedActivityId.value != null) {
+      await fetchActivityResources(selectedActivityId.value)
+    }
+    return resource
+  }
+
+  function setSelectedActivityId(id: number | null) {
+    selectedActivityId.value = id
+    if (id != null) {
+      fetchDifficultyLevels(id)
+      fetchActivityResources(id)
+    } else {
+      difficultyLevels.value = []
+      activityResources.value = []
+    }
+  }
+
   // ── Return ─────────────────────────────────────────────────────────────
 
   return {
     categories,
     topics,
+    activities,
+    difficultyLevels,
+    activityResources,
     selectedCategoryId,
+    selectedTopicId,
+    selectedActivityId,
     categoriesLoading,
     topicsLoading,
+    activitiesLoading,
+    difficultyLevelsLoading,
+    activityResourcesLoading,
     categoriesError,
     topicsError,
+    activitiesError,
+    difficultyLevelsError,
+    activityResourcesError,
     fetchCategories,
     getCategoryById,
     createCategory,
@@ -120,6 +262,18 @@ export const useDevContentStore = defineStore('devContent', () => {
     getTopicById,
     createTopic,
     updateTopic,
-    setSelectedCategoryId
+    setSelectedCategoryId,
+    fetchActivities,
+    getActivityById,
+    createActivity,
+    updateActivity,
+    setSelectedTopicId,
+    fetchDifficultyLevels,
+    createDifficultyLevel,
+    updateDifficultyLevel,
+    fetchActivityResources,
+    createActivityResource,
+    updateActivityResource,
+    setSelectedActivityId
   }
 })
