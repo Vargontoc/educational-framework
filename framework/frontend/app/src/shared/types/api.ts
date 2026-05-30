@@ -278,3 +278,102 @@ export interface ActivityResourceResponse {
   createdAt: string
   updatedAt?: string | null
 }
+
+// ── Dev Content: Content Locales ─────────────────────────────────────────
+
+export type LocaleEntityType = 'CATEGORY' | 'TOPIC' | 'ACTIVITY' | 'DIFFICULTY_LEVEL' | 'ACTIVITY_RESOURCE'
+
+export interface CreateContentLocaleRequest {
+  entityType: LocaleEntityType
+  entityId: number
+  localeCode: string
+  name: string
+  description?: string | null
+}
+
+export interface UpdateContentLocaleRequest {
+  name: string
+  description?: string | null
+}
+
+export interface ContentLocaleResponse {
+  id: number
+  entityType: string
+  entityId: number
+  localeCode: string
+  name: string
+  description?: string | null
+  createdAt: string
+  updatedAt?: string | null
+}
+
+// ── Dev Content: Curiosities ─────────────────────────────────────────────
+
+export interface CreateCuriosityRequest {
+  text: string
+  topicId?: number | null
+  minAge?: number | null
+  maxAge?: number | null
+  tags?: string[] | null
+  locale: string
+  phoneticHint?: string | null
+  status: ContentStatus
+}
+
+export interface UpdateCuriosityRequest {
+  text: string
+  topicId?: number | null
+  minAge?: number | null
+  maxAge?: number | null
+  tags?: string[] | null
+  locale: string
+  phoneticHint?: string | null
+  status: ContentStatus
+}
+
+export interface CuriosityResponse {
+  id: number
+  text: string
+  topicId?: number | null
+  minAge?: number | null
+  maxAge?: number | null
+  tags: string[]
+  locale: string
+  phoneticHint?: string | null
+  status: ContentStatus
+  createdAt: string
+  updatedAt?: string | null
+}
+
+// ── Dev Content: Avatar Event Catalog ────────────────────────────────────
+
+export type AvatarEventType = 'ACTIVITY_COMPLETED' | 'ACTIVITY_STARTED' | 'ACTIVITY_FAILED' | 'HELP_REQUESTED' | 'OUT_OF_SCOPE_QUERY' | 'CURIOSITY_REQUESTED'
+
+export type AvatarTone = 'CALM' | 'JOYFUL' | 'ENTHUSIASTIC' | 'SERIOUS' | 'NEUTRAL'
+
+export interface CreateAvatarEventCatalogRequest {
+  eventType: AvatarEventType
+  tone: AvatarTone
+  locale: string
+  messageText: string
+  status: ContentStatus
+}
+
+export interface UpdateAvatarEventCatalogRequest {
+  eventType: AvatarEventType
+  tone: AvatarTone
+  locale: string
+  messageText: string
+  status: ContentStatus
+}
+
+export interface AvatarEventCatalogResponse {
+  id: number
+  eventType: AvatarEventType
+  tone: AvatarTone
+  locale: string
+  messageText: string
+  status: ContentStatus
+  createdAt: string
+  updatedAt?: string | null
+}

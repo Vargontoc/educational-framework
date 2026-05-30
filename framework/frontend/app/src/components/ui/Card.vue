@@ -29,8 +29,8 @@ defineProps<{
   gap: var(--space-sm);
   padding: var(--space-md);
   border-radius: var(--radius-lg);
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background-color: var(--color-surface);
+  box-shadow: 0 18px 40px rgba(26, 35, 64, 0.08);
   border-top: 6px solid transparent;
   transition: box-shadow var(--transition-base), transform var(--transition-base);
   min-width: 180px;
@@ -48,7 +48,7 @@ defineProps<{
 
 /* Secondary accent */
 .card--secondary {
-  border-top-color: var(--color-secondary);
+  border-top-color: var(--color-celebration);
 }
 
 /* Disabled */
@@ -72,12 +72,12 @@ defineProps<{
 .card__title {
   font-size: var(--font-size-md);
   font-weight: 700;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .card__description {
   font-size: var(--font-size-sm);
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 </style>

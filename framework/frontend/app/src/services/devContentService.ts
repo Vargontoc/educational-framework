@@ -15,7 +15,19 @@ import type {
   UpdateDifficultyLevelRequest,
   ActivityResourceResponse,
   CreateActivityResourceRequest,
-  UpdateActivityResourceRequest
+  UpdateActivityResourceRequest,
+  ContentLocaleResponse,
+  CreateContentLocaleRequest,
+  UpdateContentLocaleRequest,
+  LocaleEntityType,
+  CuriosityResponse,
+  CreateCuriosityRequest,
+  UpdateCuriosityRequest,
+  AvatarEventCatalogResponse,
+  CreateAvatarEventCatalogRequest,
+  UpdateAvatarEventCatalogRequest,
+  AvatarEventType,
+  AvatarTone
 } from '@/shared/types/api'
 
 // ── Categories ───────────────────────────────────────────────────────────
@@ -121,5 +133,68 @@ export async function createActivityResource(payload: CreateActivityResourceRequ
 
 export async function updateActivityResource(id: number, payload: UpdateActivityResourceRequest): Promise<ActivityResourceResponse> {
   const { data } = await api.put<ApiResponse<ActivityResourceResponse>>(`/api/v1/dev/content/activity-resources/${id}`, payload)
+  return data.data
+}
+
+// ── Content Locales ──────────────────────────────────────────────────────
+
+export async function listContentLocales(entityType: LocaleEntityType, entityId: number): Promise<ContentLocaleResponse[]> {
+  const { data } = await api.get<ApiResponse<ContentLocaleResponse[]>>('/api/v1/dev/content/locales', {
+    params: { entityType, entityId }
+  })
+  return data.data
+}
+
+export async function createContentLocale(payload: CreateContentLocaleRequest): Promise<ContentLocaleResponse> {
+  const { data } = await api.post<ApiResponse<ContentLocaleResponse>>('/api/v1/dev/content/locales', payload)
+  return data.data
+}
+
+export async function updateContentLocale(id: number, payload: UpdateContentLocaleRequest): Promise<ContentLocaleResponse> {
+  const { data } = await api.put<ApiResponse<ContentLocaleResponse>>(`/api/v1/dev/content/locales/${id}`, payload)
+  return data.data
+}
+
+// ── Curiosities ──────────────────────────────────────────────────────────
+
+export async function listCuriosities(filters?: { topicId?: number; age?: number; locale?: string }): Promise<CuriosityResponse[]> {
+  const { data } = await api.get<ApiResponse<CuriosityResponse[]>>('/api/v1/dev/content/curiosities', { params: filters })
+  return data.data
+}
+
+export async function getCuriosityById(id: number): Promise<CuriosityResponse> {
+  const { data } = await api.get<ApiResponse<CuriosityResponse>>(`/api/v1/dev/content/curiosities/${id}`)
+  return data.data
+}
+
+export async function createCuriosity(payload: CreateCuriosityRequest): Promise<CuriosityResponse> {
+  const { data } = await api.post<ApiResponse<CuriosityResponse>>('/api/v1/dev/content/curiosities', payload)
+  return data.data
+}
+
+export async function updateCuriosity(id: number, payload: UpdateCuriosityRequest): Promise<CuriosityResponse> {
+  const { data } = await api.put<ApiResponse<CuriosityResponse>>(`/api/v1/dev/content/curiosities/${id}`, payload)
+  return data.data
+}
+
+// ── Avatar Event Catalog ─────────────────────────────────────────────────
+
+export async function listAvatarEvents(filters?: { eventType?: AvatarEventType; tone?: AvatarTone; locale?: string }): Promise<AvatarEventCatalogResponse[]> {
+  const { data } = await api.get<ApiResponse<AvatarEventCatalogResponse[]>>('/api/v1/dev/content/avatar-events', { params: filters })
+  return data.data
+}
+
+export async function getAvatarEventById(id: number): Promise<AvatarEventCatalogResponse> {
+  const { data } = await api.get<ApiResponse<AvatarEventCatalogResponse>>(`/api/v1/dev/content/avatar-events/${id}`)
+  return data.data
+}
+
+export async function createAvatarEvent(payload: CreateAvatarEventCatalogRequest): Promise<AvatarEventCatalogResponse> {
+  const { data } = await api.post<ApiResponse<AvatarEventCatalogResponse>>('/api/v1/dev/content/avatar-events', payload)
+  return data.data
+}
+
+export async function updateAvatarEvent(id: number, payload: UpdateAvatarEventCatalogRequest): Promise<AvatarEventCatalogResponse> {
+  const { data } = await api.put<ApiResponse<AvatarEventCatalogResponse>>(`/api/v1/dev/content/avatar-events/${id}`, payload)
   return data.data
 }

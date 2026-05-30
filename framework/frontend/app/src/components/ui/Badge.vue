@@ -20,13 +20,12 @@ defineProps<{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--touch-target-min);
+  min-height: 28px;
   padding: 6px var(--space-md);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
@@ -38,7 +37,7 @@ defineProps<{
 
 /* Secondary */
 .badge--secondary {
-  background-color: var(--color-secondary);
+  background-color: var(--color-celebration);
   color: var(--color-text-on-secondary);
 }
 

@@ -7,6 +7,9 @@ import TopicList from '@/components/dev-content/TopicList.vue'
 import ActivityList from '@/components/dev-content/ActivityList.vue'
 import DifficultyLevelList from '@/components/dev-content/DifficultyLevelList.vue'
 import ActivityResourceList from '@/components/dev-content/ActivityResourceList.vue'
+import ContentLocaleList from '@/components/dev-content/ContentLocaleList.vue'
+import CuriosityList from '@/components/dev-content/CuriosityList.vue'
+import AvatarEventList from '@/components/dev-content/AvatarEventList.vue'
 
 const activeSection = ref('categories')
 
@@ -27,6 +30,9 @@ function handleNavigate(section: string) {
       <ActivityList v-else-if="activeSection === 'activities'" />
       <DifficultyLevelList v-else-if="activeSection === 'difficultyLevels'" />
       <ActivityResourceList v-else-if="activeSection === 'resources'" />
+      <ContentLocaleList v-else-if="activeSection === 'locales'" />
+      <CuriosityList v-else-if="activeSection === 'curiosities'" />
+      <AvatarEventList v-else-if="activeSection === 'avatarEvents'" />
       <DevSection v-else :section-id="activeSection" />
     </main>
   </div>

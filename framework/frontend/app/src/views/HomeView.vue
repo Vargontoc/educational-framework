@@ -39,8 +39,8 @@ function handleRetry() {
   <div class="home">
     <!-- Loading state -->
     <div v-if="familyStore.viewState === 'loading'" class="home__center">
-      <div class="spinner" aria-hidden="true"></div>
-      <p>{{ t('home.loading') }}</p>
+      <img src="@/assets/images/avatar-bot.png" alt="" class="home__avatar home__avatar--loading" />
+      <p class="home__lead">{{ t('home.loading') }}</p>
     </div>
 
     <!-- Error state -->
@@ -53,6 +53,7 @@ function handleRetry() {
     <div v-else-if="familyStore.viewState === 'noFamily'" class="home__center">
       <div class="home__avatar-container">
         <img src="@/assets/images/avatar-bot.png" alt="" class="home__avatar" />
+        <p class="home__kicker">{{ t('home.noFamilyKicker') }}</p>
         <button class="home__cta" @click="familyStore.setActiveModal('familyRegistration')">
           {{ t('home.welcomeFamily') }}
         </button>
@@ -77,6 +78,7 @@ function handleRetry() {
       </button>
       <div class="home__avatar-container">
         <img src="@/assets/images/avatar-bot.png" alt="" class="home__avatar" />
+        <p class="home__kicker">{{ t('home.familyReadyKicker') }}</p>
         <button class="home__family-btn" @click="openChildSelector">
           {{ familyStore.family?.name }}
         </button>
@@ -101,6 +103,24 @@ function handleRetry() {
   align-items: center;
   justify-content: center;
   overflow: auto;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.86) 0 9%, transparent 10%),
+    radial-gradient(circle at 75% 24%, rgba(255, 255, 255, 0.72) 0 8%, transparent 9%),
+    linear-gradient(180deg, var(--color-sky) 0 67%, var(--color-grass) 68% 100%);
+  color: var(--color-text-primary);
+}
+
+.home::after {
+  content: '';
+  position: fixed;
+  left: -4vw;
+  right: -4vw;
+  bottom: 0;
+  height: 22vh;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 18% 100%, rgba(92, 145, 70, 0.16) 0 18%, transparent 19%),
+    radial-gradient(ellipse at 63% 100%, rgba(92, 145, 70, 0.14) 0 22%, transparent 23%);
 }
 
 .home__center {
@@ -115,32 +135,52 @@ function handleRetry() {
 .home__avatar-container {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border-radius: 48px;
+  background: rgba(255, 255, 255, 0.36);
+  box-shadow: 0 24px 80px rgba(26, 35, 64, 0.08);
+  backdrop-filter: blur(8px);
 }
 
 .home__avatar {
   width: 200px;
   height: 200px;
   object-fit: contain;
+  filter: drop-shadow(0 18px 22px rgba(26, 35, 64, 0.16));
+}
+
+.home__avatar--loading {
+  animation: soft-bounce 1.7s ease-in-out infinite;
+}
+
+.home__kicker,
+.home__lead {
+  max-width: 340px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .home__cta {
-  position: absolute;
-  bottom: var(--space-md);
+  position: relative;
   min-width: 180px;
-  min-height: var(--touch-target-min);
-  padding: var(--space-sm) var(--space-md);
+  min-height: var(--touch-target-child-primary);
+  padding: var(--space-md) var(--space-lg);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
   background-color: var(--color-primary);
   color: var(--color-text-on-primary);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-body);
   font-family: var(--font-family-base);
   font-weight: 700;
   cursor: pointer;
   transition: background-color var(--transition-base);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 4px 0 var(--color-primary-dark), 0 18px 28px rgba(43, 91, 224, 0.22);
 }
 
 .home__cta:hover {
@@ -148,36 +188,36 @@ function handleRetry() {
 }
 
 .home__family-btn {
-  position: absolute;
-  bottom: var(--space-md);
+  position: relative;
   min-width: 180px;
-  min-height: var(--touch-target-min);
-  padding: var(--space-sm) var(--space-md);
+  min-height: var(--touch-target-child-primary);
+  padding: var(--space-md) var(--space-lg);
   border: none;
-  border-radius: var(--radius-md);
-  background-color: var(--color-secondary);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-celebration);
   color: var(--color-text-on-secondary);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-body);
   font-family: var(--font-family-base);
   font-weight: 700;
   cursor: pointer;
   transition: background-color var(--transition-base);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 0 var(--color-celebration-dark), 0 18px 28px rgba(245, 166, 35, 0.24);
 }
 
 .home__family-btn:hover {
-  background-color: var(--color-secondary-dark);
+  background-color: var(--color-celebration-dark);
 }
 
 .home__settings-icon {
   position: fixed;
   top: var(--space-md);
-  right: var(--space-md);
+  left: var(--space-md);
   width: var(--touch-target-min);
   height: var(--touch-target-min);
   border: none;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.78);
+  color: var(--color-text-primary);
   font-size: var(--font-size-lg);
   cursor: pointer;
   display: flex;
@@ -187,18 +227,19 @@ function handleRetry() {
 }
 
 .home__settings-icon:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
 }
 
 .home__help-icon {
   position: fixed;
   top: var(--space-md);
-  right: calc(var(--space-md) + var(--touch-target-min) + var(--space-sm));
+  right: var(--space-md);
   width: var(--touch-target-min);
   height: var(--touch-target-min);
   border: none;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.78);
+  color: var(--color-primary);
   font-size: var(--font-size-md);
   font-weight: 700;
   cursor: pointer;
@@ -209,11 +250,11 @@ function handleRetry() {
 }
 
 .home__help-icon:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
 }
 
 .home__error {
-  color: #ef4444;
+  color: var(--color-error-adult);
   font-size: var(--font-size-md);
 }
 
@@ -221,7 +262,7 @@ function handleRetry() {
   min-height: var(--touch-target-min);
   padding: var(--space-sm) var(--space-md);
   border: 2px solid var(--color-primary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-primary);
   font-size: var(--font-size-md);
@@ -248,6 +289,28 @@ function handleRetry() {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes soft-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (max-width: 720px) {
+  .home__avatar-container {
+    padding: var(--space-md);
+  }
+
+  .home__avatar {
+    width: 150px;
+    height: 150px;
   }
 }
 </style>

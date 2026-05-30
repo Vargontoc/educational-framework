@@ -9,14 +9,31 @@ export const messages = {
     error: 'Ha ocurrido un error al cargar la familia',
     retry: 'Reintentar',
     welcomeFamily: 'Bienvenida familia',
+    noFamilyKicker: 'Crea un espacio familiar para comenzar con una experiencia privada y acompañada.',
+    familyReadyKicker: 'Elige quién va a jugar o entra al panel del adulto.',
     helpAriaLabel: 'Ayuda',
     settingsAriaLabel: 'Configuración'
   },
   panel: {
-    title: 'Panel de Control'
+    title: 'Panel de Control',
+    eyebrow: 'Espacio adulto',
+    nav: {
+      settings: 'Configuración',
+      children: 'Niños',
+      agent: 'Agentes',
+      familyReading: 'Lectura en familia'
+    },
+    cards: {
+      settingsTitle: 'Configuración familiar',
+      settingsDescription: 'Idioma, audio, avatar y PIN se gestionan desde un entorno claro y protegido.',
+      childrenTitle: 'Seguimiento de niños',
+      childrenDescription: 'Cada hijo mantiene su firma visual, estado de sesión y acceso a su dashboard.'
+    }
   },
   game: {
-    title: 'Juego'
+    title: 'Paseo de aprendizaje',
+    mapEyebrow: 'Mundo vivo',
+    placeholder: 'Preparando la sesión de {childId}. El backend decidirá el siguiente descubrimiento.'
   },
   rotation: {
     message: 'Por favor, gira el dispositivo a modo horizontal para continuar'
@@ -212,6 +229,99 @@ export const messages = {
       IMAGE: 'Imagen',
       AUDIO: 'Audio',
       VIDEO: 'Video'
+    },
+    locales: {
+      title: 'Locales de Contenido',
+      create: 'Crear Locale',
+      edit: 'Editar Locale',
+      entityType: 'Tipo de Entidad',
+      entityId: 'ID de Entidad',
+      localeCode: 'Código de Locale',
+      name: 'Nombre',
+      description: 'Descripción',
+      selectEntityType: 'Seleccione el tipo de entidad',
+      selectEntityId: 'Ingrese el ID de la entidad',
+      namePlaceholder: 'Ingrese el nombre localizado',
+      descriptionPlaceholder: 'Ingrese una descripción (opcional)',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      noLocales: 'No hay locales registrados',
+      errorLoading: 'Error al cargar los locales',
+      errorCreate: 'Error al crear el locale',
+      errorUpdate: 'Error al actualizar el locale',
+      conflictError: 'Ya existe un locale para esta entidad y código',
+      i18nNotice: 'Los locales de contenido son datos del catálogo, no traducciones de la interfaz'
+    },
+    curiosities: {
+      title: 'Curiosidades',
+      create: 'Crear Curiosidad',
+      edit: 'Editar Curiosidad',
+      text: 'Texto',
+      topic: 'Tema',
+      minAge: 'Edad Mínima',
+      maxAge: 'Edad Máxima',
+      locale: 'Locale',
+      tags: 'Etiquetas',
+      phoneticHint: 'Sugerencia Fonética',
+      status: 'Estado',
+      textPlaceholder: 'Ingrese el texto de la curiosidad (máx. 300 caracteres)',
+      selectTopic: 'Seleccione un tema (opcional)',
+      allTopics: 'Todos los temas',
+      tagsPlaceholder: 'etiqueta1, etiqueta2',
+      phoneticHintPlaceholder: 'Sugerencia fonética para TTS (opcional)',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      noCuriosities: 'No hay curiosidades registradas',
+      errorLoading: 'Error al cargar las curiosidades',
+      errorCreate: 'Error al crear la curiosidad',
+      errorUpdate: 'Error al actualizar la curiosidad',
+      conflictError: 'Ya existe una curiosidad con ese texto',
+      ttsHelper: 'Texto orientado a TTS. Máximo 300 caracteres.',
+      charCount: '{count}/300 caracteres'
+    },
+    avatarEvents: {
+      title: 'Eventos de Avatar',
+      create: 'Crear Evento',
+      edit: 'Editar Evento',
+      eventType: 'Tipo de Evento',
+      tone: 'Tono',
+      locale: 'Locale',
+      messageText: 'Texto del Mensaje',
+      status: 'Estado',
+      selectEventType: 'Seleccione el tipo de evento',
+      selectTone: 'Seleccione el tono',
+      messageTextPlaceholder: 'Ingrese el texto del mensaje (máx. 300 caracteres)',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      noEvents: 'No hay eventos de avatar registrados',
+      errorLoading: 'Error al cargar los eventos',
+      errorCreate: 'Error al crear el evento',
+      errorUpdate: 'Error al actualizar el evento',
+      conflictError: 'Ya existe un evento con esos parámetros',
+      ttsHelper: 'Mensaje fallback optimizado para TTS. Máximo 300 caracteres.',
+      charCount: '{count}/300 caracteres'
+    },
+    localeEntityType: {
+      CATEGORY: 'Categoría',
+      TOPIC: 'Tema',
+      ACTIVITY: 'Actividad',
+      DIFFICULTY_LEVEL: 'Nivel de Dificultad',
+      ACTIVITY_RESOURCE: 'Recurso de Actividad'
+    },
+    avatarEventType: {
+      ACTIVITY_COMPLETED: 'Actividad Completada',
+      ACTIVITY_STARTED: 'Actividad Iniciada',
+      ACTIVITY_FAILED: 'Actividad Fallida',
+      HELP_REQUESTED: 'Ayuda Solicitada',
+      OUT_OF_SCOPE_QUERY: 'Consulta Fuera de Alcance',
+      CURIOSITY_REQUESTED: 'Curiosidad Solicitada'
+    },
+    avatarTone: {
+      CALM: 'Calma',
+      JOYFUL: 'Alegre',
+      ENTHUSIASTIC: 'Entusiasta',
+      SERIOUS: 'Serio',
+      NEUTRAL: 'Neutral'
     }
   }
 }

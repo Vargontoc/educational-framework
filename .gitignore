@@ -30,3 +30,5 @@ framework/frontend/app/dist-ssr/
 framework/frontend/app/.vite/
 framework/frontend/node_modules/
 framework/frontend/dist/
+
+docs/design/**

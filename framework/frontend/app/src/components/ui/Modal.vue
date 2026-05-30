@@ -118,7 +118,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(26, 35, 64, 0.42);
   padding: var(--space-md);
 }
 
@@ -128,10 +128,10 @@ onBeforeUnmount(() => {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 24px 70px rgba(26, 35, 64, 0.24);
 }
 
 .modal-enter-active,

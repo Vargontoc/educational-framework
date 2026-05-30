@@ -1,35 +1,61 @@
 :root {
-  /* Colors */
-  --color-primary: #7c3aed;
-  --color-primary-dark: #6d28d9;
-  --color-secondary: #f59e0b;
-  --color-secondary-dark: #d97706;
-  --color-neutral: #e5e7eb;
-  --color-neutral-dark: #9ca3af;
+  /* Core palette from design decisions v1 */
+  --color-sky: #d6ecff;
+  --color-grass: #c8e6a0;
+  --color-surface: #ffffff;
+  --color-panel-bg: #f4f6f9;
+  --color-primary: #2b5be0;
+  --color-primary-dark: #2146ad;
+  --color-celebration: #f5a623;
+  --color-celebration-dark: #d88912;
+  --color-warm: #ff8c69;
+  --color-success-child: #6cc97f;
+  --color-try-again: #ffb347;
+  --color-disabled: #b0bec5;
+  --color-error-adult: #e53935;
+  --color-success-adult: #43a047;
+  --color-neutral: #e8edf4;
+  --color-neutral-dark: #6b7a99;
+  --color-text-primary: #1a2340;
+  --color-text-secondary: #6b7a99;
 
   /* Text on colored surfaces */
   --color-text-on-primary: #ffffff;
-  --color-text-on-secondary: #1f2937;
+  --color-text-on-secondary: #1a2340;
 
   /* Typography */
-  --font-size-sm: 14px;
-  --font-size-md: 18px;
-  --font-size-lg: 24px;
+  --font-size-caption: 13px;
+  --font-size-button: 15px;
+  --font-size-body: 16px;
+  --font-size-section-title: 22px;
+  --font-size-story: 24px;
+  --font-size-game-label: 22px;
+  --font-size-game-instruction: 28px;
+  --font-size-sm: var(--font-size-caption);
+  --font-size-md: var(--font-size-body);
+  --font-size-lg: var(--font-size-section-title);
   --font-family-base: 'Nunito', 'Rounded Mplus 1c', system-ui, sans-serif;
 
   /* Spacing */
+  --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
+  --space-xl: 48px;
   --space-lg: 32px;
 
   /* Border radii */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 32px;
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 9999px;
 
-  /* Touch target minimum (FEAT-001 accessibility) */
-  --touch-target-min: 44px;
+  /* Touch targets */
+  --touch-target-adult: 44px;
+  --touch-target-child-secondary: 64px;
+  --touch-target-child-primary: 80px;
+  --touch-target-min: var(--touch-target-adult);
 
   /* Transitions */
-  --transition-base: 150ms ease;
+  --transition-base: 180ms ease;
+  --transition-view: 360ms ease;
 }
