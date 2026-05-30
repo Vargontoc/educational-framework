@@ -22,6 +22,9 @@ const firstPinInputRef = ref<HTMLInputElement | null>(null)
 const confirmPinInputRef = ref<HTMLInputElement | null>(null)
 
 const isOpen = computed(() => familyStore.activeModal === 'familyRegistration')
+const pinFirstLength = computed(() => pinFirst.value.length)
+const pinConfirmLength = computed(() => pinConfirm.value.length)
+const submittingState = computed(() => submitting.value)
 
 const pinDotsFirst = computed(() => pinFirst.value.split('').concat(Array(4 - pinFirst.value.length).fill('empty')).slice(0, 4))
 const pinDotsConfirm = computed(() => pinConfirm.value.split('').concat(Array(4 - pinConfirm.value.length).fill('empty')).slice(0, 4))
@@ -337,7 +340,7 @@ function handleClose() {
           <button
             class="action-btn"
             type="button"
-            :disabled="submitting || pinFirst.length < 4 || pinConfirm.length < 4"
+            :disabled="submittingState || pinFirstLength < 4 || pinConfirmLength < 4"
             @click="handleSubmit"
           >
             {{ t('modal.registerFamily.confirm') }}
