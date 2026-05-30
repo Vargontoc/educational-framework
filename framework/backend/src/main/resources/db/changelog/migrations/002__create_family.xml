@@ -29,8 +29,8 @@
             </column>
             <column name="updated_at" type="TIMESTAMPTZ"/>
         </createTable>
-
-        <sql>ALTER TABLE family ADD CONSTRAINT chk_family_single_row CHECK (id = 1);</sql>
+        <sql>ALTER TABLE family ADD COLUMN family_stored BOOLEAN GENERATED ALWAYS AS (TRUE) STORED</sql>
+        <sql>CREATE UNIQUE INDEX chk_family_single_row ON family(family_stored)</sql>
     </changeSet>
 
 </databaseChangeLog>
