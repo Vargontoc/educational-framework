@@ -1,7 +1,8 @@
 export const messages = {
   common: {
     loading: 'Cargando...',
-    error: 'Ha ocurrido un error'
+    error: 'Ha ocurrido un error',
+    retry: 'Reintentar'
   },
   home: {
     title: 'Inicio',
@@ -47,10 +48,23 @@ export const messages = {
       error401: 'PIN incorrecto'
     },
     registerFamily: {
-      title: 'Registrar familia',
+      title: 'Crear espacio familiar',
+      step1Label: '¿Cómo se llama tu familia?',
+      step2LabelCreate: 'Crea un PIN de 4 dígitos',
+      step2LabelConfirm: 'Confirma tu PIN',
       namePlaceholder: 'Nombre de la familia',
-      pinPlaceholder: 'Crea un PIN de acceso',
-      submit: 'Crear familia'
+      nameRequired: 'Ingresa el nombre de tu familia',
+      pinMismatch: 'Los PIN no coinciden. Intenta de nuevo.',
+      continue: 'Continuar',
+      back: 'Volver',
+      backAriaLabel: 'Volver al paso anterior',
+      digitAria: 'Número {digit}',
+      deleteAriaLabel: 'Borrar',
+      keypadAriaLabel: 'Teclado numérico',
+      pinProgressAria: 'Paso {count} de 4',
+      errorBadRequest: 'Datos inválidos. Revisa la información.',
+      errorServer: 'Error del servidor. Intenta más tarde.',
+      errorConflict: 'Ya existe una familia registrada.'
     },
     children: {
       title: '¿Quién eres?',
