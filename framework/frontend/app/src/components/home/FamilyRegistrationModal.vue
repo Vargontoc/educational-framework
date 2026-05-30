@@ -224,6 +224,9 @@ function handleClose() {
           :aria-label="t('modal.registerFamily.backAriaLabel')"
           @click="goToStep1"
         >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           {{ t('modal.registerFamily.back') }}
         </button>
         <p class="step-label">
@@ -485,20 +488,29 @@ function handleClose() {
 .back-btn {
   align-self: flex-start;
   min-height: 36px;
-  padding: var(--space-xs) var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
   border: none;
-  background: transparent;
-  color: #6b7280;
+  border-radius: var(--radius-pill);
+  background-color: transparent;
+  color: var(--color-primary);
   font-size: var(--font-size-sm);
   font-family: var(--font-family-base);
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  transition: background-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .back-btn:hover {
-  color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-primary) 30%, transparent);
+}
+
+.back-btn:active {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 .pin-dots {
