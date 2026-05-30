@@ -59,12 +59,17 @@ export const messages = {
       back: 'Volver',
       backAriaLabel: 'Volver al paso anterior',
       digitAria: 'Número {digit}',
-      deleteAriaLabel: 'Borrar',
+      digitEntered: 'ingresado',
+      deleteAriaLabel: 'Borrar último dígito',
+      clearAriaLabel: 'Borrar todo',
+      delete: '⌫',
+      clear: 'C',
       keypadAriaLabel: 'Teclado numérico',
       pinProgressAria: 'Paso {count} de 4',
       errorBadRequest: 'Datos inválidos. Revisa la información.',
       errorServer: 'Error del servidor. Intenta más tarde.',
-      errorConflict: 'Ya existe una familia registrada.'
+      errorConflict: 'Ya existe una familia registrada.',
+      confirm: 'Confirmar'
     },
     children: {
       title: '¿Quién eres?',

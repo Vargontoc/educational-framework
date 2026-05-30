@@ -23,8 +23,8 @@ const confirmPinInputRef = ref<HTMLInputElement | null>(null)
 
 const isOpen = computed(() => familyStore.activeModal === 'familyRegistration')
 
-const pinDotsFirst = computed(() => pinFirst.value.padEnd(4, 'empty').slice(0, 4).split(''))
-const pinDotsConfirm = computed(() => pinConfirm.value.padEnd(4, 'empty').slice(0, 4).split(''))
+const pinDotsFirst = computed(() => pinFirst.value.split('').concat(Array(4 - pinFirst.value.length).fill('empty')).slice(0, 4))
+const pinDotsConfirm = computed(() => pinConfirm.value.split('').concat(Array(4 - pinConfirm.value.length).fill('empty')).slice(0, 4))
 
 watch(isOpen, async (open) => {
   if (open) {
@@ -84,13 +84,6 @@ function appendDigit(digit: string) {
     }
   } else if (step.value === 2 && pinConfirm.value.length < 4) {
     pinConfirm.value += digit
-    if (pinConfirm.value.length === 4) {
-      if (pinConfirm.value === pinFirst.value) {
-        handleSubmit()
-      } else {
-        triggerMismatch()
-      }
-    }
   }
 }
 
@@ -101,6 +94,15 @@ function deleteDigit() {
     pinError.value = ''
   } else if (step.value === 2 && pinFirst.value.length > 0) {
     pinFirst.value = pinFirst.value.slice(0, -1)
+  }
+}
+
+function clearAll() {
+  if (step.value === 2) {
+    pinFirst.value = ''
+    pinConfirm.value = ''
+    pinError.value = ''
+    nextTick(() => firstPinInputRef.value?.focus())
   }
 }
 
@@ -116,6 +118,13 @@ function triggerMismatch() {
 
 async function handleSubmit() {
   if (submitting.value) return
+  if (pinFirst.value.length < 4) return
+  if (pinConfirm.value.length < 4) return
+  if (pinConfirm.value !== pinFirst.value) {
+    triggerMismatch()
+    return
+  }
+
   submitting.value = true
   serverError.value = ''
   pinError.value = ''
@@ -199,7 +208,7 @@ function handleClose() {
           </p>
         </div>
         <button
-          class="primary-btn"
+          class="action-btn"
           type="button"
           :disabled="!name.trim()"
           @click="goToStep2"
@@ -226,7 +235,8 @@ function handleClose() {
         <div
           class="pin-dots"
           :class="{ 'pin-dots--shake': shaking, 'pin-dots--error': pinError }"
-          :aria-label="t('modal.registerFamily.pinProgressAria', { count: pinConfirm.length || pinFirst.length })"
+          role="status"
+          aria-live="polite"
         >
           <span
             v-for="(dot, i) in (pinConfirm.length > 0 ? pinDotsConfirm : pinDotsFirst)"
@@ -236,6 +246,7 @@ function handleClose() {
               'pin-dot--filled': dot !== 'empty',
               'pin-dot--error': pinError && pinConfirm.length > 0
             }"
+            :aria-label="dot !== 'empty' ? t('modal.registerFamily.digitEntered') : undefined"
             aria-hidden="true"
           />
         </div>
@@ -292,27 +303,42 @@ function handleClose() {
             <button
               class="keypad-btn keypad-btn--action"
               type="button"
-              :aria-label="t('modal.registerFamily.deleteAriaLabel')"
+              :aria-label="t('modal.registerFamily.clearAriaLabel')"
               :disabled="submitting"
-              @click="deleteDigit"
+              @click="clearAll"
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M5 8.5L9.5 13L14 8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M5 8.5L9.5 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                <rect x="2.5" y="4" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-              </svg>
+              {{ t('modal.registerFamily.clear') }}
             </button>
             <button
               class="keypad-btn"
               type="button"
-              aria-label="0"
+              :aria-label="t('modal.registerFamily.digitAria', { digit: '0' })"
               :disabled="submitting"
               @click="appendDigit('0')"
             >
               0
             </button>
-            <div class="keypad-spacer" />
+            <button
+              class="keypad-btn keypad-btn--action keypad-btn--delete"
+              type="button"
+              :aria-label="t('modal.registerFamily.deleteAriaLabel')"
+              :disabled="submitting"
+              @click="deleteDigit"
+            >
+              {{ t('modal.registerFamily.delete') }}
+            </button>
           </div>
+        </div>
+
+        <div class="action-row">
+          <button
+            class="action-btn"
+            type="button"
+            :disabled="submitting || pinFirst.length < 4 || pinConfirm.length < 4"
+            @click="handleSubmit"
+          >
+            {{ t('modal.registerFamily.confirm') }}
+          </button>
         </div>
 
         <input
@@ -425,29 +451,35 @@ function handleClose() {
   text-align: center;
 }
 
-.primary-btn {
+.action-btn {
   min-width: 200px;
-  min-height: 44px;
+  min-height: var(--touch-target-min);
   padding: var(--space-sm) var(--space-lg);
   border: none;
   border-radius: var(--radius-pill);
   background-color: var(--color-primary);
   color: var(--color-text-on-primary);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-button);
   font-family: var(--font-family-base);
   font-weight: 700;
   cursor: pointer;
-  transition: background-color var(--transition-base);
+  transition: background-color var(--transition-base), transform var(--transition-base);
   box-shadow: 0 4px 0 var(--color-primary-dark), 0 18px 28px rgba(43, 91, 224, 0.22);
 }
 
-.primary-btn:hover:not(:disabled) {
+.action-btn:hover:not(:disabled) {
   background-color: var(--color-primary-dark);
 }
 
-.primary-btn:disabled {
+.action-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--color-primary-dark);
+}
+
+.action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .back-btn {
@@ -471,22 +503,22 @@ function handleClose() {
 
 .pin-dots {
   display: flex;
-  gap: var(--space-sm);
+  gap: 12px;
   padding: var(--space-md);
 }
 
 .pin-dot {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  border: 2px solid #d1d5db;
+  border: 2px solid var(--color-neutral);
   background-color: transparent;
   transition: background-color 0.15s, border-color 0.15s;
 }
 
 .pin-dot--filled {
-  background-color: #374151;
-  border-color: #374151;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .pin-dot--error {
@@ -519,7 +551,7 @@ function handleClose() {
   flex-direction: column;
   gap: var(--space-sm);
   width: 100%;
-  max-width: 260px;
+  max-width: 280px;
 }
 
 .keypad-row {
@@ -533,8 +565,8 @@ function handleClose() {
 }
 
 .keypad-btn {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border: none;
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
@@ -546,8 +578,8 @@ function handleClose() {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color var(--transition-base), transform 0.1s;
-  box-shadow: 0 2px 0 #d1d5db;
+  transition: background-color var(--transition-base), transform var(--transition-base);
+  box-shadow: 0 4px 0 #d1d5db, 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .keypad-btn:hover:not(:disabled) {
@@ -555,7 +587,7 @@ function handleClose() {
 }
 
 .keypad-btn:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: translateY(3px);
   box-shadow: 0 1px 0 #d1d5db;
 }
 
@@ -565,19 +597,31 @@ function handleClose() {
 }
 
 .keypad-btn--action {
-  background-color: transparent;
-  box-shadow: none;
-  color: #6b7280;
+  background-color: #f3f4f6;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  box-shadow: 0 3px 0 #d1d5db, 0 1px 4px rgba(0,0,0,0.06);
 }
 
 .keypad-btn--action:hover:not(:disabled) {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: #e5e7eb;
 }
 
-.keypad-spacer {
-  width: 64px;
-  height: 64px;
+.keypad-btn--action:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #d1d5db;
+}
+
+.keypad-btn--delete {
+  color: #e53935;
+}
+
+.keypad-btn--delete:hover:not(:disabled) {
+  background-color: #fef2f2;
+}
+
+.action-row {
+  margin-top: var(--space-sm);
 }
 
 .sr-only {
@@ -594,13 +638,8 @@ function handleClose() {
 
 @media (max-width: 360px) {
   .keypad-btn {
-    width: 56px;
-    height: 56px;
-  }
-
-  .keypad-spacer {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
   }
 }
 </style>
