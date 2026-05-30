@@ -1,25 +1,12 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import { useFamilyStore } from '@/stores/useFamilyStore'
-import * as sessionService from '@/services/sessionService'
 import Modal from '@/components/ui/Modal.vue'
 
 const { t } = useI18n()
-const router = useRouter()
 const familyStore = useFamilyStore()
 
 const TITLE_ID = 'child-selector-title'
-
-onMounted(() => {
-  familyStore.fetchChildren()
-})
-
-function handleSelectChild(childId: number) {
-  sessionService.openChildSession(childId)
-  router.push('/game/' + childId)
-}
 
 function handleAddChild() {
   familyStore.setActiveModal('addChild')
@@ -36,46 +23,60 @@ function handleClose() {
     :title-id="TITLE_ID"
     @close="handleClose"
   >
-    <h2 :id="TITLE_ID" class="modal-title">{{ t('modal.children.title') }}</h2>
+    <div class="modal-inner">
+      <h2 :id="TITLE_ID" class="modal-title">{{ t('modal.children.title') }}</h2>
 
-    <div v-if="familyStore.children.length === 0" class="empty-state">
-      <p>{{ t('modal.children.empty') }}</p>
-    </div>
+      <div v-if="familyStore.children.length === 0" class="empty-state">
+        <p>{{ t('modal.children.empty') }}</p>
+      </div>
 
-    <div v-else class="children-grid">
-      <button
-        v-for="child in familyStore.children"
-        :key="child.id"
-        class="child-card"
-        @click="handleSelectChild(child.id)"
-      >
-        <div class="child-avatar">
-          <img
-            v-if="child.avatar"
-            :src="child.avatar"
-            :alt="child.name"
-            class="child-avatar-img"
-          />
-          <span v-else class="child-avatar-placeholder">
-            {{ child.name.charAt(0).toUpperCase() }}
-          </span>
+      <div v-else class="children-grid" role="listbox" :aria-label="t('modal.children.title')">
+        <div
+          v-for="child in familyStore.children"
+          :key="child.id"
+          class="child-card"
+          role="option"
+          :aria-label="t('modal.children.cardAriaLabel', { name: child.name })"
+        >
+          <div class="child-avatar">
+            <img
+              v-if="child.avatar"
+              :src="child.avatar"
+              :alt="child.name"
+              class="child-avatar-img"
+            />
+            <span v-else class="child-avatar-placeholder">
+              {{ child.name.charAt(0).toUpperCase() }}
+            </span>
+          </div>
+          <span class="child-name">{{ child.name }}</span>
         </div>
-        <span class="child-name">{{ child.name }}</span>
+      </div>
+
+      <button
+        class="add-child-btn"
+        @click="handleAddChild"
+      >
+        <span class="add-icon" aria-hidden="true">+</span>
+        <span>{{ t('modal.children.addChild') }}</span>
       </button>
     </div>
-
-    <button class="add-child-btn" @click="handleAddChild">
-      + {{ t('modal.children.addChild') }}
-    </button>
   </Modal>
 </template>
 
 <style scoped>
+.modal-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
 .modal-title {
   font-size: var(--font-size-lg);
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 var(--space-md);
+  margin: 0;
+  text-align: center;
 }
 
 .empty-state {
@@ -84,11 +85,15 @@ function handleClose() {
   padding: var(--space-lg) 0;
 }
 
+.empty-state p {
+  margin: 0;
+  font-size: var(--font-size-body);
+}
+
 .children-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: var(--space-md);
-  margin-bottom: var(--space-md);
 }
 
 .child-card {
@@ -100,25 +105,19 @@ function handleClose() {
   border: 2px solid var(--color-neutral);
   border-radius: var(--radius-md);
   background: #ffffff;
-  cursor: pointer;
-  transition: border-color var(--transition-base), transform var(--transition-base);
-  min-height: var(--touch-target-min);
-}
-
-.child-card:hover {
-  border-color: var(--color-primary);
-  transform: translateY(-2px);
+  min-height: 140px;
 }
 
 .child-avatar {
-  width: 64px;
-  height: 64px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   overflow: hidden;
   background-color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .child-avatar-img {
@@ -128,16 +127,18 @@ function handleClose() {
 }
 
 .child-avatar-placeholder {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-text-on-primary);
+  font-family: var(--font-family-base);
 }
 
 .child-name {
   font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2937;
   text-align: center;
+  font-family: var(--font-family-base);
 }
 
 .add-child-btn {
@@ -151,11 +152,20 @@ function handleClose() {
   font-family: var(--font-family-base);
   color: #6b7280;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
   transition: border-color var(--transition-base), color var(--transition-base);
 }
 
 .add-child-btn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+.add-icon {
+  font-size: var(--font-size-lg);
+  line-height: 1;
 }
 </style>

@@ -69,16 +69,34 @@ export const messages = {
       confirm: 'Confirmar'
     },
     children: {
-      title: '¿Quién eres?',
+      title: '¿Quién va a jugar?',
       addChild: 'Agregar niño',
-      empty: 'No hay perfiles aún'
+      empty: 'No hay perfiles aún',
+      cardAriaLabel: 'Perfil de {name}'
     },
     addChild: {
-      title: 'Agregar perfil de niño',
+      title: 'Nuevo perfil',
+      step1Label: '¿Cómo se llama el niño?',
+      step2Label: '¿Cuándo es su cumpleaños?',
+      step3Label: 'Elige un avatar',
       namePlaceholder: 'Nombre del niño',
+      nameRequired: 'Ingresa el nombre del niño',
+      nameWhitespace: 'El nombre no puede estar vacío',
       birthdayPlaceholder: 'Fecha de nacimiento',
-      avatarPlaceholder: 'URL del avatar (opcional)',
-      submit: 'Crear perfil'
+      birthdayRequired: 'Ingresa la fecha de nacimiento',
+      birthdayInvalid: 'Fecha inválida',
+      avatarSectionLabel: 'Selecciona un avatar',
+      avatarOptionAria: 'Avatar {name}, {index} de {total}',
+      avatarSelectedAria: 'Avatar {name} seleccionado',
+      back: 'Volver',
+      backAriaLabel: 'Volver al paso anterior',
+      continue: 'Continuar',
+      confirm: 'Crear perfil',
+      submitting: 'Creando perfil...',
+      errorBadRequest: 'Datos inválidos. Revisa la información.',
+      errorNotFound: 'Familia no encontrada. Intenta de nuevo.',
+      errorServer: 'Error del servidor. Intenta más tarde.',
+      closeAriaLabel: 'Cerrar'
     }
   },
   devContent: {

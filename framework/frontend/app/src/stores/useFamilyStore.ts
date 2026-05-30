@@ -62,7 +62,6 @@ export const useFamilyStore = defineStore('family', () => {
   async function addChild(payload: CreateChildProfileRequest) {
     await childService.createChild(payload)
     await fetchChildren()
-    activeModal.value = null
   }
 
   return {
