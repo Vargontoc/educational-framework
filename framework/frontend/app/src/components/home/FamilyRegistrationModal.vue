@@ -11,34 +11,25 @@ const TITLE_ID = 'family-registration-title'
 
 const step = ref<1 | 2>(1)
 const name = ref('')
-const pinFirst = ref('')
-const pinConfirm = ref('')
+const pin = ref('')
 const submitting = ref(false)
 const nameError = ref('')
-const pinError = ref('')
 const serverError = ref('')
-const shaking = ref(false)
 const firstPinInputRef = ref<HTMLInputElement | null>(null)
-const confirmPinInputRef = ref<HTMLInputElement | null>(null)
 
 const isOpen = computed(() => familyStore.activeModal === 'familyRegistration')
-const pinFirstLength = computed(() => pinFirst.value.length)
-const pinConfirmLength = computed(() => pinConfirm.value.length)
+const pinLength = computed(() => pin.value.length)
 const submittingState = computed(() => submitting.value)
 
-const pinDotsFirst = computed(() => pinFirst.value.split('').concat(Array(4 - pinFirst.value.length).fill('empty')).slice(0, 4))
-const pinDotsConfirm = computed(() => pinConfirm.value.split('').concat(Array(4 - pinConfirm.value.length).fill('empty')).slice(0, 4))
+const pinDots = computed(() => pin.value.split('').concat(Array(4 - pin.value.length).fill('empty')).slice(0, 4))
 
 watch(isOpen, async (open) => {
   if (open) {
     step.value = 1
     name.value = ''
-    pinFirst.value = ''
-    pinConfirm.value = ''
+    pin.value = ''
     nameError.value = ''
-    pinError.value = ''
     serverError.value = ''
-    shaking.value = false
     submitting.value = false
     await nextTick()
     const firstInput = document.getElementById('family-name')
@@ -58,17 +49,13 @@ function validateName(): boolean {
 function goToStep2() {
   if (!validateName()) return
   step.value = 2
-  pinFirst.value = ''
-  pinConfirm.value = ''
-  pinError.value = ''
+  pin.value = ''
   nextTick(() => firstPinInputRef.value?.focus())
 }
 
 function goToStep1() {
   step.value = 1
-  pinFirst.value = ''
-  pinConfirm.value = ''
-  pinError.value = ''
+  pin.value = ''
   nextTick(() => {
     const el = document.getElementById('family-name')
     el?.focus()
@@ -78,64 +65,34 @@ function goToStep1() {
 function appendDigit(digit: string) {
   if (submitting.value) return
   serverError.value = ''
-  pinError.value = ''
-
-  if (step.value === 2 && pinFirst.value.length < 4) {
-    pinFirst.value += digit
-    if (pinFirst.value.length === 4) {
-      nextTick(() => confirmPinInputRef.value?.focus())
-    }
-  } else if (step.value === 2 && pinConfirm.value.length < 4) {
-    pinConfirm.value += digit
+  if (pin.value.length < 4) {
+    pin.value += digit
   }
 }
 
 function deleteDigit() {
   if (submitting.value) return
-  if (step.value === 2 && pinConfirm.value.length > 0) {
-    pinConfirm.value = pinConfirm.value.slice(0, -1)
-    pinError.value = ''
-  } else if (step.value === 2 && pinFirst.value.length > 0) {
-    pinFirst.value = pinFirst.value.slice(0, -1)
+  if (pin.value.length > 0) {
+    pin.value = pin.value.slice(0, -1)
   }
 }
 
 function clearAll() {
-  if (step.value === 2) {
-    pinFirst.value = ''
-    pinConfirm.value = ''
-    pinError.value = ''
-    nextTick(() => firstPinInputRef.value?.focus())
-  }
-}
-
-function triggerMismatch() {
-  pinError.value = t('modal.registerFamily.pinMismatch')
-  shaking.value = true
-  pinConfirm.value = ''
-  setTimeout(() => {
-    shaking.value = false
-    nextTick(() => firstPinInputRef.value?.focus())
-  }, 500)
+  pin.value = ''
+  nextTick(() => firstPinInputRef.value?.focus())
 }
 
 async function handleSubmit() {
   if (submitting.value) return
-  if (pinFirst.value.length < 4) return
-  if (pinConfirm.value.length < 4) return
-  if (pinConfirm.value !== pinFirst.value) {
-    triggerMismatch()
-    return
-  }
+  if (pin.value.length < 4) return
 
   submitting.value = true
   serverError.value = ''
-  pinError.value = ''
 
   try {
     await familyStore.registerFamily({
       name: name.value.trim(),
-      pin: pinFirst.value,
+      pin: pin.value,
       ttsEnabled: true,
       agentEnabled: true
     })
@@ -232,34 +189,21 @@ function handleClose() {
           </svg>
           {{ t('modal.registerFamily.back') }}
         </button>
-        <p class="step-label">
-          {{ pinConfirm.length === 0
-            ? t('modal.registerFamily.step2LabelCreate')
-            : t('modal.registerFamily.step2LabelConfirm') }}
-        </p>
+        <p class="step-label">{{ t('modal.registerFamily.step2Label') }}</p>
 
         <div
           class="pin-dots"
-          :class="{ 'pin-dots--shake': shaking, 'pin-dots--error': pinError }"
           role="status"
           aria-live="polite"
         >
           <span
-            v-for="(dot, i) in (pinConfirm.length > 0 ? pinDotsConfirm : pinDotsFirst)"
+            v-for="(dot, i) in pinDots"
             :key="i"
             class="pin-dot"
-            :class="{
-              'pin-dot--filled': dot !== 'empty',
-              'pin-dot--error': pinError && pinConfirm.length > 0
-            }"
-            :aria-label="dot !== 'empty' ? t('modal.registerFamily.digitEntered') : undefined"
+            :class="{ 'pin-dot--filled': dot !== 'empty' }"
             aria-hidden="true"
           />
         </div>
-
-        <p v-if="pinError" class="field-error pin-error" role="alert">
-          {{ pinError }}
-        </p>
 
         <div
           class="keypad"
@@ -340,7 +284,7 @@ function handleClose() {
           <button
             class="action-btn"
             type="button"
-            :disabled="submittingState || pinFirstLength < 4 || pinConfirmLength < 4"
+            :disabled="submittingState || pinLength < 4"
             @click="handleSubmit"
           >
             {{ t('modal.registerFamily.confirm') }}
@@ -349,13 +293,6 @@ function handleClose() {
 
         <input
           ref="firstPinInputRef"
-          class="sr-only"
-          aria-hidden="true"
-          tabindex="-1"
-          @keydown="(e) => { if (/^\d$/.test(e.key)) appendDigit(e.key); if (e.key === 'Backspace') deleteDigit(); }"
-        />
-        <input
-          ref="confirmPinInputRef"
           class="sr-only"
           aria-hidden="true"
           tabindex="-1"
@@ -534,31 +471,6 @@ function handleClose() {
 .pin-dot--filled {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
-}
-
-.pin-dot--error {
-  border-color: #e53935;
-  background-color: transparent;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-6px); }
-  40% { transform: translateX(6px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
-}
-
-.pin-dots--shake {
-  animation: shake 0.4s ease-in-out;
-}
-
-.pin-dots--error .pin-dot:not(.pin-dot--filled) {
-  border-color: #e53935;
-}
-
-.pin-error {
-  margin: 0;
 }
 
 .keypad {
