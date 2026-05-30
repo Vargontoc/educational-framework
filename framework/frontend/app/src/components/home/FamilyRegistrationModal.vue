@@ -364,7 +364,7 @@ function handleClose() {
 .modal-inner {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .modal-title {
@@ -406,7 +406,7 @@ function handleClose() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .step-label {
@@ -503,13 +503,13 @@ function handleClose() {
 
 .pin-dots {
   display: flex;
-  gap: 12px;
-  padding: var(--space-md);
+  gap: 10px;
+  padding: var(--space-sm) 0;
 }
 
 .pin-dot {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 2px solid var(--color-neutral);
   background-color: transparent;
@@ -543,30 +543,30 @@ function handleClose() {
 }
 
 .pin-error {
-  margin-top: calc(-1 * var(--space-sm));
+  margin: 0;
 }
 
 .keypad {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 6px;
   width: 100%;
-  max-width: 280px;
+  max-width: 260px;
 }
 
 .keypad-row {
   display: flex;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: 6px;
 }
 
 .keypad-row--actions {
-  gap: var(--space-sm);
+  gap: 6px;
 }
 
 .keypad-btn {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border: none;
   border-radius: var(--radius-md);
   background-color: var(--color-surface);
@@ -579,7 +579,7 @@ function handleClose() {
   align-items: center;
   justify-content: center;
   transition: background-color var(--transition-base), transform var(--transition-base);
-  box-shadow: 0 4px 0 #d1d5db, 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 3px 0 #d1d5db, 0 1px 4px rgba(0,0,0,0.08);
 }
 
 .keypad-btn:hover:not(:disabled) {
@@ -587,7 +587,7 @@ function handleClose() {
 }
 
 .keypad-btn:active:not(:disabled) {
-  transform: translateY(3px);
+  transform: translateY(2px);
   box-shadow: 0 1px 0 #d1d5db;
 }
 
@@ -600,7 +600,7 @@ function handleClose() {
   background-color: #f3f4f6;
   font-size: var(--font-size-sm);
   font-weight: 600;
-  box-shadow: 0 3px 0 #d1d5db, 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 0 #d1d5db, 0 1px 2px rgba(0,0,0,0.06);
 }
 
 .keypad-btn--action:hover:not(:disabled) {
@@ -608,7 +608,7 @@ function handleClose() {
 }
 
 .keypad-btn--action:active:not(:disabled) {
-  transform: translateY(2px);
+  transform: translateY(1px);
   box-shadow: 0 1px 0 #d1d5db;
 }
 
@@ -621,7 +621,7 @@ function handleClose() {
 }
 
 .action-row {
-  margin-top: var(--space-sm);
+  margin-top: var(--space-xs);
 }
 
 .sr-only {
@@ -638,8 +638,12 @@ function handleClose() {
 
 @media (max-width: 360px) {
   .keypad-btn {
-    width: 64px;
-    height: 64px;
+    width: 58px;
+    height: 58px;
+  }
+
+  .keypad {
+    max-width: 240px;
   }
 }
 </style>
