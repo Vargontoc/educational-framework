@@ -134,11 +134,26 @@ Design output:
 ## Review
 
 completed_tasks:
+- Contract And Existing Flow Review: Verified `PinModal.vue`, `authService.ts`, `useSessionStore.ts`, `router/index.ts`, `HomeView.vue`, `PanelControlView.vue` before editing
+- PIN Access From Home: Settings opens PinModal in familyReady state; PinModal validates via `POST /api/v1/auth/login`; 4-digit PIN with dot masking; 201 stores token + navigates to /panel; 401 shows adult red error; 5xx shows retryable message; close clears draft
+- Session Store And Route Protection: Token in-memory only (removed persist for isAuthenticated); `isAuthenticated` is computed from `!!token`; `/panel` route guard checks `isAuthenticated` (reactive to token); `router.replace()` for navigation; logout action calls `authService.logout()` and clears store
+- Panel Shell Layout: Sidebar with Management (Configuration, Children, Chatbot, Documentation) and Experiences (Family Reading, Family Relaxation); 6 placeholder sections with title, description, coming-soon badge; active section state via background + left border (not color-only); section selection local to shell (no backend)
+- Responsive Behavior: Expanded sidebar ~220px default; collapsed sidebar ~64px at width<768px with accessible aria labels; rotation overlay via existing RotationOverlay component; adult touch targets >= 44px
+- i18n: Added all panel nav labels, logout, section titles/descriptions, placeholder badge, aria labels, adult error strings to es.ts
+- Testing And Verification: Build passes; Settings/PIN flow verified; logout clears session; sidebar active state verified
 
 incomplete_tasks:
+- ParentChannel preparation (optional, out of scope — websocket contract reviewed but no implementation added)
 
 contract_changes:
+- No contract changes; used existing `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `LoginRequest`, `LoginResponse`, `Error401`
 
 learnings:
+- `isAuthenticated` persisted independently caused inconsistency when token (in-memory) was lost on refresh — resolved by computing `isAuthenticated` from token presence
+- PinModal's `@authenticated` event was wired in HomeView but never emitted — removed dead event wiring
+- RotationOverlay was already built and could be composed directly in PanelControlView
 
 next_sprint_suggestions:
+- Implement real panel sections (configuration, children dashboard, chatbot) with proper contracts
+- Add ParentChannel websocket connection for session invalidation events
+- Add PIN change functionality
