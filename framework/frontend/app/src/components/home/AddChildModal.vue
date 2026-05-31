@@ -3,6 +3,7 @@ import { ref, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFamilyStore } from '@/stores/useFamilyStore'
 import Modal from '@/components/ui/Modal.vue'
+import childAvatarsSvg from '@/assets/images/child-avatars.svg?url'
 
 const { t } = useI18n()
 const familyStore = useFamilyStore()
@@ -20,20 +21,7 @@ const submitting = ref(false)
 
 const addButtonRef = ref<HTMLButtonElement | null>(null)
 
-interface AvatarOption {
-  id: string
-  emoji: string
-  bgColor: string
-}
-
-const AVATAR_OPTIONS: AvatarOption[] = [
-  { id: 'avatar-1', emoji: '🦊', bgColor: '#F97316' },
-  { id: 'avatar-2', emoji: '🐱', bgColor: '#A78BFA' },
-  { id: 'avatar-3', emoji: '🐶', bgColor: '#60A5FA' },
-  { id: 'avatar-4', emoji: '🦁', bgColor: '#FBBF24' },
-  { id: 'avatar-5', emoji: '🐼', bgColor: '#6B7280' },
-  { id: 'avatar-6', emoji: '🐨', bgColor: '#34D399' }
-]
+const AVATAR_IDS = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6']
 
 const isOpen = computed(() => familyStore.activeModal === 'addChild')
 const submittingState = computed(() => submitting.value)
@@ -108,14 +96,14 @@ function handleAvatarKeydown(event: KeyboardEvent, avatarId: string, index: numb
   }
   if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
     event.preventDefault()
-    const nextIndex = (index + 1) % AVATAR_OPTIONS.length
+    const nextIndex = (index + 1) % AVATAR_IDS.length
     const nextEl = document.getElementById(`avatar-option-${nextIndex}`)
     nextEl?.focus()
     return
   }
   if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
     event.preventDefault()
-    const prevIndex = (index - 1 + AVATAR_OPTIONS.length) % AVATAR_OPTIONS.length
+    const prevIndex = (index - 1 + AVATAR_IDS.length) % AVATAR_IDS.length
     const prevEl = document.getElementById(`avatar-option-${prevIndex}`)
     prevEl?.focus()
   }
@@ -158,8 +146,8 @@ async function handleSubmit() {
 }
 
 function handleClose() {
-  resetStepper()
   if (submitting.value) return
+  resetStepper()
   familyStore.setActiveModal(null)
 }
 
@@ -288,40 +276,36 @@ function resetStepper() {
           :aria-label="t('modal.addChild.avatarSectionLabel')"
         >
           <div
-            v-for="(avatar, index) in AVATAR_OPTIONS"
-            :key="avatar.id"
+            v-for="(id, index) in AVATAR_IDS"
+            :key="id"
             :id="`avatar-option-${index}`"
             class="avatar-option"
-            :class="{ 'avatar-option--selected': selectedAvatar === avatar.id }"
+            :class="{ 'avatar-option--selected': selectedAvatar === id }"
             role="option"
-            :aria-selected="selectedAvatar === avatar.id"
-            :aria-label="t('modal.addChild.avatarOptionAria', { name: avatar.emoji, index: index + 1, total: AVATAR_OPTIONS.length })"
+            :aria-selected="selectedAvatar === id"
+            :aria-label="t('modal.addChild.avatarOptionAria', { name: id, index: index + 1, total: AVATAR_IDS.length })"
             tabindex="0"
-            @click="selectAvatar(avatar.id)"
-            @keydown="(e) => handleAvatarKeydown(e, avatar.id, index)"
+            @click="selectAvatar(id)"
+            @keydown="(e) => handleAvatarKeydown(e, id, index)"
           >
-            <div
-              class="avatar-circle"
-              :style="{ backgroundColor: avatar.bgColor }"
+            <svg
+              class="avatar-svg"
+              width="64"
+              height="64"
+              viewBox="0 0 100 100"
               aria-hidden="true"
             >
-              <span class="avatar-emoji">{{ avatar.emoji }}</span>
-              <span
-                v-if="selectedAvatar === avatar.id"
-                class="avatar-check"
-                aria-hidden="true"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="8" fill="#1F2937" fill-opacity="0.6"/>
-                  <path d="M5 8L7 10L11 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-            </div>
+              <use :href="`${childAvatarsSvg}#${id}`" />
+            </svg>
             <span
-              v-if="selectedAvatar === avatar.id"
-              class="avatar-selected-label"
+              v-if="selectedAvatar === id"
+              class="avatar-check"
+              aria-hidden="true"
             >
-              {{ t('modal.addChild.avatarSelectedAria', { name: avatar.emoji }) }}
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="8" fill="#1F2937" fill-opacity="0.6"/>
+                <path d="M5 8L7 10L11 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </span>
           </div>
         </div>
@@ -508,41 +492,40 @@ function resetStepper() {
   background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
 }
 
+.avatar-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-sm);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-base), background-color var(--transition-base);
+}
+
+.avatar-option:focus-visible {
+  border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
 .avatar-option--selected {
   border-color: var(--color-primary);
   background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
-.avatar-circle {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 0 rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
-  flex-shrink: 0;
-}
-
-.avatar-emoji {
-  font-size: 32px;
-  line-height: 1;
+.avatar-svg {
+  display: block;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,0.12)) drop-shadow(0 1px 4px rgba(0,0,0,0.08));
 }
 
 .avatar-check {
   position: absolute;
   bottom: -2px;
   right: -2px;
-}
-
-.avatar-selected-label {
-  font-size: var(--font-size-xs);
-  color: var(--color-primary);
-  font-weight: 600;
-  text-align: center;
-  font-family: var(--font-family-base);
-  min-height: 16px;
 }
 
 .action-row {
@@ -567,13 +550,9 @@ function resetStepper() {
     gap: 6px;
   }
 
-  .avatar-circle {
+  .avatar-svg {
     width: 56px;
     height: 56px;
-  }
-
-  .avatar-emoji {
-    font-size: 28px;
   }
 }
 </style>

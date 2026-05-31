@@ -2,11 +2,18 @@
 import { useI18n } from 'vue-i18n'
 import { useFamilyStore } from '@/stores/useFamilyStore'
 import Modal from '@/components/ui/Modal.vue'
+import childAvatarsSvg from '@/assets/images/child-avatars.svg?url'
 
 const { t } = useI18n()
 const familyStore = useFamilyStore()
 
 const TITLE_ID = 'child-selector-title'
+
+const PLACEHOLDER_AVATARS = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6']
+
+function isPlaceholderAvatar(avatar: string): boolean {
+  return PLACEHOLDER_AVATARS.includes(avatar)
+}
 
 function handleAddChild() {
   familyStore.setActiveModal('addChild')
@@ -39,8 +46,18 @@ function handleClose() {
           :aria-label="t('modal.children.cardAriaLabel', { name: child.name })"
         >
           <div class="child-avatar">
+            <svg
+              v-if="isPlaceholderAvatar(child.avatar)"
+              class="child-avatar-svg"
+              width="96"
+              height="96"
+              viewBox="0 0 100 100"
+              aria-hidden="true"
+            >
+              <use :href="`${childAvatarsSvg}#${child.avatar}`" />
+            </svg>
             <img
-              v-if="child.avatar"
+              v-else-if="child.avatar"
               :src="child.avatar"
               :alt="child.name"
               class="child-avatar-img"
@@ -124,6 +141,12 @@ function handleClose() {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.child-avatar-svg {
+  display: block;
+  width: 96px;
+  height: 96px;
 }
 
 .child-avatar-placeholder {
