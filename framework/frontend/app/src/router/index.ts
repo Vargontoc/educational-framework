@@ -17,7 +17,7 @@ const router = createRouter({
       component: () => import('@/views/PanelControlView.vue'),
       beforeEnter: () => {
         const session = useSessionStore()
-        if (!session.isAuthenticated) {
+        if (!session.isAuthenticated()) {
           return '/'
         }
       }

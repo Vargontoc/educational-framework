@@ -24,8 +24,6 @@ const pinDots = computed(() => {
   return Array.from({ length: PIN_LENGTH }, (_, i) => i < pin.value.length)
 })
 
-const pinHidden = computed(() => pin.value)
-
 function blockNonDigit(event: KeyboardEvent) {
   if (event.ctrlKey || event.metaKey || event.altKey) return
   if (event.key.length === 1 && !/\d/.test(event.key)) {
@@ -42,7 +40,7 @@ async function handleSubmit() {
     sessionStore.token = response.token
     sessionStore.familyId = response.familyId
     familyStore.setActiveModal(null)
-    router.push('/panel')
+    router.replace('/panel')
   } catch (error: unknown) {
     const axiosError = error as { response?: { status?: number } }
     const status = axiosError.response?.status
@@ -88,7 +86,7 @@ function handleClose() {
 
       <input
         id="pin-input"
-        v-model="pinHidden"
+        v-model="pin"
         type="hidden"
         autocomplete="one-time-code"
         @keydown="blockNonDigit"

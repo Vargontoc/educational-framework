@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import * as authService from '@/services/authService'
 
@@ -9,12 +9,14 @@ export const useSessionStore = defineStore(
     const selectedChildId = ref<number | null>(null)
     const token = ref<string | null>(null)
 
-    const isAuthenticated = computed(() => !!token.value)
-
     function $reset() {
       familyId.value = null
       selectedChildId.value = null
       token.value = null
+    }
+
+    function isAuthenticated(): boolean {
+      return !!token.value
     }
 
     async function logout() {
@@ -29,9 +31,9 @@ export const useSessionStore = defineStore(
       familyId,
       selectedChildId,
       token,
-      isAuthenticated,
       $reset,
-      logout
+      logout,
+      isAuthenticated
     }
   },
   {
