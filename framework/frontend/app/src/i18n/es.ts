@@ -66,6 +66,39 @@ export const messages = {
       comingSoon: 'Próximamente'
     }
   },
+  docs: {
+    title: 'Documentación',
+    eyebrow: 'Ayuda y recursos',
+    backHome: 'Volver al inicio',
+    backPanel: 'Volver al panel',
+    backPanelAriaLabel: 'Volver al panel de control',
+    sections: {
+      gettingStarted: {
+        title: 'Primeros pasos',
+        description: 'Aprende a crear tu espacio familiar, registrar perfiles de niños y comenzar a usar la aplicación.'
+      },
+      familyAndProfiles: {
+        title: 'Familia y perfiles',
+        description: 'Gestiona los perfiles de los miembros de tu familia, sus datos y preferencias.'
+      },
+      parentControl: {
+        title: 'Panel de control parental',
+        description: 'Accede a la configuración avanzada, gestiona el acceso de los niños y personaliza la experiencia.'
+      },
+      familyExperiences: {
+        title: 'Experiencias en familia',
+        description: 'Descubre las actividades de lectura, relajación y juego disponibles para toda la familia.'
+      },
+      privacyAndSecurity: {
+        title: 'Privacidad y seguridad',
+        description: 'Información sobre cómo protegemos tus datos y los de tus hijos.'
+      },
+      support: {
+        title: 'Soporte',
+        description: '¿Tienes dudas o problemas? Consulta las preguntas frecuentes o contacta con nuestro equipo.'
+      }
+    }
+  },
   game: {
     title: 'Paseo de aprendizaje',
     mapEyebrow: 'Mundo vivo',

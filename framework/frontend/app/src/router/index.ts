@@ -44,6 +44,11 @@ const router = createRouter({
       }
     },
     {
+      path: '/docs',
+      name: 'docs',
+      component: () => import('@/views/DocsView.vue')
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/'
     }

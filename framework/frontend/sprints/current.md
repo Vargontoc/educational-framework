@@ -1,8 +1,8 @@
-# Sprint 011 - frontend
+# Sprint 012 - frontend
 # -----------------------------------------------
 
 ## Goal
-Implement the Parent Control Shell from `docs/product/features/frontend/FEAT-005-Parent-Control-View.md`: PIN-gated access from Home, protected `/panel` route, in-memory session handling, responsive sidebar shell, local placeholder sections, and logout without implementing the individual panel sections.
+Implement the Docs View Shell from `docs/product/features/frontend/FEAT-006-Docs-View.md`: public `/docs` route, adult-facing documentation layout, local section navigation, placeholder content, and Parent Control Shell link integration without authentication, backend calls, WebSocket connections, or Markdown rendering implementation.
 
 ## Status
 status: active
@@ -13,147 +13,121 @@ waiting_for:
 
 ## Tasks
 
-### Contract And Existing Flow Review
-- [ ] Review `docs/contracts/api/openapi.json` for `LoginRequest`, `LoginResponse`, `ApiResponseLogin`, `Error401`, and `/api/v1/auth/login` responses.
-- [ ] Review `docs/contracts/api/openapi.json` for `/api/v1/auth/logout` behavior.
-- [ ] Review `docs/contracts/api/websocket.json` for currently contracted ParentChannel session events only.
-- [ ] Verify existing `src/components/home/PinModal.vue`, `src/services/authService.ts`, `src/stores/useSessionStore.ts`, `src/router/index.ts`, `src/views/HomeView.vue`, and `src/views/PanelControlView.vue` before editing.
+### Feature And Existing Flow Review
+- [ ] Review `docs/product/features/frontend/FEAT-006-Docs-View.md` before editing.
+- [ ] Review existing router configuration in `src/router/index.ts`.
+- [ ] Review `src/views/PanelControlView.vue` to link Documentation to `/docs` from the Parent Control Shell.
+- [ ] Confirm no backend API, service, Axios, WebSocket, or ParentChannel integration is needed.
 - [ ] Do not change backend contracts in this sprint.
 
-### PIN Access From Home
-- [ ] Ensure the Home `Settings` action is available only in `familyReady` state.
-- [ ] Ensure `Settings` opens the parental PIN modal.
-- [ ] Validate the PIN only through `POST /api/v1/auth/login` using the shared Axios client.
-- [ ] Use a 4-digit adult PIN flow for v1.
-- [ ] Mask PIN digits as dots and never display entered digits as plain text.
-- [ ] On `201`, store the returned opaque token in memory only and navigate to `/panel`.
-- [ ] On `401`, show inline adult red validation and allow retry.
-- [ ] On network or `5xx`, show retryable adult-facing feedback.
-- [ ] Clear local PIN draft state on close and after successful login.
+### Public Docs Route
+- [ ] Add route `/docs` with name `docs`.
+- [ ] Ensure `/docs` is public and has no parental auth guard.
+- [ ] Ensure `/docs` does not require `VITE_ENABLE_DEV_CONTENT`.
+- [ ] Ensure `/docs` renders when no family state or auth token exists.
+- [ ] Preserve existing unknown-route redirect policy.
 
-### Session Store And Route Protection
-- [ ] Keep the raw Bearer token in memory only in `useSessionStore`.
-- [ ] Do not store the raw token in localStorage, sessionStorage, route state, or persisted Pinia slices.
-- [ ] Avoid persisted `isAuthenticated` state becoming inconsistent with missing in-memory token after refresh.
-- [ ] Protect `/panel` so missing token redirects to Home.
-- [ ] Use `router.replace()` for Home -> Panel and Panel -> Home private navigation flows.
-- [ ] Implement explicit logout if available: call `POST /api/v1/auth/logout` when token exists, clear session store, and return Home.
-
-### Panel Shell Layout
-- [ ] Implement the `/panel` shell with left sidebar and main content region.
-- [ ] Add Management navigation group: Configuration, Children, Chatbot, Documentation.
-- [ ] Add Experiences navigation group: Family Reading, Family Relaxation.
-- [ ] Keep all sections as local placeholders with title, short description, and coming-soon/unavailable state.
-- [ ] Section selection must be local to the shell and must not require backend data.
+### Docs View Shell
+- [ ] Create `DocsView.vue` or equivalent route component.
+- [ ] Add adult-facing header with documentation title and short description.
+- [ ] Add local section navigation/index.
+- [ ] Add main content region with placeholder content.
+- [ ] Include initial sections: Getting started, Family and profiles, Parent control panel, Family experiences, Privacy and security, Support.
+- [ ] Section selection must be local to the Docs view and must not require backend data.
 - [ ] Active section state must be visible and not color-only.
-- [ ] Documentation may link to `/docs` only if that route exists; otherwise keep it as placeholder.
-- [ ] Do not implement section-specific business logic in this sprint.
+- [ ] Add optional link back to Home.
+- [ ] Add optional link back to Panel only when an authenticated in-memory parent session exists.
+
+### Parent Control Shell Integration
+- [ ] Update the Documentation item in the Parent Control Shell to navigate to `/docs`.
+- [ ] Do not render documentation content inside `/panel`.
+- [ ] Returning to `/panel` remains protected by the in-memory token guard.
+- [ ] Do not add documentation API calls or Markdown loading to the panel.
+
+### Future Markdown Preparation
+- [ ] Keep the Docs shell structure easy to replace with static Markdown-driven content later.
+- [ ] Do not add Markdown parser dependencies.
+- [ ] Do not implement Markdown file loading.
+- [ ] Do not implement dynamic slug routing, search, versioning, or generated table of contents.
+- [ ] Do not create backend documentation endpoints.
 
 ### Responsive Behavior
-- [ ] Tablet landscape uses an expanded sidebar of approximately `220px`.
-- [ ] Mobile landscape or width under `768px` uses a collapsed sidebar of approximately `64px`.
-- [ ] Collapsed sidebar remains keyboard and screen-reader accessible through translated labels.
-- [ ] Portrait orientation continues to show the existing rotation overlay.
+- [ ] Desktop/tablet landscape can use a two-column layout with section navigation and content.
+- [ ] Mobile landscape can stack navigation and content or use a compact horizontal section list.
+- [ ] Portrait orientation follows the existing app rotation overlay behavior if global shell applies it.
+- [ ] Text remains readable without horizontal scrolling.
 - [ ] Adult touch targets are at least 44px.
 
-### Optional ParentChannel Preparation
-- [ ] If ParentChannel structure is added, limit it to `docs/contracts/api/websocket.json` only.
-- [ ] Do not invent websocket event types.
-- [ ] Do not implement dashboard updates, agent status, chatbot streaming, child management actions, or uncontracted events.
-- [ ] Handle only already contracted session invalidation/status behavior if implemented.
-
 ### i18n And Accessibility
-- [ ] Add all visible labels, section titles, placeholder text, validation messages, API error messages, and aria labels to `src/i18n/es.ts`.
-- [ ] Do not hardcode visible text in Vue templates.
-- [ ] Settings icon, PIN modal, sidebar items, collapsed navigation, and logout must have translated accessible labels.
-- [ ] PIN modal preserves dialog semantics, focus trap, close behavior, and focus return.
-- [ ] Sidebar navigation is keyboard operable.
-- [ ] Panel text meets WCAG AA contrast for adult UI.
+- [ ] Add all visible labels, section titles, placeholder text, and aria labels to `src/i18n/es.ts`.
+- [ ] Do not hardcode visible text in Vue templates unless it is approved local static placeholder content.
+- [ ] Use semantic heading order.
+- [ ] Section navigation is keyboard operable.
+- [ ] Active section state does not rely on color only.
+- [ ] Links have clear translated labels.
+- [ ] Text contrast meets WCAG AA for adult UI.
 - [ ] Avoid sustained uppercase visible labels.
 
 ### Testing And Verification
-- [ ] Add or update component/integration tests if the project has a test harness available for this area.
-- [ ] Verify Settings opens PIN modal from Home `familyReady` state.
-- [ ] Verify PIN login calls `POST /api/v1/auth/login` with `LoginRequest`.
-- [ ] Verify successful login stores token in memory and navigates to `/panel`.
-- [ ] Verify `401` shows inline translated error.
-- [ ] Verify missing token redirects `/panel` to Home.
-- [ ] Verify sidebar renders Management and Experiences groups with all expected items.
-- [ ] Verify sidebar active section changes placeholder content without backend calls.
-- [ ] Verify logout clears session state and navigates Home.
-- [ ] Verify all visible strings resolve through i18n.
-- [ ] Verify tablet landscape expanded sidebar, mobile landscape collapsed sidebar, and portrait overlay behavior manually.
+- [ ] Add or update component/routing tests if the project has a test harness available for this area.
+- [ ] Verify `/docs` renders without authenticated session.
+- [ ] Verify `/docs` renders when no family state is loaded.
+- [ ] Verify Documentation link from Parent Control Shell points to `/docs`.
+- [ ] Verify section navigation changes visible placeholder content locally.
+- [ ] Verify no Axios/API call is triggered by opening or navigating inside Docs view.
+- [ ] Verify no WebSocket connection is opened by Docs view.
+- [ ] Verify all visible strings resolve through i18n keys where applicable.
+- [ ] Verify desktop/tablet landscape, mobile landscape, and portrait overlay behavior manually.
 - [ ] Run `npm run build` from `framework/frontend/app`.
 
 ## Risks
-- **Scope creep into real panel sections**: shell work may expand into configuration, dashboard, chatbot, documentation, reading, or relaxation features.
-  Mitigation: keep sections as placeholders and create separate features for real behavior.
-- **Token persistence violation**: token may be stored in persisted state for convenience.
-  Mitigation: keep raw token in memory only and redirect to Home when missing.
-- **Authentication state inconsistency**: persisted `isAuthenticated` can survive while token is gone.
-  Mitigation: derive usable auth from token presence and clear invalid auth state on refresh.
-- **Contract drift**: shell may call endpoints that do not exist yet.
-  Mitigation: call only `auth/login`, optional `auth/logout`, and optionally contracted websocket session events.
-- **Collapsed sidebar accessibility**: labels may disappear visually and semantically.
-  Mitigation: keep translated accessible labels and non-color active indicators.
-- **ParentChannel scope creep**: implementation may invent future events.
-  Mitigation: limit optional websocket preparation to the existing contract only.
+- **Markdown scope creep**: the shell may add Markdown rendering too early.
+  Mitigation: document Markdown as future preparation only; do not add parser dependencies in this sprint.
+- **Accidental authentication guard**: `/docs` may be protected like `/panel`.
+  Mitigation: keep `/docs` outside the panel guard and verify direct access without token.
+- **Backend/API creep**: docs may start calling backend endpoints for content.
+  Mitigation: implement as frontend-only shell with no services or Axios calls.
+- **Panel coupling**: documentation may be rendered inside the protected panel instead of public route.
+  Mitigation: link from Parent Control Shell to `/docs`; keep Docs as independent public view.
+- **Adult UI drift**: Docs view may inherit GameView visuals.
+  Mitigation: align with Parent Control Shell visual language and adult design tokens.
 
 ## Dependencies
-- `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` - source feature.
+- `docs/product/features/frontend/FEAT-006-Docs-View.md` - source feature.
 - `docs/product/features/frontend/FEAT-001-Base-Styles.md` - design tokens and UI component baseline.
-- `docs/product/features/frontend/FEAT-002-Home-View.md` - Home Settings entry point.
-- `docs/product/features/frontend/FEAT-003-Creation-Family.md` - family-ready state dependency.
-- `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md` - Home child selector adjacency.
-- `docs/design/frontend_design_v1.docx` - frontend behavior and architecture decisions.
-- `docs/design/design_decisions_v1.docx` - panel/sidebar visual and interaction decisions.
-- `docs/contracts/api/openapi.json` - source of truth for auth request/response shapes.
-- `docs/contracts/api/websocket.json` - source of truth for optional ParentChannel session events.
+- `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` - Parent Control Shell documentation entry point.
+- `docs/design/frontend_design_v1.docx` - frontend behavior and route decisions.
+- `docs/design/design_decisions_v1.docx` - adult UI visual and accessibility decisions.
 
 ## Agent Instruction
-- Implement only `FEAT-005-Parent-Control-View` as a Parent Control Shell.
-- Do not implement configuration, children dashboard, chatbot, documentation rendering, family reading, relaxation, child blocking, child session expulsion, backend logic, audio, TTS, or agent calls.
-- Use `POST /api/v1/auth/login` and optional `POST /api/v1/auth/logout` through `src/shared/api/axios.ts` only.
-- Stores call services; services call Axios.
-- Derive TypeScript request/response types from `docs/contracts/api/openapi.json`.
-- Keep raw auth token in memory only; do not persist it in localStorage, sessionStorage, route state, or persisted Pinia slices.
-- All visible strings and aria labels must go through Vue i18n.
-- Keep the UI aligned with accepted design tokens, adult-facing validation semantics, and responsive sidebar rules.
-- Commit: `feat(frontend): add parent control shell`
+- Implement only `FEAT-006-Docs-View` as a public Docs View Shell.
+- Do not implement Markdown rendering, Markdown loading, dynamic slug routing, search, versioned docs, backend endpoints, WebSocket integration, or documentation editing.
+- Do not use Axios or services from the Docs view.
+- `/docs` must be public and must not require parent auth, FamilySession, Bearer token, or `VITE_ENABLE_DEV_CONTENT`.
+- Parent Control Shell should link to `/docs` rather than render docs internally.
+- All visible strings and aria labels should go through Vue i18n where applicable.
+- Keep the UI aligned with adult-facing design tokens and accessibility rules.
+- Commit: `feat(frontend): add docs view shell`
 
 ## Notes
-Derived from `docs/product/features/frontend/FEAT-005-Parent-Control-View.md`.
+Derived from `docs/product/features/frontend/FEAT-006-Docs-View.md`.
 
 Design output:
-- View/feature: Parent Control Shell.
-- Data flow: `HomeView` Settings opens `PinModal`; PIN submission goes through `authService.login`; successful `LoginResponse.token` is stored in `useSessionStore` memory only; router navigates to `/panel`; panel maintains active placeholder section locally; logout calls `authService.logout` when possible and clears session.
-- Component tree: `HomeView` -> `PinModal`; route `/panel` -> `PanelControlView` -> sidebar navigation + placeholder content region.
-- Contract dependency: `POST /api/v1/auth/login`, optional `POST /api/v1/auth/logout`, `LoginRequest`, `LoginResponse`, `ApiResponseLogin`, `Error401`, and optionally existing ParentChannel session events from `docs/contracts/api/websocket.json`.
-- Risks: scope creep into real sections, token persistence, auth state inconsistency, uncontracted endpoints/events, collapsed sidebar accessibility.
+- View/feature: public Docs View Shell.
+- Data flow: none beyond local component state for active documentation section; no service or API calls.
+- Component tree: router `/docs` -> `DocsView` -> section navigation + placeholder content; Parent Control Shell Documentation item links to `/docs`.
+- Contract dependency: none for this sprint.
+- Future direction: static Markdown content loading and rendering may be added in a separate feature.
+- Risks: auth guard leakage, Markdown scope creep, accidental API calls, panel coupling, adult UI drift.
 
 ## Review
 
 completed_tasks:
-- Contract And Existing Flow Review: Verified `PinModal.vue`, `authService.ts`, `useSessionStore.ts`, `router/index.ts`, `HomeView.vue`, `PanelControlView.vue` before editing
-- PIN Access From Home: Settings opens PinModal in familyReady state; PinModal validates via `POST /api/v1/auth/login`; 4-digit PIN with dot masking; 201 stores token + navigates to /panel; 401 shows adult red error; 5xx shows retryable message; close clears draft
-- Session Store And Route Protection: Token in-memory only (removed persist for isAuthenticated); `isAuthenticated` is computed from `!!token`; `/panel` route guard checks `isAuthenticated` (reactive to token); `router.replace()` for navigation; logout action calls `authService.logout()` and clears store
-- Panel Shell Layout: Sidebar with Management (Configuration, Children, Chatbot, Documentation) and Experiences (Family Reading, Family Relaxation); 6 placeholder sections with title, description, coming-soon badge; active section state via background + left border (not color-only); section selection local to shell (no backend)
-- Responsive Behavior: Expanded sidebar ~220px default; collapsed sidebar ~64px at width<768px with accessible aria labels; rotation overlay via existing RotationOverlay component; adult touch targets >= 44px
-- i18n: Added all panel nav labels, logout, section titles/descriptions, placeholder badge, aria labels, adult error strings to es.ts
-- Testing And Verification: Build passes; Settings/PIN flow verified; logout clears session; sidebar active state verified
 
 incomplete_tasks:
-- ParentChannel preparation (optional, out of scope — websocket contract reviewed but no implementation added)
 
 contract_changes:
-- No contract changes; used existing `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `LoginRequest`, `LoginResponse`, `Error401`
 
 learnings:
-- `isAuthenticated` persisted independently caused inconsistency when token (in-memory) was lost on refresh — resolved by computing `isAuthenticated` from token presence
-- PinModal's `@authenticated` event was wired in HomeView but never emitted — removed dead event wiring
-- RotationOverlay was already built and could be composed directly in PanelControlView
 
 next_sprint_suggestions:
-- Implement real panel sections (configuration, children dashboard, chatbot) with proper contracts
-- Add ParentChannel websocket connection for session invalidation events
-- Add PIN change functionality

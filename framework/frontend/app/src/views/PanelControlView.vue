@@ -36,13 +36,20 @@ async function handleLogout() {
   await sessionStore.logout()
   router.replace('/')
 }
+
+function handleNavClick(item: NavItem) {
+  if (item.id === 'documentation') {
+    router.push('/docs')
+  } else {
+    activeSection.value = item.id as Exclude<Section, 'documentation'>
+  }
+}
 </script>
 
 <template>
   <RotationOverlay>
     <div class="panel-shell">
       <aside class="sidebar" aria-label="Panel navigation">
-        <div class="sidebar__brand" aria-hidden="true">A+C</div>
 
         <nav class="sidebar__nav" aria-label="Panel sections">
           <ul class="sidebar__list" role="list">
@@ -52,10 +59,10 @@ async function handleLogout() {
             <li v-for="item in managementItems" :key="item.id">
               <button
                 class="sidebar__item"
-                :class="[`sidebar__item--${item.group}`, { 'sidebar__item--active': activeSection === item.id }]"
-                :aria-current="activeSection === item.id ? 'page' : undefined"
+                :class="[`sidebar__item--${item.group}`, { 'sidebar__item--active': item.id !== 'documentation' && activeSection === item.id }]"
+                :aria-current="item.id !== 'documentation' && activeSection === item.id ? 'page' : undefined"
                 :aria-label="t(item.ariaLabelKey)"
-                @click="activeSection = item.id"
+                @click="handleNavClick(item)"
               >
                 <span class="sidebar__item-icon" aria-hidden="true">
                   <svg v-if="item.id === 'settings'" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -123,7 +130,6 @@ async function handleLogout() {
 
       <main class="panel-content" :aria-label="t(activeSection ? `panel.section.${activeSection}.title` : 'panel.title')">
         <header class="panel-content__header">
-          <p class="panel-content__eyebrow">{{ t('panel.eyebrow') }}</p>
           <h1 class="panel-content__title">{{ t(`panel.section.${activeSection}.title`) }}</h1>
         </header>
 

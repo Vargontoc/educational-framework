@@ -22,6 +22,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <slot />
   <div v-if="isPortrait" class="rotation-overlay">
     <p>{{ t('rotation.message') }}</p>
   </div>
