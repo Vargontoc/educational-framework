@@ -123,11 +123,26 @@ Design output:
 ## Review
 
 completed_tasks:
+- Feature And Existing Flow Review: Reviewed FEAT-006, router, PanelControlView documentation item before editing
+- Public Docs Route: Added `/docs` with name `docs`, no auth guard, no VITE check, renders without family state
+- Docs View Shell: Created `DocsView.vue` with adult header, A+C brand, back-to-home link, 6-section local navigation, placeholder content, conditional back-to-panel link
+- Parent Control Shell Integration: Documentation nav item now calls `router.push('/docs')` instead of setting active section; active state only applies to in-panel sections
+- Future Markdown Preparation: Shell structure keeps section data in a simple array, easily replaceable with Markdown-driven content later
+- Responsive Behavior: Two-column layout desktop/tablet; stacked with horizontal scrolling nav on mobile; RotationOverlay wraps full shell
+- i18n: Added all section titles, descriptions, eyebrow, backHome, backPanel to es.ts
+- Testing And Verification: Build passes; /docs accessible without auth
 
 incomplete_tasks:
+- None
 
 contract_changes:
+- No backend contract changes
 
 learnings:
+- Documentation is rendered in its own public route, not inside /panel, keeping concerns properly separated
+- Using a handler function `handleNavClick` allows mixed behavior within a uniform nav list iteration
 
 next_sprint_suggestions:
+- Add real Markdown content loading in a future feature
+- Implement static docs content structure with folder/file conventions
+- Add search functionality in a future feature
