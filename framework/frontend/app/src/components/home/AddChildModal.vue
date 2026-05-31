@@ -59,6 +59,12 @@ function validateBirthday(): boolean {
     birthdayError.value = t('modal.addChild.birthdayInvalid')
     return false
   }
+  const today = new Date()
+  const age = today.getFullYear() - date.getFullYear()
+  if (age < 3 || age > 8) {
+    birthdayError.value = t('modal.addChild.birthdayOutOfRange')
+    return false
+  }
   birthdayError.value = ''
   return true
 }
@@ -152,11 +158,20 @@ async function handleSubmit() {
 }
 
 function handleClose() {
+  resetStepper()
   if (submitting.value) return
   familyStore.setActiveModal(null)
 }
 
 function resetAndClose() {
+  resetStepper()
+  familyStore.setActiveModal('childSelector')
+  nextTick(() => {
+    addButtonRef.value?.focus()
+  })
+}
+
+function resetStepper() {
   step.value = 1
   name.value = ''
   birthday.value = ''
@@ -165,10 +180,6 @@ function resetAndClose() {
   birthdayError.value = ''
   serverError.value = ''
   submitting.value = false
-  familyStore.setActiveModal('childSelector')
-  nextTick(() => {
-    addButtonRef.value?.focus()
-  })
 }
 </script>
 

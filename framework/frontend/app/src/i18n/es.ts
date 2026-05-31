@@ -85,6 +85,7 @@ export const messages = {
       birthdayPlaceholder: 'Fecha de nacimiento',
       birthdayRequired: 'Ingresa la fecha de nacimiento',
       birthdayInvalid: 'Fecha inválida',
+      birthdayOutOfRange: 'Esta aplicación es para niños y niñas de 3 a 8 años',
       avatarSectionLabel: 'Selecciona un avatar',
       avatarOptionAria: 'Avatar {name}, {index} de {total}',
       avatarSelectedAria: 'Avatar {name} seleccionado',
