@@ -18,17 +18,52 @@ export const messages = {
   panel: {
     title: 'Panel de Control',
     eyebrow: 'Espacio adulto',
+    logout: 'Cerrar sesión',
+    logoutAriaLabel: 'Cerrar sesión y volver al inicio',
     nav: {
+      managementGroup: 'Gestión',
+      experiencesGroup: 'Experiencias',
       settings: 'Configuración',
+      settingsAriaLabel: 'Configuración familiar',
       children: 'Niños',
+      childrenAriaLabel: 'Gestión de perfiles infantiles',
       agent: 'Agentes',
-      familyReading: 'Lectura en familia'
+      agentAriaLabel: 'Configuración del chatbot',
+      documentation: 'Documentación',
+      documentationAriaLabel: 'Documentación y ayuda',
+      familyReading: 'Lectura en familia',
+      familyReadingAriaLabel: 'Experiencia de lectura en familia',
+      familyRelaxation: 'Relajación en familia',
+      familyRelaxationAriaLabel: 'Experiencia de relajación en familia'
     },
-    cards: {
-      settingsTitle: 'Configuración familiar',
-      settingsDescription: 'Idioma, audio, avatar y PIN se gestionan desde un entorno claro y protegido.',
-      childrenTitle: 'Seguimiento de niños',
-      childrenDescription: 'Cada hijo mantiene su firma visual, estado de sesión y acceso a su dashboard.'
+    section: {
+      settings: {
+        title: 'Configuración',
+        description: 'Gestiona el idioma, audio, avatar y PIN de la familia.'
+      },
+      children: {
+        title: 'Niños',
+        description: 'Gestiona los perfiles de los niños y su acceso.'
+      },
+      agent: {
+        title: 'Agentes',
+        description: 'Configura el comportamiento del chatbot familiar.'
+      },
+      documentation: {
+        title: 'Documentación',
+        description: 'Consulta la documentación y ayuda disponible.'
+      },
+      familyReading: {
+        title: 'Lectura en familia',
+        description: 'Actividades de lectura compartidas.'
+      },
+      familyRelaxation: {
+        title: 'Relajación en familia',
+        description: 'Momentos de calma y relajación en familia.'
+      }
+    },
+    placeholder: {
+      comingSoon: 'Próximamente'
     }
   },
   game: {
@@ -43,9 +78,10 @@ export const messages = {
     close: 'Cerrar',
     pin: {
       title: 'Acceso parental',
-      placeholder: 'Ingresa tu PIN',
+      placeholder: 'Ingresa tu PIN de 4 dígitos',
       submit: 'Entrar',
-      error401: 'PIN incorrecto'
+      error401: 'PIN incorrecto',
+      errorServer: 'Error del servidor. Intenta más tarde.'
     },
     registerFamily: {
       title: 'Crear espacio familiar',

@@ -1,35 +1,42 @@
-import { ref, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import * as authService from '@/services/authService'
 
 export const useSessionStore = defineStore(
   'session',
   () => {
     const familyId = ref<number | null>(null)
     const selectedChildId = ref<number | null>(null)
-    const isAuthenticated = ref(false)
-    // in-memory only — never persisted, cleared on page refresh by design (ADR-010 section 3.3)
     const token = ref<string | null>(null)
+
+    const isAuthenticated = computed(() => !!token.value)
 
     function $reset() {
       familyId.value = null
       selectedChildId.value = null
-      isAuthenticated.value = false
       token.value = null
     }
 
-    // Fix isAuthenticated/token inconsistency after page refresh:
-    // token is in-memory (lost on refresh), so if it is null, isAuthenticated must be false.
-    watch(token, (newToken) => {
-      if (newToken === null) {
-        isAuthenticated.value = false
+    async function logout() {
+      try {
+        await authService.logout()
+      } catch {
       }
-    }, { immediate: true })
+      $reset()
+    }
 
-    return { familyId, selectedChildId, isAuthenticated, token, $reset }
+    return {
+      familyId,
+      selectedChildId,
+      token,
+      isAuthenticated,
+      $reset,
+      logout
+    }
   },
   {
     persist: {
-      pick: ['familyId', 'selectedChildId', 'isAuthenticated'],
+      pick: ['familyId', 'selectedChildId'],
       storage: sessionStorage
     }
   }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useFamilyStore } from '@/stores/useFamilyStore'
 import { useSessionStore } from '@/stores/useSessionStore'
 import * as authService from '@/services/authService'
@@ -8,6 +9,7 @@ import Modal from '@/components/ui/Modal.vue'
 import Button from '@/components/ui/Button.vue'
 
 const { t } = useI18n()
+const router = useRouter()
 const familyStore = useFamilyStore()
 const sessionStore = useSessionStore()
 
@@ -16,13 +18,13 @@ const errorMsg = ref<string | null>(null)
 const submitting = ref(false)
 
 const TITLE_ID = 'pin-title'
+const PIN_LENGTH = 4
 
-const numericPin = computed({
-  get: () => pin.value,
-  set: (value: string) => {
-    pin.value = value.replace(/\D/g, '').slice(0, 6)
-  }
+const pinDots = computed(() => {
+  return Array.from({ length: PIN_LENGTH }, (_, i) => i < pin.value.length)
 })
+
+const pinHidden = computed(() => pin.value)
 
 function blockNonDigit(event: KeyboardEvent) {
   if (event.ctrlKey || event.metaKey || event.altKey) return
@@ -32,20 +34,22 @@ function blockNonDigit(event: KeyboardEvent) {
 }
 
 async function handleSubmit() {
+  if (pin.value.length !== PIN_LENGTH) return
   errorMsg.value = null
   submitting.value = true
   try {
     const response = await authService.login(pin.value)
     sessionStore.token = response.token
     sessionStore.familyId = response.familyId
-    sessionStore.isAuthenticated = true
     familyStore.setActiveModal(null)
+    router.push('/panel')
   } catch (error: unknown) {
-    const status = (error as { response?: { status?: number } })?.response?.status
+    const axiosError = error as { response?: { status?: number } }
+    const status = axiosError.response?.status
     if (status === 401) {
       errorMsg.value = t('modal.pin.error401')
     } else {
-      errorMsg.value = (error as Error).message ?? 'Error'
+      errorMsg.value = t('modal.pin.errorServer')
     }
   } finally {
     submitting.value = false
@@ -53,6 +57,9 @@ async function handleSubmit() {
 }
 
 function handleClose() {
+  pin.value = ''
+  errorMsg.value = null
+  if (submitting.value) return
   familyStore.setActiveModal(null)
 }
 </script>
@@ -66,26 +73,68 @@ function handleClose() {
     <h2 :id="TITLE_ID" class="modal-title">{{ t('modal.pin.title') }}</h2>
 
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <div class="form-field">
-        <label for="pin-input" class="sr-only">{{ t('modal.pin.placeholder') }}</label>
-        <input
-          id="pin-input"
-          v-model="numericPin"
-          type="text"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          maxlength="6"
-          autocomplete="one-time-code"
-          :placeholder="t('modal.pin.placeholder')"
-          required
-          class="form-input"
-          @keydown="blockNonDigit"
-        />
+      <div class="pin-display" aria-hidden="true">
+        <span
+          v-for="(filled, i) in pinDots"
+          :key="i"
+          class="pin-dot"
+          :class="{ 'pin-dot--filled': filled }"
+        >
+          <span v-if="filled" class="pin-dot__dot" aria-hidden="true" />
+        </span>
       </div>
 
       <p v-if="errorMsg" class="form-error" role="alert">{{ errorMsg }}</p>
 
-      <Button type="submit" :disabled="submitting || !pin">
+      <input
+        id="pin-input"
+        v-model="pinHidden"
+        type="hidden"
+        autocomplete="one-time-code"
+        @keydown="blockNonDigit"
+      />
+
+      <div class="pin-keypad" role="group" :aria-label="t('modal.registerFamily.keypadAriaLabel')">
+        <button
+          v-for="digit in [1, 2, 3, 4, 5, 6, 7, 8, 9]"
+          :key="digit"
+          type="button"
+          class="keypad-btn"
+          :aria-label="t('modal.registerFamily.digitAria', { digit })"
+          @click="pin = (pin + digit).slice(0, PIN_LENGTH)"
+        >
+          {{ digit }}
+        </button>
+        <button
+          type="button"
+          class="keypad-btn keypad-btn--action"
+          :aria-label="t('modal.registerFamily.clearAriaLabel')"
+          @click="pin = ''"
+        >
+          {{ t('modal.registerFamily.clear') }}
+        </button>
+        <button
+          type="button"
+          class="keypad-btn"
+          :aria-label="t('modal.registerFamily.digitAria', { digit: 0 })"
+          @click="pin = (pin + '0').slice(0, PIN_LENGTH)"
+        >
+          0
+        </button>
+        <button
+          type="button"
+          class="keypad-btn keypad-btn--action"
+          :aria-label="t('modal.registerFamily.deleteAriaLabel')"
+          @click="pin = pin.slice(0, -1)"
+        >
+          {{ t('modal.registerFamily.delete') }}
+        </button>
+      </div>
+
+      <Button
+        type="submit"
+        :disabled="submitting || pin.length !== PIN_LENGTH"
+      >
         {{ t('modal.pin.submit') }}
       </Button>
     </form>
@@ -103,33 +152,86 @@ function handleClose() {
 .modal-form {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-md);
 }
 
-.form-field {
+.pin-display {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
 }
 
-.form-input {
-  min-height: var(--touch-target-min);
-  padding: var(--space-sm) var(--space-md);
+.pin-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   border: 2px solid var(--color-neutral);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-md);
-  font-family: var(--font-family-base);
-  outline: none;
-  transition: border-color var(--transition-base);
+  transition: border-color var(--transition-base), background-color var(--transition-base);
 }
 
-.form-input:focus {
+.pin-dot--filled {
   border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.pin-dot__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
 }
 
 .form-error {
   font-size: var(--font-size-sm);
-  color: #ef4444;
+  color: #e53935;
+  margin: 0;
+  text-align: center;
+}
+
+.pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 260px;
+}
+
+.keypad-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: var(--color-neutral);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-family: var(--font-family-base);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--transition-base);
+}
+
+.keypad-btn:hover {
+  background-color: color-mix(in srgb, var(--color-neutral) 80%, black);
+}
+
+.keypad-btn:active {
+  background-color: color-mix(in srgb, var(--color-neutral) 60%, black);
+}
+
+.keypad-btn--action {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.keypad-btn--action:hover {
+  background-color: color-mix(in srgb, var(--color-neutral) 70%, transparent);
 }
 
 .sr-only {

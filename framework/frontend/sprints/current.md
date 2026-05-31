@@ -1,8 +1,8 @@
-# Sprint 010 - frontend
+# Sprint 011 - frontend
 # -----------------------------------------------
 
 ## Goal
-Implement the child selector and child creation flow from `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md`: a Home child selector modal with avatar cards and a `+` action, plus a three-step adult-facing child creation stepper for name, birthday, and avatar selection using OpenAPI-derived request payloads.
+Implement the Parent Control Shell from `docs/product/features/frontend/FEAT-005-Parent-Control-View.md`: PIN-gated access from Home, protected `/panel` route, in-memory session handling, responsive sidebar shell, local placeholder sections, and logout without implementing the individual panel sections.
 
 ## Status
 status: active
@@ -14,124 +14,122 @@ waiting_for:
 ## Tasks
 
 ### Contract And Existing Flow Review
-- [ ] Review `docs/contracts/api/openapi.json` for `CreateChildProfileRequest`, `ChildProfileResponse`, `ApiResponseChildProfile`, `ApiResponseChildProfileList`, and `/api/v1/family/children` responses.
-- [ ] Verify existing `src/services/childService.ts`, `src/services/familyService.ts`, `src/stores/useFamilyStore.ts`, `src/views/HomeView.vue`, `src/components/home/ChildSelectorModal.vue`, and `src/components/home/AddChildModal.vue` before editing.
-- [ ] Confirm the current Home `familyReady` flow opens the child selector from the family name button.
+- [ ] Review `docs/contracts/api/openapi.json` for `LoginRequest`, `LoginResponse`, `ApiResponseLogin`, `Error401`, and `/api/v1/auth/login` responses.
+- [ ] Review `docs/contracts/api/openapi.json` for `/api/v1/auth/logout` behavior.
+- [ ] Review `docs/contracts/api/websocket.json` for currently contracted ParentChannel session events only.
+- [ ] Verify existing `src/components/home/PinModal.vue`, `src/services/authService.ts`, `src/stores/useSessionStore.ts`, `src/router/index.ts`, `src/views/HomeView.vue`, and `src/views/PanelControlView.vue` before editing.
 - [ ] Do not change backend contracts in this sprint.
 
-### Child List And Selector
-- [ ] Ensure child list loading uses the existing service/store layer and shared Axios client only.
-- [ ] Render registered children as centered avatar cards in the child selector modal.
-- [ ] Each child card shows only avatar image and child name.
-- [ ] Keep child card size at least `120x140px` where viewport allows.
-- [ ] Keep avatar image at least `96px` where viewport allows.
-- [ ] Render child name in Nunito Bold.
-- [ ] Use the avatar identifier color as a visual accent when available.
-- [ ] Add a `+` card/action that opens the child creation stepper.
-- [ ] Do not implement child session creation or GameView navigation in this sprint.
+### PIN Access From Home
+- [ ] Ensure the Home `Settings` action is available only in `familyReady` state.
+- [ ] Ensure `Settings` opens the parental PIN modal.
+- [ ] Validate the PIN only through `POST /api/v1/auth/login` using the shared Axios client.
+- [ ] Use a 4-digit adult PIN flow for v1.
+- [ ] Mask PIN digits as dots and never display entered digits as plain text.
+- [ ] On `201`, store the returned opaque token in memory only and navigate to `/panel`.
+- [ ] On `401`, show inline adult red validation and allow retry.
+- [ ] On network or `5xx`, show retryable adult-facing feedback.
+- [ ] Clear local PIN draft state on close and after successful login.
 
-### Child Creation Service And Store
-- [ ] Ensure child creation uses only the shared Axios client from `src/shared/api/axios.ts`.
-- [ ] Ensure request typing is derived from `docs/contracts/api/openapi.json`: `name`, `birthday`, optional/nullable `avatar`, `ttsEnabled`, and `agentEnabled`.
-- [ ] Default `ttsEnabled` to `true` in v1 and keep it hidden from the UI.
-- [ ] Default `agentEnabled` to `true` in v1 and keep it hidden from the UI.
-- [ ] Handle `201`, `400`, `404`, network, and `5xx` cases distinctly enough for the modal UX.
-- [ ] Refresh the child list after successful creation.
-- [ ] Refresh Home/family state after `404` family-not-found recovery.
-- [ ] Do not persist child creation draft state in localStorage, sessionStorage, route state, or persisted Pinia slices.
+### Session Store And Route Protection
+- [ ] Keep the raw Bearer token in memory only in `useSessionStore`.
+- [ ] Do not store the raw token in localStorage, sessionStorage, route state, or persisted Pinia slices.
+- [ ] Avoid persisted `isAuthenticated` state becoming inconsistent with missing in-memory token after refresh.
+- [ ] Protect `/panel` so missing token redirects to Home.
+- [ ] Use `router.replace()` for Home -> Panel and Panel -> Home private navigation flows.
+- [ ] Implement explicit logout if available: call `POST /api/v1/auth/logout` when token exists, clear session store, and return Home.
 
-### Three-Step Creation Stepper
-- [ ] Implement child creation as a three-step conversational flow opened from the selector `+` action.
-- [ ] Step 1 asks only for the child display name.
-- [ ] Step 1 blocks empty or whitespace-only values with inline translated validation.
-- [ ] Step 2 asks only for birthday.
-- [ ] Step 2 requires an OpenAPI-compatible ISO date value.
-- [ ] Step 2 blocks empty or invalid dates with inline translated validation.
-- [ ] Do not add local age-range domain validation unless the contract requires it.
-- [ ] Step 3 shows avatar placeholder options in a grid.
-- [ ] Avatar selection must be pointer and keyboard accessible.
-- [ ] Selected avatar state must not rely on color only.
-- [ ] Use stable placeholder avatar identifiers if final assets are not available.
-- [ ] Submit `POST /api/v1/family/children` with `name`, `birthday`, `avatar`, `ttsEnabled: true`, and `agentEnabled: true`.
-- [ ] On success, close the creation stepper, clear draft state, refresh child list, and return to the child selector modal.
+### Panel Shell Layout
+- [ ] Implement the `/panel` shell with left sidebar and main content region.
+- [ ] Add Management navigation group: Configuration, Children, Chatbot, Documentation.
+- [ ] Add Experiences navigation group: Family Reading, Family Relaxation.
+- [ ] Keep all sections as local placeholders with title, short description, and coming-soon/unavailable state.
+- [ ] Section selection must be local to the shell and must not require backend data.
+- [ ] Active section state must be visible and not color-only.
+- [ ] Documentation may link to `/docs` only if that route exists; otherwise keep it as placeholder.
+- [ ] Do not implement section-specific business logic in this sprint.
 
-### Accessibility And UX
-- [ ] Use the shared modal component and preserve dialog semantics.
-- [ ] Move focus to the first field/control when opening the child creation stepper.
-- [ ] Keep focus trapped while selector/stepper modal is open.
-- [ ] Allow `Escape` to close before submission.
-- [ ] Return focus to the `+` action after closing the creation stepper.
-- [ ] Add translated accessible labels for child cards, the `+` action, avatar options, back, close, and submit/progress states.
-- [ ] Expose selected avatar state through ARIA state and visible border/icon/text, not color alone.
-- [ ] Keep adult touch targets at least 44px and selector cards comfortable in tablet/mobile landscape.
-- [ ] Use adult error color `#E53935`; do not use child retry orange for this modal.
-- [ ] Avoid sustained uppercase visible labels.
+### Responsive Behavior
+- [ ] Tablet landscape uses an expanded sidebar of approximately `220px`.
+- [ ] Mobile landscape or width under `768px` uses a collapsed sidebar of approximately `64px`.
+- [ ] Collapsed sidebar remains keyboard and screen-reader accessible through translated labels.
+- [ ] Portrait orientation continues to show the existing rotation overlay.
+- [ ] Adult touch targets are at least 44px.
 
-### i18n
-- [ ] Add all visible labels, helper text, validation messages, API error messages, and aria labels to `src/i18n/es.ts`.
+### Optional ParentChannel Preparation
+- [ ] If ParentChannel structure is added, limit it to `docs/contracts/api/websocket.json` only.
+- [ ] Do not invent websocket event types.
+- [ ] Do not implement dashboard updates, agent status, chatbot streaming, child management actions, or uncontracted events.
+- [ ] Handle only already contracted session invalidation/status behavior if implemented.
+
+### i18n And Accessibility
+- [ ] Add all visible labels, section titles, placeholder text, validation messages, API error messages, and aria labels to `src/i18n/es.ts`.
 - [ ] Do not hardcode visible text in Vue templates.
-- [ ] Keep copy warm and simple without adding extra decisions beyond the current step.
+- [ ] Settings icon, PIN modal, sidebar items, collapsed navigation, and logout must have translated accessible labels.
+- [ ] PIN modal preserves dialog semantics, focus trap, close behavior, and focus return.
+- [ ] Sidebar navigation is keyboard operable.
+- [ ] Panel text meets WCAG AA contrast for adult UI.
+- [ ] Avoid sustained uppercase visible labels.
 
 ### Testing And Verification
 - [ ] Add or update component/integration tests if the project has a test harness available for this area.
-- [ ] Verify child selector opens from Home `familyReady` state.
-- [ ] Verify child cards render avatar and name only.
-- [ ] Verify `+` opens the child creation stepper.
-- [ ] Verify required child name validation.
-- [ ] Verify required and invalid birthday validation.
-- [ ] Verify avatar grid selection state and keyboard selection.
-- [ ] Verify successful submission payload matches `CreateChildProfileRequest`, including `ttsEnabled: true` and `agentEnabled: true`.
-- [ ] Verify `201`, `400`, `404`, and network/server error handling.
-- [ ] Verify child list refresh after successful creation.
-- [ ] Verify closing the stepper clears draft state.
+- [ ] Verify Settings opens PIN modal from Home `familyReady` state.
+- [ ] Verify PIN login calls `POST /api/v1/auth/login` with `LoginRequest`.
+- [ ] Verify successful login stores token in memory and navigates to `/panel`.
+- [ ] Verify `401` shows inline translated error.
+- [ ] Verify missing token redirects `/panel` to Home.
+- [ ] Verify sidebar renders Management and Experiences groups with all expected items.
+- [ ] Verify sidebar active section changes placeholder content without backend calls.
+- [ ] Verify logout clears session state and navigates Home.
 - [ ] Verify all visible strings resolve through i18n.
-- [ ] Verify landscape tablet, landscape mobile, and portrait rotation overlay behavior manually.
+- [ ] Verify tablet landscape expanded sidebar, mobile landscape collapsed sidebar, and portrait overlay behavior manually.
 - [ ] Run `npm run build` from `framework/frontend/app`.
 
 ## Risks
-- **Session scope creep**: child creation may be mixed with starting a child session or GameView navigation.
-  Mitigation: implement only profile creation and child-list refresh; leave session creation and navigation out of scope.
-- **Configuration overload**: the modal may expose audio/avatar toggles too early.
-  Mitigation: keep `ttsEnabled` and `agentEnabled` hidden and default both to `true` in v1.
-- **Contract drift**: frontend may invent request shapes or omit required fields.
-  Mitigation: derive request types from `docs/contracts/api/openapi.json` and send all required `CreateChildProfileRequest` fields.
-- **Avatar asset assumptions**: final avatar assets may not exist yet.
-  Mitigation: use stable placeholder identifiers and keep the replacement path documented.
-- **Color-only selection**: avatar selection may be inaccessible if indicated only by color.
-  Mitigation: combine color with border, icon/text, and ARIA selected state.
-- **Double submission**: submit can race if controls remain active.
-  Mitigation: disable actions while submitting and ignore duplicate submit attempts.
+- **Scope creep into real panel sections**: shell work may expand into configuration, dashboard, chatbot, documentation, reading, or relaxation features.
+  Mitigation: keep sections as placeholders and create separate features for real behavior.
+- **Token persistence violation**: token may be stored in persisted state for convenience.
+  Mitigation: keep raw token in memory only and redirect to Home when missing.
+- **Authentication state inconsistency**: persisted `isAuthenticated` can survive while token is gone.
+  Mitigation: derive usable auth from token presence and clear invalid auth state on refresh.
+- **Contract drift**: shell may call endpoints that do not exist yet.
+  Mitigation: call only `auth/login`, optional `auth/logout`, and optionally contracted websocket session events.
+- **Collapsed sidebar accessibility**: labels may disappear visually and semantically.
+  Mitigation: keep translated accessible labels and non-color active indicators.
+- **ParentChannel scope creep**: implementation may invent future events.
+  Mitigation: limit optional websocket preparation to the existing contract only.
 
 ## Dependencies
-- `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md` - source feature.
+- `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` - source feature.
 - `docs/product/features/frontend/FEAT-001-Base-Styles.md` - design tokens and UI component baseline.
-- `docs/product/features/frontend/FEAT-002-Home-View.md` - Home child selector entry point.
+- `docs/product/features/frontend/FEAT-002-Home-View.md` - Home Settings entry point.
 - `docs/product/features/frontend/FEAT-003-Creation-Family.md` - family-ready state dependency.
+- `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md` - Home child selector adjacency.
 - `docs/design/frontend_design_v1.docx` - frontend behavior and architecture decisions.
-- `docs/design/design_decisions_v1.docx` - visual, typography, interaction, and accessibility decisions.
-- `docs/contracts/api/openapi.json` - source of truth for `/api/v1/family/children` request/response shapes.
+- `docs/design/design_decisions_v1.docx` - panel/sidebar visual and interaction decisions.
+- `docs/contracts/api/openapi.json` - source of truth for auth request/response shapes.
+- `docs/contracts/api/websocket.json` - source of truth for optional ParentChannel session events.
 
 ## Agent Instruction
-- Implement only `FEAT-004-Modal-Creation-Child`.
-- Do not implement family creation, parent PIN login, panel access, child session creation, GameView navigation changes, backend logic, audio, TTS, or agent calls.
-- Use `GET /api/v1/family/children` and `POST /api/v1/family/children` through `src/shared/api/axios.ts` only.
+- Implement only `FEAT-005-Parent-Control-View` as a Parent Control Shell.
+- Do not implement configuration, children dashboard, chatbot, documentation rendering, family reading, relaxation, child blocking, child session expulsion, backend logic, audio, TTS, or agent calls.
+- Use `POST /api/v1/auth/login` and optional `POST /api/v1/auth/logout` through `src/shared/api/axios.ts` only.
 - Stores call services; services call Axios.
 - Derive TypeScript request/response types from `docs/contracts/api/openapi.json`.
-- Keep `ttsEnabled: true` and `agentEnabled: true` hidden from the UI for v1.
-- Do not persist child creation draft data in localStorage, sessionStorage, route state, or persisted Pinia slices.
+- Keep raw auth token in memory only; do not persist it in localStorage, sessionStorage, route state, or persisted Pinia slices.
 - All visible strings and aria labels must go through Vue i18n.
-- Keep the UI aligned with accepted design tokens, child avatar card sizing, and adult-facing validation semantics.
-- Commit: `feat(frontend): add child creation modal`
+- Keep the UI aligned with accepted design tokens, adult-facing validation semantics, and responsive sidebar rules.
+- Commit: `feat(frontend): add parent control shell`
 
 ## Notes
-Derived from `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md`.
+Derived from `docs/product/features/frontend/FEAT-005-Parent-Control-View.md`.
 
 Design output:
-- View/feature: Home child selector and child creation modal.
-- Data flow: `HomeView` opens `ChildSelectorModal`; selector uses family/child store to list children; `+` opens `AddChildModal`; modal keeps draft step state locally; submission goes through child/family service; service calls `POST /api/v1/family/children`; store refreshes child list.
-- Component tree: `HomeView` -> `ChildSelectorModal` -> child avatar card grid + add action -> `AddChildModal` -> shared `Modal` + local step content + avatar picker.
-- Contract dependency: `GET /api/v1/family/children`, `POST /api/v1/family/children`, `CreateChildProfileRequest`, `ApiResponseChildProfile`, `ApiResponseChildProfileList`, `Error400`, `Error404` from `docs/contracts/api/openapi.json`.
-- Risks: session scope creep, hidden default configuration, avatar placeholder replacement, inaccessible selection state, double submission.
+- View/feature: Parent Control Shell.
+- Data flow: `HomeView` Settings opens `PinModal`; PIN submission goes through `authService.login`; successful `LoginResponse.token` is stored in `useSessionStore` memory only; router navigates to `/panel`; panel maintains active placeholder section locally; logout calls `authService.logout` when possible and clears session.
+- Component tree: `HomeView` -> `PinModal`; route `/panel` -> `PanelControlView` -> sidebar navigation + placeholder content region.
+- Contract dependency: `POST /api/v1/auth/login`, optional `POST /api/v1/auth/logout`, `LoginRequest`, `LoginResponse`, `ApiResponseLogin`, `Error401`, and optionally existing ParentChannel session events from `docs/contracts/api/websocket.json`.
+- Risks: scope creep into real sections, token persistence, auth state inconsistency, uncontracted endpoints/events, collapsed sidebar accessibility.
 
 ## Review
 

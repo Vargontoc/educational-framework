@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import { useFamilyStore } from '@/stores/useFamilyStore'
 import FamilyRegistrationModal from '@/components/home/FamilyRegistrationModal.vue'
 import PinModal from '@/components/home/PinModal.vue'
@@ -9,7 +8,6 @@ import ChildSelectorModal from '@/components/home/ChildSelectorModal.vue'
 import AddChildModal from '@/components/home/AddChildModal.vue'
 
 const { t } = useI18n()
-const router = useRouter()
 const familyStore = useFamilyStore()
 
 onMounted(async () => {
@@ -24,10 +22,6 @@ function openChildSelector() {
 
 function openPin() {
   familyStore.setActiveModal('pin')
-}
-
-function onAuthenticated() {
-  router.push('/panel')
 }
 
 function handleRetry() {
@@ -63,13 +57,6 @@ function handleRetry() {
     <!-- Family ready state -->
     <div v-else-if="familyStore.viewState === 'familyReady'" class="home__center">
       <button
-        class="home__help-icon"
-        :aria-label="t('home.helpAriaLabel')"
-        @click.prevent
-      >
-        ?
-      </button>
-      <button
         class="home__settings-icon"
         :aria-label="t('home.settingsAriaLabel')"
         @click="openPin"
@@ -87,7 +74,7 @@ function handleRetry() {
 
     <!-- Modals -->
     <FamilyRegistrationModal />
-    <PinModal @authenticated="onAuthenticated" />
+    <PinModal />
     <ChildSelectorModal />
     <AddChildModal />
   </div>
