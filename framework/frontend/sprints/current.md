@@ -169,11 +169,31 @@ Design output:
 ## Review
 
 completed_tasks:
+- Feature And Existing Flow Review: Reviewed FEAT-007, websocket.json auth message, OpenAPI child session types, existing stores/views before implementation
+- Child Session Service: Created `childSessionService.ts` with `openChildSession()` and `closeChildSession()` using shared Axios client; types already in api.ts
+- In-Memory Child Session State: Extended `useSessionStore` with `activeChildSession` (non-persisted), `setActiveChildSession()`, `clearActiveChildSession()`, and `hasActiveChildSession(childId)` for route guard
+- Route Guard For /game/:childId: Added `beforeEnter` to `/game/:childId` that validates in-memory child session via `sessionStore.hasActiveChildSession()`; redirects to / if absent
+- Home + ChildSelectorModal Integration: Added `select` emit to ChildSelectorModal; HomeView handles `handleChildSelect` → opens child session → stores in sessionStore → router.replace('/game/:childId')
+- GameView Shell: Loader state with base-idle.png avatar + animated ring; world map state with sky/grass gradient, drifting clouds, path nodes; child register colors throughout; no adult red
+- WebSocket Lifecycle: Opens WS after session validation; sends auth message `{type:"auth",childSessionId}` on open; waits for AUTH_ACK then starts 30s heartbeat; handles HEARTBEAT_ACK/GAME_STATE_UPDATE/SESSION_EXPIRED/SESSION_INVALIDATED/CHILD_EXPELLED/PARENT_BLOCK
+- Cleanup On Unmount: Closes WS, clears heartbeat timer, removes listeners; terminal events call clearChildSessionAndGoHome() which clears state and navigates to /
+- i18n: Added game.loaderText to es.ts; removed placeholder string; all visible copy uses t()
+- Build Passes: vue-tsc + vite build clean; 220 modules; base-idle.png optimized into dist
 
 incomplete_tasks:
+- None
 
 contract_changes:
+- No backend contract changes (websocket.json already had the auth message design that FEAT-007 requires)
 
 learnings:
+- In-memory child session state uses a non-persisted Pinia ref; `persist.pick` only includes familyId/selectedChildId, so activeChildSession is session-only and cleared on page refresh
+- Route guard validates against `activeChildSession.childProfileId` matching the route childId param — not the session id itself; this means selecting child A and then directly navigating to /game/childB would redirect to /
+- WebSocket lifecycle is self-contained in GameView; no game domain store needed for the shell
+- Exit behavior decision: intentional navigation away (unmount) relies on heartbeat expiry server-side rather than calling DELETE /api/v1/sessions/children/{id}; this can be revisited in a future feature
 
 next_sprint_suggestions:
+- Add real world content (map tiles, path steps) in a future feature
+- Add TTS welcome audio once backend TTS service is confirmed
+- Add reconnection phase logic for WS disconnects
+- Add game action placeholder handling
