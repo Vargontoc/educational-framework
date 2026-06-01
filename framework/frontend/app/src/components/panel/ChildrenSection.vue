@@ -35,11 +35,11 @@ function getChildActiveSession(childId: number): ChildSessionResponse | null {
 }
 
 async function loadSessions() {
-  if (pollInFlight) return
+  if (pollInFlight || !family.value) return
   pollInFlight = true
   sessionsError.value = false
   try {
-    const all = await getActiveChildSessions()
+    const all = await getActiveChildSessions(family.value.id)
     activeSessions.value = all.filter(s => s.status === 'ACTIVE')
   } catch {
     sessionsError.value = true

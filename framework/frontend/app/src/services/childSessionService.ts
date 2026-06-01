@@ -14,8 +14,10 @@ export async function closeChildSession(id: number): Promise<void> {
   await api.delete(`/api/v1/sessions/children/${id}`)
 }
 
-export async function getActiveChildSessions(): Promise<ChildSessionResponse[]> {
-  const { data } = await api.get<ApiResponse<ChildSessionResponse[]>>('/api/v1/sessions/children')
+export async function getActiveChildSessions(familyId: number): Promise<ChildSessionResponse[]> {
+  const { data } = await api.get<ApiResponse<ChildSessionResponse[]>>('/api/v1/sessions/children', {
+    params: { familyId }
+  })
   return data.data
 }
 

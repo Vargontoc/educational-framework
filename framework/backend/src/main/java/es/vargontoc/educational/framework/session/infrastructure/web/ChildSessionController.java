@@ -57,7 +57,7 @@ public class ChildSessionController {
         return ResponseEntity.status(201).body(ApiResponse.created(toResponse(session)));
     }
 
-    @GetMapping
+    @GetMapping()
     public ResponseEntity<ApiResponse<List<ChildSessionResponse>>> getActiveSessions(@RequestParam Long familyId) {
         var sessions = childSessionUseCase.getActiveSessions(familyId).stream()
             .map(ChildSessionController::toResponse)
