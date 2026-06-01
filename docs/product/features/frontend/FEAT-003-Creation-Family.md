@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Family creation modal from Home when no family is registered
 depends_on: FEAT-001-Base-Styles, FEAT-002-Home-View, docs/contracts/api/openapi.json
 owned_by: frontend

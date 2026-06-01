@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Public documentation view for the application
 depends_on: FEAT-001-Base-Styles, FEAT-005-Parent-Control-View
 owned_by: frontend

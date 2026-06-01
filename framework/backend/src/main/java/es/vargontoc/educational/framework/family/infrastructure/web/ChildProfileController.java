@@ -7,6 +7,7 @@ import es.vargontoc.educational.framework.family.model.ChildProfile;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/v1/family/children")
@@ -75,9 +78,16 @@ public class ChildProfileController {
         return ResponseEntity.ok(ApiResponse.ok(toResponse(updated)));
     }
 
+    @PutMapping("/activation/{id}")
+    public ResponseEntity<Void> changeStateChild(@PathVariable Long id) {
+        childProfileUseCase.changeActiveState(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deactivateChild(@PathVariable Long id) {
-        childProfileUseCase.deactivateChild(id);
+    public ResponseEntity<Void> deleteChild(@PathVariable Long id) 
+    {  
+        childProfileUseCase.deleteChild(id);
         return ResponseEntity.noContent().build();
     }
 

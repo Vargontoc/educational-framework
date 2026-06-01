@@ -7,12 +7,15 @@ import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepositor
 import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
 import es.vargontoc.educational.framework.family.validation.ChildProfileValidator;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 
 @Service
 @Transactional
@@ -24,10 +27,13 @@ public class ChildProfileService implements ChildProfileUseCase {
     private final ChildProfileRepository childProfileRepository;
     private final ChildProfileValidator childProfileValidator;
 
-    public ChildProfileService(FamilyRepository familyRepository, ChildProfileRepository childProfileRepository) {
+    private final ChildSessionUseCase sessions;
+
+    public ChildProfileService(FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildProfileRepository childProfileRepository) {
         this.familyRepository = familyRepository;
         this.childProfileRepository = childProfileRepository;
         this.childProfileValidator = new ChildProfileValidator();
+        this.sessions = sessions;
     }
 
     @Override
@@ -94,13 +100,29 @@ public class ChildProfileService implements ChildProfileUseCase {
     }
 
     @Override
-    public void deactivateChild(Long id) {
+    public ChildProfile changeActiveState(Long id) {
         var child = childProfileRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Child profile not found"));
-        child.setActive(false);
+        child.setActive(!child.isActive());
         child.setUpdatedAt(LocalDateTime.now());
         childProfileRepository.save(child);
+
+        if(!child.isActive()) {
+            sessions.getActiveSessions(child.getFamilyId()).stream().filter(x -> x.getChildProfileId().equals(id)).toList().forEach(e -> sessions.closeSession(e.getId()));
+        }
+
+        return child;
     }
+    
+    @Override
+    public void deleteChild(Long id) {
+        var child = childProfileRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Child profile not found"));
+
+        sessions.getActiveSessions(child.getFamilyId()).stream().filter(x -> x.getChildProfileId().equals(id)).toList().forEach(e -> sessions.closeSession(e.getId()));
+        childProfileRepository.deleteById(id);
+    }
+
 
     private Family getFamilyOrThrow() {
         return familyRepository.findFamily()

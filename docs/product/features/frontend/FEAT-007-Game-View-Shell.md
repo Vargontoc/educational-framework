@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Game view for children
 depends_on: FEAT-001-Base-Styles, FEAT-002-Home-View, FEAT-004-Modal-Creation-Child
 owned_by: frontend

@@ -29,5 +29,7 @@ public interface ChildProfileUseCase {
         boolean agentEnabled
     );
 
-    void deactivateChild(Long id);
+    ChildProfile changeActiveState(Long id);
+
+    void deleteChild(Long id);
 }

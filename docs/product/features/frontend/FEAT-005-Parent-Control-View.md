@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Parent control panel shell after PIN access from Home
 depends_on: FEAT-001-Base-Styles, FEAT-002-Home-View, FEAT-003-Creation-Family, FEAT-004-Modal-Creation-Child, docs/contracts/api/openapi.json, docs/contracts/api/websocket.json
 owned_by: frontend

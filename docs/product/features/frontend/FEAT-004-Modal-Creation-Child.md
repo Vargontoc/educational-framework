@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Child creation modal from the Home child selector
 depends_on: FEAT-001-Base-Styles, FEAT-002-Home-View, FEAT-003-Creation-Family, docs/contracts/api/openapi.json
 owned_by: frontend

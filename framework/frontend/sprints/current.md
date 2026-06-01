@@ -1,8 +1,8 @@
-# Sprint 013 - frontend
+# Sprint 014 - frontend
 # -----------------------------------------------
 
 ## Goal
-Implement the frontend-only Game View Shell from `docs/product/features/frontend/FEAT-007-Game-View-Shell.md`: child avatar selection opens a child session, stores it in memory only, navigates to protected-by-memory `/game/:childId`, renders the child-facing loader and empty World Map shell, starts the real frontend Game WebSocket lifecycle against `/ws/game`, sends heartbeat while connected, handles contracted session events, and cleans up on exit. Backend implementation changes are out of scope for this sprint.
+Implement the Parent Control Children Section from `docs/product/features/frontend/FEAT-008-Child-Section.md`: replace the `/panel` Children placeholder with real adult-facing child profile management, active session display, 5-second active-session polling, edit/block/unblock/delete/close-session actions, i18n, accessibility, and responsive panel layout. Backend implementation is out of scope.
 
 ## Status
 status: active
@@ -14,186 +14,193 @@ waiting_for:
 ## Tasks
 
 ### Feature And Existing Flow Review
-- [ ] Review `docs/product/features/frontend/FEAT-007-Game-View-Shell.md` before editing.
-- [ ] Review `docs/contracts/api/openapi.json` for `OpenChildSessionRequest`, `ChildSessionResponse`, `ApiResponseChildSession`, and child session endpoints.
-- [ ] Review `docs/contracts/api/websocket.json` for `/ws/game` and `SessionEvent` payloads.
-- [ ] Review existing Home child selector flow before adding GameView navigation.
-- [ ] Review `src/router/index.ts` and existing route guards before adding `/game/:childId`.
-- [ ] Review existing session store before adding in-memory child session state.
-- [ ] Review existing WebSocket utilities or stores before adding Game WebSocket lifecycle.
-- [ ] Do not change backend code or backend contracts in this sprint.
+- [ ] Review `docs/product/features/frontend/FEAT-008-Child-Section.md` before editing.
+- [ ] Review `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` for panel shell constraints and Children placeholder behavior.
+- [ ] Review `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md` for child card/avatar/edit patterns.
+- [ ] Review `docs/contracts/api/openapi.json` for family, child profile, and child session schemas/endpoints.
+- [ ] Review `docs/contracts/api/websocket.json` for optional ParentChannel session events only.
+- [ ] Review existing panel component structure before replacing the Children placeholder.
+- [ ] Review existing service/store patterns before adding child profile/session services.
+- [ ] Do not implement backend code in this sprint.
 
-### Child Session Opening From Home
-- [ ] When a child avatar is selected from Home, call `POST /api/v1/sessions/children` through the shared Axios client.
-- [ ] Send `childProfileId` from the selected child.
-- [ ] Omit `heartbeatIntervalSeconds` or use the documented default only if the existing service pattern supports it.
-- [ ] Derive request and response types from OpenAPI-generated/shared frontend types where available.
-- [ ] On `201`, store `ChildSessionResponse` in memory only.
-- [ ] On successful session creation, navigate with router replace to `/game/:childId`.
-- [ ] Do not require parental PIN for this child GameView entry flow.
-- [ ] Do not persist child session state in `localStorage`, `sessionStorage`, route state, or persisted Pinia slices.
-- [ ] Do not put raw tokens or child session data in URL query parameters.
+### Contract And Endpoint Alignment
+- [ ] Use OpenAPI-derived types where the endpoint exists in `docs/contracts/api/openapi.json`.
+- [ ] Confirm `GET /api/v1/family`, `GET /api/v1/family/children`, `PATCH /api/v1/family/children/{id}`, `DELETE /api/v1/family/children/{id}`, `GET /api/v1/sessions/children?familyId={familyId}`, and `DELETE /api/v1/sessions/children/{id}/expel` are available in frontend API typing or service layer.
+- [ ] Account for backend endpoint `PUT /api/v1/family/children/activation/{id}` for block/unblock.
+- [ ] If OpenAPI does not yet include `PUT /api/v1/family/children/activation/{id}`, isolate the call in a clearly named service method and document the contract drift in review.
+- [ ] Do not change backend contracts unless explicitly requested.
+- [ ] Do not invent local request/response models that diverge from existing schemas.
 
-### In-Memory Child Session Guard
-- [ ] Add route `/game/:childId` with name `game`.
-- [ ] Protect `/game/:childId` with an in-memory child session guard, not the parental auth guard.
-- [ ] Allow route only when an active in-memory child session exists for the route `childId`.
-- [ ] Redirect direct URL access to Home when no matching child session exists.
-- [ ] Redirect refresh-on-game to Home because in-memory child session state is gone.
-- [ ] Redirect route child id mismatch to Home and clear invalid transient child session state if needed.
-- [ ] Preserve existing unknown-route redirect policy.
+### Children Section Integration
+- [ ] Replace the Children placeholder in `/panel` with the real Children section.
+- [ ] Keep `/panel` protected by the existing in-memory parent token guard.
+- [ ] Load family settings needed for child TTS/agent ceiling values.
+- [ ] Load child profiles from `GET /api/v1/family/children`.
+- [ ] Load active child sessions from `GET /api/v1/sessions/children?familyId={familyId}`.
+- [ ] Show adult-facing loading, empty, and retryable error states.
+- [ ] Do not open GameView from the panel.
 
-### GameView Shell
-- [ ] Create `GameView.vue` or equivalent route component.
-- [ ] Render a full-viewport fixed GameView shell with no document scrollbars.
-- [ ] Use child visual register: sky `#D6ECFF`, grass `#C8E6A0`, cobalt `#2B5BE0`, child retry orange `#FFB347`.
-- [ ] Do not use adult panel background `#F4F6F9` as the GameView background.
-- [ ] Do not use adult error red `#E53935` in GameView.
-- [ ] Include child-facing loader using `assets/animations/base-idle.png` as the temporary avatar idle placeholder.
-- [ ] Add a soft circular loading affordance around or near the avatar.
-- [ ] Mock only the local welcome state; do not call TTS or Coqui.
-- [ ] Render an empty World Map placeholder after loader/preparation state.
-- [ ] Keep the map as a walk/promenade shell, not numbered levels or visible locked path.
-- [ ] Do not add a child-facing exit button.
+### Child Cards
+- [ ] Render child cards with avatar, name, active/blocked state, TTS state, agent state, and active session state.
+- [ ] Use `ChildProfileResponse.active` to show active vs blocked state.
+- [ ] Match active `ChildSessionResponse` entries by `childProfileId` and `status: ACTIVE`.
+- [ ] Show live session duration from `ChildSessionResponse.startedAt` when active.
+- [ ] Show Edit action for each child.
+- [ ] Show Block or Unblock action according to `active`.
+- [ ] Show Close session action only when the child has an active session.
+- [ ] Ensure active/blocked/session states do not rely on color alone.
 
-### Game WebSocket Frontend Lifecycle
-- [ ] Open a real browser WebSocket targeting `/ws/game` after child session validation.
-- [ ] Implement open, message, error, and close handlers.
-- [ ] Send `{ "type": "heartbeat" }` while the WebSocket is open.
-- [ ] Use the child session heartbeat interval when available, or a conservative local interval aligned with backend defaults.
-- [ ] Parse incoming `SessionEvent` messages.
-- [ ] Handle `HEARTBEAT_ACK` by updating technical connection state only.
-- [ ] Handle `GAME_STATE_UPDATE` as placeholder state without rendering game engines.
-- [ ] Handle `SESSION_EXPIRED`, `SESSION_INVALIDATED`, `CHILD_EXPELLED`, and `PARENT_BLOCK` by closing WebSocket, clearing child session state, and navigating to Home.
-- [ ] Hide WebSocket handshake errors and technical connection failures from the child-facing UI.
-- [ ] Do not put tokens in the WebSocket URL.
-- [ ] Do not implement backend handshake changes in frontend beyond the current browser WebSocket lifecycle.
+### Edit Child Modal
+- [ ] Add adult-facing edit modal for child profile updates.
+- [ ] Include required name field.
+- [ ] Include required birthday field using contract-compatible date format.
+- [ ] Include avatar editing only if the existing avatar selector pattern can be reused without scope creep.
+- [ ] Include `ttsEnabled` toggle.
+- [ ] Include `agentEnabled` toggle.
+- [ ] Disable child TTS toggle when family-level TTS is disabled and show translated explanatory text.
+- [ ] Disable child agent toggle when family-level agent is disabled and show translated explanatory text.
+- [ ] Validate required name and birthday before submit.
+- [ ] Submit `PATCH /api/v1/family/children/{id}` with `UpdateChildProfileRequest` shape.
+- [ ] On success, close modal and refresh children and sessions.
+- [ ] On `400`, show inline adult validation feedback.
+- [ ] On `404`, close stale modal state and refresh list.
+- [ ] On network or `5xx`, show retryable adult-facing feedback.
 
-### Cleanup And Session Exit
-- [ ] Close the WebSocket when GameView unmounts.
-- [ ] Clear heartbeat timers on unmount and terminal events.
-- [ ] Remove event listeners on unmount.
-- [ ] Clear transient GameView local state on unmount.
-- [ ] Clear child session state after terminal session events.
-- [ ] Decide from existing app flow whether intentional navigation away should call `DELETE /api/v1/sessions/children/{id}` or only rely on heartbeat expiry; document the chosen behavior in review.
-- [ ] Do not leave background WebSocket connections open after navigating away.
+### Block And Unblock
+- [ ] Add confirmation modal for Block/Unblock action.
+- [ ] Call `PUT /api/v1/family/children/activation/{id}` on confirmation.
+- [ ] Refresh children and sessions after success.
+- [ ] Do not manually call session close/expel after activation toggle; backend owns that side effect.
+- [ ] After blocking, ensure the card shows blocked state and no stale Close session action remains after refresh.
 
-### i18n And Accessibility
-- [ ] Add all visible GameView strings and aria labels to `src/i18n/es.ts` or the existing i18n module.
-- [ ] Keep visible GameView copy sparse and child-friendly.
+### Delete Child
+- [ ] Add destructive confirmation modal for Delete.
+- [ ] Keep delete visually and semantically distinct from Block/Unblock.
+- [ ] Call `DELETE /api/v1/family/children/{id}` on confirmation.
+- [ ] Refresh children and sessions after success.
+- [ ] Remove the child card after successful refresh.
+- [ ] Do not manually call session close/expel after delete; backend owns that side effect.
+- [ ] On `404`, close stale modal state and refresh list.
+
+### Close Active Session
+- [ ] Show Close session only for children with active sessions.
+- [ ] Add confirmation modal for Close session.
+- [ ] Call `DELETE /api/v1/sessions/children/{sessionId}/expel` on confirmation.
+- [ ] Refresh active sessions immediately after success.
+- [ ] If session is already gone, clear stale local session state and refresh.
+- [ ] Do not show technical session errors to the adult without translated context.
+
+### Session Polling
+- [ ] Start active-session polling when the Children section becomes active.
+- [ ] Poll `GET /api/v1/sessions/children?familyId={familyId}` every 5 seconds.
+- [ ] Stop polling when parent leaves the Children section.
+- [ ] Stop polling when `/panel` unmounts or parent logs out.
+- [ ] Skip a poll tick if a previous active-session request is still in flight.
+- [ ] Prevent duplicate intervals if the parent reselects Children.
+- [ ] Refresh sessions immediately after edit, activation toggle, delete, and close-session actions.
+- [ ] Compute visible session duration from `startedAt` and update display on the 5-second cadence.
+- [ ] Show translated fallback if `startedAt` is missing or invalid.
+
+### Optional ParentChannel Use
+- [ ] ParentChannel integration is optional.
+- [ ] If used, subscribe only to already contracted session events from `docs/contracts/api/websocket.json`.
+- [ ] Do not invent child profile update events.
+- [ ] Keep profile refresh REST-based.
+- [ ] Do not add WebSocket dependency if polling satisfies this sprint.
+
+### Visual, Responsive, And Accessibility
+- [ ] Use adult panel background `#F4F6F9` and white card surfaces.
+- [ ] Use cobalt `#2B5BE0` for primary actions and active states.
+- [ ] Use adult error red `#E53935` for destructive/error states.
+- [ ] Do not use child GameView retry orange in adult panel flows.
+- [ ] Keep layout aligned with Parent Control Shell, not GameView.
+- [ ] Add all visible strings and aria labels to `src/i18n/es.ts` or existing i18n module.
 - [ ] Avoid sustained uppercase visible labels.
-- [ ] Ensure any audio-related future state has equivalent visual state.
-- [ ] Do not rely on color alone for visible state.
-- [ ] Keep GameView useful without audio.
-- [ ] Respect the existing portrait rotation overlay behavior.
-- [ ] Keep touch targets in GameView at least `64px` where interactive controls exist.
-- [ ] Keep interactive text at least `20px` where interactive text exists.
-
-### Backend Handshake Mitigation Awareness
-- [ ] Treat the current backend `/ws/game` handshake limitation as a known external backend issue, not a frontend blocker.
-- [ ] Frontend must still implement the WebSocket lifecycle and cleanup.
-- [ ] If backend rejects the socket due missing `Authorization` header or missing `childSessionId` binding, keep the empty World Map shell usable and hide technical details from the child.
-- [ ] Do not implement backend code.
-- [ ] Do not change `docs/contracts/api/websocket.json` in this sprint.
-- [ ] Do not add token query parameter workarounds.
+- [ ] Ensure all icon buttons have translated accessible labels.
+- [ ] Ensure card actions are keyboard operable.
+- [ ] Ensure modals manage focus and return focus to triggers.
+- [ ] Ensure active/blocked/session states are not color-only.
+- [ ] Keep adult touch targets at least 44px.
+- [ ] Verify tablet landscape, mobile landscape, and portrait rotation overlay behavior.
 
 ### Testing And Verification
-- [ ] Add or update routing/component/service tests if the project has a test harness available for this area.
-- [ ] Verify child avatar selection calls `POST /api/v1/sessions/children` with the selected child profile id.
-- [ ] Verify successful session creation stores only in-memory child session data.
-- [ ] Verify successful session creation navigates to `/game/:childId` using router replace.
-- [ ] Verify `/game/:childId` without matching child session redirects to Home.
-- [ ] Verify `/game/:childId` with matching active child session renders GameView.
-- [ ] Verify refresh on `/game/:childId` redirects to Home.
-- [ ] Verify GameView creates a WebSocket for `/ws/game` after validation.
-- [ ] Verify GameView sends heartbeat while connected.
-- [ ] Verify terminal session events close socket, clear child session state, and navigate Home.
-- [ ] Verify GameView closes WebSocket and clears timers on unmount.
-- [ ] Verify no Coqui/TTS endpoint is called.
-- [ ] Verify no raw token appears in route params, query string, local storage, or session storage.
-- [ ] Verify GameView has no child-facing exit button.
-- [ ] Verify desktop/tablet landscape, mobile landscape, and portrait overlay behavior manually.
-- [ ] Verify GameView does not create document scrollbars.
+- [ ] Add or update service/component/routing tests if the project has a test harness available for this area.
+- [ ] Verify Children section replaces the placeholder when selected in the panel.
+- [ ] Verify missing parent token still redirects `/panel` to Home.
+- [ ] Verify initial load calls family, children, and active-session endpoints.
+- [ ] Verify cards render child profile state and active session state.
+- [ ] Verify session duration display updates on the 5-second polling cadence.
+- [ ] Verify polling starts only while Children section is active.
+- [ ] Verify polling stops on section change and component unmount.
+- [ ] Verify polling skips overlapping active-session requests.
+- [ ] Verify edit modal validation and submit payload.
+- [ ] Verify family-level disabled TTS/agent disables corresponding child toggles.
+- [ ] Verify activation toggle calls `PUT /api/v1/family/children/activation/{id}` and refreshes data.
+- [ ] Verify delete confirmation calls `DELETE /api/v1/family/children/{id}` and refreshes data.
+- [ ] Verify close session calls `DELETE /api/v1/sessions/children/{sessionId}/expel`.
+- [ ] Verify error handling for `400`, `404`, network, and `5xx` flows.
+- [ ] Verify all visible labels resolve through i18n keys.
 - [ ] Run `npm run build` from `framework/frontend/app`.
 
 ## Risks
-- **Direct URL bypass**: `/game/:childId` may become reachable without selecting a child avatar.
-  Mitigation: guard route with in-memory active child session state and never restore from URL alone.
-- **Backend WebSocket handshake mismatch**: current backend may reject browser WebSocket connections because custom `Authorization` headers are not available and `childSessionId` is not bound.
-  Mitigation: implement frontend lifecycle and safe rejection handling; backend team has already been notified and backend changes remain out of scope.
-- **Token workaround leakage**: adding tokens to WebSocket URLs would expose sensitive data.
-  Mitigation: never place tokens in URL/query params and do not invent child tokens.
-- **TTS scope creep**: welcome audio may trigger direct frontend Coqui calls.
-  Mitigation: mock local welcome state only; do not call TTS or `openapi_tts.json`.
-- **Game domain creep**: shell may start implementing map/game logic.
-  Mitigation: keep World Map empty and handle only lifecycle/session events.
-- **Adult UI drift**: GameView may use adult panel styles or red errors.
-  Mitigation: use child register colors and hide technical failures from the child.
-- **Resource leaks**: WebSocket and heartbeat timers may continue after navigation.
-  Mitigation: centralize cleanup on unmount and terminal events.
+- **Activation endpoint contract drift**: backend exposes `PUT /api/v1/family/children/activation/{id}` but OpenAPI may not include it yet.
+  Mitigation: isolate the service call and document drift in review; do not silently invent broad local models.
+- **Delete vs block confusion**: delete is destructive while block/unblock is reversible.
+  Mitigation: separate labels, styling, confirmation copy, and actions clearly.
+- **Duplicated backend side effects**: frontend may close sessions after edit, activation toggle, or delete even though backend owns those side effects.
+  Mitigation: only refresh children/sessions after those profile mutations.
+- **Stale session state**: active session cards may become outdated.
+  Mitigation: poll active sessions every 5 seconds while Children is active and refresh immediately after mutations.
+- **Polling load or leaks**: timer may run outside the section or overlap requests.
+  Mitigation: stop timer on section change/unmount/logout and skip overlapping requests.
+- **Family ceiling mismatch**: child TTS/agent toggles may appear enabled when family-level settings disable them.
+  Mitigation: load family settings, disable unavailable toggles, and show explanatory text.
+- **Adult UI drift**: panel may use GameView colors/feedback.
+  Mitigation: keep adult panel visual language and adult error semantics.
 
 ## Dependencies
-- `docs/product/features/frontend/FEAT-007-Game-View-Shell.md` - source feature.
-- `docs/product/features/frontend/FEAT-001-Base-Styles.md` - child visual tokens and UI baseline.
-- `docs/product/features/frontend/FEAT-002-Home-View.md` - Home child selection and navigation flow.
-- `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md` - child selector/avatar card behavior.
-- `docs/contracts/api/openapi.json` - `OpenChildSessionRequest`, `ChildSessionResponse`, and child session endpoints.
-- `docs/contracts/api/websocket.json` - `/ws/game` and `SessionEvent` contract.
-- `docs/design/frontend_design_v1.docx` - GameView route, lifecycle, WebSocket, and viewport direction.
-- `docs/design/design_decisions_v1.docx` - child visual register, loader, audio, animation, and interaction rules.
+- `docs/product/features/frontend/FEAT-008-Child-Section.md` - source feature.
+- `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` - Parent Control Shell and Children placeholder.
+- `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md` - child card/avatar/profile patterns.
+- `docs/product/features/frontend/FEAT-001-Base-Styles.md` - visual and accessibility tokens.
+- `docs/contracts/api/openapi.json` - family, child profile, and child session endpoints.
+- `docs/contracts/api/websocket.json` - optional ParentChannel session events.
+- `docs/design/frontend_design_v1.docx` - panel/children section behavior.
+- `docs/design/design_decisions_v1.docx` - adult UI and accessibility decisions.
 
 ## Agent Instruction
-- Implement only frontend work for `FEAT-007-Game-View-Shell`.
+- Implement only `FEAT-008-Child-Section` frontend work.
 - Do not implement backend changes.
-- Do not change backend contracts.
-- Do not implement real minigames, procedural map content, TTS, binary audio streaming, or advanced reconnection phases.
-- Do not add direct Coqui or TTS API calls.
-- Do not persist raw tokens or child session state.
-- Do not put tokens in WebSocket URLs.
-- Use the shared Axios client for `POST /api/v1/sessions/children`.
+- Do not change backend contracts unless explicitly requested.
+- Do not implement child dashboard/progress analytics.
+- Do not open GameView from the panel.
+- Do not add direct TTS, agent, or Coqui calls.
+- Keep parent token in memory only.
+- Use shared Axios services for API calls.
+- Poll active child sessions every 5 seconds only while the Children section is active.
+- Do not manually close sessions after child edit, activation toggle, or delete; backend owns those side effects.
 - Use Vue Router, Pinia, Vue i18n, and TypeScript according to the frontend stack.
-- Keep GameView full viewport, child-facing, and free of adult technical error UI.
-- Commit: `feat(frontend): add game view shell`
+- Keep all visible strings and aria labels in i18n.
+- Commit: `feat(frontend): add parent children section`
 
 ## Notes
-Derived from `docs/product/features/frontend/FEAT-007-Game-View-Shell.md`.
+Derived from `docs/product/features/frontend/FEAT-008-Child-Section.md`.
 
 Design output:
-- View/feature: child-facing GameView Shell.
-- Data flow: Home child avatar selection opens `ChildSessionResponse`; GameView validates in-memory child session; WebSocket lifecycle starts after route validation.
-- Component tree: Home child selector -> child session service -> router `/game/:childId` -> `GameView` -> loader + empty World Map placeholder + Game WebSocket lifecycle.
-- Contract dependency: OpenAPI child session endpoints and WebSocket `SessionEvent` only.
-- Backend note: backend team has been warned about `/ws/game` browser handshake and `childSessionId` binding; frontend sprint should not implement backend fixes.
-- Risks: direct URL bypass, backend handshake rejection, token leakage, TTS scope creep, GameView resource leaks.
+- View/feature: adult-facing Children section inside Parent Control Shell.
+- Data flow: family settings + child profiles + active child sessions; session polling every 5 seconds while section is active.
+- Component tree: `/panel` -> `PanelControlView` Children section -> child cards + edit/confirm modals + polling/session state.
+- Contract dependency: OpenAPI family/child/session endpoints; activation endpoint may require OpenAPI update.
+- Risks: activation contract drift, destructive delete confusion, stale sessions, polling leaks, family TTS/agent ceiling mismatch.
 
 ## Review
 
 completed_tasks:
-- Feature And Existing Flow Review: Reviewed FEAT-007, websocket.json auth message, OpenAPI child session types, existing stores/views before implementation
-- Child Session Service: Created `childSessionService.ts` with `openChildSession()` and `closeChildSession()` using shared Axios client; types already in api.ts
-- In-Memory Child Session State: Extended `useSessionStore` with `activeChildSession` (non-persisted), `setActiveChildSession()`, `clearActiveChildSession()`, and `hasActiveChildSession(childId)` for route guard
-- Route Guard For /game/:childId: Added `beforeEnter` to `/game/:childId` that validates in-memory child session via `sessionStore.hasActiveChildSession()`; redirects to / if absent
-- Home + ChildSelectorModal Integration: Added `select` emit to ChildSelectorModal; HomeView handles `handleChildSelect` → opens child session → stores in sessionStore → router.replace('/game/:childId')
-- GameView Shell: Loader state with base-idle.png avatar + animated ring; world map state with sky/grass gradient, drifting clouds, path nodes; child register colors throughout; no adult red
-- WebSocket Lifecycle: Opens WS after session validation; sends auth message `{type:"auth",childSessionId}` on open; waits for AUTH_ACK then starts 30s heartbeat; handles HEARTBEAT_ACK/GAME_STATE_UPDATE/SESSION_EXPIRED/SESSION_INVALIDATED/CHILD_EXPELLED/PARENT_BLOCK
-- Cleanup On Unmount: Closes WS, clears heartbeat timer, removes listeners; terminal events call clearChildSessionAndGoHome() which clears state and navigates to /
-- i18n: Added game.loaderText to es.ts; removed placeholder string; all visible copy uses t()
-- Build Passes: vue-tsc + vite build clean; 220 modules; base-idle.png optimized into dist
 
 incomplete_tasks:
-- None
 
 contract_changes:
-- No backend contract changes (websocket.json already had the auth message design that FEAT-007 requires)
 
 learnings:
-- In-memory child session state uses a non-persisted Pinia ref; `persist.pick` only includes familyId/selectedChildId, so activeChildSession is session-only and cleared on page refresh
-- Route guard validates against `activeChildSession.childProfileId` matching the route childId param — not the session id itself; this means selecting child A and then directly navigating to /game/childB would redirect to /
-- WebSocket lifecycle is self-contained in GameView; no game domain store needed for the shell
-- Exit behavior decision: intentional navigation away (unmount) relies on heartbeat expiry server-side rather than calling DELETE /api/v1/sessions/children/{id}; this can be revisited in a future feature
 
 next_sprint_suggestions:
-- Add real world content (map tiles, path steps) in a future feature
-- Add TTS welcome audio once backend TTS service is confirmed
-- Add reconnection phase logic for WS disconnects
-- Add game action placeholder handling

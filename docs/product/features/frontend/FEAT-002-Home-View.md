@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Pantalla principal de la aplicación
 depends_on: FEAT-001-Base-Styles
 owned_by: frontend
