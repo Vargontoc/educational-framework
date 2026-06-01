@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFamilyStore } from '@/stores/useFamilyStore'
 import ChildCard from './ChildCard.vue'
@@ -73,7 +73,9 @@ onUnmounted(() => {
 
 function handleEdit(child: ChildProfileResponse) {
   editingChild.value = child
-  editModalOpen.value = true
+  nextTick(() => {
+    editModalOpen.value = true
+  })
 }
 
 function handleBlock(child: ChildProfileResponse) {

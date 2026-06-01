@@ -81,7 +81,6 @@ export const messages = {
       card: {
         activeLabel: 'Activo',
         blockedLabel: 'Bloqueado',
-        sessionActive: 'En sesión',
         tts: 'Audio',
         agent: 'Agente',
         on: 'Sí',

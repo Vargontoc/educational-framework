@@ -48,6 +48,16 @@ watch(() => props.open, (isOpen) => {
   }
 })
 
+watch(() => props.child, (newChild) => {
+  if (props.open && newChild) {
+    name.value = newChild.name
+    birthday.value = newChild.birthday
+    selectedAvatar.value = newChild.avatar
+    ttsEnabled.value = newChild.ttsEnabled
+    agentEnabled.value = newChild.agentEnabled
+  }
+})
+
 function validateName(): boolean {
   if (!name.value.trim()) {
     nameError.value = t('panel.children.editModal.nameRequired')
