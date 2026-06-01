@@ -3,7 +3,7 @@ import { ref, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFamilyStore } from '@/stores/useFamilyStore'
 import Modal from '@/components/ui/Modal.vue'
-import childAvatarsSvg from '@/assets/images/child-avatars.svg?url'
+import AvatarPicker from '@/components/shared/AvatarPicker.vue'
 
 const { t } = useI18n()
 const familyStore = useFamilyStore()
@@ -20,8 +20,6 @@ const serverError = ref('')
 const submitting = ref(false)
 
 const addButtonRef = ref<HTMLButtonElement | null>(null)
-
-const AVATAR_IDS = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6']
 
 const isOpen = computed(() => familyStore.activeModal === 'addChild')
 const submittingState = computed(() => submitting.value)
@@ -77,36 +75,6 @@ function goToStep1() {
 function goToStep3() {
   if (!validateBirthday()) return
   step.value = 3
-  nextTick(() => {
-    const firstAvatar = document.getElementById('avatar-option-0')
-    firstAvatar?.focus()
-  })
-}
-
-function selectAvatar(avatarId: string) {
-  if (submitting.value) return
-  selectedAvatar.value = avatarId
-}
-
-function handleAvatarKeydown(event: KeyboardEvent, avatarId: string, index: number) {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault()
-    selectAvatar(avatarId)
-    return
-  }
-  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-    event.preventDefault()
-    const nextIndex = (index + 1) % AVATAR_IDS.length
-    const nextEl = document.getElementById(`avatar-option-${nextIndex}`)
-    nextEl?.focus()
-    return
-  }
-  if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-    event.preventDefault()
-    const prevIndex = (index - 1 + AVATAR_IDS.length) % AVATAR_IDS.length
-    const prevEl = document.getElementById(`avatar-option-${prevIndex}`)
-    prevEl?.focus()
-  }
 }
 
 async function handleSubmit() {
@@ -270,45 +238,7 @@ function resetStepper() {
         </button>
         <p class="step-label">{{ t('modal.addChild.step3Label') }}</p>
 
-        <div
-          class="avatar-grid"
-          role="listbox"
-          :aria-label="t('modal.addChild.avatarSectionLabel')"
-        >
-          <div
-            v-for="(id, index) in AVATAR_IDS"
-            :key="id"
-            :id="`avatar-option-${index}`"
-            class="avatar-option"
-            :class="{ 'avatar-option--selected': selectedAvatar === id }"
-            role="option"
-            :aria-selected="selectedAvatar === id"
-            :aria-label="t('modal.addChild.avatarOptionAria', { name: id, index: index + 1, total: AVATAR_IDS.length })"
-            tabindex="0"
-            @click="selectAvatar(id)"
-            @keydown="(e) => handleAvatarKeydown(e, id, index)"
-          >
-            <svg
-              class="avatar-svg"
-              width="64"
-              height="64"
-              viewBox="0 0 100 100"
-              aria-hidden="true"
-            >
-              <use :href="`${childAvatarsSvg}#${id}`" />
-            </svg>
-            <span
-              v-if="selectedAvatar === id"
-              class="avatar-check"
-              aria-hidden="true"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="8" fill="#1F2937" fill-opacity="0.6"/>
-                <path d="M5 8L7 10L11 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </div>
-        </div>
+        <AvatarPicker v-model="selectedAvatar" />
 
         <div class="action-row">
           <button

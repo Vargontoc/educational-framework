@@ -15,6 +15,10 @@ export const messages = {
     helpAriaLabel: 'Ayuda',
     settingsAriaLabel: 'Configuración'
   },
+  avatarPicker: {
+    sectionLabel: 'Selecciona un avatar',
+    optionAria: 'Avatar {name}, {index} de {total}'
+  },
   panel: {
     title: 'Panel de Control',
     eyebrow: 'Espacio adulto',
@@ -64,6 +68,68 @@ export const messages = {
     },
     placeholder: {
       comingSoon: 'Próximamente'
+    },
+    children: {
+      title: 'Niños',
+      description: 'Gestiona los perfiles de los niños y su acceso.',
+      empty: 'No hay perfiles registrados',
+      loading: 'Cargando perfiles...',
+      retry: 'Reintentar',
+      pollingError: 'No se pudo actualizar la lista de sesiones',
+      durationMinutes: '{m}m {s}s',
+      durationSeconds: '{s}s',
+      card: {
+        activeLabel: 'Activo',
+        blockedLabel: 'Bloqueado',
+        sessionActive: 'En sesión',
+        tts: 'Audio',
+        agent: 'Agente',
+        on: 'Sí',
+        off: 'No'
+      },
+      actions: {
+        edit: 'Editar',
+        editAria: 'Editar perfil de {name}',
+        block: 'Bloquear',
+        blockAria: 'Bloquear acceso de {name}',
+        unblock: 'Desbloquear',
+        unblockAria: 'Desbloquear acceso de {name}',
+        closeSession: 'Cerrar sesión',
+        closeSessionAria: 'Cerrar sesión activa de {name}'
+      },
+      editModal: {
+        title: 'Editar perfil',
+        nameLabel: 'Nombre',
+        namePlaceholder: 'Nombre del niño',
+        nameRequired: 'Ingresa el nombre del niño',
+        birthdayLabel: 'Cumpleaños',
+        birthdayRequired: 'Ingresa la fecha de nacimiento',
+        birthdayInvalid: 'Fecha inválida',
+        avatarLabel: 'Avatar',
+        ttsLabel: 'Audio activado',
+        ttsDisabledReason: 'Audio desactivado a nivel familiar',
+        agentLabel: 'Agente activado',
+        agentDisabledReason: 'Agente desactivado a nivel familiar',
+        submit: 'Guardar cambios',
+        submitting: 'Guardando...',
+        errorBadRequest: 'Datos inválidos. Revisa la información.',
+        errorNotFound: 'Perfil no encontrado.',
+        errorServer: 'Error del servidor. Intenta más tarde.',
+        delete: 'Eliminar perfil',
+        deleteConfirmTitle: '¿Eliminar perfil?',
+        deleteConfirmMessage: 'Esta acción es irreversible. Se eliminará el perfil de {name} y cualquier sesión activa asociada.'
+      },
+      confirm: {
+        blockTitle: 'Bloquear acceso de {name}?',
+        blockMessage: 'El niño no podrá acceder al juego hasta que lo desbloquees.',
+        unblockTitle: 'Desbloquear acceso de {name}?',
+        unblockMessage: 'El niño podrá volver a acceder al juego.',
+        closeTitle: 'Cerrar sesión de {name}?',
+        closeMessage: 'La sesión activa se cerrará inmediatamente.',
+        confirm: 'Confirmar',
+        cancel: 'Cancelar',
+        loading: 'Cargando...'
+      }
     }
   },
   docs: {

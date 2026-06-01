@@ -191,6 +191,15 @@
         }
       }
     },
+    "/api/v1/family/children/activation/{id}": {
+      "put": {
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "204": { "description": "No Content" },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
     "/api/v1/content/stories": {
       "get": {
         "tags": ["content"],
@@ -585,6 +594,109 @@
         },
         "responses": {
           "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseAvatarEventCatalog" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/stories": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create story",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateStoryRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseStory" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List stories",
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseStoryList" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/stories/{id}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get story by id",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseStory" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update story",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateStoryRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseStory" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/stories/{storyId}/pages": {
+      "post": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Create story page",
+        "parameters": [{ "name": "storyId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CreateStoryPageRequest" } } }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseStoryPage" } } } },
+          "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] List pages for a story",
+        "parameters": [{ "name": "storyId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseStoryPageList" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      }
+    },
+    "/api/v1/dev/content/stories/{storyId}/pages/{pageId}": {
+      "get": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Get story page by id",
+        "parameters": [
+          { "name": "storyId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } },
+          { "name": "pageId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseStoryPage" } } } },
+          "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
+        }
+      },
+      "put": {
+        "tags": ["dev-content"],
+        "summary": "[DEV ONLY] Update story page",
+        "parameters": [
+          { "name": "storyId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } },
+          { "name": "pageId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UpdateStoryPageRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiResponseStoryPage" } } } },
           "400": { "description": "Bad Request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error400" } } } },
           "404": { "description": "Not Found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error404" } } } }
         }
@@ -1628,6 +1740,56 @@
           "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
         }
       },
+      "CreateStoryRequest": {
+        "type": "object",
+        "required": ["title", "status"],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "estimatedDurationMinutes": { "type": "integer", "nullable": true },
+          "topicIds": { "type": "array", "nullable": true, "items": { "type": "integer", "format": "int64" } },
+          "backgroundMusicResourceRef": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "UpdateStoryRequest": {
+        "type": "object",
+        "required": ["title", "status"],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "minAge": { "type": "integer", "nullable": true },
+          "maxAge": { "type": "integer", "nullable": true },
+          "estimatedDurationMinutes": { "type": "integer", "nullable": true },
+          "topicIds": { "type": "array", "nullable": true, "items": { "type": "integer", "format": "int64" } },
+          "backgroundMusicResourceRef": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "CreateStoryPageRequest": {
+        "type": "object",
+        "required": ["pageOrder", "text", "status"],
+        "properties": {
+          "pageOrder": { "type": "integer" },
+          "text": { "type": "string" },
+          "imageResourceRef": { "type": "string", "nullable": true },
+          "audioResourceRef": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
+      "UpdateStoryPageRequest": {
+        "type": "object",
+        "required": ["pageOrder", "text", "status"],
+        "properties": {
+          "pageOrder": { "type": "integer" },
+          "text": { "type": "string" },
+          "imageResourceRef": { "type": "string", "nullable": true },
+          "audioResourceRef": { "type": "string", "nullable": true },
+          "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] }
+        }
+      },
       "StoryResponse": {
         "type": "object",
         "properties": {
@@ -1673,6 +1835,15 @@
           "pages": { "type": "array", "items": { "$ref": "#/components/schemas/StoryPageResponse" } }
         }
       },
+      "ApiResponseStory": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/StoryResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
       "ApiResponseStoryList": {
         "type": "object",
         "properties": {
@@ -1687,6 +1858,24 @@
         "properties": {
           "success": { "type": "boolean" },
           "data": { "$ref": "#/components/schemas/StoryDetailResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseStoryPage": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/StoryPageResponse" },
+          "message": { "type": "string", "nullable": true },
+          "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseStoryPageList": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/StoryPageResponse" } },
           "message": { "type": "string", "nullable": true },
           "errors": { "type": "array", "nullable": true, "items": { "type": "string" } }
         }

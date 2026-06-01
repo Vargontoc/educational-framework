@@ -13,3 +13,12 @@ export async function openChildSession(payload: OpenChildSessionRequest): Promis
 export async function closeChildSession(id: number): Promise<void> {
   await api.delete(`/api/v1/sessions/children/${id}`)
 }
+
+export async function getActiveChildSessions(): Promise<ChildSessionResponse[]> {
+  const { data } = await api.get<ApiResponse<ChildSessionResponse[]>>('/api/v1/sessions/children')
+  return data.data
+}
+
+export async function expelSession(sessionId: number): Promise<void> {
+  await api.delete(`/api/v1/sessions/children/${sessionId}/expel`)
+}
