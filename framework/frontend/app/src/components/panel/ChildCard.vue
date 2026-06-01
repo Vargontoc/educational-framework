@@ -53,7 +53,29 @@ const sessionDuration = computed(() => {
         </svg>
       </div>
       <div class="card-info">
-        <h3 class="child-name">{{ child.name }}</h3>
+        <div class="name-row">
+          <h3 class="child-name">{{ child.name }}</h3>
+          <div v-if="activeSession" class="session-inline">
+            <span class="session-duration">
+              <svg class="duration-icon" width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M7 4v3l2 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              {{ sessionDuration }}
+            </span>
+            <button
+              class="close-session-btn"
+              type="button"
+              :aria-label="t('panel.children.actions.closeSessionAria', { name: child.name })"
+              @click="emit('closeSession')"
+            >
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M3 10.5L7 4l4 6.5H3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5.5 8.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
         <div class="status-badges">
           <span
             class="status-badge"
@@ -95,27 +117,6 @@ const sessionDuration = computed(() => {
           {{ child.agentEnabled ? t('panel.children.card.on') : t('panel.children.card.off') }}
         </span>
       </div>
-    </div>
-
-    <div v-if="activeSession" class="session-row">
-      <div class="session-duration">
-        <svg class="duration-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M7 4v3l2 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <span>{{ sessionDuration }}</span>
-      </div>
-      <button
-        class="close-session-btn"
-        type="button"
-        :aria-label="t('panel.children.actions.closeSessionAria', { name: child.name })"
-        @click="emit('closeSession')"
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M3 10.5L7 4l4 6.5H3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M5.5 8.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-      </button>
     </div>
 
     <div class="card-actions">
@@ -185,10 +186,57 @@ const sessionDuration = computed(() => {
 }
 
 .child-name {
-  margin: 0 0 var(--space-xs);
+  margin: 0;
   font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--color-text-primary);
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-xs);
+}
+
+.session-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.session-duration {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.close-session-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: 4px 8px;
+  border: 2px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-base);
+  font-weight: 600;
+  transition: border-color var(--transition-base), color var(--transition-base), background-color var(--transition-base);
+}
+
+.close-session-btn:hover {
+  background-color: color-mix(in srgb, #e53935 8%, transparent);
+  border-color: #e53935;
+  color: #e53935;
 }
 
 .status-badges {
@@ -249,40 +297,6 @@ const sessionDuration = computed(() => {
 
 .flag-value--off {
   color: var(--color-text-secondary);
-}
-
-.session-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.session-duration {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.close-session-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: background-color var(--transition-base), color var(--transition-base);
-}
-
-.close-session-btn:hover {
-  background-color: color-mix(in srgb, #e53935 12%, transparent);
-  color: #e53935;
 }
 
 .card-actions {
