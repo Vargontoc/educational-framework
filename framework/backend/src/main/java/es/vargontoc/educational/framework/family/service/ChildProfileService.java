@@ -108,7 +108,7 @@ public class ChildProfileService implements ChildProfileUseCase {
         childProfileRepository.save(child);
 
         if(!child.isActive()) {
-            sessions.getActiveSessions(child.getFamilyId()).stream().filter(x -> x.getChildProfileId().equals(id)).toList().forEach(e -> sessions.closeSession(e.getId()));
+            sessions.getActiveSessions(child.getFamilyId()).stream().filter(x -> x.getChildProfileId().equals(id)).toList().forEach(e -> sessions.expelChild(e.getId()));
         }
 
         return child;

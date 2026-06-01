@@ -206,7 +206,11 @@ export const messages = {
       title: '¿Quién va a jugar?',
       addChild: 'Agregar niño',
       empty: 'No hay perfiles aún',
-      cardAriaLabel: 'Perfil de {name}'
+      cardAriaLabel: 'Perfil de {name}',
+      blocked: 'Bloqueado',
+      blockedWarningTitle: 'Perfil bloqueado',
+      blockedWarningMessage: 'El perfil de {name} está bloqueado. Un adulto debe desbloquearlo desde el panel de control.',
+      blockedWarningClose: 'Entendido'
     },
     addChild: {
       title: 'Nuevo perfil',
