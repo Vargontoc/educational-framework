@@ -35,6 +35,7 @@ function handleRetry() {
 }
 
 async function handleChildSelect(child: ChildProfileResponse) {
+  if (!child.active) return
   try {
     const session = await childSessionService.openChildSession({ childProfileId: child.id })
     sessionStore.setActiveChildSession(session)
