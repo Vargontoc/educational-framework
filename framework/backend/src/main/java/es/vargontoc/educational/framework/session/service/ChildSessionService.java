@@ -98,6 +98,13 @@ public class ChildSessionService implements ChildSessionUseCase {
 
     @Override
     @Transactional(readOnly = true)
+    public ChildSession getSession(Long id) {
+        return childSessionRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Child session not found: " + id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ChildSession> getActiveSessions(Long familyId) {
         return childSessionRepository.findActiveByFamilyId(familyId);
     }

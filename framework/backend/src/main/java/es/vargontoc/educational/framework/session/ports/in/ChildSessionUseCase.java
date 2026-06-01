@@ -15,6 +15,8 @@ public interface ChildSessionUseCase {
 
     void recordHeartbeat(Long id);
 
+    ChildSession getSession(Long id);
+
     List<ChildSession> getActiveSessions(Long familyId);
 
     int expireInactiveSessions(LocalDateTime cutoff);

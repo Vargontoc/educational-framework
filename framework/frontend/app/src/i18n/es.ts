@@ -102,7 +102,7 @@ export const messages = {
   game: {
     title: 'Paseo de aprendizaje',
     mapEyebrow: 'Mundo vivo',
-    placeholder: 'Preparando la sesión de {childId}. El backend decidirá el siguiente descubrimiento.'
+    loaderText: 'Preparando tu aventura...'
   },
   rotation: {
     message: 'Por favor, gira el dispositivo a modo horizontal para continuar'

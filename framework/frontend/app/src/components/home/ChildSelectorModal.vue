@@ -3,16 +3,24 @@ import { useI18n } from 'vue-i18n'
 import { useFamilyStore } from '@/stores/useFamilyStore'
 import Modal from '@/components/ui/Modal.vue'
 import childAvatarsSvg from '@/assets/images/child-avatars.svg?url'
+import type { ChildProfileResponse } from '@/shared/types/api'
 
 const { t } = useI18n()
 const familyStore = useFamilyStore()
 
 const TITLE_ID = 'child-selector-title'
+const emit = defineEmits<{
+  select: [child: ChildProfileResponse]
+}>()
 
 const PLACEHOLDER_AVATARS = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5', 'avatar-6']
 
 function isPlaceholderAvatar(avatar: string): boolean {
   return PLACEHOLDER_AVATARS.includes(avatar)
+}
+
+function handleSelectChild(child: ChildProfileResponse) {
+  emit('select', child)
 }
 
 function handleAddChild() {
@@ -44,6 +52,7 @@ function handleClose() {
           class="child-card"
           role="option"
           :aria-label="t('modal.children.cardAriaLabel', { name: child.name })"
+          @click="handleSelectChild(child)"
         >
           <div class="child-avatar">
             <svg
@@ -123,6 +132,7 @@ function handleClose() {
   border-radius: var(--radius-md);
   background: #ffffff;
   min-height: 140px;
+  cursor: pointer;
 }
 
 .child-avatar {

@@ -3,7 +3,7 @@
   "info": {
     "title": "Educational Framework WebSocket Contract",
     "description": "Baseline real-time contract for FEAT-002 session events.",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "channels": {
     "/ws/parent": {
@@ -31,7 +31,12 @@
     },
     "/ws/game": {
       "protocol": "ws",
-      "description": "Native game WebSocket endpoint. Connections require Authorization: Bearer <token> during handshake.",
+      "description": "Native game WebSocket endpoint. No Authorization header is required during handshake. Authentication is performed via an initial auth message after connection. Handshake sequence: connect → send auth → receive AUTH_ACK → send heartbeat/game_action. Connections that do not send a valid auth message within 15 seconds are closed.",
+      "publish": {
+        "message": {
+          "$ref": "#/components/messages/GameClientMessage"
+        }
+      },
       "subscribe": {
         "message": {
           "$ref": "#/components/messages/SessionEvent"
@@ -55,7 +60,8 @@
                 "SESSION_INVALIDATED",
                 "CHILD_EXPELLED",
                 "PARENT_BLOCK",
-                "HEARTBEAT_ACK"
+                "HEARTBEAT_ACK",
+                "AUTH_ACK"
               ]
             },
             "sessionId": {
@@ -66,6 +72,43 @@
               "type": "object"
             }
           }
+        }
+      },
+      "GameClientMessage": {
+        "name": "GameClientMessage",
+        "description": "Messages sent from the game client to the server.",
+        "payload": {
+          "type": "object",
+          "required": ["type"],
+          "discriminator": "type",
+          "oneOf": [
+            {
+              "title": "AuthMessage",
+              "description": "First message sent after connecting. Binds the WebSocket session to an active child session.",
+              "properties": {
+                "type": { "type": "string", "const": "auth" },
+                "childSessionId": { "type": "integer", "format": "int64" }
+              },
+              "required": ["type", "childSessionId"]
+            },
+            {
+              "title": "HeartbeatMessage",
+              "description": "Sent periodically to keep the child session alive. Only valid after successful auth.",
+              "properties": {
+                "type": { "type": "string", "const": "heartbeat" }
+              },
+              "required": ["type"]
+            },
+            {
+              "title": "GameActionMessage",
+              "description": "Placeholder for future game engine actions. Only valid after successful auth.",
+              "properties": {
+                "type": { "type": "string", "const": "game_action" },
+                "payload": { "type": "object" }
+              },
+              "required": ["type"]
+            }
+          ]
         }
       }
     },
@@ -93,6 +136,10 @@
       "HEARTBEAT_ACK": {
         "direction": "server_to_client",
         "description": "Acknowledgement emitted by server after receiving heartbeat."
+      },
+      "AUTH_ACK": {
+        "direction": "server_to_client",
+        "description": "WebSocket session successfully bound to an active child session after auth message."
       }
     }
   }

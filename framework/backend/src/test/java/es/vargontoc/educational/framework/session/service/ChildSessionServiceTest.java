@@ -150,6 +150,25 @@ class ChildSessionServiceTest {
     }
 
     @Test
+    void getSession_found_returnsSession() {
+        var session = activeSession();
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+        var result = childSessionService.getSession(1L);
+
+        assertEquals(1L, result.getId());
+        assertEquals(ChildSessionStatus.ACTIVE, result.getStatus());
+    }
+
+    @Test
+    void getSession_notFound_throwsResourceNotFoundException() {
+        when(childSessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException.class,
+            () -> childSessionService.getSession(99L));
+    }
+
+    @Test
     void expireInactiveSessions_marksAllResultsExpired() {
         var first = activeSession();
         var second = activeSession();

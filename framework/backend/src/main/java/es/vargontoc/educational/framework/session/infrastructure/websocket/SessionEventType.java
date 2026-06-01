@@ -7,7 +7,8 @@ public enum SessionEventType {
     SESSION_INVALIDATED("Family session was revoked externally, usually after a PIN change."),
     CHILD_EXPELLED("Parent or admin explicitly expelled the child from the active session."),
     PARENT_BLOCK("Child is blocked by parental control and cannot reconnect until unblocked."),
-    HEARTBEAT_ACK("Acknowledgement emitted by server after receiving heartbeat.");
+    HEARTBEAT_ACK("Acknowledgement emitted by server after receiving heartbeat."),
+    AUTH_ACK("WebSocket session bound to an active child session after auth message.");
 
     private final String description;
 

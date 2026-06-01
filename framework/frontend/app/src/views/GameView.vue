@@ -1,15 +1,146 @@
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useSessionStore } from '@/stores/useSessionStore'
 
 const { t } = useI18n()
 const route = useRoute()
-const childId = route.params.childId
+const router = useRouter()
+const sessionStore = useSessionStore()
+
+const childId = computed(() => String(route.params.childId))
+const childName = ref<string>('')
+
+type GameViewState = 'preparing' | 'ready' | 'error'
+
+const viewState = ref<GameViewState>('preparing')
+const connectionState = ref<'connecting' | 'connected' | 'disconnected'>('disconnected')
+
+let ws: WebSocket | null = null
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+const HEARTBEAT_INTERVAL_MS = 30_000
+
+function getChildName(): string {
+  const child = sessionStore.activeChildSession
+  if (child) {
+    return String(child.childProfileId)
+  }
+  return childId.value
+}
+
+function startHeartbeat() {
+  stopHeartbeat()
+  heartbeatTimer = setInterval(() => {
+    sendMessage({ type: 'heartbeat' })
+  }, HEARTBEAT_INTERVAL_MS)
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer !== null) {
+    clearInterval(heartbeatTimer)
+    heartbeatTimer = null
+  }
+}
+
+function sendMessage(payload: object) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(payload))
+  }
+}
+
+function closeWebSocket() {
+  if (ws) {
+    ws.close()
+    ws = null
+  }
+}
+
+function clearChildSessionAndGoHome() {
+  sessionStore.clearActiveChildSession()
+  router.replace('/')
+}
+
+function handleTerminalEvent(_event: string) {
+  closeWebSocket()
+  stopHeartbeat()
+  clearChildSessionAndGoHome()
+}
+
+function onWsOpen() {
+  connectionState.value = 'connected'
+  sendMessage({ type: 'auth', childSessionId: sessionStore.activeChildSession?.id })
+}
+
+function onWsMessage(event: MessageEvent) {
+  try {
+    const data = JSON.parse(event.data) as { event: string; payload?: unknown }
+    switch (data.event) {
+      case 'AUTH_ACK':
+        startHeartbeat()
+        viewState.value = 'ready'
+        break
+      case 'HEARTBEAT_ACK':
+        break
+      case 'GAME_STATE_UPDATE':
+        break
+      case 'SESSION_EXPIRED':
+      case 'SESSION_INVALIDATED':
+      case 'CHILD_EXPELLED':
+      case 'PARENT_BLOCK':
+        handleTerminalEvent(data.event)
+        break
+    }
+  } catch {
+  }
+}
+
+function onWsClose() {
+  connectionState.value = 'disconnected'
+  stopHeartbeat()
+}
+
+function onWsError() {
+  connectionState.value = 'disconnected'
+}
+
+function initWebSocket() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const wsUrl = `${protocol}//${window.location.host}/ws/game`
+  ws = new WebSocket(wsUrl)
+  ws.onopen = onWsOpen
+  ws.onmessage = onWsMessage
+  ws.onclose = onWsClose
+  ws.onerror = onWsError
+}
+
+onMounted(() => {
+  if (!sessionStore.activeChildSession) {
+    router.replace('/')
+    return
+  }
+  childName.value = getChildName()
+  viewState.value = 'preparing'
+  initWebSocket()
+})
+
+onUnmounted(() => {
+  closeWebSocket()
+  stopHeartbeat()
+})
 </script>
 
 <template>
   <main class="game-view" aria-labelledby="game-title">
-    <section class="game-view__world">
+    <div v-if="viewState === 'preparing'" class="game-view__loader" aria-live="polite">
+      <div class="game-view__loader-avatar">
+        <img src="@/assets/animations/base-idle.png" alt="" class="game-view__avatar-img" />
+        <div class="game-view__loader-ring" aria-hidden="true"></div>
+      </div>
+      <p class="game-view__loader-text">{{ t('game.loaderText') }}</p>
+    </div>
+
+    <section v-else class="game-view__world" aria-label="World map">
       <div class="game-view__cloud game-view__cloud--one" aria-hidden="true"></div>
       <div class="game-view__cloud game-view__cloud--two" aria-hidden="true"></div>
       <div class="game-view__path" aria-hidden="true">
@@ -20,7 +151,6 @@ const childId = route.params.childId
       <div class="game-view__card">
         <p class="game-view__eyebrow">{{ t('game.mapEyebrow') }}</p>
         <h1 id="game-title">{{ t('game.title') }}</h1>
-        <p>{{ t('game.placeholder', { childId }) }}</p>
       </div>
     </section>
   </main>
@@ -28,10 +158,50 @@ const childId = route.params.childId
 
 <style scoped>
 .game-view {
+  position: fixed;
+  inset: 0;
   min-height: 100vh;
   min-height: 100dvh;
   background: linear-gradient(180deg, var(--color-sky) 0 66%, var(--color-grass) 67% 100%);
   overflow: hidden;
+}
+
+.game-view__loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  gap: var(--space-lg);
+}
+
+.game-view__loader-avatar {
+  position: relative;
+  width: 160px;
+  height: 160px;
+}
+
+.game-view__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.game-view__loader-ring {
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  border: 6px solid rgba(255, 255, 255, 0.6);
+  border-top-color: var(--color-primary);
+  animation: spin 1.2s linear infinite;
+}
+
+.game-view__loader-text {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  font-weight: 600;
 }
 
 .game-view__world {
@@ -136,16 +306,16 @@ const childId = route.params.childId
   line-height: 1.5;
 }
 
-.game-view__card p {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-game-label);
-  line-height: 1.5;
-}
-
 .game-view__eyebrow {
   color: var(--color-primary) !important;
   font-size: var(--font-size-button) !important;
   font-weight: 800;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes drift {

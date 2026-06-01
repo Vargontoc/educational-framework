@@ -71,7 +71,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(gameWebSocketHandler(), "/ws/game")
-            .addInterceptors(new WebSocketAuthInterceptor(familySessionUseCase))
             .setAllowedOriginPatterns("*");
     }
 

@@ -25,7 +25,13 @@ const router = createRouter({
     {
       path: '/game/:childId',
       name: 'game',
-      component: () => import('@/views/GameView.vue')
+      component: () => import('@/views/GameView.vue'),
+      beforeEnter: (to) => {
+        const session = useSessionStore()
+        if (!session.hasActiveChildSession(String(to.params.childId))) {
+          return '/'
+        }
+      }
     },
     {
       path: '/design-system',

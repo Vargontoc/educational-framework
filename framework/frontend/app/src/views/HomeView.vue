@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useFamilyStore } from '@/stores/useFamilyStore'
+import { useSessionStore } from '@/stores/useSessionStore'
+import * as childSessionService from '@/services/childSessionService'
 import FamilyRegistrationModal from '@/components/home/FamilyRegistrationModal.vue'
 import PinModal from '@/components/home/PinModal.vue'
 import ChildSelectorModal from '@/components/home/ChildSelectorModal.vue'
 import AddChildModal from '@/components/home/AddChildModal.vue'
+import type { ChildProfileResponse } from '@/shared/types/api'
 
 const { t } = useI18n()
+const router = useRouter()
 const familyStore = useFamilyStore()
+const sessionStore = useSessionStore()
 
 onMounted(async () => {
   await nextTick()
@@ -26,6 +32,16 @@ function openPin() {
 
 function handleRetry() {
   familyStore.fetchFamily()
+}
+
+async function handleChildSelect(child: ChildProfileResponse) {
+  try {
+    const session = await childSessionService.openChildSession({ childProfileId: child.id })
+    sessionStore.setActiveChildSession(session)
+    familyStore.setActiveModal(null)
+    router.replace(`/game/${child.id}`)
+  } catch {
+  }
 }
 </script>
 
@@ -75,7 +91,7 @@ function handleRetry() {
     <!-- Modals -->
     <FamilyRegistrationModal />
     <PinModal />
-    <ChildSelectorModal />
+    <ChildSelectorModal @select="handleChildSelect" />
     <AddChildModal />
   </div>
 </template>
