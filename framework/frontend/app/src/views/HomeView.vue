@@ -39,7 +39,7 @@ async function handleChildSelect(child: ChildProfileResponse) {
     const session = await childSessionService.openChildSession({ childProfileId: child.id })
     sessionStore.setActiveChildSession(session)
     familyStore.setActiveModal(null)
-    router.replace(`/game/${child.id}`)
+    router.replace('/game')
   } catch {
   }
 }

@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/useSessionStore'
 
 const { t } = useI18n()
-const route = useRoute()
 const router = useRouter()
 const sessionStore = useSessionStore()
 
-const childId = computed(() => String(route.params.childId))
 const childName = ref<string>('')
 
 type GameViewState = 'preparing' | 'ready' | 'error'
@@ -21,12 +19,13 @@ let ws: WebSocket | null = null
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 const HEARTBEAT_INTERVAL_MS = 30_000
 
+function getChildProfileId(): number | null {
+  return sessionStore.activeChildSession?.childProfileId ?? null
+}
+
 function getChildName(): string {
-  const child = sessionStore.activeChildSession
-  if (child) {
-    return String(child.childProfileId)
-  }
-  return childId.value
+  const profileId = getChildProfileId()
+  return profileId !== null ? String(profileId) : ''
 }
 
 function startHeartbeat() {
@@ -44,8 +43,10 @@ function stopHeartbeat() {
 }
 
 function sendMessage(payload: object) {
+  console.log("Estado WS " + ws?.readyState)
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(payload))
+    console.log("Enviado evento")
   }
 }
 
@@ -75,6 +76,7 @@ function onWsOpen() {
 function onWsMessage(event: MessageEvent) {
   try {
     const data = JSON.parse(event.data) as { event: string; payload?: unknown }
+    console.log('WS Message: ' + event)
     switch (data.event) {
       case 'AUTH_ACK':
         startHeartbeat()
@@ -105,8 +107,7 @@ function onWsError() {
 }
 
 function initWebSocket() {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const wsUrl = `${protocol}//${window.location.host}/ws/game`
+  const wsUrl = `${import.meta.env.VITE_WS_BASE_URL}/ws/game`
   ws = new WebSocket(wsUrl)
   ws.onopen = onWsOpen
   ws.onmessage = onWsMessage

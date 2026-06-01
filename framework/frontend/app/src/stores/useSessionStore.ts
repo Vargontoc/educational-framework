@@ -30,10 +30,9 @@ export const useSessionStore = defineStore(
       activeChildSession.value = null
     }
 
-    function hasActiveChildSession(childId: string): boolean {
-      if (!activeChildSession.value) return false
-      return String(activeChildSession.value.childProfileId) === childId
-    }
+function hasActiveChildSession(): boolean {
+  return activeChildSession.value?.status === 'ACTIVE'
+}
 
     async function logout() {
       try {

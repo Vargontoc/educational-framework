@@ -23,12 +23,13 @@ const router = createRouter({
       }
     },
     {
-      path: '/game/:childId',
+      path: '/game',
       name: 'game',
       component: () => import('@/views/GameView.vue'),
-      beforeEnter: (to) => {
+      props: true,
+      beforeEnter: () => {
         const session = useSessionStore()
-        if (!session.hasActiveChildSession(String(to.params.childId))) {
+        if (!session.hasActiveChildSession()) {
           return '/'
         }
       }

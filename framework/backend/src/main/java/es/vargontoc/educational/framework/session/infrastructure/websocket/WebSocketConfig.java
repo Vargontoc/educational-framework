@@ -8,17 +8,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.scheduling.concurrent.DefaultManagedTaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.servlet.handler.SimpleUrlHandlerMapping;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
-import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
+import org.springframework.web.socket.server.support.WebSocketHttpRequestHandler;
+
+import java.util.Map;
 
 @Configuration
 @EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSocketConfigurer {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final FamilySessionUseCase familySessionUseCase;
     private final ChildSessionUseCase childSessionUseCase;
@@ -68,10 +72,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSoc
 
     // ── Native WebSocket (game channel) ───────────────────────────────
 
-    @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(gameWebSocketHandler(), "/ws/game")
-            .setAllowedOriginPatterns("*");
+    @Bean
+    public HandlerMapping nativeWebSocketHandlerMapping() {
+        DefaultHandshakeHandler handshakeHandler = new DefaultHandshakeHandler() {
+            @Override
+            protected boolean isValidOrigin(ServerHttpRequest request) {
+                return true;
+            }
+        };
+        WebSocketHttpRequestHandler handler = new WebSocketHttpRequestHandler(gameWebSocketHandler(), handshakeHandler);
+        SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
+        mapping.setUrlMap(Map.of("/ws/game", handler));
+        mapping.setOrder(-1);
+        return mapping;
     }
 
     @Bean
