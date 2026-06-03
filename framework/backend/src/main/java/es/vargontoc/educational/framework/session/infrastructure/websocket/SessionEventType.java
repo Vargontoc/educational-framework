@@ -8,7 +8,11 @@ public enum SessionEventType {
     CHILD_EXPELLED("Parent or admin explicitly expelled the child from the active session."),
     PARENT_BLOCK("Child is blocked by parental control and cannot reconnect until unblocked."),
     HEARTBEAT_ACK("Acknowledgement emitted by server after receiving heartbeat."),
-    AUTH_ACK("WebSocket session bound to an active child session after auth message.");
+    AUTH_ACK("WebSocket session bound to an active child session after auth message."),
+    CHILD_TTS_ACTIVATED("TTS Service is activated for the child."),
+    CHILD_TTS_DEACTIVATED("TTS service is deactivated for the child."),
+    CHILD_AGENT_ACTIVATED(  "Agent Child model is activated for the child"),
+    CHILD_AGENT_DEACTIVATED("Agent Child model is desactivated for the child");
 
     private final String description;
 

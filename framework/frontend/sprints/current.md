@@ -1,12 +1,12 @@
-# Sprint 014 - frontend
+# Sprint 015 - frontend
 # -----------------------------------------------
 
 ## Goal
-Implement the Parent Control Children Section from `docs/product/features/frontend/FEAT-008-Child-Section.md`: replace the `/panel` Children placeholder with real adult-facing child profile management, active session display, 5-second active-session polling, edit/block/unblock/delete/close-session actions, i18n, accessibility, and responsive panel layout. Backend implementation is out of scope.
+Implement the Parent Control Settings Section from `docs/product/features/frontend/FEAT-009-Settings-Section`: replace the `/panel` Settings placeholder with real adult-facing family configuration, global TTS and agent controls, PIN update with confirmation, real REST/WebSocket integration, i18n, accessibility, and responsive panel layout. Backend implementation is out of scope.
 
 ## Status
 status: active
-started_at: 2026-06-01 00:00:00
+started_at: 2026-06-03 00:00:00
 closed_at:
 blocked_by:
 waiting_for:
@@ -14,99 +14,68 @@ waiting_for:
 ## Tasks
 
 ### Feature And Existing Flow Review
-- [ ] Review `docs/product/features/frontend/FEAT-008-Child-Section.md` before editing.
-- [ ] Review `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` for panel shell constraints and Children placeholder behavior.
-- [ ] Review `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md` for child card/avatar/edit patterns.
-- [ ] Review `docs/contracts/api/openapi.json` for family, child profile, and child session schemas/endpoints.
-- [ ] Review `docs/contracts/api/websocket.json` for optional ParentChannel session events only.
-- [ ] Review existing panel component structure before replacing the Children placeholder.
-- [ ] Review existing service/store patterns before adding child profile/session services.
+- [ ] Review `docs/product/features/frontend/FEAT-009-Settings-Section` before editing.
+- [ ] Review `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` for panel shell constraints and Settings placeholder behavior.
+- [ ] Review `docs/product/features/frontend/FEAT-001-Base-Styles.md` for adult visual and accessibility tokens.
+- [ ] Review `docs/contracts/api/openapi.json` for family settings and PIN update contract behavior.
+- [ ] Review `docs/contracts/api/websocket.json` for `CHILD_TTS_ACTIVATED`, `CHILD_TTS_DEACTIVATED`, `CHILD_AGENT_ACTIVATED`, `CHILD_AGENT_DEACTIVATED`, and `SESSION_INVALIDATED`.
+- [ ] Review existing panel component structure before replacing the Settings placeholder.
+- [ ] Review existing service/store patterns before adding settings services.
 - [ ] Do not implement backend code in this sprint.
 
 ### Contract And Endpoint Alignment
 - [ ] Use OpenAPI-derived types where the endpoint exists in `docs/contracts/api/openapi.json`.
-- [ ] Confirm `GET /api/v1/family`, `GET /api/v1/family/children`, `PATCH /api/v1/family/children/{id}`, `DELETE /api/v1/family/children/{id}`, `GET /api/v1/sessions/children?familyId={familyId}`, and `DELETE /api/v1/sessions/children/{id}/expel` are available in frontend API typing or service layer.
-- [ ] Account for backend endpoint `PUT /api/v1/family/children/activation/{id}` for block/unblock.
-- [ ] If OpenAPI does not yet include `PUT /api/v1/family/children/activation/{id}`, isolate the call in a clearly named service method and document the contract drift in review.
-- [ ] Do not change backend contracts unless explicitly requested.
+- [ ] Confirm `GET /api/v1/family` is available in frontend API typing or service layer.
+- [ ] Confirm the real endpoint for updating global TTS and agent settings with persisted child propagation.
+- [ ] Confirm the real endpoint for updating the family PIN and invalidating FamilySessions only.
+- [ ] If `PATCH /api/v1/family` is used, send the current `name` because `UpdateFamilyRequest.name` is required.
+- [ ] If OpenAPI does not document child propagation or FamilySession-only invalidation, stop and report the backend contract blocker.
 - [ ] Do not invent local request/response models that diverge from existing schemas.
+- [ ] Do not add mock endpoints, fake events, or local-only propagation state.
 
-### Children Section Integration
-- [ ] Replace the Children placeholder in `/panel` with the real Children section.
+### Settings Section Integration
+- [ ] Replace the Settings placeholder in `/panel` with the real Settings section.
 - [ ] Keep `/panel` protected by the existing in-memory parent token guard.
-- [ ] Load family settings needed for child TTS/agent ceiling values.
-- [ ] Load child profiles from `GET /api/v1/family/children`.
-- [ ] Load active child sessions from `GET /api/v1/sessions/children?familyId={familyId}`.
+- [ ] Load current family settings from `GET /api/v1/family`.
 - [ ] Show adult-facing loading, empty, and retryable error states.
+- [ ] Keep raw parent token in memory only.
 - [ ] Do not open GameView from the panel.
 
-### Child Cards
-- [ ] Render child cards with avatar, name, active/blocked state, TTS state, agent state, and active session state.
-- [ ] Use `ChildProfileResponse.active` to show active vs blocked state.
-- [ ] Match active `ChildSessionResponse` entries by `childProfileId` and `status: ACTIVE`.
-- [ ] Show live session duration from `ChildSessionResponse.startedAt` when active.
-- [ ] Show Edit action for each child.
-- [ ] Show Block or Unblock action according to `active`.
-- [ ] Show Close session action only when the child has an active session.
-- [ ] Ensure active/blocked/session states do not rely on color alone.
+### Global TTS Control
+- [ ] Render a global TTS toggle from real `FamilyResponse.ttsEnabled` state.
+- [ ] Opening TTS disable flow shows a confirmation modal explaining child and active-session effects.
+- [ ] Confirming TTS disable calls the real API integration that persists child-level disabled effect.
+- [ ] Refresh family settings and affected child state if displayed by the UI.
+- [ ] Re-enabling global TTS must not reactivate children manually disabled before.
+- [ ] Do not simulate child propagation locally.
 
-### Edit Child Modal
-- [ ] Add adult-facing edit modal for child profile updates.
-- [ ] Include required name field.
-- [ ] Include required birthday field using contract-compatible date format.
-- [ ] Include avatar editing only if the existing avatar selector pattern can be reused without scope creep.
-- [ ] Include `ttsEnabled` toggle.
-- [ ] Include `agentEnabled` toggle.
-- [ ] Disable child TTS toggle when family-level TTS is disabled and show translated explanatory text.
-- [ ] Disable child agent toggle when family-level agent is disabled and show translated explanatory text.
-- [ ] Validate required name and birthday before submit.
-- [ ] Submit `PATCH /api/v1/family/children/{id}` with `UpdateChildProfileRequest` shape.
-- [ ] On success, close modal and refresh children and sessions.
-- [ ] On `400`, show inline adult validation feedback.
-- [ ] On `404`, close stale modal state and refresh list.
-- [ ] On network or `5xx`, show retryable adult-facing feedback.
+### Global Agent Control
+- [ ] Render a global agent toggle from real `FamilyResponse.agentEnabled` state.
+- [ ] Opening agent disable flow shows a confirmation modal explaining child and active-session effects.
+- [ ] Confirming agent disable calls the real API integration that persists child-level disabled effect.
+- [ ] Refresh family settings and affected child state if displayed by the UI.
+- [ ] Re-enabling global agent must not reactivate children manually disabled before.
+- [ ] Do not simulate child propagation locally.
 
-### Block And Unblock
-- [ ] Add confirmation modal for Block/Unblock action.
-- [ ] Call `PUT /api/v1/family/children/activation/{id}` on confirmation.
-- [ ] Refresh children and sessions after success.
-- [ ] Do not manually call session close/expel after activation toggle; backend owns that side effect.
-- [ ] After blocking, ensure the card shows blocked state and no stale Close session action remains after refresh.
+### PIN Update Flow
+- [ ] Add Change PIN action inside Settings.
+- [ ] Do not ask for the current PIN because the parent is already authenticated in `/panel`.
+- [ ] Use the custom numeric keypad pattern with 4 digits.
+- [ ] Ask for new PIN and confirmation.
+- [ ] Mask digits as indicators; never show PIN digits as plain text.
+- [ ] On mismatch, show adult red feedback, shake indicators, clear confirmation entry, and keep the first PIN entry.
+- [ ] On matching confirmation, call the real backend integration.
+- [ ] On success, clear the current family session from memory and navigate Home.
+- [ ] Do not close ChildSessions from the frontend after PIN update.
+- [ ] Clear PIN state after success, close, mismatch reset, or unrecoverable error.
 
-### Delete Child
-- [ ] Add destructive confirmation modal for Delete.
-- [ ] Keep delete visually and semantically distinct from Block/Unblock.
-- [ ] Call `DELETE /api/v1/family/children/{id}` on confirmation.
-- [ ] Refresh children and sessions after success.
-- [ ] Remove the child card after successful refresh.
-- [ ] Do not manually call session close/expel after delete; backend owns that side effect.
-- [ ] On `404`, close stale modal state and refresh list.
-
-### Close Active Session
-- [ ] Show Close session only for children with active sessions.
-- [ ] Add confirmation modal for Close session.
-- [ ] Call `DELETE /api/v1/sessions/children/{sessionId}/expel` on confirmation.
-- [ ] Refresh active sessions immediately after success.
-- [ ] If session is already gone, clear stale local session state and refresh.
-- [ ] Do not show technical session errors to the adult without translated context.
-
-### Session Polling
-- [ ] Start active-session polling when the Children section becomes active.
-- [ ] Poll `GET /api/v1/sessions/children?familyId={familyId}` every 5 seconds.
-- [ ] Stop polling when parent leaves the Children section.
-- [ ] Stop polling when `/panel` unmounts or parent logs out.
-- [ ] Skip a poll tick if a previous active-session request is still in flight.
-- [ ] Prevent duplicate intervals if the parent reselects Children.
-- [ ] Refresh sessions immediately after edit, activation toggle, delete, and close-session actions.
-- [ ] Compute visible session duration from `startedAt` and update display on the 5-second cadence.
-- [ ] Show translated fallback if `startedAt` is missing or invalid.
-
-### Optional ParentChannel Use
-- [ ] ParentChannel integration is optional.
-- [ ] If used, subscribe only to already contracted session events from `docs/contracts/api/websocket.json`.
-- [ ] Do not invent child profile update events.
-- [ ] Keep profile refresh REST-based.
-- [ ] Do not add WebSocket dependency if polling satisfies this sprint.
+### WebSocket Event Handling
+- [ ] Use only events documented in `docs/contracts/api/websocket.json`.
+- [ ] Handle `CHILD_TTS_ACTIVATED` and `CHILD_TTS_DEACTIVATED` according to GameView feedback rules if this sprint touches GameView event handling.
+- [ ] Handle `CHILD_AGENT_ACTIVATED` and `CHILD_AGENT_DEACTIVATED` according to GameView feedback rules if this sprint touches GameView event handling.
+- [ ] Use `SESSION_INVALIDATED` for other active panel sessions after PIN update where the existing ParentChannel flow supports it.
+- [ ] Do not invent alternate event names or payload fields.
+- [ ] Do not show adult toasts in GameView.
 
 ### Visual, Responsive, And Accessibility
 - [ ] Use adult panel background `#F4F6F9` and white card surfaces.
@@ -117,81 +86,73 @@ waiting_for:
 - [ ] Add all visible strings and aria labels to `src/i18n/es.ts` or existing i18n module.
 - [ ] Avoid sustained uppercase visible labels.
 - [ ] Ensure all icon buttons have translated accessible labels.
-- [ ] Ensure card actions are keyboard operable.
+- [ ] Ensure toggles and keypad actions are keyboard operable.
+- [ ] Ensure settings states are not color-only.
 - [ ] Ensure modals manage focus and return focus to triggers.
-- [ ] Ensure active/blocked/session states are not color-only.
 - [ ] Keep adult touch targets at least 44px.
 - [ ] Verify tablet landscape, mobile landscape, and portrait rotation overlay behavior.
 
 ### Testing And Verification
 - [ ] Add or update service/component/routing tests if the project has a test harness available for this area.
-- [ ] Verify Children section replaces the placeholder when selected in the panel.
+- [ ] Verify Settings section replaces the placeholder when selected in the panel.
 - [ ] Verify missing parent token still redirects `/panel` to Home.
-- [ ] Verify initial load calls family, children, and active-session endpoints.
-- [ ] Verify cards render child profile state and active session state.
-- [ ] Verify session duration display updates on the 5-second polling cadence.
-- [ ] Verify polling starts only while Children section is active.
-- [ ] Verify polling stops on section change and component unmount.
-- [ ] Verify polling skips overlapping active-session requests.
-- [ ] Verify edit modal validation and submit payload.
-- [ ] Verify family-level disabled TTS/agent disables corresponding child toggles.
-- [ ] Verify activation toggle calls `PUT /api/v1/family/children/activation/{id}` and refreshes data.
-- [ ] Verify delete confirmation calls `DELETE /api/v1/family/children/{id}` and refreshes data.
-- [ ] Verify close session calls `DELETE /api/v1/sessions/children/{sessionId}/expel`.
-- [ ] Verify error handling for `400`, `404`, network, and `5xx` flows.
+- [ ] Verify initial load calls the real family settings endpoint.
+- [ ] Verify TTS toggle renders backend value and submits the real API request on confirmation.
+- [ ] Verify agent toggle renders backend value and submits the real API request on confirmation.
+- [ ] Verify enabling global TTS/agent does not locally mutate child settings to enabled.
+- [ ] Verify PIN flow validates new PIN confirmation.
+- [ ] Verify PIN flow clears PIN state after success, close, or mismatch reset.
+- [ ] Verify successful PIN update clears session state and navigates Home.
+- [ ] Verify ChildSessions are not closed by the PIN update frontend flow.
+- [ ] Verify `400`, `404`, network, and `5xx` handling for settings and PIN flows.
 - [ ] Verify all visible labels resolve through i18n keys.
 - [ ] Run `npm run build` from `framework/frontend/app`.
 
 ## Risks
-- **Activation endpoint contract drift**: backend exposes `PUT /api/v1/family/children/activation/{id}` but OpenAPI may not include it yet.
-  Mitigation: isolate the service call and document drift in review; do not silently invent broad local models.
-- **Delete vs block confusion**: delete is destructive while block/unblock is reversible.
-  Mitigation: separate labels, styling, confirmation copy, and actions clearly.
-- **Duplicated backend side effects**: frontend may close sessions after edit, activation toggle, or delete even though backend owns those side effects.
-  Mitigation: only refresh children/sessions after those profile mutations.
-- **Stale session state**: active session cards may become outdated.
-  Mitigation: poll active sessions every 5 seconds while Children is active and refresh immediately after mutations.
-- **Polling load or leaks**: timer may run outside the section or overlap requests.
-  Mitigation: stop timer on section change/unmount/logout and skip overlapping requests.
-- **Family ceiling mismatch**: child TTS/agent toggles may appear enabled when family-level settings disable them.
-  Mitigation: load family settings, disable unavailable toggles, and show explanatory text.
-- **Adult UI drift**: panel may use GameView colors/feedback.
+- **OpenAPI side-effect drift**: OpenAPI may not document child propagation for global settings or FamilySession-only invalidation after PIN update.
+  Mitigation: stop implementation and request backend contract update; do not mock propagation.
+- **Local-only propagation temptation**: frontend may appear correct while backend state is not persisted.
+  Mitigation: use only real API responses and refresh from backend after mutations.
+- **Wrong session invalidation**: PIN update may accidentally close ChildSessions.
+  Mitigation: do not call child session endpoints from PIN flow; require FamilySession-only contract behavior.
+- **WebSocket payload ambiguity**: TTS/agent event names exist but payload semantics may be minimal.
+  Mitigation: use only `event` and `sessionId` unless backend documents additional payload fields.
+- **Adult UI drift**: Settings may use GameView colors/feedback.
   Mitigation: keep adult panel visual language and adult error semantics.
 
 ## Dependencies
-- `docs/product/features/frontend/FEAT-008-Child-Section.md` - source feature.
-- `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` - Parent Control Shell and Children placeholder.
-- `docs/product/features/frontend/FEAT-004-Modal-Creation-Child.md` - child card/avatar/profile patterns.
+- `docs/product/features/frontend/FEAT-009-Settings-Section` - source feature.
+- `docs/product/features/frontend/FEAT-005-Parent-Control-View.md` - Parent Control Shell and Settings placeholder.
 - `docs/product/features/frontend/FEAT-001-Base-Styles.md` - visual and accessibility tokens.
-- `docs/contracts/api/openapi.json` - family, child profile, and child session endpoints.
-- `docs/contracts/api/websocket.json` - optional ParentChannel session events.
-- `docs/design/frontend_design_v1.docx` - panel/children section behavior.
+- `docs/contracts/api/openapi.json` - family settings and PIN update endpoints.
+- `docs/contracts/api/websocket.json` - realtime session/settings events.
+- `docs/design/frontend_design_v1.docx` - panel/settings behavior and PIN flow.
 - `docs/design/design_decisions_v1.docx` - adult UI and accessibility decisions.
 
 ## Agent Instruction
-- Implement only `FEAT-008-Child-Section` frontend work.
+- Implement only `FEAT-009-Settings-Section` frontend work.
 - Do not implement backend changes.
 - Do not change backend contracts unless explicitly requested.
-- Do not implement child dashboard/progress analytics.
-- Do not open GameView from the panel.
-- Do not add direct TTS, agent, or Coqui calls.
+- Do not add mocks, fake endpoints, fake events, or local-only propagation state.
+- Do not implement Children section work already covered by `FEAT-008-Child-Section.md`.
+- Do not implement learning domain priority, minigame weight, or seed configuration.
+- Do not close ChildSessions after PIN update.
 - Keep parent token in memory only.
 - Use shared Axios services for API calls.
-- Poll active child sessions every 5 seconds only while the Children section is active.
-- Do not manually close sessions after child edit, activation toggle, or delete; backend owns those side effects.
+- Use only WebSocket events documented in `docs/contracts/api/websocket.json`.
 - Use Vue Router, Pinia, Vue i18n, and TypeScript according to the frontend stack.
 - Keep all visible strings and aria labels in i18n.
-- Commit: `feat(frontend): add parent children section`
+- Commit: `feat(frontend): add parent settings section`
 
 ## Notes
-Derived from `docs/product/features/frontend/FEAT-008-Child-Section.md`.
+Derived from `docs/product/features/frontend/FEAT-009-Settings-Section`.
 
 Design output:
-- View/feature: adult-facing Children section inside Parent Control Shell.
-- Data flow: family settings + child profiles + active child sessions; session polling every 5 seconds while section is active.
-- Component tree: `/panel` -> `PanelControlView` Children section -> child cards + edit/confirm modals + polling/session state.
-- Contract dependency: OpenAPI family/child/session endpoints; activation endpoint may require OpenAPI update.
-- Risks: activation contract drift, destructive delete confusion, stale sessions, polling leaks, family TTS/agent ceiling mismatch.
+- View/feature: adult-facing Settings section inside Parent Control Shell.
+- Data flow: family settings load, settings mutation, PIN update, family session cleanup, contracted realtime events.
+- Component tree: `/panel` -> `PanelControlView` Settings section -> settings cards/toggles + confirm modals + PIN keypad flow.
+- Contract dependency: OpenAPI family settings/PIN behavior and WebSocket session/settings events.
+- Risks: OpenAPI side-effect drift, local-only propagation, wrong session invalidation, WebSocket payload ambiguity.
 
 ## Review
 

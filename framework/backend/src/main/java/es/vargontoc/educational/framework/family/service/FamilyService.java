@@ -6,6 +6,7 @@ import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
 import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
 import es.vargontoc.educational.framework.family.validation.FamilyValidator;
+import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.FamilySession;
 import es.vargontoc.educational.framework.session.model.FamilySessionStatus;
 import es.vargontoc.educational.framework.session.ports.out.FamilySessionRepository;
@@ -14,11 +15,14 @@ import es.vargontoc.educational.framework.session.infrastructure.websocket.Sessi
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
 import es.vargontoc.educational.framework.shared.exception.ConflictException;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+
+import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
 
 @Service
 @Transactional
@@ -26,6 +30,7 @@ public class FamilyService implements FamilyUseCase {
 
     private final FamilyRepository familyRepository;
     private final ChildProfileRepository childProfileRepository;
+    private final ChildSessionRepository childSessionRepository;
     private final FamilySessionRepository familySessionRepository;
     private final SessionEventPublisher sessionEventPublisher;
     private final FamilyValidator familyValidator;
@@ -34,6 +39,7 @@ public class FamilyService implements FamilyUseCase {
     public FamilyService(
         FamilyRepository familyRepository,
         ChildProfileRepository childProfileRepository,
+        ChildSessionRepository childSessionRepository,
         FamilySessionRepository familySessionRepository,
         SessionEventPublisher sessionEventPublisher
     ) {
@@ -41,6 +47,7 @@ public class FamilyService implements FamilyUseCase {
         this.childProfileRepository = childProfileRepository;
         this.familySessionRepository = familySessionRepository;
         this.sessionEventPublisher = sessionEventPublisher;
+        this.childSessionRepository = childSessionRepository;
         this.familyValidator = new FamilyValidator();
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
@@ -122,6 +129,35 @@ public class FamilyService implements FamilyUseCase {
                 childProfileRepository.save(child);
             }
         }
+
+        if(disableTts || disableAgent) 
+        {
+            var childSessions = childSessionRepository.findActiveByFamilyId(familyId);
+            if(!childSessions.isEmpty())
+            {
+                for (ChildSession childSession : childSessions) {
+
+                    if(disableTts) {
+                        sessionEventPublisher.notifyChild(childSession.getId(), SessionEvent.of(SessionEventType.CHILD_TTS_DEACTIVATED, childSession.getId()));
+                    }
+
+                    if(disableAgent) {
+                        sessionEventPublisher.notifyChild(childSession.getId(), SessionEvent.of(SessionEventType.CHILD_AGENT_DEACTIVATED, childSession.getId()));
+                    }
+                }
+            }  
+        }
+    }
+
+
+    private void sendTTSConfigChangesForChilds(SessionEventType event)
+    {
+        
+    }
+
+    private void sendAgentChangesFroChilds(SessionEventType event) 
+    {
+
     }
 
     private void revokeFamilySessions(Long familyId) {

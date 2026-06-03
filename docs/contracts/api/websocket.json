@@ -61,7 +61,11 @@
                 "CHILD_EXPELLED",
                 "PARENT_BLOCK",
                 "HEARTBEAT_ACK",
-                "AUTH_ACK"
+                "AUTH_ACK",
+                "CHILD_TTS_ACTIVATED",
+                "CHILD_TTS_DEACTIVATED",
+                "CHILD_AGENT_ACTIVATED",
+                "CHILD_AGENT_DEACTIVATED"
               ]
             },
             "sessionId": {

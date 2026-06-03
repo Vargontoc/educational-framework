@@ -15,7 +15,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
+import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
 
 @Service
 @Transactional
@@ -24,14 +28,18 @@ public class ChildProfileService implements ChildProfileUseCase {
     private static final String DEFAULT_CHILD_AVATAR = "default-child";
 
     private final FamilyRepository familyRepository;
+    private final ChildSessionRepository childSessionRepository;
+    private final SessionEventPublisher sessionEventPublisher;
     private final ChildProfileRepository childProfileRepository;
     private final ChildProfileValidator childProfileValidator;
 
     private final ChildSessionUseCase sessions;
 
-    public ChildProfileService(FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildProfileRepository childProfileRepository) {
+    public ChildProfileService(FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildSessionRepository childSessionRepository, SessionEventPublisher sessionEventPublisher, ChildProfileRepository childProfileRepository) {
         this.familyRepository = familyRepository;
         this.childProfileRepository = childProfileRepository;
+        this.childSessionRepository = childSessionRepository;
+        this.sessionEventPublisher = sessionEventPublisher;
         this.childProfileValidator = new ChildProfileValidator();
         this.sessions = sessions;
     }
@@ -89,6 +97,9 @@ public class ChildProfileService implements ChildProfileUseCase {
 
         childProfileValidator.validate(new ChildProfileValidator.ChildProfileValidationInput(name, birthday, avatar));
 
+        boolean stateTts = child.isTtsEnabled();
+        boolean stateAgent = child.isAgentEnabled();
+
         child.setName(name);
         child.setBirthday(birthday);
         child.setAvatar(resolveAvatar(avatar));
@@ -96,7 +107,37 @@ public class ChildProfileService implements ChildProfileUseCase {
         child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isAgentEnabled()));
         child.setUpdatedAt(LocalDateTime.now());
 
-        return childProfileRepository.save(child);
+        try {
+            var stored = childProfileRepository.save(child);
+            boolean ttsChanges = stateTts != stored.isTtsEnabled();
+            boolean agentChanges = stateAgent != stored.isAgentEnabled();
+            
+            if(ttsChanges || agentChanges)  
+            {
+                var session = childSessionRepository.findActiveByChildProfileId(stored.getId());
+                if(session.isPresent()) 
+                {
+                    var s = session.get();
+                    if(ttsChanges) 
+                    {
+                        sessionEventPublisher.notifyChild(s.getId(), 
+                            SessionEvent.of(stored.isTtsEnabled() ? SessionEventType.CHILD_TTS_ACTIVATED : SessionEventType.CHILD_TTS_DEACTIVATED,
+                             s.getId()));
+                    }
+
+                    if(agentChanges) 
+                    {
+                        sessionEventPublisher.notifyChild(s.getId(), 
+                            SessionEvent.of(stored.isAgentEnabled() ? SessionEventType.CHILD_AGENT_ACTIVATED : SessionEventType.CHILD_AGENT_DEACTIVATED,
+                             s.getId()));
+                    }
+                }
+            }
+
+            return stored;
+        }catch(Exception e) {
+            throw e;
+        }
     }
 
     @Override

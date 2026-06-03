@@ -27,8 +27,14 @@ function isPlaceholderAvatar(avatar: string): boolean {
   return PLACEHOLDER_AVATARS.includes(avatar)
 }
 
-function handleSelectChild(child: ChildProfileResponse) {
-  if (!child.active) return
+async function handleSelectChild(child: ChildProfileResponse) {
+  await familyStore.fetchChildren()
+  const fresh = familyStore.children.find(c => c.id === child.id)
+  if (fresh && !fresh.active) {
+    blockedChildName.value = child.name
+    blockedWarningOpen.value = true
+    return
+  }
   emit('select', child)
 }
 
@@ -39,18 +45,6 @@ function handleAddChild() {
 function handleClose() {
   familyStore.setActiveModal(null)
 }
-
-watch(isOpen, (open) => {
-  if (open) {
-    blockedWarningOpen.value = false
-    blockedChildName.value = ''
-    const blockedChild = familyStore.children.find(c => !c.active)
-    if (blockedChild) {
-      blockedChildName.value = blockedChild.name
-      blockedWarningOpen.value = true
-    }
-  }
-})
 
 watch(() => familyStore.children, (children, oldChildren) => {
   if (!isOpen.value) return

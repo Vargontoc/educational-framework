@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Manage children from the parental control panel
 depends_on: FEAT-001-Base-Styles, FEAT-005-Parent-Control-View, docs/contracts/api/openapi.json, docs/contracts/api/websocket.json
 owned_by: frontend
