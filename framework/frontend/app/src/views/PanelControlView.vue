@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/useSessionStore'
 import RotationOverlay from '@/components/RotationOverlay.vue'
+import SettingsSection from '@/components/panel/SettingsSection.vue'
 import ChildrenSection from '@/components/panel/ChildrenSection.vue'
 
 const { t } = useI18n()
@@ -136,6 +137,7 @@ function handleNavClick(item: NavItem) {
 
         <div class="panel-content__body">
           <ChildrenSection v-if="activeSection === 'children'" />
+          <SettingsSection v-else-if="activeSection === 'settings'" />
           <div v-else class="panel-placeholder">
             <div class="panel-placeholder__icon" aria-hidden="true">
               <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
