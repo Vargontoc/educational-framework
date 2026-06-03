@@ -40,10 +40,68 @@ export const messages = {
       familyRelaxation: 'Relajación en familia',
       familyRelaxationAriaLabel: 'Experiencia de relajación en familia'
     },
+    settings: {
+      title: 'Configuración',
+      description: 'Gestiona el audio, el agente y el PIN de la familia.',
+      loading: 'Cargando configuración...',
+      error: 'No se pudo cargar la configuración',
+      retry: 'Reintentar',
+      tts: {
+        label: 'Audio (TTS)',
+        description: 'Activa o desactiva la narración de audio para los niños.',
+        enabled: 'Audio activado',
+        disabled: 'Audio desactivado',
+        confirmDisableTitle: '¿Desactivar el audio?',
+        confirmDisableMessage: 'El audio se desactivará para todos los niños. Las sesiones activas de los niños recibirá esta configuración.',
+        confirmEnableTitle: '¿Activar el audio?',
+        confirmEnableMessage: 'El audio se activará a nivel familiar. Los niños que lo tenían desactivado individualmente no se verán afectados.',
+        confirm: 'Confirmar',
+        cancel: 'Cancelar',
+        updating: 'Actualizando...',
+        updateError: 'No se pudo actualizar la configuración de audio.'
+      },
+      agent: {
+        label: 'Agente Avatar',
+        description: 'Activa o desactiva el agente avatar para los niños.',
+        enabled: 'Agente activado',
+        disabled: 'Agente desactivado',
+        confirmDisableTitle: '¿Desactivar el agente?',
+        confirmDisableMessage: 'El agente se desactivará para todos los niños. Las sesiones activas de los niños recibirá esta configuración.',
+        confirmEnableTitle: '¿Activar el agente?',
+        confirmEnableMessage: 'El agente se activará a nivel familiar. Los niños que lo tenían desactivado individualmente no se verán afectados.',
+        confirm: 'Confirmar',
+        cancel: 'Cancelar',
+        updating: 'Actualizando...',
+        updateError: 'No se pudo actualizar la configuración del agente.'
+      },
+      pin: {
+        label: 'Cambiar PIN',
+        description: 'Actualiza el PIN de acceso parental.',
+        currentPinLabel: 'PIN actual',
+        newPinLabel: 'Nuevo PIN',
+        confirmPinLabel: 'Confirmar nuevo PIN',
+        currentPinPlaceholder: 'Ingresa tu PIN actual',
+        newPinPlaceholder: 'Ingresa el nuevo PIN de 4 dígitos',
+        confirmPinPlaceholder: 'Confirma el nuevo PIN',
+        currentPinError: 'PIN incorrecto',
+        mismatchError: 'Los PIN no coinciden',
+        mismatchHint: 'Por favor, ingresa nuevamente la confirmación.',
+        clearHint: 'El PIN se ha borrado. Comienza de nuevo.',
+        updateError: 'No se pudo actualizar el PIN.',
+        updateSuccess: 'PIN actualizado correctamente',
+        keypadAriaLabel: 'Teclado numérico del PIN',
+        digitAria: 'Dígito {index}',
+        deleteAriaLabel: 'Borrar último dígito',
+        clearAriaLabel: 'Borrar todo',
+        confirm: 'Confirmar',
+        cancel: 'Cancelar',
+        close: 'Cerrar'
+      }
+    },
     section: {
       settings: {
         title: 'Configuración',
-        description: 'Gestiona el idioma, audio, avatar y PIN de la familia.'
+        description: 'Gestiona el audio, el agente y el PIN de la familia.'
       },
       children: {
         title: 'Niños',
