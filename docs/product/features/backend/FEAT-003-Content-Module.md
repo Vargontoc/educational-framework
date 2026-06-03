@@ -8,13 +8,6 @@ depends_on: shared, family
 owned_by: backend
 test: unit + integration + contract
 sprints:
-- framework/backend/sprints/current.md
-- framework/backend/sprints/planned/010-dev-admin-core-catalog-apis.md
-- framework/backend/sprints/planned/011-curiosities-and-avatar-fallback-catalog.md
-- framework/backend/sprints/planned/012-learning-paths-and-tracing-patterns.md
-- framework/backend/sprints/planned/013-stories-catalog-with-parental-access.md
-- framework/backend/sprints/planned/014-seeds-and-runtime-content-read-services.md
-- framework/backend/sprints/planned/015-contract-hardening-and-integration-readiness.md
 
 ## Implementation Notes
 
