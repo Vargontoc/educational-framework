@@ -16,6 +16,7 @@ class Config(BaseSettings):
     coqui_base_url: str = "http://localhost:5002"
     tts_output_format: str = "mp3"
     tts_timeout_ms: int = 30000
+    tts_max_text_length: int = 300
     tts_port: int = 8081
     tts_host: str = "0.0.0.0"
 

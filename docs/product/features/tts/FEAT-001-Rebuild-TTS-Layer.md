@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Internal API for TTS service
 depends_on: `docs/architecture/decisions/ADR-012-Replain-tts-service.md`
 owned_by: tts

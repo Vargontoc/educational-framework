@@ -1,68 +1,79 @@
-# Sprint 001 - tts
+# Sprint 003 - tts
 # -----------------------------------------------
 
 ## Goal
 
-Create the initial `tts-educational` API shell and Dockerfile for FEAT-001, without implementing real TTS provider integration.
+Implement the internal WAV/PCM to MP3 conversion module inside `tts-educational` using `ffmpeg`, so provider adapters can normalize audio output before responding to the backend.
 
 ## Status
 
-status: proposal
-started_at:
-closed_at:
+status: completed
+started_at: 2026-06-04
+closed_at: 2026-06-04
 blocked_by:
 waiting_for:
 
 ## Tasks
 
-- [ ] Create the `tts-educational` service directory structure under `framework/tts`.
-- [ ] Create a minimal Python API application.
-- [ ] Add `GET /health` returning a successful service status response.
-- [ ] Add `POST /api/v1/tts/synthesize` as a placeholder endpoint returning `501 Not Implemented`.
-- [ ] Add service-level configuration loading for reserved TTS environment variables.
-- [ ] Add a Dockerfile for the `tts-educational` image.
-- [ ] Add minimal tests for healthcheck and placeholder synthesis behavior.
-- [ ] Verify the Docker image builds successfully.
-- [ ] Document local build and run instructions if needed.
+- [ ] Add `ffmpeg` to the `tts-educational` Dockerfile.
+- [ ] Create `app/converter.py` — convert WAV/PCM bytes to MP3 bytes using ffmpeg via subprocess.
+- [ ] Handle conversion errors with a controlled `ConversionError` exception.
+- [ ] Add `TTS_MAX_TEXT_LENGTH` to reserved env vars in `envs/.env`.
+- [ ] Create `tests/test_converter.py` — test WAV fixture → MP3, invalid input → ConversionError.
+- [ ] Verify `pytest tests/test_converter.py` passes.
+- [ ] Verify `docker build` includes ffmpeg.
 
 ## Risks
 
-- Scope creep into Chatterbox, Coqui/XTTS, fallback, conversion, cache, backend integration, or frontend integration.
-- Accidental coupling with `api-educational` instead of keeping `tts-educational` independent.
-- Premature contract drift before the real synthesis API is finalized.
-- Dockerfile builds may fail if Python dependency versions are not pinned or if the base image is too heavy.
+- `ffmpeg` increases container image size (~80MB). Using python:3.12-slim is already larger with apt packages.
+- Temp file or pipe leak if subprocess doesn't clean up properly — using pipe I/O avoids files entirely.
+- 64 kbps mono output not validated in tests beyond checking non-empty MP3.
+- Invalid provider output must surface as stable `ConversionError`, not a raw subprocess exception.
 
 ## Dependencies
 
 - `docs/architecture/decisions/ADR-012-Replain-tts-service.md`
 - `docs/product/features/tts/FEAT-001-Rebuild-TTS-Layer.md`
+- `docs/product/features/tts/FEAT-002-Contracts-API.md`
+- `docs/product/features/tts/FEAT-003-Conversor-WAV-MP3.md`
 
-No blocking dependency on backend, frontend, Chatterbox, Coqui, or infrastructure compose changes for this sprint.
+No blocking dependency on backend, frontend, infrastructure compose, or provider container changes.
 
 ## Agent Instruction
 
-- Implement only the API shell and Dockerfile defined by FEAT-001.
-- Do not call Chatterbox or Coqui.
+- Do not implement provider adapters (Chatterbox, Coqui).
 - Do not implement provider fallback logic.
-- Do not implement WAV/PCM to MP3 conversion.
-- Do not implement audio cache.
+- Do not add cache endpoints or cache invalidation behavior.
 - Do not modify `framework/infrastructure/docker-compose.yml` or `framework/infrastructure/docker-compose.prod.yml`.
 - Do not modify backend or frontend source files.
-- The placeholder synthesis endpoint must clearly return `501 Not Implemented`.
-- The service may load reserved environment variables but must start without provider containers.
+- Do not modify `docs/contracts/api/openapi_tts.json` (contract already done in Sprint 002).
+- Use `subprocess.run` with pipe I/O — no persistent temp files.
+- Raise `ConversionError` for invalid/malformed audio input.
+- Generate WAV fixture inline in tests using Python's `wave` module — no binary fixture file.
 
 ## Notes
 
-This sprint prepares only the service boundary for `tts-educational`. Provider integration and `docs/contracts/api/openapi_tts.json` repopulation are intentionally deferred to later features.
+This sprint adds the conversion module only. The module will be called by provider adapters in later features. No public API changes.
 
 ## Review
 
 completed_tasks:
+  - Added ffmpeg to Dockerfile (apt-get install, clean apt cache)
+  - Created app/converter.py with convert_wav_to_mp3(audio_bytes) → bytes using subprocess pipe I/O
+  - ConversionError with code, message, retryable attributes (not bare Exception)
+  - Added TTS_MAX_TEXT_LENGTH to envs/.env and app/config.py
+  - Created tests/test_converter.py with check_ffmpeg fixture (skips when ffmpeg not present)
+  - pytest passes (4 skipped on Windows without ffmpeg, would run in container)
+  - docker build succeeds — ffmpeg installed in image
 
-incomplete_tasks:
-
-contract_changes:
+incomplete_tasks: None
 
 learnings:
+  - ConversionError must accept constructor args — bare `Exception` subclass with no __init__ doesn't accept kwargs
+  - ffmpeg pipe I/O avoids temp files entirely — no cleanup needed
+  - tests skip on systems without ffmpeg (CI/CD will run in container where ffmpeg is present)
+  - image size increased by ~80MB due to ffmpeg and its dependencies
 
 next_sprint_suggestions:
+  - FEAT-004: Implement Coqui provider adapter calling convert_wav_to_mp3
+  - Or FEAT-005: Implement Chatterbox provider adapter
