@@ -16,13 +16,14 @@ framework/infrastructure    -> environment orchertration, docker compose files, 
 framework/agents            -> domiain AI agents for application
 framework/backend           -> Spring Boot API, bussiness logic, persistence
 framework/frontend          -> Vue3 SPS, UI Components, API Conssumption
+framework/tts               -> internal tts-educational API shell and future TTS provider orchestration
 
 ## Contracts
 
 Single source of truth for all inter-layer arguments
 No layer duplicates contract files locally
 
-- docs/contracts/api/openapi_tts.json     -> API contracts between layers (backend -> TTS Container)
+- docs/contracts/api/openapi_tts.json     -> API contracts between layers (backend -> tts-educational)
 - docs/contracts/api/agents/education-framework-agent-chind,json -> API contracts between layers (backend <-> Agent Child)
 - docs/contracts/schemas/curiosities_catalog_sample_es.json -> Sample schema for Curiosities Catalog JSON Schema
 - docs/contracts/schemas/motivation_actions_sample.json -> Sample schema for Motivation Actions JSON Schema
@@ -56,6 +57,7 @@ If a layer is blocked by another, current.md must declare
 - framework/infrastructure/agent.md -> manages Docker environments and service configuration
 - framework/backend/agent.md -> handles API develpment, bussiness logic, persistence, security
 - framework/frontend/agent.md -> handles UI development, state management and routing integration
+- framework/tts/agent.md -> handles internal TTS API shell and future provider orchestration
 
 ## Workflow
 
