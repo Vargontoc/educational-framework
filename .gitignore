@@ -17,6 +17,13 @@ npm-debug.log*
 framework/backend/target/
 framework/backend/.mvn/
 
+# ── TTS (Python / FastAPI) ─────────────────────
+framework/tts/__pycache__/
+framework/tts/*.pyc
+framework/tts/.pytest_cache/
+framework/tts/tests/.pytest_cache/
+framework/tts/.ruff_cache/
+
 # ── Docker ───────────────────────────────────
 # Never commit generated docker volumes or override files
 docker-compose.override.yml
