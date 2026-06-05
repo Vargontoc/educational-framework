@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Normalize TTS provider audio output to MP3
 depends_on: `docs/architecture/decisions/ADR-012-Replain-tts-service.md`, `docs/product/features/tts/FEAT-001-Rebuild-TTS-Layer.md`, `docs/product/features/tts/FEAT-002-Contracts-API.md`
 owned_by: tts
