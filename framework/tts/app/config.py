@@ -5,7 +5,7 @@ class Config(BaseSettings):
     model_config = SettingsConfigDict(
         env_file="envs/.env",
         env_file_encoding="utf-8",
-        case_sensitive=True,
+        case_sensitive=False,
         extra="ignore",
     )
 
@@ -13,6 +13,7 @@ class Config(BaseSettings):
     tts_enable_fallback: bool = False
     tts_fallback_provider: str = ""
     chatterbox_base_url: str = "http://chatterbox-educational:5003"
+    chatterbox_synthesis_endpoint: str = "/v1/synthesize"
     coqui_base_url: str = "http://localhost:5002"
     tts_output_format: str = "mp3"
     tts_timeout_ms: int = 30000
@@ -22,4 +23,7 @@ class Config(BaseSettings):
 
 
 def get_config() -> Config:
-    return Config()
+    config = Config()
+    if not config.tts_provider:
+        raise ValueError("TTS_PROVIDER is required")
+    return config

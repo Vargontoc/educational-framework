@@ -20,6 +20,12 @@ _ADAPTERS = {
 
 
 def get_provider_adapter(provider_name: str) -> ProviderAdapter:
+    if not provider_name:
+        raise ProviderConfigError(
+            code="UNKNOWN_PROVIDER",
+            message="TTS_PROVIDER is not set. Supported providers: {SUPPORTED_PROVIDERS}",
+            retryable=False,
+        )
     if provider_name not in SUPPORTED_PROVIDERS:
         raise ProviderConfigError(
             code="UNKNOWN_PROVIDER",
