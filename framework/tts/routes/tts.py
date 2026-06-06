@@ -3,9 +3,14 @@ from fastapi import APIRouter, HTTPException, status
 router = APIRouter(prefix="/api/v1/tts", tags=["tts"])
 
 
-@router.get("/health")
-async def health():
-    return {"status": "healthy", "service": "tts-educational"}
+@router.get("/status")
+async def status_endpoint():
+    return {
+        "provider": "chatterbox",
+        "model": "xtts_v2",
+        "voiceProfile": "default",
+        "state": "ready",
+    }
 
 
 @router.post("/synthesize")

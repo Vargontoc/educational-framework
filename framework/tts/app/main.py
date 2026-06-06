@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.config import get_config
+from routes.health import router as health_router
 from routes.tts import router as tts_router
 
 
@@ -19,6 +20,7 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
+    app.include_router(health_router)
     app.include_router(tts_router)
     return app
 

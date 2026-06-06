@@ -8,7 +8,7 @@ from app.main import app
 async def test_healthcheck_returns_200():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/api/v1/tts/health")
+        response = await client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
@@ -23,3 +23,14 @@ async def test_synthesize_returns_501():
     assert response.status_code == 501
     data = response.json()
     assert data["detail"] is not None
+
+
+@pytest.mark.asyncio
+async def test_status_returns_200():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/tts/status")
+    assert response.status_code == 200
+    data = response.json()
+    assert "provider" in data
+    assert "state" in data

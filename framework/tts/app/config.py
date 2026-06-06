@@ -12,7 +12,7 @@ class Config(BaseSettings):
     tts_provider: str = ""
     tts_enable_fallback: bool = False
     tts_fallback_provider: str = ""
-    chatterbox_base_url: str = "http://localhost:8000"
+    chatterbox_base_url: str = "http://chatterbox-educational:5003"
     coqui_base_url: str = "http://localhost:5002"
     tts_output_format: str = "mp3"
     tts_timeout_ms: int = 30000
