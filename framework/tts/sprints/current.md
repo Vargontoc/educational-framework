@@ -1,34 +1,34 @@
-# Sprint 006 - tts
+# Sprint 007 - tts
 # -----------------------------------------------
 
 ## Goal
 
-Implement real Chatterbox provider adapter inside `tts-educational` with HTTP calls to `chatterbox-educational`, tone mapping from FEAT-004, and WAV→MP3 conversion from FEAT-003. Chatterbox always returns WAV so conversion is always required.
+Implement real XTTS provider adapter inside `tts-educational` using the same adapter interface as Chatterbox (FEAT-006). Connect to `coqui-educational` via `COQUI_BASE_URL`, apply FEAT-004 tone mapping, always convert WAV→MP3 via FEAT-003, return `audio/mpeg` with proper error codes (503/504/422/500). No real Coqui/XTTS container in tests.
 
 ## Status
 
 status: active
-started_at: 2026-06-05
-closed_at:
+started_at: 2026-06-06
 blocked_by:
 waiting_for:
 
 ## Tasks
 
-- [ ] `app/config.py` — validate `TTS_PROVIDER` is not empty at startup, raise `ValueError` if empty; add `chatterbox_synthesis_endpoint: str = "/v1/synthesize"`
-- [ ] `app/adapters/chatterbox.py` — replace stub with real HTTP: httpx.Client, POST to {CHATTERBOX_BASE_URL}/v1/synthesize, resolve tone mapping, always convert WAV→MP3, map errors (503/504/500)
-- [ ] `app/adapters/factory.py` — propagate empty provider error
-- [ ] `routes/tts.py` — replace 501 with real call to adapter, return `Response(content=mp3_bytes, media_type="audio/mpeg")`, request model with text/locale/tone/emotion/intensity/voice_profile/output_format
-- [ ] `envs/.env` — add `CHATTERBOX_SYNTHESIS_ENDPOINT=/v1/synthesize`, `TTS_PROVIDER=chatterbox`
-- [ ] `tests/test_chatterbox_adapter.py` — mock httpx responses, 5 tests: WAV→MP3, timeout→504, connection error→503, tone mapping applied, TTS_PROVIDER empty→startup error
-- [ ] `pytest` passes without Chatterbox container
+- [ ] `app/adapters/xtts.py` — replace stub with real HTTP: httpx.Client with per-provider timeout, POST to {COQUI_BASE_URL}/..., resolve tone mapping, always convert WAV→MP3, map errors (503/504/422/500)
+- [ ] `app/config.py` — add `xtts_timeout_ms: int = 90000` as provider-specific timeout; Chatterbox keeps `tts_timeout_ms = 30000`; adapter selects appropriate timeout based on active provider
+- [ ] `app/adapters/factory.py` — already maps "xtts" to `XttsAdapter`; no changes needed
+- [ ] `routes/tts.py` — already calls adapter via `get_provider_adapter()`; no changes needed for routing, only error handling already present
+- [ ] `envs/.env` — change `TTS_PROVIDER=xtts` to select XTTS adapter
+- [ ] `tests/test_xtts_adapter.py` — mock httpx responses, 5+ tests: WAV→MP3, timeout→504, connection error→503, tone mapping applied, TTS_PROVIDER=xtts resolves adapter
+- [ ] `pytest` passes without Coqui/XTTS container
 
 ## Risks
 
-- Chatterbox API shape may differ from assumptions
-- Tone mapping may not produce good Spanish child-facing prosody without manual validation
-- Timeout too aggressive for long narration
-- Adapter integration could accidentally expose provider-specific parameters
+- Coqui/XTTS endpoint shape may differ from adapter assumptions
+- XTTS output format may differ if patched server changes
+- Timeout (`TTS_TIMEOUT_MS`) may be too aggressive for XTTS synthesis — mitigated: per-provider `xtts_timeout_ms = 90000` vs `tts_timeout_ms = 30000`
+- Tone mapping may not produce consistent results across XTTS and Chatterbox
+- `coqui_base_url` default is `http://localhost:5002` (local dev) not `http://coqui-educational:5002` — may need verification
 
 ## Dependencies
 
@@ -37,35 +37,29 @@ waiting_for:
 - `docs/product/features/tts/FEAT-003-Conversor-WAV-MP3.md`
 - `docs/product/features/tts/FEAT-004-Map-Tone.md`
 - `docs/product/features/tts/FEAT-005-Expand-FastAPI.md`
-- `docs/product/features/tts/FEAT-006-Chatterbox-Integration.md`
+- `docs/product/features/tts/FEAT-006-Chatterbox-Integration.md` (FEAT-007 depends on same interface)
 
-No blocking dependency on backend, frontend, infrastructure compose, or XTTS/fallback changes.
+No blocking dependency on backend, frontend, infrastructure compose, or fallback changes.
 
 ## Agent Instruction
 
-- Implement only the Chatterbox adapter path — no XTTS fallback, no provider fallback logic
-- Do NOT call real Chatterbox container — use mocked HTTP responses in tests
+- Implement only the XTTS adapter path — no provider fallback logic
+- Do NOT call real Coqui/XTTS container — use mocked HTTP responses in tests
 - Do NOT implement audio cache behavior
 - Do NOT modify `framework/infrastructure/docker-compose.yml` or `framework/infrastructure/docker-compose.prod.yml`
 - Do NOT modify backend or frontend source files
 - Do NOT modify `docs/contracts/api/openapi_tts.json`
-- Chatterbox always returns WAV — always call `convert_wav_to_mp3()`
-- If `TTS_PROVIDER` is empty at startup, raise `ValueError("TTS_PROVIDER is required")` — do not default silently
-- Return only audio bytes with `audio/mpeg` content type — no version headers in this sprint
-- Keep Chatterbox native parameters (exaggeration, cfg_weight, temperature, audio_prompt) internal
+- XTTS/Coqui always returns WAV — always call `convert_wav_to_mp3()`
+- If `TTS_PROVIDER` is empty at startup, raise `ValueError("TTS_PROVIDER is required")` — already enforced in config
+- Return only audio bytes with `audio/mpeg` content type — no version headers
+- Keep XTTS native parameters (`speaker_wav`, `speed`, `language_id`) internal to the adapter
+- Reuse existing `resolve_tone()` from `app.adapters.tone_mapping`
+- Reuse existing `convert_wav_to_mp3()` from converter module
+- Reuse existing `ProviderConfigError` from factory.py
+- Error codes: `httpx.TimeoutException` → 504, `httpx.ConnectError` → 503, unsupported tone → 422, invalid response → 500
+- Use per-provider timeout: `config.xtts_timeout_ms` for XTTS, `config.tts_timeout_ms` for Chatterbox
+- Follow same adapter pattern as `ChatterboxAdapter` for consistency
 
 ## Notes
 
-This sprint integrates only the Chatterbox adapter path. Provider fallback and XTTS integration are handled by later features.
-
-## Review
-
-completed_tasks:
-
-incomplete_tasks:
-
-contract_changes:
-
-learnings:
-
-next_sprint_suggestions:
+This sprint integrates only the XTTS adapter path. Provider fallback and provider startup orchestration are handled by later features.

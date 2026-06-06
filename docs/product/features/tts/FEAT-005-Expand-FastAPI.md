@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: accepted
 user_history: Expand the `tts-educational` FastAPI shell into a maintainable internal API structure
 depends_on: `docs/architecture/decisions/ADR-012-Replain-tts-service.md`, `docs/product/features/tts/FEAT-001-Rebuild-TTS-Layer.md`, `docs/product/features/tts/FEAT-002-Contracts-API.md`, `docs/product/features/tts/FEAT-003-Conversor-WAV-MP3.md`, `docs/product/features/tts/FEAT-004-Map-Tone.md`
 owned_by: tts

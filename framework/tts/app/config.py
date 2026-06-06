@@ -15,6 +15,8 @@ class Config(BaseSettings):
     chatterbox_base_url: str = "http://chatterbox-educational:5003"
     chatterbox_synthesis_endpoint: str = "/v1/synthesize"
     coqui_base_url: str = "http://localhost:5002"
+    coqui_synthesis_endpoint: str = "/v1/synthesize"
+    xtts_timeout_ms: int = 90000
     tts_output_format: str = "mp3"
     tts_timeout_ms: int = 30000
     tts_max_text_length: int = 300

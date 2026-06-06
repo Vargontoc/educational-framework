@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from app.adapters.factory import (
     ProviderConfigError,
@@ -7,16 +9,31 @@ from app.adapters.factory import (
 
 
 def test_chatterbox_adapter_resolved():
+    import shutil
+    if not shutil.which("ffmpeg"):
+        pytest.skip("ffmpeg not installed on this system")
+
     adapter = get_provider_adapter("chatterbox")
     assert adapter is not None
     assert hasattr(adapter, "synthesize")
 
 
 def test_xtts_adapter_resolved():
-    adapter = get_provider_adapter("xtts")
-    assert adapter is not None
-    result = adapter.synthesize("text", "calm", "es", "default")
-    assert isinstance(result, bytes)
+    import shutil
+    if not shutil.which("ffmpeg"):
+        pytest.skip("ffmpeg not installed on this system")
+
+    wav_bytes = b"RIFF" + b"\x00" * 40 + b"WAVE"
+    with patch("httpx.Client") as mock_client_class:
+        mock_client = mock_client_class.return_value.__enter__.return_value
+        mock_response = mock_client.post.return_value
+        mock_response.status_code = 200
+        mock_response.content = wav_bytes
+
+        adapter = get_provider_adapter("xtts")
+        assert adapter is not None
+        result = adapter.synthesize("text", "calm", "es", "default")
+        assert isinstance(result, bytes)
 
 
 def test_unknown_provider_raises():
