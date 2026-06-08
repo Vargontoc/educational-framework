@@ -1,46 +1,40 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "info": {
-    "title": "tts-educational API",
-    "description": "Provider-agnostic TTS facade for api-educational. Describes tts-educational, not native Chatterbox or Coqui/XTTS APIs. All requests are forwarded internally to the active TTS provider.",
-    "version": "1.0.0",
-    "x-changelog": "1.0.0 — new contract for tts-educational replacing Coqui-native /api/tts. POST /api/v1/tts/synthesize with JSON body returns audio/mpeg. Provider-agnostic schema. No speaker_wav in stable API.",
-    "x-internal-base-url": "http://tts-educational:8081",
-    "x-local-base-url": "http://localhost:8081"
+    "title": "tts-educational",
+    "description": "Internal TTS API shell for provider selection, synthesis orchestration, and audio format normalization.",
+    "version": "0.2.0"
   },
-  "servers": [
-    {
-      "url": "http://tts-educational:8081",
-      "description": "Internal Docker network (api-educational → tts-educational)"
-    },
-    {
-      "url": "http://localhost:8081",
-      "description": "Local development and testing"
-    }
-  ],
   "paths": {
     "/health": {
       "get": {
-        "summary": "Service health",
-        "description": "Returns service liveness and readiness. Does not check provider availability — use /api/v1/tts/status for provider health.",
-        "operationId": "health",
+        "tags": ["health"],
+        "summary": "Health",
+        "operationId": "health_health_get",
         "responses": {
           "200": {
-            "description": "Service is healthy",
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tts/status": {
+      "get": {
+        "tags": ["tts"],
+        "summary": "Status Endpoint",
+        "operationId": "status_endpoint_api_v1_tts_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "example": "healthy"
-                    },
-                    "service": {
-                      "type": "string",
-                      "example": "tts-educational"
-                    }
-                  }
+                  "$ref": "#/components/schemas/StatusResponse"
                 }
               }
             }
@@ -50,184 +44,68 @@
     },
     "/api/v1/tts/synthesize": {
       "post": {
-        "summary": "Speech synthesis",
-        "description": "Synthesizes text into backend-compatible MP3 audio. tts-educational resolves the active provider internally and maps the semantic request to provider-specific parameters. Returns binary MP3 audio on success.",
-        "operationId": "synthesize",
+        "tags": ["tts"],
+        "summary": "Synthesize",
+        "operationId": "synthesize_api_v1_tts_synthesize_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["text"],
-                "properties": {
-                  "text": {
-                    "type": "string",
-                    "description": "Text to synthesize. Maximum length is configurable via TTS_MAX_TEXT_LENGTH env var, default 300 characters.",
-                    "maxLength": 300,
-                    "example": "¿Sabías que los elefantes pueden recordar caminos de hace muchos años?"
-                  },
-                  "locale": {
-                    "type": "string",
-                    "description": "Language locale for synthesis.",
-                    "enum": ["es", "en"],
-                    "default": "es"
-                  },
-                  "tone": {
-                    "type": "string",
-                    "description": "Semantic tone selector. Scalable — provider adapters map tones to provider-specific parameters.",
-                    "enum": ["calm", "joyful", "enthusiastic", "playful", "serious"]
-                  },
-                  "emotion": {
-                    "type": "string",
-                    "description": "Optional semantic emotion tag passed to the provider adapter."
-                  },
-                  "intensity": {
-                    "type": "number",
-                    "description": "Optional synthesis intensity from 0.0 (minimum) to 1.0 (maximum).",
-                    "minimum": 0.0,
-                    "maximum": 1.0
-                  },
-                  "voiceProfile": {
-                    "type": "string",
-                    "description": "Stable voice identity selected by the backend or defaulted by tts-educational. Provider adapters map this to provider-specific voice references.",
-                    "example": "calm_adult_female"
-                  },
-                  "outputFormat": {
-                    "type": "string",
-                    "description": "Requested output audio format.",
-                    "enum": ["mp3"],
-                    "default": "mp3"
-                  }
-                }
-              },
-              "example": {
-                "text": "¿Sabías que los elefantes pueden recordar caminos de hace muchos años?",
-                "locale": "es",
-                "tone": "calm",
-                "voiceProfile": "calm_adult_female",
-                "outputFormat": "mp3"
+                "$ref": "#/components/schemas/SynthesizeRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": "Synthesis successful — MP3 audio returned",
+            "description": "Successful Response — audio/mpeg binary",
             "content": {
               "audio/mpeg": {
                 "schema": {
                   "type": "string",
-                  "format": "binary"
+                  "format": "binary",
+                  "description": "MP3 audio data"
                 }
-              }
-            },
-            "headers": {
-              "X-Provider-Name": {
-                "description": "Name of the active TTS provider",
-                "schema": { "type": "string", "example": "coqui" }
-              },
-              "X-Model-Version": {
-                "description": "Version of the TTS model used",
-                "schema": { "type": "string", "example": "xtts_v2" }
-              },
-              "X-Voice-Profile-Version": {
-                "description": "Version of the voice profile used",
-                "schema": { "type": "string", "example": "1.0" }
-              },
-              "X-Audio-Format-Version": {
-                "description": "Version of the audio format",
-                "schema": { "type": "string", "example": "mp3" }
-              },
-              "X-Synthesis-Profile-Version": {
-                "description": "Version of the synthesis profile",
-                "schema": { "type": "string", "example": "1.0" }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input — missing text or text exceeds maximum length",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
               }
             }
           },
           "422": {
-            "description": "Unsupported synthesis parameters — unsupported locale, tone, voice profile, or output format",
+            "description": "Unprocessable Entity — unsupported tone, invalid voice_profile, or provider validation error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          },
-          "503": {
-            "description": "Selected provider or model unavailable",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          },
-          "504": {
-            "description": "Synthesis or internal conversion timeout",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/TTSError"
+                }
               }
             }
           },
           "500": {
-            "description": "Unexpected synthesis failure",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tts/status": {
-      "get": {
-        "summary": "TTS service status",
-        "description": "Returns provider-agnostic status for the active TTS configuration, including configured provider and loaded model. Does not perform live health checks against provider containers.",
-        "operationId": "status",
-        "responses": {
-          "200": {
-            "description": "TTS service status",
+            "description": "Internal Server Error — provider or conversion error",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "provider": {
-                      "type": "string",
-                      "description": "Configured TTS provider",
-                      "example": "coqui"
-                    },
-                    "model": {
-                      "type": "string",
-                      "description": "Loaded TTS model identifier",
-                      "example": "xtts_v2"
-                    },
-                    "voiceProfile": {
-                      "type": "string",
-                      "description": "Active voice profile",
-                      "example": "calm_adult_female"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": ["ready", "loading", "error"],
-                      "description": "Current service state"
-                    }
-                  }
-                },
-                "example": {
-                  "provider": "coqui",
-                  "model": "xtts_v2",
-                  "voiceProfile": "calm_adult_female",
-                  "state": "ready"
+                  "$ref": "#/components/schemas/TTSError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable — provider unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TTSError"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout — synthesis timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TTSError"
                 }
               }
             }
@@ -238,89 +116,160 @@
   },
   "components": {
     "schemas": {
-      "Error": {
+      "SynthesizeRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text",
+            "description": "Text to synthesize"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale",
+            "default": "es",
+            "description": "Language locale (e.g., es, en)"
+          },
+          "tone": {
+            "type": "string",
+            "title": "Tone",
+            "default": "calm",
+            "enum": ["calm", "joyful", "enthusiastic", "playful", "serious"],
+            "description": "Semantic tone for prosody adjustment"
+          },
+          "emotion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emotion",
+            "description": "Emotion hint (optional, not currently used)"
+          },
+          "intensity": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intensity",
+            "description": "Tone intensity (optional, not currently used)"
+          },
+          "voice_profile": {
+            "type": "string",
+            "title": "Voice Profile",
+            "default": "npc",
+            "enum": ["npc", "storyteller"],
+            "description": "Voice character: npc (child-friendly) or storyteller (narration)"
+          }
+        },
         "type": "object",
-        "description": "Stable error shape. Backend uses error.code to decide text-only Avatar fallback.",
+        "required": ["text"],
+        "title": "SynthesizeRequest"
+      },
+      "StatusResponse": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["chatterbox", "xtts"],
+            "title": "Provider",
+            "description": "Active TTS provider"
+          },
+          "model": {
+            "type": "string",
+            "enum": ["chatterbox", "xtts_v2"],
+            "title": "Model",
+            "description": "TTS model in use"
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "default": "ready",
+            "description": "Service state"
+          }
+        },
+        "type": "object",
+        "required": ["provider", "model", "state"],
+        "title": "StatusResponse"
+      },
+      "TTSError": {
         "properties": {
           "error": {
-            "type": "object",
             "properties": {
               "code": {
                 "type": "string",
-                "description": "Machine-readable error code",
-                "enum": [
-                  "TEXT_TOO_LONG",
-                  "MISSING_TEXT",
-                  "UNSUPPORTED_LOCALE",
-                  "UNSUPPORTED_TONE",
-                  "UNSUPPORTED_VOICE_PROFILE",
-                  "UNSUPPORTED_OUTPUT_FORMAT",
-                  "PROVIDER_UNAVAILABLE",
-                  "SYNTHESIS_TIMEOUT",
-                  "INTERNAL_ERROR"
-                ]
+                "title": "Code",
+                "description": "Error code (e.g., UNSUPPORTED_TONE, SYNTHESIS_TIMEOUT, PROVIDER_UNAVAILABLE, PROVIDER_ERROR)"
               },
               "message": {
                 "type": "string",
+                "title": "Message",
                 "description": "Human-readable error description"
               },
               "retryable": {
                 "type": "boolean",
-                "description": "Whether the request can be retried with the same parameters"
+                "title": "Retryable",
+                "description": "Whether the request can be retried"
               }
             },
+            "type": "object",
             "required": ["code", "message", "retryable"]
           }
         },
-        "required": ["error"]
-      },
-      "Limits": {
         "type": "object",
-        "description": "Documented operational limits for tts-educational",
+        "required": ["error"],
+        "title": "TTSError"
+      },
+      "HTTPValidationError": {
         "properties": {
-          "maxTextLength": {
-            "type": "integer",
-            "description": "Maximum text length in characters. Configurable via TTS_MAX_TEXT_LENGTH env var.",
-            "example": 300
-          },
-          "locales": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
             "type": "array",
-            "description": "Supported locales",
-            "items": { "type": "string" },
-            "example": ["es", "en"]
-          },
-          "tones": {
-            "type": "array",
-            "description": "Supported tone selectors. Provider adapters map these to provider-specific parameters.",
-            "items": { "type": "string" },
-            "example": ["calm", "joyful", "enthusiastic", "playful", "serious"]
-          },
-          "outputFormats": {
-            "type": "array",
-            "description": "Supported output formats",
-            "items": { "type": "string" },
-            "example": ["mp3"]
-          },
-          "defaultOutputFormat": {
-            "type": "string",
-            "description": "Default output format when not specified",
-            "example": "mp3"
-          },
-          "timeoutMs": {
-            "type": "integer",
-            "description": "Default synthesis timeout in milliseconds. Configurable via TTS_TIMEOUT_MS env var.",
-            "example": 30000
+            "title": "Detail"
           }
-        }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
       }
     }
-  },
-  "x-notes": {
-    "provider_agnostic": true,
-    "cache_owner": "backend-avatar",
-    "no_speaker_wav_in_contract": true,
-    "contract_version": "1.0.0",
-    "related_features": "FEAT-001 (tts-educational shell), FEAT-002 (this contract), FEAT-003 (tones), FEAT-004 (curiosities), FEAT-005 (muletillas), ADR-012 (tts-service replain)",
-    "pii": "tts-educational runs on-premise within educational-network. No text sent leaves the local server."
   }
 }

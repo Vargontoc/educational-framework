@@ -1,4 +1,9 @@
+import os
+import shutil
 import subprocess
+
+
+_ffmpeg_path: str | None = os.environ.get("FFMPEG_PATH") or shutil.which("ffmpeg")
 
 
 class ConversionError(Exception):
@@ -10,10 +15,11 @@ class ConversionError(Exception):
 
 
 def convert_wav_to_mp3(audio_bytes: bytes) -> bytes:
+    ffmpeg = _ffmpeg_path or "ffmpeg"
     try:
         result = subprocess.run(
             [
-                "ffmpeg",
+                ffmpeg,
                 "-f", "wav",
                 "-i", "pipe:0",
                 "-f", "mp3",

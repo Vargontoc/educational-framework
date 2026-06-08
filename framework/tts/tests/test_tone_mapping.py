@@ -17,6 +17,9 @@ def test_resolve_tone_chatterbox_all():
         assert "exaggeration" in result
         assert "cfg_weight" in result
         assert "temperature" in result
+        assert 0.25 <= result["exaggeration"] <= 2.0
+        assert 0.0 <= result["cfg_weight"] <= 1.0
+        assert 0.05 <= result["temperature"] <= 5.0
 
 
 def test_resolve_tone_xtts_all():

@@ -3,11 +3,11 @@ TONE_MAPPING_VERSION = "1.0"
 SEMANTIC_TONES = ["calm", "joyful", "enthusiastic", "playful", "serious"]
 
 CHATTERBOX_MAPPING = {
-    "calm": {"exaggeration": 0.2, "cfg_weight": 0.3, "temperature": 0.3},
+    "calm": {"exaggeration": 0.3, "cfg_weight": 0.3, "temperature": 0.3},
     "joyful": {"exaggeration": 0.8, "cfg_weight": 0.5, "temperature": 0.7},
     "enthusiastic": {"exaggeration": 0.9, "cfg_weight": 0.6, "temperature": 0.8},
     "playful": {"exaggeration": 0.7, "cfg_weight": 0.5, "temperature": 0.6},
-    "serious": {"exaggeration": 0.1, "cfg_weight": 0.4, "temperature": 0.2},
+    "serious": {"exaggeration": 0.25, "cfg_weight": 0.4, "temperature": 0.2},
 }
 
 XTTS_MAPPING = {

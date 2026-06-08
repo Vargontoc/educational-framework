@@ -31,7 +31,7 @@ async def test_synthesize_returns_audio_mpeg():
         text="Hello",
         tone="calm",
         locale="es",
-        voice_profile="default",
+        voice_profile="npc",
     )
 
 

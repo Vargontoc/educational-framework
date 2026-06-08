@@ -19,11 +19,19 @@ def test_chatterbox_adapter_resolved():
 
 
 def test_xtts_adapter_resolved():
-    import shutil
+    import io, wave, shutil
     if not shutil.which("ffmpeg"):
         pytest.skip("ffmpeg not installed on this system")
 
-    wav_bytes = b"RIFF" + b"\x00" * 40 + b"WAVE"
+    num_frames = int(16000 * 0.1)
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(16000)
+        wf.writeframes(bytes(num_frames * 2))
+    wav_bytes = buf.getvalue()
+
     with patch("httpx.Client") as mock_client_class:
         mock_client = mock_client_class.return_value.__enter__.return_value
         mock_response = mock_client.post.return_value

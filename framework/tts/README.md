@@ -46,5 +46,6 @@ docker run -p 8081:8081 tts-educational
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/v1/tts/health` | Health check |
-| POST | `/api/v1/tts/synthesize` | Placeholder synthesis (501 Not Implemented) |
+| GET | `/health` | Health check |
+| GET | `/api/v1/tts/status` | TTS service status |
+| POST | `/api/v1/tts/synthesize` | Synthesize speech through the configured provider and return MP3 audio |

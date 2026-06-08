@@ -22,7 +22,7 @@ The backend continues to call only `tts-educational`.
 ## In Scope
 
 - Implement the Chatterbox provider adapter in `tts-educational`.
-- Use `CHATTERBOX_BASE_URL`, default `http://chatterbox-educational:5003`.
+- Use `CHATTERBOX_BASE_URL`, default `http://chatterbox-educational:4123`.
 - Apply FEAT-004 tone mapping before calling Chatterbox.
 - Send provider-specific Chatterbox parameters internally.
 - Apply configurable timeout using `TTS_TIMEOUT_MS`.
@@ -60,6 +60,10 @@ Semantic inputs may include:
 
 Chatterbox internal parameters may include:
 
+- `input`.
+- `voice`.
+- `response_format`.
+- `speed`.
 - `exaggeration`.
 - `cfg_weight`.
 - `temperature`.
@@ -85,6 +89,7 @@ The adapter must map failures consistently:
 
 - Chatterbox unavailable -> `503`.
 - Chatterbox timeout -> `504`.
+- Chatterbox validation error -> `422`.
 - Unsupported tone or mapping -> `422`.
 - Invalid Chatterbox response -> controlled `500` provider response error unless the contract is extended later.
 - Unexpected failure -> `500`.
@@ -110,7 +115,7 @@ Required tests:
 ## Acceptance Criteria
 
 - `tts-educational` can select and invoke the Chatterbox adapter when `TTS_PROVIDER=chatterbox`.
-- Chatterbox URL is configurable and defaults to `http://chatterbox-educational:5003`.
+- Chatterbox URL is configurable and defaults to `http://chatterbox-educational:4123`.
 - Chatterbox native parameters do not leak into the backend contract.
 - Tone mapping from FEAT-004 is used.
 - Audio normalization from FEAT-003 is used when needed.

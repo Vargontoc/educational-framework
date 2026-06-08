@@ -63,7 +63,7 @@ The service must load these variables with safe defaults where possible:
 - `TTS_PROVIDER`.
 - `TTS_ENABLE_FALLBACK`.
 - `TTS_FALLBACK_PROVIDER`.
-- `CHATTERBOX_BASE_URL`, default `http://chatterbox-educational:5003`.
+- `CHATTERBOX_BASE_URL`, default `http://chatterbox-educational:4123`.
 - `COQUI_BASE_URL`, default `http://coqui-educational:5002`.
 - `TTS_OUTPUT_FORMAT`, default `mp3`.
 - `TTS_TIMEOUT_MS`.
@@ -117,7 +117,7 @@ Required tests:
 - Public endpoints match FEAT-002.
 - Provider adapter stubs exist for Chatterbox and XTTS v2.
 - Active provider is selected from configuration.
-- Provider ports `5003` and `5002` are defaults, not hardcoded in route logic.
+- Provider ports `4123` and `5002` are defaults, not hardcoded in route logic.
 - `/health` does not require provider containers.
 - `/api/v1/tts/status` reports provider-agnostic status.
 - No real provider calls are implemented.

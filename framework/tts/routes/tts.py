@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
@@ -9,11 +11,10 @@ from app.converter import ConversionError
 class SynthesizeRequest(BaseModel):
     text: str = Field(..., min_length=1)
     locale: str = Field(default="es")
-    tone: str = Field(default="calm")
+    tone: Literal["calm", "joyful", "enthusiastic", "playful", "serious"] = Field(default="calm")
     emotion: str | None = None
     intensity: float | None = Field(default=None, ge=0.0, le=1.0)
-    voice_profile: str = Field(default="default")
-    output_format: str = Field(default="mp3")
+    voice_profile: Literal["npc", "storyteller"] = Field(default="npc")
 
 
 router = APIRouter(prefix="/api/v1/tts", tags=["tts"])
@@ -25,7 +26,6 @@ async def status_endpoint():
     return {
         "provider": config.tts_provider,
         "model": "chatterbox" if config.tts_provider == "chatterbox" else "xtts_v2",
-        "voiceProfile": "default",
         "state": "ready",
     }
 
@@ -53,6 +53,7 @@ async def synthesize(request: SynthesizeRequest):
             "SYNTHESIS_TIMEOUT": status.HTTP_504_GATEWAY_TIMEOUT,
             "PROVIDER_UNAVAILABLE": status.HTTP_503_SERVICE_UNAVAILABLE,
             "UNSUPPORTED_TONE": status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "PROVIDER_VALIDATION_ERROR": status.HTTP_422_UNPROCESSABLE_ENTITY,
         }.get(e.code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         raise HTTPException(
             status_code=status_code,

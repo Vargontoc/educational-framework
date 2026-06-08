@@ -12,8 +12,10 @@ class Config(BaseSettings):
     tts_provider: str = ""
     tts_enable_fallback: bool = False
     tts_fallback_provider: str = ""
-    chatterbox_base_url: str = "http://chatterbox-educational:5003"
-    chatterbox_synthesis_endpoint: str = "/v1/synthesize"
+    chatterbox_base_url: str = "http://chatterbox-educational:4123"
+    chatterbox_synthesis_endpoint: str = "/v1/audio/speech"
+    chatterbox_voice_npc: str = "nubi-npc-voice"
+    chatterbox_voice_storyteller: str = "nubi-storyteller-voice"
     coqui_base_url: str = "http://localhost:5002"
     coqui_synthesis_endpoint: str = "/v1/synthesize"
     xtts_timeout_ms: int = 90000

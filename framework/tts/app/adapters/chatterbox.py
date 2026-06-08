@@ -5,12 +5,29 @@ from app.converter import ConversionError, convert_wav_to_mp3
 from app.mappings.tone_mapping import ToneMappingError, resolve_tone
 
 
+_VOICE_MAP = {
+    "default": "npc",
+    "npc": "npc",
+    "storyteller": "storyteller",
+}
+
+
 class ChatterboxAdapter(ProviderAdapter):
     def __init__(self):
         config = get_config()
         self.base_url = config.chatterbox_base_url
         self.endpoint = config.chatterbox_synthesis_endpoint
         self.timeout_ms = config.tts_timeout_ms
+        self.voice_npc = config.chatterbox_voice_npc
+        self.voice_storyteller = config.chatterbox_voice_storyteller
+
+    def _resolve_voice(self, voice_profile: str) -> str:
+        key = _VOICE_MAP.get(voice_profile, voice_profile)
+        if key == "npc":
+            return self.voice_npc
+        if key == "storyteller":
+            return self.voice_storyteller
+        return voice_profile
 
     def synthesize(self, text: str, tone: str, locale: str, voice_profile: str) -> bytes:
         try:
@@ -22,9 +39,13 @@ class ChatterboxAdapter(ProviderAdapter):
                 retryable=False,
             )
 
+        voice = self._resolve_voice(voice_profile)
+
         payload = {
-            "text": text,
-            "language": locale,
+            "input": text,
+            "voice": voice,
+            "response_format": "wav",
+            "speed": 1.0,
             "exaggeration": tone_params["exaggeration"],
             "cfg_weight": tone_params["cfg_weight"],
             "temperature": tone_params["temperature"],
@@ -49,6 +70,13 @@ class ChatterboxAdapter(ProviderAdapter):
                 retryable=False,
             ) from e
 
+        if response.status_code in (400, 422):
+            raise ConversionError(
+                code="PROVIDER_VALIDATION_ERROR",
+                message=f"Chatterbox rejected synthesis request with status {response.status_code}: {response.text}",
+                retryable=False,
+            )
+
         if response.status_code != 200:
             raise ConversionError(
                 code="PROVIDER_ERROR",
@@ -61,6 +89,13 @@ class ChatterboxAdapter(ProviderAdapter):
             raise ConversionError(
                 code="PROVIDER_ERROR",
                 message="Chatterbox returned empty audio",
+                retryable=False,
+            )
+
+        if not audio_bytes.startswith(b"RIFF"):
+            raise ConversionError(
+                code="PROVIDER_ERROR",
+                message="Chatterbox response is not WAV audio",
                 retryable=False,
             )
 
