@@ -87,6 +87,7 @@ public class LearningPathStepController {
             step.getStepOrder(),
             step.getUnlockCondition(),
             step.getVisualMetadata(),
+            step.getStatus(),
             step.getCreatedAt(),
             step.getUpdatedAt()
         );

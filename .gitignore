@@ -29,6 +29,8 @@ framework/tts/.ruff_cache/
 docker-compose.override.yml
 
 backlog/
+!framework/backend/sprints/backlog/
+!framework/backend/sprints/backlog/*.md
 
 # ── Frontend (Vue 3 / Typescript) ────────────
 framework/frontend/app/node_modules/
