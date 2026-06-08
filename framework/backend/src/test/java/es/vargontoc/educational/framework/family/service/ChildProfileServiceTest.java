@@ -4,6 +4,9 @@ import es.vargontoc.educational.framework.family.model.ChildProfile;
 import es.vargontoc.educational.framework.family.model.Family;
 import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
 import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
+import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
+import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,6 +30,15 @@ class ChildProfileServiceTest {
 
     @Mock
     private ChildProfileRepository childProfileRepository;
+
+    @Mock
+    private ChildSessionUseCase childSessionUseCase;
+
+    @Mock
+    private ChildSessionRepository childSessionRepository;
+
+    @Mock
+    private SessionEventPublisher sessionEventPublisher;
 
     @InjectMocks
     private ChildProfileService childProfileService;
@@ -64,14 +77,17 @@ class ChildProfileServiceTest {
     }
 
     @Test
-    void deactivateChild_setsActiveFalse() {
+    void changeActiveState_setsActiveFalseWhenWasTrue() {
         var child = new ChildProfile();
+        child.setId(7L);
+        child.setFamilyId(1L);
         child.setActive(true);
 
         when(childProfileRepository.findById(7L)).thenReturn(Optional.of(child));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(childSessionUseCase.getActiveSessions(1L)).thenReturn(List.of());
 
-        childProfileService.deactivateChild(7L);
+        childProfileService.changeActiveState(7L);
 
         assertFalse(child.isActive());
     }
@@ -91,6 +107,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.findById(2L)).thenReturn(Optional.of(child));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(childSessionRepository.findActiveByChildProfileId(2L)).thenReturn(Optional.empty());
 
         var updated = childProfileService.updateChild(
             2L,

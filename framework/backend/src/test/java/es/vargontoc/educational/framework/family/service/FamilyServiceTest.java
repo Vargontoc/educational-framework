@@ -6,6 +6,7 @@ import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepositor
 import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
 import es.vargontoc.educational.framework.session.model.FamilySession;
 import es.vargontoc.educational.framework.session.model.FamilySessionStatus;
+import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
 import es.vargontoc.educational.framework.session.ports.out.FamilySessionRepository;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
@@ -41,6 +42,9 @@ class FamilyServiceTest {
     private ChildProfileRepository childProfileRepository;
 
     @Mock
+    private ChildSessionRepository childSessionRepository;
+
+    @Mock
     private FamilySessionRepository familySessionRepository;
 
     @Mock
@@ -53,6 +57,7 @@ class FamilyServiceTest {
         familyService = new FamilyService(
             familyRepository,
             childProfileRepository,
+            childSessionRepository,
             familySessionRepository,
             sessionEventPublisher
         );
