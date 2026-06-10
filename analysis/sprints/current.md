@@ -1,8 +1,8 @@
-# Sprint 017 - backend
+# Sprint 018 - backend
 # -----------------------------------------------
 
 ## Goal
-Integrate the backend avatar module with `tts-educational` using the repository TTS contract, MP3 responses, and stable voice profiles.
+Add deterministic MP3 audio caching for avatar and narration synthesis results.
 
 ## Status
 status: backlog
@@ -13,63 +13,54 @@ waiting_for:
 
 ## Tasks
 
-### TTS Client
-- [ ] Add a backend TTS client that calls `POST /api/v1/tts/synthesize` on `tts-educational`.
-- [ ] Configure TTS base URL, request timeout, and optional enablement through backend properties.
-- [ ] Send request fields compatible with `docs/contracts/api/openapi_tts.json`: `text`, `locale`, `tone`, and `voice_profile`.
-- [ ] Accept only successful `audio/mpeg` responses as generated MP3 audio.
-- [ ] Reject unexpected content types and fall back to text-only avatar metadata.
-- [ ] Do not call Coqui/XTTS or Chatterbox provider services directly.
-- [ ] Do not add backend WAV-to-MP3 conversion.
+### Cache Key
+- [ ] Define the avatar audio cache key using `eventType + tone + locale + textHash + voiceProfile + audioFormatVersion`.
+- [ ] Include child-specific context in the key when generated text contains child-specific values.
+- [ ] Keep `voiceProfile` in the key so `npc` and `storyteller` audio never collide.
+- [ ] Include TTS voice reference/version metadata if exposed by the TTS contract later.
 
-### Voice Profiles
-- [ ] Use `voice_profile: "npc"` for short avatar/NPC game feedback.
-- [ ] Use `voice_profile: "storyteller"` for narration and reading flows.
-- [ ] Keep provider-specific interpretation of each voice profile inside `tts-educational`.
-- [ ] Ensure voice profile is part of the internal avatar audio request model for later cache keys.
+### Cache Storage
+- [ ] Implement L1 in-memory cache for frequent short catalog messages.
+- [ ] Implement L2 local disk/storage cache if compatible with current backend storage conventions.
+- [ ] Store only MP3 bytes returned by `tts-educational`.
+- [ ] Never store WAV/PCM audio in backend cache.
+- [ ] Configure cache enablement and storage path where needed.
 
-### Tone Mapping
-- [ ] Map backend `CALM` to TTS `calm`.
-- [ ] Map backend `JOYFUL` to TTS `joyful`.
-- [ ] Map backend `ENTHUSIASTIC` to TTS `enthusiastic`.
-- [ ] Map backend `SERIOUS` to TTS `serious`.
-- [ ] Map backend `NEUTRAL` to TTS `calm` for v1 unless TTS adds explicit `neutral` support.
-
-### Failure Handling
-- [ ] On TTS timeout, return text-only avatar metadata with `audioAvailable: false`.
-- [ ] On TTS 4xx/5xx, return text-only avatar metadata with `audioAvailable: false`.
-- [ ] On connection failure, return text-only avatar metadata with `audioAvailable: false`.
-- [ ] Ensure child-facing flows never block indefinitely waiting for TTS.
+### Cache Behavior
+- [ ] Check cache before calling TTS.
+- [ ] Store generated MP3 on TTS success.
+- [ ] Fall back safely when cache read fails.
+- [ ] Regenerate or fall back safely when cached data is invalid.
+- [ ] Do not pre-generate large batches in this sprint unless it remains deterministic and cheap.
 
 ### Tests
-- [ ] Unit test request serialization for `npc` voice profile.
-- [ ] Unit test request serialization for `storyteller` voice profile.
-- [ ] Unit test all backend-to-TTS tone mappings, including `NEUTRAL -> calm`.
-- [ ] Unit test `audio/mpeg` response acceptance.
-- [ ] Unit test invalid content type fallback.
-- [ ] Unit test timeout fallback.
-- [ ] Unit test TTS error fallback.
-- [ ] Add integration-style client tests with a mocked HTTP server where practical.
+- [ ] Unit test cache hit avoids TTS call.
+- [ ] Unit test cache miss invokes TTS and stores MP3 bytes.
+- [ ] Unit test text change changes cache key.
+- [ ] Unit test tone change changes cache key.
+- [ ] Unit test locale change changes cache key.
+- [ ] Unit test `voiceProfile` change changes cache key.
+- [ ] Unit test child-specific text is not reused globally.
+- [ ] Unit test corrupted cache entry falls back safely.
 
 ## Risks
-- Runtime TTS OpenAPI can drift from `docs/contracts/api/openapi_tts.json`.
-- TTS latency can make avatar interaction feel delayed if timeouts are too high.
-- Voice profile semantics can drift between backend and TTS service.
+- Unsafe cache keys can leak child-specific generated speech across profiles.
+- Disk cache cleanup can leak storage if not bounded.
+- Cache invalidation can become incorrect if TTS provider/model versions are not represented.
 
 ## Dependencies
 - Sprint 016 avatar module foundation.
-- `docs/contracts/api/openapi_tts.json`.
-- `tts-educational` endpoint available in target environments.
+- Sprint 017 TTS client and voice profiles.
+- FEAT-005 cache strategy.
 
 ## Agent Instruction
-- Treat `docs/contracts/api/openapi_tts.json` as the implementation contract.
-- Keep all provider-specific fields out of backend request models.
-- Keep failure behavior graceful and text-first.
-- Do not introduce cache in this sprint.
-- Do not introduce WebSocket binary delivery in this sprint.
+- Keep the cache deterministic and explainable.
+- Prefer simple bounded cache behavior over complex eviction mechanisms.
+- Do not change TTS provider contracts in this sprint.
+- Do not add WebSocket delivery in this sprint.
 
 ## Notes
-The live service on port `8081` has been observed returning `audio/mpeg`, but its generated OpenAPI may need alignment with the repository contract.
+The first useful cache candidates are short catalog-backed avatar messages such as activity start, completion, failure, help, and lifecycle greetings.
 
 ## Review
 
