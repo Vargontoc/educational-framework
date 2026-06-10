@@ -49,3 +49,7 @@ app:
     retention-days: 30
     scheduling:
       enabled: ${APP_SESSION_SCHEDULING_ENABLED:true}
+  tts:
+    base-url: ${TTS_BASE_URL:http://localhost:8081}
+    timeout-ms: ${TTS_TIMEOUT_MS:5000}
+    enabled: ${TTS_ENABLED:true}

@@ -1,7 +1,9 @@
 package es.vargontoc.educational.framework.avatar.service;
 
 import es.vargontoc.educational.framework.avatar.infrastructure.dto.AvatarEventRequest;
+import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsException;
 import es.vargontoc.educational.framework.avatar.model.AvatarEventResult;
+import es.vargontoc.educational.framework.avatar.ports.out.TtsClient;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
 import es.vargontoc.educational.framework.content.model.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarTone;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,11 +47,14 @@ class AvatarServiceTest {
     @Mock
     private AvatarEventCatalogRepository avatarEventCatalogRepository;
 
+    @Mock
+    private TtsClient ttsClient;
+
     private AvatarService avatarService;
 
     @BeforeEach
     void setUp() {
-        avatarService = new AvatarService(childSessionRepository, childProfileRepository, avatarEventCatalogRepository);
+        avatarService = new AvatarService(childSessionRepository, childProfileRepository, avatarEventCatalogRepository, ttsClient);
     }
 
     @Test
@@ -61,6 +67,8 @@ class AvatarServiceTest {
         when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
         when(avatarEventCatalogRepository.findActiveByFilters(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES"))
             .thenReturn(List.of(catalog));
+        when(ttsClient.synthesize(anyString(), anyString(), any(), anyString()))
+            .thenReturn("fake-mp3-data".getBytes());
 
         AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
         AvatarEventResult result = avatarService.processAvatarEvent(request);
@@ -70,6 +78,7 @@ class AvatarServiceTest {
         assertEquals("Great job!", result.getText());
         assertTrue(result.isAudioAvailable());
         assertFalse(result.isSuppressed());
+        assertNotNull(result.getAudioData());
     }
 
     @Test
@@ -129,6 +138,7 @@ class AvatarServiceTest {
         assertEquals("Great job!", result.getText());
         assertFalse(result.isAudioAvailable());
         assertFalse(result.isSuppressed());
+        assertNull(result.getAudioData());
     }
 
     @Test
@@ -140,6 +150,8 @@ class AvatarServiceTest {
         when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
         when(avatarEventCatalogRepository.findActiveByFilters(any(), any(), any()))
             .thenReturn(List.of());
+        when(ttsClient.synthesize(anyString(), anyString(), any(), anyString()))
+            .thenReturn("fake-mp3-data".getBytes());
 
         AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
         AvatarEventResult result = avatarService.processAvatarEvent(request);
@@ -149,6 +161,30 @@ class AvatarServiceTest {
         assertEquals("Thank you for using the educational framework!", result.getText());
         assertTrue(result.isAudioAvailable());
         assertFalse(result.isSuppressed());
+    }
+
+    @Test
+    void processAvatarEvent_ttsEnabled_butSynthesisFails_returnsTextOnly() {
+        ChildSession session = createActiveSession(1L, 100L, 10L);
+        ChildProfile childProfile = createChildProfile(100L, true, true);
+        AvatarEventCatalog catalog = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES", "Great job!");
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+        when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
+        when(avatarEventCatalogRepository.findActiveByFilters(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES"))
+            .thenReturn(List.of(catalog));
+        when(ttsClient.synthesize(anyString(), anyString(), any(), anyString()))
+            .thenThrow(new TtsException("TTS timeout", "CONNECTION_ERROR", true));
+
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
+        AvatarEventResult result = avatarService.processAvatarEvent(request);
+
+        assertNotNull(result);
+        assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
+        assertEquals("Great job!", result.getText());
+        assertFalse(result.isAudioAvailable());
+        assertFalse(result.isSuppressed());
+        assertNull(result.getAudioData());
     }
 
     private ChildSession createActiveSession(Long sessionId, Long childProfileId, Long familyId) {

@@ -11,16 +11,18 @@ public class AvatarEventResult {
     private boolean audioAvailable;
     private Map<String, Object> audioMetadata;
     private boolean suppressed;
+    private byte[] audioData;
 
     public AvatarEventResult() {
     }
 
-    public AvatarEventResult(AvatarEventType eventType, String text, boolean audioAvailable, Map<String, Object> audioMetadata, boolean suppressed) {
+    public AvatarEventResult(AvatarEventType eventType, String text, boolean audioAvailable, Map<String, Object> audioMetadata, boolean suppressed, byte[] audioData) {
         this.eventType = eventType;
         this.text = text;
         this.audioAvailable = audioAvailable;
         this.audioMetadata = audioMetadata;
         this.suppressed = suppressed;
+        this.audioData = audioData;
     }
 
     public AvatarEventType getEventType() {
@@ -61,5 +63,13 @@ public class AvatarEventResult {
 
     public void setSuppressed(boolean suppressed) {
         this.suppressed = suppressed;
+    }
+
+    public byte[] getAudioData() {
+        return audioData;
+    }
+
+    public void setAudioData(byte[] audioData) {
+        this.audioData = audioData;
     }
 }

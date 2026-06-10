@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,8 +42,8 @@ class GameWebSocketHandlerTest {
     @BeforeEach
     void setUp() {
         handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper());
-        when(session.getId()).thenReturn("test-session-id");
-        when(session.getAttributes()).thenReturn(new HashMap<>());
+        lenient().when(session.getId()).thenReturn("test-session-id");
+        lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
     }
 
     @Test
