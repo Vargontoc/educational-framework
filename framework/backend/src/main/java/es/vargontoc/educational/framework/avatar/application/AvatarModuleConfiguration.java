@@ -6,8 +6,10 @@ import es.vargontoc.educational.framework.avatar.infrastructure.cache.CachingTts
 import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsClientAdapter;
 import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsProperties;
 import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsToneMapper;
+import es.vargontoc.educational.framework.avatar.ports.in.NarrateStorytellerUseCase;
 import es.vargontoc.educational.framework.avatar.ports.out.TtsClient;
 import es.vargontoc.educational.framework.avatar.service.AvatarService;
+import es.vargontoc.educational.framework.avatar.service.NarrateStorytellerService;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
@@ -51,5 +53,10 @@ class AvatarModuleConfiguration {
             AvatarEventCatalogRepository avatarEventCatalogRepository,
             TtsClient ttsClient) {
         return new AvatarService(childSessionRepository, childProfileRepository, avatarEventCatalogRepository, ttsClient);
+    }
+
+    @Bean
+    NarrateStorytellerUseCase narrateStorytellerUseCase(TtsClient ttsClient) {
+        return new NarrateStorytellerService(ttsClient);
     }
 }
