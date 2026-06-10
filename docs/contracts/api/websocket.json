@@ -3,7 +3,7 @@
   "info": {
     "title": "Educational Framework WebSocket Contract",
     "description": "Baseline real-time contract for FEAT-002 session events.",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "channels": {
     "/ws/parent": {
@@ -39,7 +39,10 @@
       },
       "subscribe": {
         "message": {
-          "$ref": "#/components/messages/SessionEvent"
+          "oneOf": [
+            { "$ref": "#/components/messages/SessionEvent" },
+            { "$ref": "#/components/messages/GameAvatarEvent" }
+          ]
         }
       }
     }
@@ -65,7 +68,8 @@
                 "CHILD_TTS_ACTIVATED",
                 "CHILD_TTS_DEACTIVATED",
                 "CHILD_AGENT_ACTIVATED",
-                "CHILD_AGENT_DEACTIVATED"
+                "CHILD_AGENT_DEACTIVATED",
+                "GAME_AVATAR_EVENT"
               ]
             },
             "sessionId": {
@@ -74,6 +78,42 @@
             },
             "payload": {
               "type": "object"
+            }
+          }
+        }
+      },
+      "GameAvatarEvent": {
+        "name": "GameAvatarEvent",
+        "description": "Avatar audio event sent to game client. JSON metadata frame, optionally followed by a binary audio frame correlated by audioId.",
+        "payload": {
+          "type": "object",
+          "required": ["event", "sessionId", "eventType", "audioAvailable", "text"],
+          "properties": {
+            "event": {
+              "type": "string",
+              "const": "GAME_AVATAR_EVENT"
+            },
+            "sessionId": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "eventType": {
+              "type": "string",
+              "enum": ["SESSION_CONNECTED", "SESSION_DISCONNECTED"],
+              "description": "Lifecycle subtype. SESSION_CONNECTED: welcome after auth. SESSION_DISCONNECTED: farewell before backend-initiated close."
+            },
+            "audioAvailable": {
+              "type": "boolean",
+              "description": "True when audio binary frame will follow."
+            },
+            "audioId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Correlation ID for the following binary audio frame. Present only when audioAvailable is true."
+            },
+            "text": {
+              "type": "string",
+              "description": "Fallback text. Always present regardless of audio availability."
             }
           }
         }
@@ -144,6 +184,25 @@
       "AUTH_ACK": {
         "direction": "server_to_client",
         "description": "WebSocket session successfully bound to an active child session after auth message."
+      },
+      "GAME_AVATAR_EVENT": {
+        "direction": "server_to_client",
+        "description": "Avatar audio event. Sent as JSON text frame, optionally followed by binary audio frame (see BinaryAudioFrame)."
+      },
+      "SESSION_CONNECTED": {
+        "direction": "server_to_client",
+        "description": "Lifecycle subtype: welcome avatar sent after successful game WebSocket authentication. Text: 'Hola, vamos a jugar!'"
+      },
+      "SESSION_DISCONNECTED": {
+        "direction": "server_to_client",
+        "description": "Lifecycle subtype: farewell avatar sent before backend-initiated session close. Text: 'Vaya, parece que es hora de despedirnos. Hasta la proxima.'"
+      }
+    },
+    "schemas": {
+      "BinaryAudioFrame": {
+        "name": "BinaryAudioFrame",
+        "description": "Binary frame containing MP3 audio data. Follows a GameAvatarEvent JSON frame when audioAvailable=true. Format: [4 bytes: audioId length as big-endian int32][N bytes: audioId UTF-8][remaining bytes: MP3 audio data]. The audioId field in the preceding JSON frame is used to correlate the binary frame.",
+        "contentType": "application/octet-stream"
       }
     }
   }

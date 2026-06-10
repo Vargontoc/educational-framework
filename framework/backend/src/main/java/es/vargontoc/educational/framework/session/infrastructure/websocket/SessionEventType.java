@@ -12,7 +12,10 @@ public enum SessionEventType {
     CHILD_TTS_ACTIVATED("TTS Service is activated for the child."),
     CHILD_TTS_DEACTIVATED("TTS service is deactivated for the child."),
     CHILD_AGENT_ACTIVATED(  "Agent Child model is activated for the child"),
-    CHILD_AGENT_DEACTIVATED("Agent Child model is desactivated for the child");
+    CHILD_AGENT_DEACTIVATED("Agent Child model is desactivated for the child"),
+    GAME_AVATAR_EVENT("Avatar audio event sent to game client."),
+    SESSION_CONNECTED("Game client authenticated and avatar welcome sent."),
+    SESSION_DISCONNECTED("Backend-initiated session end with avatar farewell sent.");
 
     private final String description;
 

@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.stomp.StompSubscribeInterceptor;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.session.ports.in.FamilySessionUseCase;
@@ -28,16 +29,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ChildSessionUseCase childSessionUseCase;
     private final ObjectMapper objectMapper;
     private final StompSubscribeInterceptor stompSubscribeInterceptor;
+    private final AvatarLifecycleService avatarLifecycleService;
 
     public WebSocketConfig(
             FamilySessionUseCase familySessionUseCase,
             ChildSessionUseCase childSessionUseCase,
             ObjectMapper objectMapper,
-            StompSubscribeInterceptor stompSubscribeInterceptor) {
+            StompSubscribeInterceptor stompSubscribeInterceptor,
+            AvatarLifecycleService avatarLifecycleService) {
         this.familySessionUseCase = familySessionUseCase;
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.stompSubscribeInterceptor = stompSubscribeInterceptor;
+        this.avatarLifecycleService = avatarLifecycleService;
     }
 
     // ── STOMP (parental channel) ──────────────────────────────────────
@@ -89,6 +93,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Bean
     public GameWebSocketHandler gameWebSocketHandler() {
-        return new GameWebSocketHandler(childSessionUseCase, objectMapper);
+        return new GameWebSocketHandler(childSessionUseCase, objectMapper, avatarLifecycleService);
     }
 }

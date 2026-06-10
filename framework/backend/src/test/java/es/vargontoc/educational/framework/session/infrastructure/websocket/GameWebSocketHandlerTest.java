@@ -1,6 +1,8 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.avatar.infrastructure.dto.GameAvatarEvent;
+import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
@@ -23,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,13 +38,16 @@ class GameWebSocketHandlerTest {
     private ChildSessionUseCase childSessionUseCase;
 
     @Mock
+    private AvatarLifecycleService avatarLifecycleService;
+
+    @Mock
     private WebSocketSession session;
 
     private GameWebSocketHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper());
+        handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarLifecycleService);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
     }
@@ -139,6 +145,51 @@ class GameWebSocketHandlerTest {
         handler.afterConnectionClosed(session, CloseStatus.NORMAL);
 
         assertFalse(handler.hasActiveSession(4L));
+    }
+
+    @Test
+    void auth_validActiveSession_triggersWelcomeAvatar() throws IOException {
+        var childSession = childSession(5L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(5L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+        var avatarResult = new AvatarLifecycleService.AvatarLifecycleResult(
+            GameAvatarEvent.welcome(5L, true, "audio-id-123", "Hola, vamos a jugar!"),
+            "mp3-data".getBytes()
+        );
+        when(avatarLifecycleService.welcome(5L)).thenReturn(avatarResult);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":5}"));
+
+        verify(avatarLifecycleService).welcome(5L);
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(2)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_AVATAR_EVENT")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("SESSION_CONNECTED")));
+    }
+
+    @Test
+    void sendFarewellAndClose_sendsFarewellAndCloses() throws IOException {
+        var childSession = childSession(6L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(6L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":6}"));
+        assertTrue(handler.hasActiveSession(6L));
+
+        var avatarResult = new AvatarLifecycleService.AvatarLifecycleResult(
+            GameAvatarEvent.farewell(6L, true, "audio-id-456", "Vaya, parece que es hora de despedirnos. Hasta la proxima."),
+            "mp3-data".getBytes()
+        );
+        when(avatarLifecycleService.farewell(6L)).thenReturn(avatarResult);
+
+        handler.sendFarewellAndClose(6L);
+
+        verify(avatarLifecycleService).farewell(6L);
+        verify(session).close(CloseStatus.NORMAL);
     }
 
     private ChildSession childSession(Long id, ChildSessionStatus status) {

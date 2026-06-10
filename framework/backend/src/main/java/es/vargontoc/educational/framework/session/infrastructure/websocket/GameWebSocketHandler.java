@@ -2,18 +2,22 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -29,6 +33,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private final ChildSessionUseCase childSessionUseCase;
     private final ObjectMapper objectMapper;
+    private final AvatarLifecycleService avatarLifecycleService;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -38,9 +43,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         return t;
     });
 
-    public GameWebSocketHandler(ChildSessionUseCase childSessionUseCase, ObjectMapper objectMapper) {
+    public GameWebSocketHandler(ChildSessionUseCase childSessionUseCase, ObjectMapper objectMapper,
+                             AvatarLifecycleService avatarLifecycleService) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
+        this.avatarLifecycleService = avatarLifecycleService;
     }
 
     @Override
@@ -127,6 +134,60 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         return session != null && session.isOpen();
     }
 
+    public void sendFarewellAndClose(Long childSessionId) {
+        WebSocketSession session = sessionsByChildSessionId.get(childSessionId);
+        if (session == null || !session.isOpen()) {
+            return;
+        }
+        try {
+            var result = avatarLifecycleService.farewell(childSessionId);
+            if (result.isPresent()) {
+                sendToSession(childSessionId, objectMapper.writeValueAsString(result.event()));
+                if (result.audioData() != null && result.event().audioId() != null) {
+                    sendBinaryFrame(session, result.event().audioId(), result.audioData());
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not send farewell to childSessionId={}: {}", childSessionId, e.getMessage());
+        } finally {
+            closeSessionQuietly(session, CloseStatus.NORMAL);
+        }
+    }
+
+    private void sendWelcomeAvatar(Long childSessionId) {
+        try {
+            var result = avatarLifecycleService.welcome(childSessionId);
+            if (result.isPresent()) {
+                sendToSession(childSessionId, objectMapper.writeValueAsString(result.event()));
+                if (result.audioData() != null && result.event().audioId() != null) {
+                    WebSocketSession session = sessionsByChildSessionId.get(childSessionId);
+                    if (session != null && session.isOpen()) {
+                        sendBinaryFrame(session, result.event().audioId(), result.audioData());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Could not send welcome avatar to childSessionId={}: {}", childSessionId, e.getMessage());
+        }
+    }
+
+    public boolean sendBinaryFrame(WebSocketSession session, String audioId, byte[] audioData) {
+        try {
+            byte[] audioIdBytes = audioId.getBytes(StandardCharsets.UTF_8);
+            ByteBuffer buffer = ByteBuffer.allocate(4 + audioIdBytes.length + audioData.length);
+            buffer.putInt(audioIdBytes.length);
+            buffer.put(audioIdBytes);
+            buffer.put(audioData);
+            synchronized (session) {
+                session.sendMessage(new BinaryMessage(buffer.array()));
+            }
+            return true;
+        } catch (IOException e) {
+            LOGGER.error("Failed to send binary frame: {}", e.getMessage());
+            return false;
+        }
+    }
+
     @PreDestroy
     public void destroy() {
         authTimeoutScheduler.shutdownNow();
@@ -152,6 +213,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             LOGGER.info("Game WebSocket authenticated: childSessionId={}", childSessionId);
             SessionEvent ack = SessionEvent.of(SessionEventType.AUTH_ACK, childSessionId);
             sendToSession(childSessionId, objectMapper.writeValueAsString(ack));
+            sendWelcomeAvatar(childSessionId);
         } catch (ResourceNotFoundException e) {
             LOGGER.warn("Auth rejected: child session {} not found", childSessionId);
             closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
