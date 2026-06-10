@@ -53,3 +53,11 @@ app:
     base-url: ${TTS_BASE_URL:http://localhost:8081}
     timeout-ms: ${TTS_TIMEOUT_MS:5000}
     enabled: ${TTS_ENABLED:true}
+  avatar:
+    cache:
+      enabled: ${AVATAR_CACHE_ENABLED:true}
+      max-entries: ${AVATAR_CACHE_MAX_ENTRIES:1024}
+      expire-after-write-minutes: ${AVATAR_CACHE_EXPIRE_MINUTES:60}
+      disk-path: ${AVATAR_CACHE_DISK_PATH:cache/avatar-audio}
+      max-disk-entries: ${AVATAR_CACHE_MAX_DISK_ENTRIES:4096}
+      audio-format-version: ${AVATAR_CACHE_FORMAT_VERSION:1}

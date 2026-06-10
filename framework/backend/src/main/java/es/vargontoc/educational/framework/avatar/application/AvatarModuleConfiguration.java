@@ -1,5 +1,8 @@
 package es.vargontoc.educational.framework.avatar.application;
 
+import es.vargontoc.educational.framework.avatar.infrastructure.cache.AvatarAudioCache;
+import es.vargontoc.educational.framework.avatar.infrastructure.cache.AvatarAudioCacheProperties;
+import es.vargontoc.educational.framework.avatar.infrastructure.cache.CachingTtsClient;
 import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsClientAdapter;
 import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsProperties;
 import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsToneMapper;
@@ -14,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties(TtsProperties.class)
+@EnableConfigurationProperties({TtsProperties.class, AvatarAudioCacheProperties.class})
 class AvatarModuleConfiguration {
 
     @Bean
@@ -23,8 +26,22 @@ class AvatarModuleConfiguration {
     }
 
     @Bean
-    TtsClient ttsClientAdapter(RestClient.Builder restClientBuilder, TtsProperties ttsProperties, TtsToneMapper ttsToneMapper) {
-        return new TtsClientAdapter(restClientBuilder, ttsProperties, ttsToneMapper);
+    AvatarAudioCache avatarAudioCache(AvatarAudioCacheProperties cacheProperties) {
+        return new AvatarAudioCache(cacheProperties);
+    }
+
+    @Bean
+    TtsClient ttsClientAdapter(
+            RestClient.Builder restClientBuilder,
+            TtsProperties ttsProperties,
+            TtsToneMapper ttsToneMapper,
+            AvatarAudioCache cache,
+            AvatarAudioCacheProperties cacheProperties) {
+        TtsClientAdapter delegate = new TtsClientAdapter(restClientBuilder, ttsProperties, ttsToneMapper);
+        if (cacheProperties.isEnabled()) {
+            return new CachingTtsClient(delegate, cache, ttsToneMapper, cacheProperties);
+        }
+        return delegate;
     }
 
     @Bean
