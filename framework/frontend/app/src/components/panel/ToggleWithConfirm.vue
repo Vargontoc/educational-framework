@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/components/ui/Modal.vue'
 

@@ -377,3 +377,36 @@ export interface AvatarEventCatalogResponse {
   createdAt: string
   updatedAt?: string | null
 }
+
+// ── WebSocket Contract Types ──────────────────────────────────────────────
+
+export type GameAvatarEventType = 'SESSION_CONNECTED' | 'SESSION_DISCONNECTED'
+
+export interface GameAvatarEvent {
+  event: 'GAME_AVATAR_EVENT'
+  sessionId: number
+  eventType: GameAvatarEventType
+  audioAvailable: boolean
+  audioId?: string
+  text: string
+}
+
+export type SessionEventType =
+  | 'GAME_STATE_UPDATE'
+  | 'SESSION_EXPIRED'
+  | 'SESSION_INVALIDATED'
+  | 'CHILD_EXPELLED'
+  | 'PARENT_BLOCK'
+  | 'HEARTBEAT_ACK'
+  | 'AUTH_ACK'
+  | 'CHILD_TTS_ACTIVATED'
+  | 'CHILD_TTS_DEACTIVATED'
+  | 'CHILD_AGENT_ACTIVATED'
+  | 'CHILD_AGENT_DEACTIVATED'
+  | 'GAME_AVATAR_EVENT'
+
+export interface SessionEvent {
+  event: SessionEventType
+  sessionId?: number
+  payload?: unknown
+}

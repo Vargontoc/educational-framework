@@ -3,8 +3,6 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-const PIN_LENGTH = 4
-
 defineProps<{
   pin: string
   error?: boolean
@@ -28,7 +26,7 @@ function handleKey(key: string) {
   }
 }
 
-function getKeyLabel(key: string, index: number): string {
+function getKeyLabel(key: string): string {
   if (key === 'clear') return t('panel.settings.pin.clearAriaLabel')
   if (key === 'delete') return t('panel.settings.pin.deleteAriaLabel')
   return t('panel.settings.pin.digitAria', { index: parseInt(key) })
@@ -43,7 +41,7 @@ function getKeyLabel(key: string, index: number): string {
       type="button"
       class="keypad-btn"
       :class="{ 'keypad-btn--action': key === 'clear' || key === 'delete', 'keypad-btn--error': error && key !== 'clear' && key !== 'delete' }"
-      :aria-label="getKeyLabel(key, i)"
+      :aria-label="getKeyLabel(key)"
       @click="handleKey(key)"
     >
       <span v-if="key === 'clear'" class="keypad-btn__text" aria-hidden="true">

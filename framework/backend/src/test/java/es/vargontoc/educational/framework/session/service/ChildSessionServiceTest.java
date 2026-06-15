@@ -87,7 +87,7 @@ class ChildSessionServiceTest {
         childSessionService.openSession(10L, 1L, 30, null);
 
         var eventCaptor = ArgumentCaptor.forClass(SessionEvent.class);
-        verify(sessionEventPublisher).notifyChildAndParent(eq(99L), eq(1L), eventCaptor.capture());
+        verify(sessionEventPublisher).notifyChildWithFarewellAndParent(eq(99L), eq(1L), eventCaptor.capture());
 
         var event = eventCaptor.getValue();
         assertEquals(SessionEventType.SESSION_EXPIRED, event.event());
@@ -196,7 +196,7 @@ class ChildSessionServiceTest {
         childSessionService.expireInactiveSessions(cutoff);
 
         var eventCaptor = ArgumentCaptor.forClass(SessionEvent.class);
-        verify(sessionEventPublisher).notifyChildAndParent(eq(55L), eq(1L), eventCaptor.capture());
+        verify(sessionEventPublisher).notifyChildWithFarewellAndParent(eq(55L), eq(1L), eventCaptor.capture());
 
         var event = eventCaptor.getValue();
         assertEquals(SessionEventType.SESSION_EXPIRED, event.event());

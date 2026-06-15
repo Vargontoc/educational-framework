@@ -3,10 +3,13 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/useSessionStore'
+import { useAudioStore } from '@/stores/useAudioStore'
+import type { GameAvatarEvent } from '@/shared/types/api'
 
 const { t } = useI18n()
 const router = useRouter()
 const sessionStore = useSessionStore()
+const audioStore = useAudioStore()
 
 const childName = ref<string>('')
 
@@ -18,6 +21,12 @@ const connectionState = ref<'connecting' | 'connected' | 'disconnected'>('discon
 let ws: WebSocket | null = null
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null
 const HEARTBEAT_INTERVAL_MS = 30_000
+
+const MAX_BINARY_WAIT_MS = 3_000  // max wait for binary audio frame after JSON event
+
+let pendingAudioId: string | null = null
+let audioTimeoutTimer: ReturnType<typeof setTimeout> | null = null
+let pendingAvatarEventType: 'SESSION_CONNECTED' | 'SESSION_DISCONNECTED' | null = null
 
 function getChildProfileId(): number | null {
   return sessionStore.activeChildSession?.childProfileId ?? null
@@ -62,10 +71,34 @@ function clearChildSessionAndGoHome() {
   router.replace('/')
 }
 
-function handleTerminalEvent(_event: string) {
-  closeWebSocket()
-  stopHeartbeat()
-  clearChildSessionAndGoHome()
+function parseBinaryAudioFrame(buffer: ArrayBuffer): { audioId: string; mp3Data: ArrayBuffer } | null {
+  if (buffer.byteLength < 4) return null
+  const view = new DataView(buffer)
+  const audioIdLength = view.getUint32(0, false)
+  if (buffer.byteLength < 4 + audioIdLength) return null
+  const audioIdBytes = new Uint8Array(buffer, 4, audioIdLength)
+  const audioId = new TextDecoder().decode(audioIdBytes)
+  const mp3Data = buffer.slice(4 + audioIdLength)
+  return { audioId, mp3Data }
+}
+
+function handleGameAvatarEvent(event: GameAvatarEvent) {
+  pendingAvatarEventType = event.eventType
+
+  if (!event.audioAvailable) {
+    doEventGame(event.eventType, false)
+    return
+  }
+
+  if (event.audioId) {
+    pendingAudioId = event.audioId
+    const capturedEventType = event.eventType
+    audioTimeoutTimer = setTimeout(() => {
+      audioTimeoutTimer = null
+      pendingAudioId = null
+      doEventGame(capturedEventType, false)
+    }, MAX_BINARY_WAIT_MS)
+  }
 }
 
 function onWsOpen() {
@@ -74,27 +107,73 @@ function onWsOpen() {
 }
 
 function onWsMessage(event: MessageEvent) {
-  try {
-    const data = JSON.parse(event.data) as { event: string; payload?: unknown }
-    console.log('WS Message: ' + event)
-    switch (data.event) {
-      case 'AUTH_ACK':
-        startHeartbeat()
-        viewState.value = 'ready'
-        break
-      case 'HEARTBEAT_ACK':
-        break
-      case 'GAME_STATE_UPDATE':
-        break
-      case 'SESSION_EXPIRED':
-      case 'SESSION_INVALIDATED':
-      case 'CHILD_EXPELLED':
-      case 'PARENT_BLOCK':
-        handleTerminalEvent(data.event)
-        break
+  if (typeof event.data === 'string') {
+    try {
+      const data = JSON.parse(event.data) as { event: string; payload?: unknown }
+      console.log('WS Message: ' + event)
+      switch (data.event) {
+        case 'AUTH_ACK':
+          startHeartbeat()
+          break
+        case 'HEARTBEAT_ACK':
+          break
+        case 'GAME_STATE_UPDATE':
+          break
+        case 'GAME_AVATAR_EVENT': {
+          const avatarEvent = data as unknown as GameAvatarEvent
+          handleGameAvatarEvent(avatarEvent)
+          
+          break
+        }
+        case 'SESSION_EXPIRED':
+        case 'SESSION_INVALIDATED':
+        case 'CHILD_EXPELLED':
+        case 'PARENT_BLOCK':
+          //handleTerminalEvent(data.event)
+          break
+      }
+    } catch {
     }
-  } catch {
+  } else if (event.data instanceof ArrayBuffer) {
+    if (pendingAudioId === null) return
+    const parsed = parseBinaryAudioFrame(event.data)
+    if (parsed === null) return
+    if (parsed.audioId !== pendingAudioId) return
+
+    if (audioTimeoutTimer !== null) {
+      clearTimeout(audioTimeoutTimer)
+      audioTimeoutTimer = null
+    }
+    pendingAudioId = null
+    const capturedType = pendingAvatarEventType
+    pendingAvatarEventType = null
+
+    audioStore.playAudio(parsed.mp3Data)
+      .then(() => doEventGame(capturedType, true))
+      .catch(() => doEventGame(capturedType, false))
   }
+}
+
+
+
+function doEventGame(eventType: String | null, hasAudio: boolean) {
+  const capturedEventType = eventType
+  pendingAvatarEventType = null
+
+  switch (capturedEventType) {
+    case 'SESSION_CONNECTED':
+      viewState.value = 'ready'
+      break
+    case 'SESSION_DISCONNECTED':
+      revokeSession()
+      break
+  }
+}
+
+function revokeSession() {
+  closeWebSocket()
+  stopHeartbeat()
+  clearChildSessionAndGoHome()
 }
 
 function onWsClose() {
@@ -109,6 +188,7 @@ function onWsError() {
 function initWebSocket() {
   const wsUrl = `${import.meta.env.VITE_WS_BASE_URL}/ws/game`
   ws = new WebSocket(wsUrl)
+  ws.binaryType = 'arraybuffer'
   ws.onopen = onWsOpen
   ws.onmessage = onWsMessage
   ws.onclose = onWsClose

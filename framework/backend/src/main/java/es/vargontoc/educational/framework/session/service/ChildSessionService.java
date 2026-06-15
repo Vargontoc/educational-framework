@@ -40,7 +40,7 @@ public class ChildSessionService implements ChildSessionUseCase {
             .ifPresent(existing -> {
                 closeExistingSession(existing, now, ChildSessionStatus.CLOSED);
                 childSessionRepository.save(existing);
-                sessionEventPublisher.notifyChildAndParent(
+                sessionEventPublisher.notifyChildWithFarewellAndParent(
                     existing.getId(),
                     existing.getFamilyId(),
                     SessionEvent.of(SessionEventType.SESSION_EXPIRED, existing.getId(),
@@ -75,7 +75,7 @@ public class ChildSessionService implements ChildSessionUseCase {
         closeExistingSession(session, LocalDateTime.now(), ChildSessionStatus.EXPELLED);
         var saved = childSessionRepository.save(session);
 
-        sessionEventPublisher.notifyChildAndParent(
+        sessionEventPublisher.notifyChildWithFarewellAndParent(
             saved.getId(),
             saved.getFamilyId(),
             SessionEvent.of(SessionEventType.CHILD_EXPELLED, saved.getId())
@@ -120,7 +120,7 @@ public class ChildSessionService implements ChildSessionUseCase {
         childSessionRepository.saveAll(sessions);
 
         for (ChildSession session : sessions) {
-            sessionEventPublisher.notifyChildAndParent(
+            sessionEventPublisher.notifyChildWithFarewellAndParent(
                 session.getId(),
                 session.getFamilyId(),
                 SessionEvent.of(SessionEventType.SESSION_EXPIRED, session.getId(),

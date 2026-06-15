@@ -55,4 +55,9 @@ public class SessionEventPublisher {
         notifyChild(childSessionId, event);
         notifyParent(familyId, event);
     }
+
+    public void notifyChildWithFarewellAndParent(Long childSessionId, Long familyId, SessionEvent event) {
+        gameWebSocketHandler.sendFarewellAndClose(childSessionId);
+        notifyParent(familyId, event);
+    }
 }
