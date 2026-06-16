@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -190,6 +191,59 @@ class GameWebSocketHandlerTest {
 
         verify(avatarLifecycleService).farewell(6L);
         verify(session).close(CloseStatus.NORMAL);
+    }
+
+    @Test
+    void afterConnectionClosed_abruptDisconnect_doesNotThrow() {
+        handler.afterConnectionEstablished(session);
+        handler.afterConnectionClosed(session, CloseStatus.SERVER_ERROR);
+
+        assertFalse(handler.hasActiveSession(1L));
+    }
+
+    @Test
+    void auth_validActiveSession_welcomeEventHasCorrectEventField() throws IOException {
+        var childSession = childSession(7L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(7L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+        var avatarResult = new AvatarLifecycleService.AvatarLifecycleResult(
+            GameAvatarEvent.welcome(7L, false, null, "Hola, vamos a jugar!"),
+            null
+        );
+        when(avatarLifecycleService.welcome(7L)).thenReturn(avatarResult);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":7}"));
+
+        var textCaptor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(2)).sendMessage(textCaptor.capture());
+        var avatarMessage = textCaptor.getAllValues().stream()
+            .filter(m -> m.getPayload().contains("GAME_AVATAR_EVENT"))
+            .findFirst()
+            .orElseThrow();
+        assertTrue(avatarMessage.getPayload().contains("\"event\":\"GAME_AVATAR_EVENT\""));
+    }
+
+    @Test
+    void sendBinaryFrame_containsAudioIdCorrelation() throws Exception {
+        byte[] audioData = "mp3-test-data".getBytes();
+        String audioId = "test-audio-id-123";
+
+        handler.sendBinaryFrame(session, audioId, audioData);
+
+        var binaryCaptor = ArgumentCaptor.forClass(BinaryMessage.class);
+        verify(session).sendMessage(binaryCaptor.capture());
+        byte[] payload = binaryCaptor.getValue().getPayload().array();
+
+        int audioIdLength = (payload[0] & 0xFF) << 24 | (payload[1] & 0xFF) << 16
+            | (payload[2] & 0xFF) << 8 | (payload[3] & 0xFF);
+        byte[] extractedAudioId = new byte[audioIdLength];
+        System.arraycopy(payload, 4, extractedAudioId, 0, audioIdLength);
+        assertEquals(audioId, new String(extractedAudioId));
+
+        byte[] extractedAudio = new byte[payload.length - 4 - audioIdLength];
+        System.arraycopy(payload, 4 + audioIdLength, extractedAudio, 0, extractedAudio.length);
+        assertEquals("mp3-test-data", new String(extractedAudio));
     }
 
     private ChildSession childSession(Long id, ChildSessionStatus status) {
