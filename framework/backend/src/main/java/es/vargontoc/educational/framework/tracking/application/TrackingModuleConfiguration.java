@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.tracking.application;
 
+import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProperties;
 import es.vargontoc.educational.framework.tracking.ports.in.GetChildAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetViewedCuriositiesUseCase;
@@ -10,6 +11,8 @@ import es.vargontoc.educational.framework.tracking.ports.in.ResetCuriosityCycleU
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildAchievementRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningCompletedStepRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningProgressRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.CuriosityViewedRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelConfigPort;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelNavigationPort;
@@ -17,6 +20,7 @@ import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryReposit
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
 import es.vargontoc.educational.framework.tracking.service.AdaptiveDifficultyService;
 import es.vargontoc.educational.framework.tracking.service.ChildAchievementService;
+import es.vargontoc.educational.framework.tracking.service.ChildLearningProgressService;
 import es.vargontoc.educational.framework.tracking.service.CuriosityViewedService;
 import es.vargontoc.educational.framework.tracking.service.SummaryUpdateService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -65,5 +69,13 @@ class TrackingModuleConfiguration {
     @Bean
     ChildAchievementService childAchievementService(ChildAchievementRepository childAchievementRepository) {
         return new ChildAchievementService(childAchievementRepository);
+    }
+
+    @Bean
+    ChildLearningProgressService childLearningProgressService(
+            ChildLearningProgressRepository progressRepository,
+            ChildLearningCompletedStepRepository completedStepRepository,
+            LearningPathRepository learningPathRepository) {
+        return new ChildLearningProgressService(progressRepository, completedStepRepository, learningPathRepository);
     }
 }
