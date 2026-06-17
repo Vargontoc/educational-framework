@@ -4,7 +4,6 @@ import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
-import es.vargontoc.educational.framework.tracking.validation.ActivityAttemptValidator;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +27,9 @@ class ActivityAttemptServiceTest {
     @Mock
     private ActivityAttemptRepository repository;
 
+    @Mock
+    private SummaryUpdateService summaryUpdateService;
+
     @InjectMocks
     private ActivityAttemptService service;
 
@@ -47,6 +49,7 @@ class ActivityAttemptServiceTest {
         assertEquals(1L, result.attemptId());
         assertNotNull(result.createdAt());
         verify(repository).save(captor.capture());
+        verify(summaryUpdateService).updateSummaries(any(ActivityAttempt.class));
 
         var saved = captor.getValue();
         assertEquals(10L, saved.getChildProfileId());

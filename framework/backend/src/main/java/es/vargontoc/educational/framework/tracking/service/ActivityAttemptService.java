@@ -15,10 +15,14 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
 
     private final ActivityAttemptRepository repository;
     private final ActivityAttemptValidator validator;
+    private final SummaryUpdateService summaryUpdateService;
 
-    public ActivityAttemptService(ActivityAttemptRepository repository) {
+    public ActivityAttemptService(
+            ActivityAttemptRepository repository,
+            SummaryUpdateService summaryUpdateService) {
         this.repository = repository;
         this.validator = new ActivityAttemptValidator();
+        this.summaryUpdateService = summaryUpdateService;
     }
 
     @Override
@@ -45,6 +49,8 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
         attempt.setAttemptContext(attemptContext);
 
         var saved = repository.save(attempt);
+
+        summaryUpdateService.updateSummaries(saved);
 
         return new AttemptRegistrationResult(saved.getId(), saved.getCreatedAt());
     }
