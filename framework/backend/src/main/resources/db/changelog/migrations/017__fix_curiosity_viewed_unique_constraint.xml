@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="017-1" author="vargontoc">
+        <!-- Replace 3-column unique constraint (missing cycle_number) with the correct 4-column constraint.
+             Without cycle_number a child could never view the same curiosity in a second cycle. -->
+        <dropUniqueConstraint
+            tableName="curiosity_viewed"
+            constraintName="uk_curiosity_viewed_child_topic_curiosity"/>
+
+        <addUniqueConstraint
+            tableName="curiosity_viewed"
+            constraintName="uk_curiosity_viewed_child_topic_curiosity_cycle"
+            columnNames="child_profile_id, topic_id, curiosity_id, cycle_number"/>
+    </changeSet>
+
+</databaseChangeLog>

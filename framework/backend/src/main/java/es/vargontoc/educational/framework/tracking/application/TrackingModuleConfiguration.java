@@ -1,14 +1,23 @@
 package es.vargontoc.educational.framework.tracking.application;
 
 import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProperties;
+import es.vargontoc.educational.framework.tracking.ports.in.GetChildAchievementsUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.GetViewedCuriositiesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.RegisterChildAchievementUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.RegisterCuriosityViewedUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.ResetCuriosityCycleUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.ChildAchievementRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.CuriosityViewedRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelConfigPort;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelNavigationPort;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
 import es.vargontoc.educational.framework.tracking.service.AdaptiveDifficultyService;
+import es.vargontoc.educational.framework.tracking.service.ChildAchievementService;
+import es.vargontoc.educational.framework.tracking.service.CuriosityViewedService;
 import es.vargontoc.educational.framework.tracking.service.SummaryUpdateService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -46,5 +55,15 @@ class TrackingModuleConfiguration {
             SummaryUpdateService summaryUpdateService,
             AdaptiveDifficultyService adaptiveDifficultyService) {
         return new ActivityAttemptService(repository, summaryUpdateService, adaptiveDifficultyService);
+    }
+
+    @Bean
+    CuriosityViewedService curiosityViewedService(CuriosityViewedRepository curiosityViewedRepository) {
+        return new CuriosityViewedService(curiosityViewedRepository);
+    }
+
+    @Bean
+    ChildAchievementService childAchievementService(ChildAchievementRepository childAchievementRepository) {
+        return new ChildAchievementService(childAchievementRepository);
     }
 }

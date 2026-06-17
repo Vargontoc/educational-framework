@@ -21,5 +21,6 @@
     <include file="db/changelog/migrations/014__add_missing_content_fields.xml"/>
     <include file="db/changelog/migrations/015__create_tracking_schema.xml"/>
     <include file="db/changelog/migrations/016__add_adaptive_difficulty_tracking.xml"/>
+    <include file="db/changelog/migrations/017__fix_curiosity_viewed_unique_constraint.xml"/>
 
 </databaseChangeLog>
