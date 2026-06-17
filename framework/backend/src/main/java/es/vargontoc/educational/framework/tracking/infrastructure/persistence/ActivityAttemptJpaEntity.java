@@ -15,7 +15,7 @@ public class ActivityAttemptJpaEntity extends BaseEntity {
     @Column(name = "activity_id", nullable = false)
     private Long activityId;
 
-    @Column(name = "child_session_id", nullable = false)
+    @Column(name = "child_session_id")
     private Long childSessionId;
 
     @Column(name = "topic_id", nullable = false)

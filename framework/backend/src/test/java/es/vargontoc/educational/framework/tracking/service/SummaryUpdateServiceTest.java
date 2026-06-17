@@ -225,6 +225,61 @@ class SummaryUpdateServiceTest {
     }
 
     @Test
+    void averageResponseTime_excludesTimeoutsFromDivisor() {
+        var existingActivitySummary = new ActivitySummary();
+        existingActivitySummary.setChildProfileId(10L);
+        existingActivitySummary.setActivityId(20L);
+        existingActivitySummary.setTotalAttempts(1);
+        existingActivitySummary.setTotalCorrect(1);
+        existingActivitySummary.setTotalIncorrect(0);
+        existingActivitySummary.setTotalTimeouts(0);
+        existingActivitySummary.setSuccessRatePercent(new BigDecimal("100.00"));
+        existingActivitySummary.setAverageResponseTimeMs(6000);
+
+        var existingTopicSummary = new TopicSummary();
+        existingTopicSummary.setChildProfileId(10L);
+        existingTopicSummary.setTopicId(40L);
+        existingTopicSummary.setTotalAttempts(1);
+        existingTopicSummary.setTotalCorrect(1);
+        existingTopicSummary.setTotalIncorrect(0);
+        existingTopicSummary.setTotalTimeouts(0);
+        existingTopicSummary.setSuccessRatePercent(new BigDecimal("100.00"));
+        existingTopicSummary.setFailureRatePercent(BigDecimal.ZERO);
+        existingTopicSummary.setPerformanceBand(TopicPerformanceBand.STRONG);
+        existingTopicSummary.setAverageResponseTimeMs(6000);
+
+        when(activitySummaryRepository.findByChildProfileIdAndActivityId(10L, 20L))
+            .thenReturn(Optional.of(existingActivitySummary));
+        when(topicSummaryRepository.findByChildProfileIdAndTopicId(10L, 40L))
+            .thenReturn(Optional.of(existingTopicSummary));
+        when(activitySummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(topicSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // Timeout (null responseTimeMs) — should not affect the average or its divisor
+        service.updateSummaries(timeoutAttempt);
+
+        // Correct attempt with rt=4000 — average of [6000, 4000] must be 5000, not 5333
+        var correctWithRt = new ActivityAttempt();
+        correctWithRt.setChildProfileId(10L);
+        correctWithRt.setActivityId(20L);
+        correctWithRt.setChildSessionId(30L);
+        correctWithRt.setTopicId(40L);
+        correctWithRt.setDifficultyLevelId(50L);
+        correctWithRt.setResult(AttemptResult.CORRECT);
+        correctWithRt.setResponseTimeMs(4000);
+
+        service.updateSummaries(correctWithRt);
+
+        var activityCaptor = ArgumentCaptor.forClass(ActivitySummary.class);
+        verify(activitySummaryRepository, org.mockito.Mockito.times(2)).save(activityCaptor.capture());
+        assertEquals(5000, activityCaptor.getAllValues().get(1).getAverageResponseTimeMs());
+
+        var topicCaptor = ArgumentCaptor.forClass(TopicSummary.class);
+        verify(topicSummaryRepository, org.mockito.Mockito.times(2)).save(topicCaptor.capture());
+        assertEquals(5000, topicCaptor.getAllValues().get(1).getAverageResponseTimeMs());
+    }
+
+    @Test
     void performanceBand_isWEAK_whenFailuresAbove40Percent() {
         var existingTopicSummary = createTopicSummaryWithFailures(4, 2);
         when(topicSummaryRepository.findByChildProfileIdAndTopicId(10L, 40L))

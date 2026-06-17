@@ -85,9 +85,6 @@ class ActivityAttemptServiceTest {
     void register_missingChildProfileId_throwsValidationException() {
         assertThrows(ValidationException.class, () ->
             service.register(null, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, null, null));
-
-        assertThrows(ValidationException.class, () ->
-            service.register(null, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, null, null));
     }
 
     @Test

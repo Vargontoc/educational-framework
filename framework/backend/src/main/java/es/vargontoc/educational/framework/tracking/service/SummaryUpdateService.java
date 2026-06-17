@@ -7,13 +7,11 @@ import es.vargontoc.educational.framework.tracking.model.TopicPerformanceBand;
 import es.vargontoc.educational.framework.tracking.model.TopicSummary;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-@Service
 @Transactional
 public class SummaryUpdateService {
 
@@ -49,10 +47,11 @@ public class SummaryUpdateService {
             summary.getTotalCorrect(), summary.getTotalAttempts()));
 
         if (attempt.getResponseTimeMs() != null) {
+            int countWithResponseTime = summary.getTotalAttempts() - summary.getTotalTimeouts();
             summary.setAverageResponseTimeMs(calculateIncrementalAverage(
                 summary.getAverageResponseTimeMs(),
                 attempt.getResponseTimeMs(),
-                summary.getTotalAttempts()));
+                countWithResponseTime));
         }
 
         summary.setCurrentDifficultyLevelId(attempt.getDifficultyLevelId());
@@ -83,10 +82,11 @@ public class SummaryUpdateService {
         summary.setPerformanceBand(determinePerformanceBand(summary.getFailureRatePercent()));
 
         if (attempt.getResponseTimeMs() != null) {
+            int countWithResponseTime = summary.getTotalAttempts() - summary.getTotalTimeouts();
             summary.setAverageResponseTimeMs(calculateIncrementalAverage(
                 summary.getAverageResponseTimeMs(),
                 attempt.getResponseTimeMs(),
-                summary.getTotalAttempts()));
+                countWithResponseTime));
         }
 
         topicSummaryRepository.save(summary);

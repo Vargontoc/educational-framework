@@ -316,10 +316,13 @@
             referencedTableName="topic"
             referencedColumnNames="id"/>
 
-        <addUniqueConstraint
-            tableName="child_achievement"
-            constraintName="uk_child_achievement_child_code"
-            columnNames="child_profile_id, achievement_code, activity_id, topic_id"/>
+        <!-- NULLS NOT DISTINCT required because activity_id and topic_id are nullable;
+             standard UNIQUE treats NULL != NULL and would allow duplicate global achievements. -->
+        <sql>
+            CREATE UNIQUE INDEX uk_child_achievement_child_code
+            ON child_achievement (child_profile_id, achievement_code, activity_id, topic_id)
+            NULLS NOT DISTINCT;
+        </sql>
 
         <createIndex indexName="idx_child_achievement_child" tableName="child_achievement">
             <column name="child_profile_id"/>

@@ -6,10 +6,8 @@ import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import es.vargontoc.educational.framework.tracking.validation.ActivityAttemptValidator;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 @Transactional
 public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
 
