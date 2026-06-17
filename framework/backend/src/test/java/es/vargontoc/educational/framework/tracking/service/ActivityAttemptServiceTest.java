@@ -30,6 +30,9 @@ class ActivityAttemptServiceTest {
     @Mock
     private SummaryUpdateService summaryUpdateService;
 
+    @Mock
+    private AdaptiveDifficultyService adaptiveDifficultyService;
+
     @InjectMocks
     private ActivityAttemptService service;
 

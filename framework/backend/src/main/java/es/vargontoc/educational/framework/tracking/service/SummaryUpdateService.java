@@ -54,6 +54,11 @@ public class SummaryUpdateService {
                 countWithResponseTime));
         }
 
+        if (summary.getAttemptsSinceLastDifficultyChange() == null) {
+            summary.setAttemptsSinceLastDifficultyChange(0);
+        }
+        summary.setAttemptsSinceLastDifficultyChange(summary.getAttemptsSinceLastDifficultyChange() + 1);
+
         summary.setCurrentDifficultyLevelId(attempt.getDifficultyLevelId());
 
         activitySummaryRepository.save(summary);
@@ -101,6 +106,7 @@ public class SummaryUpdateService {
         summary.setTotalIncorrect(0);
         summary.setTotalTimeouts(0);
         summary.setAverageResponseTimeMs(0);
+        summary.setAttemptsSinceLastDifficultyChange(0);
         return summary;
     }
 

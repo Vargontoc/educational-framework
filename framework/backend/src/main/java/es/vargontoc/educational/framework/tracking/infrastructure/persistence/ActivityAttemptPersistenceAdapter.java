@@ -5,6 +5,8 @@ import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public class ActivityAttemptPersistenceAdapter implements ActivityAttemptRepository {
 
@@ -17,6 +19,14 @@ public class ActivityAttemptPersistenceAdapter implements ActivityAttemptReposit
     @Override
     public ActivityAttempt save(ActivityAttempt attempt) {
         return toDomain(jpaRepository.save(toJpa(attempt)));
+    }
+
+    @Override
+    public List<ActivityAttempt> findRecentByChildAndActivity(Long childProfileId, Long activityId, int limit) {
+        return jpaRepository.findRecentByChildAndActivity(childProfileId, activityId, limit)
+                .stream()
+                .map(ActivityAttemptPersistenceAdapter::toDomain)
+                .toList();
     }
 
     static ActivityAttempt toDomain(ActivityAttemptJpaEntity source) {

@@ -15,6 +15,7 @@ public class ActivitySummary {
     private BigDecimal successRatePercent;
     private Integer averageResponseTimeMs;
     private Long currentDifficultyLevelId;
+    private Integer attemptsSinceLastDifficultyChange;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -99,6 +100,14 @@ public class ActivitySummary {
 
     public void setCurrentDifficultyLevelId(Long currentDifficultyLevelId) {
         this.currentDifficultyLevelId = currentDifficultyLevelId;
+    }
+
+    public Integer getAttemptsSinceLastDifficultyChange() {
+        return attemptsSinceLastDifficultyChange;
+    }
+
+    public void setAttemptsSinceLastDifficultyChange(Integer attemptsSinceLastDifficultyChange) {
+        this.attemptsSinceLastDifficultyChange = attemptsSinceLastDifficultyChange;
     }
 
     public LocalDateTime getCreatedAt() {

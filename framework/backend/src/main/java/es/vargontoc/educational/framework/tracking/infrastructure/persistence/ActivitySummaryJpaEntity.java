@@ -38,6 +38,9 @@ public class ActivitySummaryJpaEntity extends BaseEntity {
     @Column(name = "current_difficulty_level_id")
     private Long currentDifficultyLevelId;
 
+    @Column(name = "attempts_since_last_difficulty_change", nullable = false)
+    private Integer attemptsSinceLastDifficultyChange;
+
     public Long getChildProfileId() {
         return childProfileId;
     }
@@ -108,5 +111,13 @@ public class ActivitySummaryJpaEntity extends BaseEntity {
 
     public void setCurrentDifficultyLevelId(Long currentDifficultyLevelId) {
         this.currentDifficultyLevelId = currentDifficultyLevelId;
+    }
+
+    public Integer getAttemptsSinceLastDifficultyChange() {
+        return attemptsSinceLastDifficultyChange;
+    }
+
+    public void setAttemptsSinceLastDifficultyChange(Integer attemptsSinceLastDifficultyChange) {
+        this.attemptsSinceLastDifficultyChange = attemptsSinceLastDifficultyChange;
     }
 }

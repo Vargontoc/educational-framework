@@ -38,6 +38,7 @@ public class ActivitySummaryPersistenceAdapter implements ActivitySummaryReposit
         target.setSuccessRatePercent(source.getSuccessRatePercent());
         target.setAverageResponseTimeMs(source.getAverageResponseTimeMs());
         target.setCurrentDifficultyLevelId(source.getCurrentDifficultyLevelId());
+        target.setAttemptsSinceLastDifficultyChange(source.getAttemptsSinceLastDifficultyChange());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -55,6 +56,7 @@ public class ActivitySummaryPersistenceAdapter implements ActivitySummaryReposit
         target.setSuccessRatePercent(source.getSuccessRatePercent());
         target.setAverageResponseTimeMs(source.getAverageResponseTimeMs());
         target.setCurrentDifficultyLevelId(source.getCurrentDifficultyLevelId());
+        target.setAttemptsSinceLastDifficultyChange(source.getAttemptsSinceLastDifficultyChange());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;

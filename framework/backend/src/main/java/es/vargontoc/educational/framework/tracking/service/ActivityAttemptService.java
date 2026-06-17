@@ -14,13 +14,16 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
     private final ActivityAttemptRepository repository;
     private final ActivityAttemptValidator validator;
     private final SummaryUpdateService summaryUpdateService;
+    private final AdaptiveDifficultyService adaptiveDifficultyService;
 
     public ActivityAttemptService(
             ActivityAttemptRepository repository,
-            SummaryUpdateService summaryUpdateService) {
+            SummaryUpdateService summaryUpdateService,
+            AdaptiveDifficultyService adaptiveDifficultyService) {
         this.repository = repository;
         this.validator = new ActivityAttemptValidator();
         this.summaryUpdateService = summaryUpdateService;
+        this.adaptiveDifficultyService = adaptiveDifficultyService;
     }
 
     @Override
@@ -49,6 +52,8 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
         var saved = repository.save(attempt);
 
         summaryUpdateService.updateSummaries(saved);
+
+        adaptiveDifficultyService.evaluate(childProfileId, activityId, difficultyLevelId);
 
         return new AttemptRegistrationResult(saved.getId(), saved.getCreatedAt());
     }

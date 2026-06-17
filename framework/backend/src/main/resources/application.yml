@@ -43,6 +43,18 @@ logging:
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost}
+  tracking:
+    adaptive-difficulty:
+      sliding-window-attempts: ${APP_TRACKING_AD_SLIDING_WINDOW:10}
+      increase-threshold-percent: ${APP_TRACKING_AD_INCREASE_THRESHOLD:75}
+      decrease-threshold-percent: ${APP_TRACKING_AD_DECREASE_THRESHOLD:40}
+      min-attempts-before-change: ${APP_TRACKING_AD_MIN_ATTEMPTS:5}
+      cooldown-attempts: ${APP_TRACKING_AD_COOLDOWN:3}
+      target-response-time-ms: ${APP_TRACKING_AD_TARGET_RESPONSE_MS:5000}
+      timeout-rate-threshold-percent: ${APP_TRACKING_AD_TIMEOUT_THRESHOLD:30}
+      timeout-penalty-weight: ${APP_TRACKING_AD_TIMEOUT_PENALTY:0.3}
+      accuracy-weight: ${APP_TRACKING_AD_ACCURACY_WEIGHT:0.7}
+      speed-weight: ${APP_TRACKING_AD_SPEED_WEIGHT:0.3}
   session:
     default-heartbeat-interval-seconds: 30
     heartbeat-grace-multiplier: 2
