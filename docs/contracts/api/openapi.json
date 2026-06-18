@@ -2293,6 +2293,250 @@
       }
     }
   },
+  "/api/v1/tracking/children/{childProfileId}/summary": {
+    "get": {
+      "tags": [
+        "tracking-dashboard-controller"
+      ],
+      "operationId": "getChildTrackingSummary",
+      "parameters": [
+        {
+          "name": "childProfileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiResponseChildTrackingSummaryResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/tracking/children/{childProfileId}/activities": {
+    "get": {
+      "tags": [
+        "tracking-dashboard-controller"
+      ],
+      "operationId": "getActivityPerformance",
+      "parameters": [
+        {
+          "name": "childProfileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiResponseListActivityPerformanceResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/tracking/children/{childProfileId}/topics": {
+    "get": {
+      "tags": [
+        "tracking-dashboard-controller"
+      ],
+      "operationId": "getTopicPerformance",
+      "parameters": [
+        {
+          "name": "childProfileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiResponseListTopicPerformanceResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/tracking/children/{childProfileId}/difficulty": {
+    "get": {
+      "tags": [
+        "tracking-dashboard-controller"
+      ],
+      "operationId": "getDifficultyEvolution",
+      "parameters": [
+        {
+          "name": "childProfileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        {
+          "name": "activityId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiResponseDifficultyEvolutionResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/tracking/children/{childProfileId}/response-time": {
+    "get": {
+      "tags": [
+        "tracking-dashboard-controller"
+      ],
+      "operationId": "getResponseTimeMetrics",
+      "parameters": [
+        {
+          "name": "childProfileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiResponseResponseTimeMetricsResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/tracking/children/{childProfileId}/achievements": {
+    "get": {
+      "tags": [
+        "tracking-dashboard-controller"
+      ],
+      "operationId": "getChildAchievements",
+      "parameters": [
+        {
+          "name": "childProfileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        {
+          "name": "activityId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiResponseListChildAchievementResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v1/tracking/children/{childProfileId}/learning-progress": {
+    "get": {
+      "tags": [
+        "tracking-dashboard-controller"
+      ],
+      "operationId": "getChildLearningProgress",
+      "parameters": [
+        {
+          "name": "childProfileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        {
+          "name": "learningPathId",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiResponseListChildLearningProgressResponse"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "components": {
     "schemas": {
       "UpdateTracingPatternRequest": {
@@ -4548,6 +4792,191 @@
           "INACTIVE",
           "DRAFT"
         ]
+      },
+      "TopicPerformanceBand": {
+        "type": "string",
+        "enum": [
+          "WEAK",
+          "MEDIUM",
+          "STRONG"
+        ]
+      },
+      "ChildTrackingSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "childProfileId": { "type": "integer", "format": "int64" },
+          "totalActivities": { "type": "integer", "format": "int32" },
+          "totalTopics": { "type": "integer", "format": "int32" },
+          "totalAttempts": { "type": "integer", "format": "int32" },
+          "totalCorrect": { "type": "integer", "format": "int32" },
+          "totalIncorrect": { "type": "integer", "format": "int32" },
+          "totalTimeouts": { "type": "integer", "format": "int32" },
+          "overallSuccessRate": { "type": "number", "format": "decimal" },
+          "totalAchievements": { "type": "integer", "format": "int32" },
+          "totalLearningPathsStarted": { "type": "integer", "format": "int32" },
+          "totalLearningStepsCompleted": { "type": "integer", "format": "int32" },
+          "lastActivityAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ActivityPerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "activityId": { "type": "integer", "format": "int64" },
+          "totalAttempts": { "type": "integer", "format": "int32" },
+          "totalCorrect": { "type": "integer", "format": "int32" },
+          "totalIncorrect": { "type": "integer", "format": "int32" },
+          "totalTimeouts": { "type": "integer", "format": "int32" },
+          "successRatePercent": { "type": "number", "format": "decimal" },
+          "averageResponseTimeMs": { "type": "integer", "format": "int32" },
+          "currentDifficultyLevelId": { "type": "integer", "format": "int64" },
+          "attemptsSinceLastDifficultyChange": { "type": "integer", "format": "int32" },
+          "lastAttemptAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TopicPerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "topicId": { "type": "integer", "format": "int64" },
+          "totalAttempts": { "type": "integer", "format": "int32" },
+          "totalCorrect": { "type": "integer", "format": "int32" },
+          "totalIncorrect": { "type": "integer", "format": "int32" },
+          "totalTimeouts": { "type": "integer", "format": "int32" },
+          "successRatePercent": { "type": "number", "format": "decimal" },
+          "failureRatePercent": { "type": "number", "format": "decimal" },
+          "averageResponseTimeMs": { "type": "integer", "format": "int32" },
+          "performanceBand": { "$ref": "#/components/schemas/TopicPerformanceBand" },
+          "lastAttemptAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DifficultyChangeRecord": {
+        "type": "object",
+        "properties": {
+          "difficultyLevelId": { "type": "integer", "format": "int64" },
+          "direction": { "type": "string" },
+          "changedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DifficultyEvolutionResponse": {
+        "type": "object",
+        "properties": {
+          "childProfileId": { "type": "integer", "format": "int64" },
+          "activityId": { "type": "integer", "format": "int64" },
+          "currentDifficultyLevelId": { "type": "integer", "format": "int64" },
+          "attemptsSinceLastChange": { "type": "integer", "format": "int32" },
+          "history": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DifficultyChangeRecord" }
+          }
+        }
+      },
+      "ActivityResponseTime": {
+        "type": "object",
+        "properties": {
+          "activityId": { "type": "integer", "format": "int64" },
+          "averageResponseTimeMs": { "type": "integer", "format": "int32" },
+          "minResponseTimeMs": { "type": "integer", "format": "int32" },
+          "maxResponseTimeMs": { "type": "integer", "format": "int32" }
+        }
+      },
+      "ResponseTimeMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "childProfileId": { "type": "integer", "format": "int64" },
+          "overallAverageResponseTimeMs": { "type": "integer", "format": "int32" },
+          "overallMinResponseTimeMs": { "type": "integer", "format": "int32" },
+          "overallMaxResponseTimeMs": { "type": "integer", "format": "int32" },
+          "byActivity": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ActivityResponseTime" }
+          }
+        }
+      },
+      "ChildAchievement": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "childProfileId": { "type": "integer", "format": "int64" },
+          "achievementCode": { "type": "string" },
+          "activityId": { "type": "integer", "format": "int64" },
+          "topicId": { "type": "integer", "format": "int64" },
+          "earnedAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ChildLearningProgress": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "childProfileId": { "type": "integer", "format": "int64" },
+          "learningPathId": { "type": "integer", "format": "int64" },
+          "currentLearningPathStepId": { "type": "integer", "format": "int64" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ApiResponseChildTrackingSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/ChildTrackingSummaryResponse" },
+          "message": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseListActivityPerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ActivityPerformanceResponse" } },
+          "message": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseListTopicPerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/TopicPerformanceResponse" } },
+          "message": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseDifficultyEvolutionResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/DifficultyEvolutionResponse" },
+          "message": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseResponseTimeMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/ResponseTimeMetricsResponse" },
+          "message": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseListChildAchievementResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ChildAchievement" } },
+          "message": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseListChildLearningProgressResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/ChildLearningProgress" } },
+          "message": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
       }
     }
   }
