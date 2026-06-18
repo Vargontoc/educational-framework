@@ -12,6 +12,8 @@ public interface ChildLearningCompletedStepJpaRepository extends JpaRepository<C
     List<ChildLearningCompletedStepJpaEntity> findByChildProfileIdAndLearningPathId(
             Long childProfileId, Long learningPathId);
 
+    List<ChildLearningCompletedStepJpaEntity> findByChildProfileId(Long childProfileId);
+
     @Query("SELECT e FROM ChildLearningCompletedStepJpaEntity e " +
            "WHERE e.childProfileId = :childProfileId " +
            "AND e.learningPathId = :learningPathId " +

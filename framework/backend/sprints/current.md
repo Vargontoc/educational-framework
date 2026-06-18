@@ -1,8 +1,8 @@
-# Sprint 029 - backend
+# Sprint 030 - backend
 # -----------------------------------------------
 
 ## Goal
-Expose read-only REST endpoints for the parental dashboard using tracking summaries and progress read models.
+Delete `ActivityAttempt` records older than 180 days while preserving summaries, achievements, curiosity cycles, and learning progress.
 
 ## Status
 status: backlog
@@ -13,66 +13,50 @@ waiting_for:
 
 ## Tasks
 
-### Application Read Services
-- [ ] Create dashboard application service for general child tracking summary.
-- [ ] Create read method for activity performance.
-- [ ] Create read method for topic performance.
-- [ ] Create read method for difficulty evolution if enough data exists.
-- [ ] Create read method for response time metrics.
-- [ ] Create read method for achievements.
-- [ ] Create read method for learning path progress.
-- [ ] Prefer summaries over full attempt recomputation.
+### Retention Job
+- [ ] Create tracking retention job using the existing `AbstractRetentionJob` pattern if available.
+- [ ] Hardcode retention to 180 days for v1.
+- [ ] Delete only `ActivityAttempt` rows older than the cutoff.
+- [ ] Keep `ActivitySummary` rows.
+- [ ] Keep `TopicSummary` rows.
+- [ ] Keep `ChildAchievement` rows.
+- [ ] Keep `ChildLearningProgress` rows.
+- [ ] Keep `ChildLearningCompletedStep` rows.
+- [ ] Keep `CuriosityViewed` rows because reset is cycle-based, not time-based.
+- [ ] Add structured logs with cutoff and deleted row count.
 
-### REST API
-- [ ] Create tracking dashboard controller.
-- [ ] Add `GET /api/v1/tracking/children/{childProfileId}/summary`.
-- [ ] Add `GET /api/v1/tracking/children/{childProfileId}/activities`.
-- [ ] Add `GET /api/v1/tracking/children/{childProfileId}/topics`.
-- [ ] Add `GET /api/v1/tracking/children/{childProfileId}/difficulty` if supported by stored data.
-- [ ] Add `GET /api/v1/tracking/children/{childProfileId}/response-time`.
-- [ ] Add `GET /api/v1/tracking/children/{childProfileId}/achievements`.
-- [ ] Add `GET /api/v1/tracking/children/{childProfileId}/learning-progress`.
-- [ ] Apply the same parental authorization style used by existing parental/productive APIs.
-
-### Contracts
-- [ ] Update `docs/contracts/api/openapi.json` after endpoints are implemented.
-- [ ] Do not update `docs/contracts/api/websocket.json`.
+### Repository Support
+- [ ] Add repository method to delete attempts older than a timestamp.
+- [ ] Add repository method to count old attempts if useful for logging or tests.
 
 ### Tests
-- [ ] Integration test general child summary endpoint.
-- [ ] Integration test activity performance endpoint.
-- [ ] Integration test topic performance endpoint.
-- [ ] Integration test response time endpoint.
-- [ ] Integration test achievements endpoint.
-- [ ] Integration test learning progress endpoint.
-- [ ] Negative integration test for missing child.
-- [ ] Negative integration test for unauthorized access if auth applies.
+- [ ] Unit test cutoff is 180 days before job execution time.
+- [ ] Unit test job calls attempt repository deletion.
+- [ ] Persistence/integration test deletes old attempts.
+- [ ] Persistence/integration test keeps recent attempts.
+- [ ] Persistence/integration test summaries and progress rows are not deleted.
 
 ## Manual Tests
-- Start backend locally.
-- Use Postman, curl, or Swagger to call each dashboard endpoint with a valid parental/session context.
-- Confirm totals match test or manually inserted tracking rows.
-- Confirm endpoints are read-only and do not register attempts, achievements, curiosities, or completed steps.
-- Confirm OpenAPI includes the new dashboard paths.
+- Insert one old `ActivityAttempt` older than 180 days and one recent attempt.
+- Trigger the job manually if the project has a simple way to run scheduled jobs in development.
+- Confirm only the old attempt is deleted.
+- Confirm summaries, achievements, and learning progress remain unchanged.
 
 ## Risks
-- Dashboard endpoints can accidentally recompute too much from atomic attempts.
-- Authorization mistakes could expose child progress data.
-- Adding write endpoints here would violate the feature boundary.
+- Deleting summaries would lose long-term progress.
+- Making retention configurable now would add complexity that `FEAT-006` intentionally avoids.
 
 ## Dependencies
+- Sprint 022 completed.
 - Sprint 023 completed.
-- Sprint 026 completed for achievements endpoint.
-- Sprint 027 completed for learning progress endpoint.
 
 ## Agent Instruction
-- Add only read-only dashboard endpoints.
-- Do not add runtime write endpoints for game engines.
-- Do not emit WebSocket events.
-- Update OpenAPI after REST endpoints are added.
+- Do not archive attempts; delete them.
+- Do not make retention configurable in this sprint.
+- Do not delete any tracking aggregate or progress table.
 
 ## Notes
-This is the first tracking sprint with user-visible REST contract impact.
+The app is single-family, so a fixed generous 180-day retention is acceptable for v1.
 
 ## Review
 

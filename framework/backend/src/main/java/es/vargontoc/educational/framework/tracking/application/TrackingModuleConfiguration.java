@@ -14,8 +14,10 @@ import es.vargontoc.educational.framework.tracking.ports.out.ChildAchievementRep
 import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningCompletedStepRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningProgressRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.CuriosityViewedRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.DifficultyEvolutionRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelConfigPort;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelNavigationPort;
+import es.vargontoc.educational.framework.tracking.ports.out.DifficultyEvolutionRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
 import es.vargontoc.educational.framework.tracking.service.AdaptiveDifficultyService;
@@ -24,6 +26,7 @@ import es.vargontoc.educational.framework.tracking.service.ChildLearningProgress
 import es.vargontoc.educational.framework.tracking.service.CuriosityViewedService;
 import es.vargontoc.educational.framework.tracking.service.SummaryUpdateService;
 import es.vargontoc.educational.framework.tracking.service.TopicSelectionService;
+import es.vargontoc.educational.framework.tracking.service.TrackingDashboardService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -83,5 +86,22 @@ class TrackingModuleConfiguration {
     @Bean
     TopicSelectionService topicSelectionService(TopicSummaryRepository topicSummaryRepository) {
         return new TopicSelectionService(topicSummaryRepository);
+    }
+
+    @Bean
+    TrackingDashboardService trackingDashboardService(
+            ActivitySummaryRepository activitySummaryRepository,
+            TopicSummaryRepository topicSummaryRepository,
+            ChildAchievementRepository childAchievementRepository,
+            ChildLearningProgressRepository childLearningProgressRepository,
+            ChildLearningCompletedStepRepository childLearningCompletedStepRepository,
+            DifficultyEvolutionRepository difficultyEvolutionRepository) {
+        return new TrackingDashboardService(
+                activitySummaryRepository,
+                topicSummaryRepository,
+                childAchievementRepository,
+                childLearningProgressRepository,
+                childLearningCompletedStepRepository,
+                difficultyEvolutionRepository);
     }
 }

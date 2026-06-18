@@ -4,6 +4,7 @@ import es.vargontoc.educational.framework.tracking.model.ChildLearningProgress;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningProgressRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,6 +21,14 @@ public class ChildLearningProgressPersistenceAdapter implements ChildLearningPro
             Long childProfileId, Long learningPathId) {
         return jpaRepository.findByChildProfileIdAndLearningPathId(childProfileId, learningPathId)
                 .map(ChildLearningProgressPersistenceAdapter::toDomain);
+    }
+
+    @Override
+    public List<ChildLearningProgress> findByChildProfileId(Long childProfileId) {
+        return jpaRepository.findByChildProfileId(childProfileId)
+                .stream()
+                .map(ChildLearningProgressPersistenceAdapter::toDomain)
+                .toList();
     }
 
     @Override

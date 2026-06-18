@@ -9,6 +9,8 @@ public interface ChildLearningCompletedStepRepository {
 
     List<ChildLearningCompletedStep> findByChildProfileIdAndLearningPathId(Long childProfileId, Long learningPathId);
 
+    List<ChildLearningCompletedStep> findByChildProfileId(Long childProfileId);
+
     Optional<ChildLearningCompletedStep> findByChildProfileIdAndLearningPathIdAndStepId(
             Long childProfileId, Long learningPathId, Long stepId);
 

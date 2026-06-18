@@ -26,6 +26,14 @@ public class ChildLearningCompletedStepPersistenceAdapter implements ChildLearni
     }
 
     @Override
+    public List<ChildLearningCompletedStep> findByChildProfileId(Long childProfileId) {
+        return jpaRepository.findByChildProfileId(childProfileId)
+                .stream()
+                .map(ChildLearningCompletedStepPersistenceAdapter::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<ChildLearningCompletedStep> findByChildProfileIdAndLearningPathIdAndStepId(
             Long childProfileId, Long learningPathId, Long stepId) {
         return jpaRepository.findByChildProfileIdAndLearningPathIdAndStepId(childProfileId, learningPathId, stepId)

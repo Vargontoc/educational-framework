@@ -4,6 +4,7 @@ import es.vargontoc.educational.framework.tracking.model.ActivitySummary;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,6 +20,14 @@ public class ActivitySummaryPersistenceAdapter implements ActivitySummaryReposit
     public Optional<ActivitySummary> findByChildProfileIdAndActivityId(Long childProfileId, Long activityId) {
         return jpaRepository.findByChildProfileIdAndActivityId(childProfileId, activityId)
             .map(ActivitySummaryPersistenceAdapter::toDomain);
+    }
+
+    @Override
+    public List<ActivitySummary> findByChildProfileId(Long childProfileId) {
+        return jpaRepository.findByChildProfileId(childProfileId)
+                .stream()
+                .map(ActivitySummaryPersistenceAdapter::toDomain)
+                .toList();
     }
 
     @Override
