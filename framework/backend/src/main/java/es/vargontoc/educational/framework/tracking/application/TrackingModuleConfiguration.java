@@ -23,6 +23,7 @@ import es.vargontoc.educational.framework.tracking.service.ChildAchievementServi
 import es.vargontoc.educational.framework.tracking.service.ChildLearningProgressService;
 import es.vargontoc.educational.framework.tracking.service.CuriosityViewedService;
 import es.vargontoc.educational.framework.tracking.service.SummaryUpdateService;
+import es.vargontoc.educational.framework.tracking.service.TopicSelectionService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -77,5 +78,10 @@ class TrackingModuleConfiguration {
             ChildLearningCompletedStepRepository completedStepRepository,
             LearningPathRepository learningPathRepository) {
         return new ChildLearningProgressService(progressRepository, completedStepRepository, learningPathRepository);
+    }
+
+    @Bean
+    TopicSelectionService topicSelectionService(TopicSummaryRepository topicSummaryRepository) {
+        return new TopicSelectionService(topicSummaryRepository);
     }
 }

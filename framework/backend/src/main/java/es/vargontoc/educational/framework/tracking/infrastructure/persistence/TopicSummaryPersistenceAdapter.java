@@ -5,6 +5,7 @@ import es.vargontoc.educational.framework.tracking.model.TopicSummary;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -20,6 +21,14 @@ public class TopicSummaryPersistenceAdapter implements TopicSummaryRepository {
     public Optional<TopicSummary> findByChildProfileIdAndTopicId(Long childProfileId, Long topicId) {
         return jpaRepository.findByChildProfileIdAndTopicId(childProfileId, topicId)
             .map(TopicSummaryPersistenceAdapter::toDomain);
+    }
+
+    @Override
+    public List<TopicSummary> findByChildProfileId(Long childProfileId) {
+        return jpaRepository.findByChildProfileId(childProfileId)
+                .stream()
+                .map(TopicSummaryPersistenceAdapter::toDomain)
+                .toList();
     }
 
     @Override
