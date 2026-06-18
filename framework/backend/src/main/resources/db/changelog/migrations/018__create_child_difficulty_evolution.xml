@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="018-1" author="tracking">
+        <createTable tableName="child_difficulty_evolution">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="child_profile_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty_level_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="direction" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="child_difficulty_evolution"
+            baseColumnNames="child_profile_id"
+            constraintName="fk_child_difficulty_evolution_child_profile"
+            referencedTableName="child_profile"
+            referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="child_difficulty_evolution"
+            baseColumnNames="activity_id"
+            constraintName="fk_child_difficulty_evolution_activity"
+            referencedTableName="activity"
+            referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="child_difficulty_evolution"
+            baseColumnNames="difficulty_level_id"
+            constraintName="fk_child_difficulty_evolution_difficulty_level"
+            referencedTableName="difficulty_level"
+            referencedColumnNames="id"/>
+
+        <createIndex indexName="idx_child_difficulty_evolution_child_activity" tableName="child_difficulty_evolution">
+            <column name="child_profile_id"/>
+            <column name="activity_id"/>
+            <column name="changed_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

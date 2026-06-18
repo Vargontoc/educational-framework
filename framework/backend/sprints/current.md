@@ -1,8 +1,8 @@
-# Sprint 030 - backend
+# Sprint 031 - backend
 # -----------------------------------------------
 
 ## Goal
-Delete `ActivityAttempt` records older than 180 days while preserving summaries, achievements, curiosity cycles, and learning progress.
+Harden tracking contracts, test coverage, and module boundaries after the tracking implementation sprints are complete.
 
 ## Status
 status: backlog
@@ -13,50 +13,54 @@ waiting_for:
 
 ## Tasks
 
-### Retention Job
-- [ ] Create tracking retention job using the existing `AbstractRetentionJob` pattern if available.
-- [ ] Hardcode retention to 180 days for v1.
-- [ ] Delete only `ActivityAttempt` rows older than the cutoff.
-- [ ] Keep `ActivitySummary` rows.
-- [ ] Keep `TopicSummary` rows.
-- [ ] Keep `ChildAchievement` rows.
-- [ ] Keep `ChildLearningProgress` rows.
-- [ ] Keep `ChildLearningCompletedStep` rows.
-- [ ] Keep `CuriosityViewed` rows because reset is cycle-based, not time-based.
-- [ ] Add structured logs with cutoff and deleted row count.
+### Contract Review
+- [ ] Verify `docs/contracts/api/openapi.json` includes all dashboard REST endpoints.
+- [ ] Verify `docs/contracts/api/websocket.json` is unchanged unless a separate WebSocket sprint explicitly changed it.
+- [ ] Verify no tracking runtime write operations are exposed as public REST endpoints.
+- [ ] Verify response DTO names and fields are stable for frontend consumption.
 
-### Repository Support
-- [ ] Add repository method to delete attempts older than a timestamp.
-- [ ] Add repository method to count old attempts if useful for logging or tests.
+### Boundary Review
+- [ ] Verify tracking does not depend on TTS implementation packages.
+- [ ] Verify tracking does not depend on avatar implementation packages.
+- [ ] Verify tracking does not depend on game implementation packages.
+- [ ] Verify tracking consumes content through ports/application services instead of direct content persistence access.
+- [ ] Verify tracking does not emit WebSocket events.
 
-### Tests
-- [ ] Unit test cutoff is 180 days before job execution time.
-- [ ] Unit test job calls attempt repository deletion.
-- [ ] Persistence/integration test deletes old attempts.
-- [ ] Persistence/integration test keeps recent attempts.
-- [ ] Persistence/integration test summaries and progress rows are not deleted.
+### Test Review
+- [ ] Run all tracking unit tests.
+- [ ] Run dashboard integration tests.
+- [ ] Run retention tests.
+- [ ] Run the full backend test suite if practical.
+- [ ] Add missing negative tests found during review.
+
+### Documentation
+- [ ] Update sprint review notes with final contract changes.
+- [ ] Document any intentionally deferred behavior.
+- [ ] Document manual verification results.
 
 ## Manual Tests
-- Insert one old `ActivityAttempt` older than 180 days and one recent attempt.
-- Trigger the job manually if the project has a simple way to run scheduled jobs in development.
-- Confirm only the old attempt is deleted.
-- Confirm summaries, achievements, and learning progress remain unchanged.
+- Start backend locally.
+- Open Swagger or inspect generated OpenAPI if available.
+- Confirm dashboard endpoints appear with expected request and response shapes.
+- Call the main dashboard summary endpoint with valid data.
+- Confirm there is no public endpoint for registering attempts or emitting game events.
 
 ## Risks
-- Deleting summaries would lose long-term progress.
-- Making retention configurable now would add complexity that `FEAT-006` intentionally avoids.
+- Contract drift can block frontend work.
+- Hidden dependency on game/avatar/TTS packages would make tracking harder to maintain.
+- Missing negative tests can hide authorization or validation gaps.
 
 ## Dependencies
-- Sprint 022 completed.
-- Sprint 023 completed.
+- Sprint 029 completed.
+- Sprint 030 completed.
 
 ## Agent Instruction
-- Do not archive attempts; delete them.
-- Do not make retention configurable in this sprint.
-- Do not delete any tracking aggregate or progress table.
+- This is a hardening sprint, not a feature expansion sprint.
+- Do not add new behavior unless it fixes a test, contract, or boundary gap.
+- Do not implement game, avatar, agent, or notification behavior.
 
 ## Notes
-The app is single-family, so a fixed generous 180-day retention is acceptable for v1.
+This sprint closes the tracking module implementation loop before game integration work begins.
 
 ## Review
 

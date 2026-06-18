@@ -17,7 +17,6 @@ import es.vargontoc.educational.framework.tracking.ports.out.CuriosityViewedRepo
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyEvolutionRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelConfigPort;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelNavigationPort;
-import es.vargontoc.educational.framework.tracking.ports.out.DifficultyEvolutionRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
 import es.vargontoc.educational.framework.tracking.service.AdaptiveDifficultyService;

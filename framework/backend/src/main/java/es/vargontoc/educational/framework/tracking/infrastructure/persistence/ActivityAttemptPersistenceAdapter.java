@@ -5,6 +5,7 @@ import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -27,6 +28,11 @@ public class ActivityAttemptPersistenceAdapter implements ActivityAttemptReposit
                 .stream()
                 .map(ActivityAttemptPersistenceAdapter::toDomain)
                 .toList();
+    }
+
+    @Override
+    public int deleteCreatedAtBefore(LocalDateTime cutoff) {
+        return jpaRepository.deleteByCreatedAtBefore(cutoff);
     }
 
     static ActivityAttempt toDomain(ActivityAttemptJpaEntity source) {
