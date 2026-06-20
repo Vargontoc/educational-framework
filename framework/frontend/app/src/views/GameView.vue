@@ -224,6 +224,23 @@ onUnmounted(() => {
     <section v-else class="game-view__world" aria-label="World map">
       <div class="game-view__cloud game-view__cloud--one" aria-hidden="true"></div>
       <div class="game-view__cloud game-view__cloud--two" aria-hidden="true"></div>
+
+      <div class="game-view__bg-layer" aria-hidden="true">
+        <div class="game-view__hills game-view__hills--far"></div>
+        <div class="game-view__hills game-view__hills--mid"></div>
+      </div>
+
+      <div class="game-view__mg-layer" aria-hidden="true">
+        <div class="game-view__grass-strip"></div>
+        <div class="game-view__bush game-view__bush--left"></div>
+        <div class="game-view__bush game-view__bush--right"></div>
+      </div>
+
+      <div class="game-view__companion" aria-hidden="true">
+        <img src="@/assets/animations/base-idle.png" alt="" class="game-view__companion-img" />
+      </div>
+
+      <div class="game-view__destination" aria-label="Current destination"></div>
     </section>
   </main>
 </template>
@@ -278,11 +295,10 @@ onUnmounted(() => {
 
 .game-view__world {
   position: relative;
-  display: grid;
+  width: 180vw;
   min-height: 100vh;
   min-height: 100dvh;
-  place-items: center;
-  padding: var(--space-lg);
+  overflow: hidden;
 }
 
 .game-view__cloud {
@@ -325,6 +341,105 @@ onUnmounted(() => {
   right: 10%;
   transform: scale(0.74);
   animation-duration: 34s;
+}
+
+.game-view__bg-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.game-view__hills {
+  position: absolute;
+  bottom: 33%;
+  left: -10%;
+  width: 120%;
+  border-radius: 50% 50% 0 0;
+}
+
+.game-view__hills--far {
+  height: 18%;
+  background: linear-gradient(180deg, #b8d9f0 0%, #c8e6a0 100%);
+  opacity: 0.35;
+}
+
+.game-view__hills--mid {
+  height: 12%;
+  background: linear-gradient(180deg, #9fcce8 0%, #b8dcc0 100%);
+  opacity: 0.5;
+  bottom: 31%;
+}
+
+.game-view__mg-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.game-view__grass-strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 33%;
+  background: linear-gradient(180deg, #b8dcc0 0%, var(--color-grass) 30%);
+}
+
+.game-view__bush {
+  position: absolute;
+  bottom: 26%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #8fbc8f, #6b9b6b);
+}
+
+.game-view__bush--left {
+  left: 12%;
+  width: 64px;
+  height: 48px;
+}
+
+.game-view__bush--right {
+  right: 22%;
+  width: 52px;
+  height: 38px;
+  background: radial-gradient(circle at 40% 40%, #9dc89d, #7aaa7a);
+}
+
+.game-view__companion {
+  position: absolute;
+  left: 18%;
+  bottom: 22%;
+  width: 140px;
+  height: 140px;
+}
+
+.game-view__companion-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.game-view__destination {
+  position: absolute;
+  right: 18%;
+  bottom: 22%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(43, 91, 224, 0.12) 0%, rgba(43, 91, 224, 0.04) 60%, transparent 100%);
+  box-shadow: 0 0 0 8px rgba(43, 91, 224, 0.06), 0 0 32px 12px rgba(43, 91, 224, 0.08);
+  animation: destination-pulse 3s ease-in-out infinite;
+}
+
+@keyframes destination-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 8px rgba(43, 91, 224, 0.06), 0 0 32px 12px rgba(43, 91, 224, 0.08);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(43, 91, 224, 0.04), 0 0 48px 20px rgba(43, 91, 224, 0.06);
+  }
 }
 
 @keyframes spin {
