@@ -7,8 +7,8 @@ Remove the discarded tile-based World Map placeholder from `GameView` and leave 
 
 ## Status
 
-status: ready
-started_at: 2026-06-20
+status: backlog
+started_at:
 closed_at:
 blocked_by:
 waiting_for:
