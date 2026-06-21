@@ -23,5 +23,6 @@
     <include file="db/changelog/migrations/016__add_adaptive_difficulty_tracking.xml"/>
     <include file="db/changelog/migrations/017__fix_curiosity_viewed_unique_constraint.xml"/>
     <include file="db/changelog/migrations/018__create_child_difficulty_evolution.xml"/>
+    <include file="db/changelog/migrations/019__create_game_session_summary.xml"/>
 
 </databaseChangeLog>

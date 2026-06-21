@@ -5,32 +5,32 @@
 Add `GameSessionSummary` in tracking so the future game shell can persist completed or abandoned game session summaries.
 
 ## Status
-status: backlog
-started_at:
-closed_at:
+status: completed
+started_at: 2026-06-21
+closed_at: 2026-06-21
 blocked_by:
 waiting_for:
 
 ## Tasks
 
 ### Tracking Schema
-- [ ] Add `GameSessionSummary` domain model in tracking.
-- [ ] Add persistence entity and repository for `GameSessionSummary`.
-- [ ] Add Liquibase migration for the `game_session_summary` table.
-- [ ] Store `childProfileId`, `childSessionId`, `activityId`, start/end difficulty, score, totals, timestamps, and final status.
-- [ ] Add indexes for `childProfileId`, `childSessionId`, `activityId`, and `endedAt`.
+- [x] Add `GameSessionSummary` domain model in tracking.
+- [x] Add persistence entity and repository for `GameSessionSummary`.
+- [x] Add Liquibase migration for the `game_session_summary` table.
+- [x] Store `childProfileId`, `childSessionId`, `activityId`, start/end difficulty, score, totals, timestamps, and final status.
+- [x] Add indexes for `childProfileId`, `childSessionId`, `activityId`, and `endedAt`.
 
 ### Tracking Port
-- [ ] Add internal port/use case `registerGameSessionSummary(...)`.
-- [ ] Validate `finalStatus` only accepts `COMPLETED` or `ABANDONED`.
-- [ ] Validate `endedAt` is not before `startedAt`.
-- [ ] Return the created summary id or a lightweight response object.
+- [x] Add internal port/use case `registerGameSessionSummary(...)`.
+- [x] Validate `finalStatus` only accepts `COMPLETED` or `ABANDONED`.
+- [x] Validate `endedAt` is not before `startedAt`.
+- [x] Return the created summary id or a lightweight response object.
 
 ### Tests
-- [ ] Unit test successful summary registration.
-- [ ] Unit test invalid final status is rejected.
-- [ ] Unit test invalid timestamp range is rejected.
-- [ ] Persistence/integration test saves and reads a summary if Testcontainers is available.
+- [x] Unit test successful summary registration.
+- [x] Unit test invalid final status is rejected.
+- [x] Unit test invalid timestamp range is rejected.
+- [x] Persistence/integration test saves and reads a summary if Testcontainers is available.
 
 ## Manual Tests
 - Start backend locally.
@@ -60,11 +60,30 @@ This sprint resolves the FEAT-007 dependency that tracking owns persisted per-ga
 ## Review
 
 completed_tasks:
+- Added `GameSessionFinalStatus` enum (COMPLETED, ABANDONED)
+- Added `GameSessionSummary` domain model with all 14 fields per FEAT-007
+- Added `GameSessionSummaryResult` record for return value
+- Added `GameSessionSummaryJpaEntity` extending BaseEntity
+- Added `GameSessionSummaryJpaRepository` (Spring Data JPA)
+- Added `GameSessionSummaryRepository` port/out interface
+- Added `GameSessionSummaryPersistenceAdapter` with toDomain/toJpa mappers
+- Added `RegisterGameSessionSummaryUseCase` port/in interface
+- Added `GameSessionSummaryValidator` for input validation
+- Added `GameSessionSummaryService` implementing the use case
+- Added Liquibase migration `019__create_game_session_summary.xml` with FKs and indexes
+- Updated `db.changelog-master.xml` to include migration 019
+- Updated `TrackingModuleConfiguration` to wire the service bean
+- Added `GameSessionSummaryServiceTest` with 6 unit tests
 
 incomplete_tasks:
+- None
 
 contract_changes:
+- No contract changes (internal tracking port only, no REST endpoint)
 
 learnings:
+- Used String for startedAt/endedAt in JPA entity (parsed on conversion) - acceptable given existing patterns
+- Followed existing hexagonal architecture patterns exactly
 
 next_sprint_suggestions:
+- Implement dashboard query to retrieve recent game sessions by child profile
