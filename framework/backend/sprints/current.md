@@ -1,8 +1,8 @@
-# Sprint 033 - backend
+# Sprint 034 - backend
 # -----------------------------------------------
 
 ## Goal
-Add internal tracking use cases that evaluate achievements for game attempts and game completion without emitting WebSocket events.
+Expose a small session use case that lets the game shell update `ChildSession.lastActivityAt` from `GAME_HEARTBEAT`.
 
 ## Status
 status: backlog
@@ -13,51 +13,45 @@ waiting_for:
 
 ## Tasks
 
-### Attempt-Based Achievements
-- [ ] Extend the attempt registration result to include `unlockedAchievements[]`.
-- [ ] Evaluate attempt-based achievement conditions after a registered attempt.
-- [ ] Include `DIFFICULTY_INCREASED` achievements when adaptive difficulty changes.
-- [ ] Avoid duplicate `ChildAchievement` rows for already-earned achievements.
+### Session Use Case
+- [ ] Add or reuse an internal use case for recording child session heartbeat/activity.
+- [ ] Accept `childSessionId` and current timestamp.
+- [ ] Reject missing or inactive child sessions.
+- [ ] Update `ChildSession.lastActivityAt`.
+- [ ] Return enough information for game to know whether the session is still active.
 
-### Completion-Based Achievements
-- [ ] Add internal use case `evaluateGameCompletionAchievements(childProfileId, activityId)`.
-- [ ] Evaluate `ACTIVITY_COMPLETED` conditions only when called by game.
-- [ ] Return a lightweight list of newly unlocked achievements.
-
-### Boundaries
-- [ ] Ensure tracking does not emit WebSocket events.
-- [ ] Ensure tracking does not call avatar or TTS.
-- [ ] Read achievement catalog data through content-owned ports or existing allowed content access patterns.
+### Boundary
+- [ ] Expose the use case through a session port that game can consume later.
+- [ ] Do not make game read session persistence directly.
+- [ ] Keep existing session heartbeat behavior compatible.
 
 ### Tests
-- [ ] Unit test attempt-based achievement unlock.
-- [ ] Unit test difficulty-increased achievement unlock.
-- [ ] Unit test completion-based achievement unlock.
-- [ ] Unit test already-earned achievement is not duplicated.
-- [ ] Unit test no WebSocket/avatar dependency exists in tracking services.
+- [ ] Unit test active session heartbeat updates `lastActivityAt`.
+- [ ] Unit test expired, expelled, or closed sessions are rejected.
+- [ ] Unit test unknown session id is rejected.
+- [ ] Integration test persistence update if Testcontainers is available.
 
 ## Manual Tests
-- Register attempts that satisfy a simple achievement condition through an internal test fixture.
-- Confirm one `ChildAchievement` is stored.
-- Repeat the same action and confirm no duplicate achievement is created.
+- Start backend locally.
+- Create/open a child session using existing session flow.
+- Trigger the heartbeat use case through an existing endpoint or test fixture.
+- Confirm `lastActivityAt` changes.
 
 ## Risks
-- Achievement rules can become too complex for a junior sprint if too many condition types are included.
-- Reading content catalog data directly from persistence could break module boundaries.
-- Emitting events from tracking would conflict with FEAT-007.
+- Creating a second heartbeat source could make inactivity behavior inconsistent.
+- Direct game-to-session persistence access would break module boundaries.
 
 ## Dependencies
-- Sprint 026 tracking achievements completed.
-- Sprint 024 tracking adaptive difficulty completed.
-- Sprint 032 recommended if completion achievements need session summary context.
+- Session module implemented through Sprint 008.
+- FEAT-007 heartbeat flow.
 
 ## Agent Instruction
-- Keep the first implementation minimal: only conditions needed by FEAT-007 (`DIFFICULTY_INCREASED`, `ACTIVITY_COMPLETED`, and one simple streak/attempt condition if already modeled).
-- Return data to callers; do not publish events.
-- Do not implement game or WebSocket code in this sprint.
+- Keep this sprint inside session/application boundaries.
+- Do not implement `GAME_HEARTBEAT` WebSocket handling yet.
+- Prefer reusing existing heartbeat logic instead of adding duplicate code.
 
 ## Notes
-FEAT-007 expects the game orchestrator to trigger evaluation and then emit `GAME_ACHIEVEMENT_UNLOCKED` itself.
+This prepares the coordination required by FEAT-007 between `GameState.lastActivityAt` and `ChildSession.lastActivityAt`.
 
 ## Review
 
