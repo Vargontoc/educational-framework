@@ -1,12 +1,18 @@
 package es.vargontoc.educational.framework.tracking.service;
 
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
+import es.vargontoc.educational.framework.tracking.model.AdaptiveDifficultyAction;
+import es.vargontoc.educational.framework.tracking.model.AdaptiveDifficultyResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
+import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import es.vargontoc.educational.framework.tracking.validation.ActivityAttemptValidator;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Transactional
 public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
@@ -15,15 +21,18 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
     private final ActivityAttemptValidator validator;
     private final SummaryUpdateService summaryUpdateService;
     private final AdaptiveDifficultyService adaptiveDifficultyService;
+    private final AchievementEvaluationService achievementEvaluationService;
 
     public ActivityAttemptService(
             ActivityAttemptRepository repository,
             SummaryUpdateService summaryUpdateService,
-            AdaptiveDifficultyService adaptiveDifficultyService) {
+            AdaptiveDifficultyService adaptiveDifficultyService,
+            AchievementEvaluationService achievementEvaluationService) {
         this.repository = repository;
         this.validator = new ActivityAttemptValidator();
         this.summaryUpdateService = summaryUpdateService;
         this.adaptiveDifficultyService = adaptiveDifficultyService;
+        this.achievementEvaluationService = achievementEvaluationService;
     }
 
     @Override
@@ -53,8 +62,19 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
 
         summaryUpdateService.updateSummaries(saved);
 
-        adaptiveDifficultyService.evaluate(childProfileId, activityId, difficultyLevelId);
+        List<UnlockedAchievement> allUnlocked = new ArrayList<>();
 
-        return new AttemptRegistrationResult(saved.getId(), saved.getCreatedAt());
+        AdaptiveDifficultyResult difficultyResult = adaptiveDifficultyService.evaluate(childProfileId, activityId, difficultyLevelId);
+        if (difficultyResult != null && difficultyResult.action() == AdaptiveDifficultyAction.INCREASE) {
+            List<UnlockedAchievement> difficultyAchievements =
+                    achievementEvaluationService.evaluateDifficultyIncreaseAchievements(childProfileId, activityId, topicId);
+            allUnlocked.addAll(difficultyAchievements);
+        }
+
+        List<UnlockedAchievement> attemptAchievements =
+                achievementEvaluationService.evaluateAttemptAchievements(childProfileId, activityId, topicId, result);
+        allUnlocked.addAll(attemptAchievements);
+
+        return new AttemptRegistrationResult(saved.getId(), saved.getCreatedAt(), allUnlocked);
     }
 }

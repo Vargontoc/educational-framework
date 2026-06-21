@@ -1,8 +1,11 @@
 package es.vargontoc.educational.framework.tracking.service;
 
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
+import es.vargontoc.educational.framework.tracking.model.AdaptiveDifficultyAction;
+import es.vargontoc.educational.framework.tracking.model.AdaptiveDifficultyResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
+import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 import org.junit.jupiter.api.Test;
@@ -13,11 +16,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +40,9 @@ class ActivityAttemptServiceTest {
     @Mock
     private AdaptiveDifficultyService adaptiveDifficultyService;
 
+    @Mock
+    private AchievementEvaluationService achievementEvaluationService;
+
     @InjectMocks
     private ActivityAttemptService service;
 
@@ -45,12 +55,19 @@ class ActivityAttemptServiceTest {
             attempt.setCreatedAt(LocalDateTime.now());
             return attempt;
         });
+        when(adaptiveDifficultyService.evaluate(anyLong(), anyLong(), anyLong()))
+                .thenReturn(new AdaptiveDifficultyResult(AdaptiveDifficultyAction.MAINTAIN, "no change"));
+        lenient().when(achievementEvaluationService.evaluateDifficultyIncreaseAchievements(anyLong(), anyLong(), anyLong()))
+                .thenReturn(Collections.emptyList());
+        when(achievementEvaluationService.evaluateAttemptAchievements(anyLong(), anyLong(), anyLong(), any(AttemptResult.class)))
+                .thenReturn(Collections.emptyList());
 
         var result = service.register(10L, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, 5000, null);
 
         assertNotNull(result);
         assertEquals(1L, result.attemptId());
         assertNotNull(result.createdAt());
+        assertNotNull(result.unlockedAchievements());
         verify(repository).save(captor.capture());
         verify(summaryUpdateService).updateSummaries(any(ActivityAttempt.class));
 
@@ -72,6 +89,12 @@ class ActivityAttemptServiceTest {
             attempt.setCreatedAt(LocalDateTime.now());
             return attempt;
         });
+        when(adaptiveDifficultyService.evaluate(anyLong(), anyLong(), anyLong()))
+                .thenReturn(new AdaptiveDifficultyResult(AdaptiveDifficultyAction.MAINTAIN, "no change"));
+        lenient().when(achievementEvaluationService.evaluateDifficultyIncreaseAchievements(anyLong(), anyLong(), anyLong()))
+                .thenReturn(Collections.emptyList());
+        when(achievementEvaluationService.evaluateAttemptAchievements(anyLong(), anyLong(), anyLong(), any(AttemptResult.class)))
+                .thenReturn(Collections.emptyList());
 
         String context = "{\"engine\":\"memory\",\"level\":3}";
         var result = service.register(10L, 20L, 30L, 40L, 50L, AttemptResult.INCORRECT, 3000, context);
@@ -100,5 +123,53 @@ class ActivityAttemptServiceTest {
     void register_missingResult_throwsValidationException() {
         assertThrows(ValidationException.class, () ->
             service.register(10L, 20L, 30L, 40L, 50L, null, null, null));
+    }
+
+    @Test
+    void register_withDifficultyIncrease_returnsUnlockedAchievement() {
+        var captor = ArgumentCaptor.forClass(ActivityAttempt.class);
+        when(repository.save(any())).thenAnswer(inv -> {
+            var attempt = inv.getArgument(0, ActivityAttempt.class);
+            attempt.setId(1L);
+            attempt.setCreatedAt(LocalDateTime.now());
+            return attempt;
+        });
+
+        UnlockedAchievement difficultyAchievement = new UnlockedAchievement("DIFFICULTY_INCREASED", 20L, 40L);
+        when(adaptiveDifficultyService.evaluate(anyLong(), anyLong(), anyLong()))
+                .thenReturn(new AdaptiveDifficultyResult(AdaptiveDifficultyAction.INCREASE, "score exceeded threshold"));
+        when(achievementEvaluationService.evaluateDifficultyIncreaseAchievements(anyLong(), anyLong(), anyLong()))
+                .thenReturn(List.of(difficultyAchievement));
+        when(achievementEvaluationService.evaluateAttemptAchievements(anyLong(), anyLong(), anyLong(), any()))
+                .thenReturn(Collections.emptyList());
+
+        var result = service.register(10L, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, 5000, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.unlockedAchievements().size());
+        assertEquals("DIFFICULTY_INCREASED", result.unlockedAchievements().get(0).achievementCode());
+    }
+
+    @Test
+    void register_withAttemptAchievement_returnsUnlockedAchievement() {
+        var captor = ArgumentCaptor.forClass(ActivityAttempt.class);
+        when(repository.save(any())).thenAnswer(inv -> {
+            var attempt = inv.getArgument(0, ActivityAttempt.class);
+            attempt.setId(1L);
+            attempt.setCreatedAt(LocalDateTime.now());
+            return attempt;
+        });
+
+        UnlockedAchievement streakAchievement = new UnlockedAchievement("FIRST_CORRECT_STREAK", 20L, 40L);
+        when(adaptiveDifficultyService.evaluate(anyLong(), anyLong(), anyLong()))
+                .thenReturn(new AdaptiveDifficultyResult(AdaptiveDifficultyAction.MAINTAIN, "no change"));
+        when(achievementEvaluationService.evaluateAttemptAchievements(anyLong(), anyLong(), anyLong(), any(AttemptResult.class)))
+                .thenReturn(List.of(streakAchievement));
+
+        var result = service.register(10L, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, 5000, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.unlockedAchievements().size());
+        assertEquals("FIRST_CORRECT_STREAK", result.unlockedAchievements().get(0).achievementCode());
     }
 }
