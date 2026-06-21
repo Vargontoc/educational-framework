@@ -16,10 +16,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -202,6 +202,81 @@ class ChildSessionServiceTest {
         assertEquals(SessionEventType.SESSION_EXPIRED, event.event());
         assertEquals(55L, event.sessionId());
         assertEquals("inactivity", event.payload().get("reason"));
+    }
+
+    @Test
+    void recordGameHeartbeat_activeSession_returnsActiveTrueAndUpdatesLastActivityAt() {
+        var session = activeSession();
+        var previousActivity = LocalDateTime.now().minusMinutes(1);
+        session.setLastActivityAt(previousActivity);
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+        when(childSessionRepository.save(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = childSessionService.recordGameHeartbeat(1L);
+
+        assertTrue(result.active());
+        assertEquals("ACTIVE", result.status());
+        assertNotNull(result.lastActivityAt());
+        assertTrue(result.lastActivityAt().isAfter(previousActivity));
+        verify(childSessionRepository).save(session);
+    }
+
+    @Test
+    void recordGameHeartbeat_expiredSession_returnsActiveFalse() {
+        var session = activeSession();
+        session.setStatus(ChildSessionStatus.EXPIRED);
+        session.setLastActivityAt(LocalDateTime.now().minusMinutes(5));
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+        var result = childSessionService.recordGameHeartbeat(1L);
+
+        assertFalse(result.active());
+        assertEquals("EXPIRED", result.status());
+        verify(childSessionRepository, never()).save(any());
+    }
+
+    @Test
+    void recordGameHeartbeat_expelledSession_returnsActiveFalse() {
+        var session = activeSession();
+        session.setStatus(ChildSessionStatus.EXPELLED);
+        session.setLastActivityAt(LocalDateTime.now().minusMinutes(5));
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+        var result = childSessionService.recordGameHeartbeat(1L);
+
+        assertFalse(result.active());
+        assertEquals("EXPELLED", result.status());
+        verify(childSessionRepository, never()).save(any());
+    }
+
+    @Test
+    void recordGameHeartbeat_closedSession_returnsActiveFalse() {
+        var session = activeSession();
+        session.setStatus(ChildSessionStatus.CLOSED);
+        session.setLastActivityAt(LocalDateTime.now().minusMinutes(5));
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+
+        var result = childSessionService.recordGameHeartbeat(1L);
+
+        assertFalse(result.active());
+        assertEquals("CLOSED", result.status());
+        verify(childSessionRepository, never()).save(any());
+    }
+
+    @Test
+    void recordGameHeartbeat_unknownSession_returnsActiveFalse() {
+        when(childSessionRepository.findById(99L)).thenReturn(Optional.empty());
+
+        var result = childSessionService.recordGameHeartbeat(99L);
+
+        assertFalse(result.active());
+        assertEquals(null, result.status());
+        assertEquals(null, result.lastActivityAt());
+        verify(childSessionRepository, never()).save(any());
     }
 
     private ChildSession activeSession() {

@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.session.ports.in;
 
+import es.vargontoc.educational.framework.session.model.ChildSessionHeartbeatResult;
 import es.vargontoc.educational.framework.session.model.ChildSession;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,8 @@ public interface ChildSessionUseCase {
     ChildSession expelChild(Long id);
 
     void recordHeartbeat(Long id);
+
+    ChildSessionHeartbeatResult recordGameHeartbeat(Long childSessionId);
 
     ChildSession getSession(Long id);
 
