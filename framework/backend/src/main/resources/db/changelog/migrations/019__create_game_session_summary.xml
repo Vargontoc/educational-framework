@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="019__create_game_session_summary" author="vargontoc">
+
+        <createTable tableName="game_session_summary">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="child_profile_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="child_session_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty_level_start_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="difficulty_level_end_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_attempts" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_correct" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_timeouts" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ended_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="final_status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="game_session_summary"
+            baseColumnNames="child_profile_id"
+            constraintName="fk_game_session_summary_child_profile"
+            referencedTableName="child_profile"
+            referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="game_session_summary"
+            baseColumnNames="child_session_id"
+            constraintName="fk_game_session_summary_child_session"
+            referencedTableName="child_session"
+            referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="game_session_summary"
+            baseColumnNames="activity_id"
+            constraintName="fk_game_session_summary_activity"
+            referencedTableName="activity"
+            referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="game_session_summary"
+            baseColumnNames="difficulty_level_start_id"
+            constraintName="fk_game_session_summary_difficulty_level_start"
+            referencedTableName="difficulty_level"
+            referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+            baseTableName="game_session_summary"
+            baseColumnNames="difficulty_level_end_id"
+            constraintName="fk_game_session_summary_difficulty_level_end"
+            referencedTableName="difficulty_level"
+            referencedColumnNames="id"/>
+
+        <createIndex indexName="idx_game_session_summary_child_profile" tableName="game_session_summary">
+            <column name="child_profile_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_game_session_summary_child_session" tableName="game_session_summary">
+            <column name="child_session_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_game_session_summary_activity" tableName="game_session_summary">
+            <column name="activity_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_game_session_summary_ended_at" tableName="game_session_summary">
+            <column name="ended_at"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

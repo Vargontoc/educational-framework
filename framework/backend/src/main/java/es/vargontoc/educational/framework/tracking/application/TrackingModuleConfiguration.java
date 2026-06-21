@@ -7,6 +7,7 @@ import es.vargontoc.educational.framework.tracking.ports.in.GetViewedCuriosities
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterChildAchievementUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterCuriosityViewedUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.ResetCuriosityCycleUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
@@ -17,12 +18,14 @@ import es.vargontoc.educational.framework.tracking.ports.out.CuriosityViewedRepo
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyEvolutionRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelConfigPort;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelNavigationPort;
+import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
 import es.vargontoc.educational.framework.tracking.service.AdaptiveDifficultyService;
 import es.vargontoc.educational.framework.tracking.service.ChildAchievementService;
 import es.vargontoc.educational.framework.tracking.service.ChildLearningProgressService;
 import es.vargontoc.educational.framework.tracking.service.CuriosityViewedService;
+import es.vargontoc.educational.framework.tracking.service.GameSessionSummaryService;
 import es.vargontoc.educational.framework.tracking.service.SummaryUpdateService;
 import es.vargontoc.educational.framework.tracking.service.TopicSelectionService;
 import es.vargontoc.educational.framework.tracking.service.TrackingDashboardService;
@@ -62,6 +65,12 @@ class TrackingModuleConfiguration {
             SummaryUpdateService summaryUpdateService,
             AdaptiveDifficultyService adaptiveDifficultyService) {
         return new ActivityAttemptService(repository, summaryUpdateService, adaptiveDifficultyService);
+    }
+
+    @Bean
+    RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase(
+            GameSessionSummaryRepository repository) {
+        return new GameSessionSummaryService(repository);
     }
 
     @Bean
