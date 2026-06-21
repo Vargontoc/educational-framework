@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.family.infrastructure.web.AbstractIntegrationTest;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
+import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,9 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,6 +39,9 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
 
     @Autowired
     private ChildProfileUseCase childProfileUseCase;
+
+    @Autowired
+    private ChildSessionUseCase childSessionUseCase;
 
     private Long childProfileId;
     private String token;
@@ -113,6 +120,28 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/v1/sessions/children").header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.length()", greaterThanOrEqualTo(1)));
+    }
+
+    @Test
+    void recordGameHeartbeat_activeSession_updatesLastActivityAtAndReturnsActive() throws Exception {
+        var sessionId = openSessionAndReturnId();
+        var session = childSessionUseCase.getSession(sessionId);
+        var before = session.getLastActivityAt();
+
+        Thread.sleep(10);
+
+        var result = childSessionUseCase.recordGameHeartbeat(sessionId);
+
+        assertTrue(result.active());
+        assertEquals("ACTIVE", result.status());
+        assertTrue(result.lastActivityAt().isAfter(before));
+    }
+
+    @Test
+    void recordGameHeartbeat_unknownSession_returnsInactive() {
+        var result = childSessionUseCase.recordGameHeartbeat(99999L);
+
+        assertFalse(result.active());
     }
 
     private String openBody(Long childId) throws Exception {

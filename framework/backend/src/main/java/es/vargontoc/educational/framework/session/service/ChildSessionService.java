@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.session.service;
 
+import es.vargontoc.educational.framework.session.model.ChildSessionHeartbeatResult;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
@@ -94,6 +95,25 @@ public class ChildSessionService implements ChildSessionUseCase {
 
         session.setLastActivityAt(LocalDateTime.now());
         childSessionRepository.save(session);
+    }
+
+    @Override
+    public ChildSessionHeartbeatResult recordGameHeartbeat(Long childSessionId) {
+        var sessionOpt = childSessionRepository.findById(childSessionId);
+
+        if (sessionOpt.isEmpty()) {
+            return new ChildSessionHeartbeatResult(false, null, null);
+        }
+
+        var session = sessionOpt.get();
+        if (!ChildSessionStatus.ACTIVE.equals(session.getStatus())) {
+            return new ChildSessionHeartbeatResult(false, session.getStatus().name(), session.getLastActivityAt());
+        }
+
+        session.setLastActivityAt(LocalDateTime.now());
+        childSessionRepository.save(session);
+
+        return new ChildSessionHeartbeatResult(true, session.getStatus().name(), session.getLastActivityAt());
     }
 
     @Override
