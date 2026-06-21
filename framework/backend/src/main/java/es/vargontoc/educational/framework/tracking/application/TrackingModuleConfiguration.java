@@ -2,6 +2,7 @@ package es.vargontoc.educational.framework.tracking.application;
 
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProperties;
+import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetChildAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetViewedCuriositiesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
@@ -22,9 +23,11 @@ import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryR
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
 import es.vargontoc.educational.framework.tracking.service.AdaptiveDifficultyService;
+import es.vargontoc.educational.framework.tracking.service.AchievementEvaluationService;
 import es.vargontoc.educational.framework.tracking.service.ChildAchievementService;
 import es.vargontoc.educational.framework.tracking.service.ChildLearningProgressService;
 import es.vargontoc.educational.framework.tracking.service.CuriosityViewedService;
+import es.vargontoc.educational.framework.tracking.service.GameCompletionAchievementService;
 import es.vargontoc.educational.framework.tracking.service.GameSessionSummaryService;
 import es.vargontoc.educational.framework.tracking.service.SummaryUpdateService;
 import es.vargontoc.educational.framework.tracking.service.TopicSelectionService;
@@ -63,8 +66,22 @@ class TrackingModuleConfiguration {
     RegisterActivityAttemptUseCase registerActivityAttemptUseCase(
             ActivityAttemptRepository repository,
             SummaryUpdateService summaryUpdateService,
-            AdaptiveDifficultyService adaptiveDifficultyService) {
-        return new ActivityAttemptService(repository, summaryUpdateService, adaptiveDifficultyService);
+            AdaptiveDifficultyService adaptiveDifficultyService,
+            AchievementEvaluationService achievementEvaluationService) {
+        return new ActivityAttemptService(repository, summaryUpdateService, adaptiveDifficultyService, achievementEvaluationService);
+    }
+
+    @Bean
+    AchievementEvaluationService achievementEvaluationService(
+            ActivityAttemptRepository attemptRepository,
+            RegisterChildAchievementUseCase achievementService) {
+        return new AchievementEvaluationService(attemptRepository, achievementService);
+    }
+
+    @Bean
+    EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase(
+            AchievementEvaluationService achievementEvaluationService) {
+        return new GameCompletionAchievementService(achievementEvaluationService);
     }
 
     @Bean

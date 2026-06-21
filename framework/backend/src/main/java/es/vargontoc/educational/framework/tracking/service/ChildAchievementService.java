@@ -20,7 +20,7 @@ public class ChildAchievementService implements RegisterChildAchievementUseCase,
     }
 
     @Override
-    public void registerAchievement(Long childProfileId, String achievementCode, Long activityId, Long topicId) {
+    public boolean registerAchievement(Long childProfileId, String achievementCode, Long activityId, Long topicId) {
         if (achievementCode == null || achievementCode.isBlank()) {
             throw new ValidationException("Achievement code cannot be blank");
         }
@@ -29,7 +29,7 @@ public class ChildAchievementService implements RegisterChildAchievementUseCase,
                 childProfileId, achievementCode, activityId, topicId);
 
         if (existing.isPresent()) {
-            return;
+            return false;
         }
 
         var achievement = new ChildAchievement();
@@ -40,6 +40,7 @@ public class ChildAchievementService implements RegisterChildAchievementUseCase,
         achievement.setEarnedAt(LocalDateTime.now());
 
         repository.save(achievement);
+        return true;
     }
 
     @Override

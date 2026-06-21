@@ -15,8 +15,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,8 +39,9 @@ class ChildAchievementServiceTest {
                 .thenReturn(Optional.empty());
         when(repository.save(any(ChildAchievement.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.registerAchievement(1L, "FIRST_LOGIN", null, null);
+        boolean registered = service.registerAchievement(1L, "FIRST_LOGIN", null, null);
 
+        assertTrue(registered);
         var captor = ArgumentCaptor.forClass(ChildAchievement.class);
         verify(repository).save(captor.capture());
         var saved = captor.getValue();
@@ -55,8 +58,9 @@ class ChildAchievementServiceTest {
                 .thenReturn(Optional.empty());
         when(repository.save(any(ChildAchievement.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.registerAchievement(1L, "GAME_MASTER", 10L, null);
+        boolean registered = service.registerAchievement(1L, "GAME_MASTER", 10L, null);
 
+        assertTrue(registered);
         var captor = ArgumentCaptor.forClass(ChildAchievement.class);
         verify(repository).save(captor.capture());
         var saved = captor.getValue();
@@ -75,8 +79,9 @@ class ChildAchievementServiceTest {
         when(repository.findByChildProfileIdAndAchievementCodeAndActivityIdAndTopicId(1L, "FIRST_LOGIN", null, null))
                 .thenReturn(Optional.of(existing));
 
-        service.registerAchievement(1L, "FIRST_LOGIN", null, null);
+        boolean registered = service.registerAchievement(1L, "FIRST_LOGIN", null, null);
 
+        assertFalse(registered);
         verify(repository, never()).save(any());
     }
 
