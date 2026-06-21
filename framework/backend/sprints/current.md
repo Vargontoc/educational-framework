@@ -1,8 +1,8 @@
-# Sprint 034 - backend
+# Sprint 035 - backend
 # -----------------------------------------------
 
 ## Goal
-Expose a small session use case that lets the game shell update `ChildSession.lastActivityAt` from `GAME_HEARTBEAT`.
+Ensure the game shell can load the minimum content catalog data needed to start a game without depending on content persistence internals.
 
 ## Status
 status: backlog
@@ -13,45 +13,44 @@ waiting_for:
 
 ## Tasks
 
-### Session Use Case
-- [ ] Add or reuse an internal use case for recording child session heartbeat/activity.
-- [ ] Accept `childSessionId` and current timestamp.
-- [ ] Reject missing or inactive child sessions.
-- [ ] Update `ChildSession.lastActivityAt`.
-- [ ] Return enough information for game to know whether the session is still active.
+### Content Read Ports
+- [ ] Identify existing content read services or ports for `Activity` and `DifficultyLevel`.
+- [ ] Add a minimal internal query for active activity by id if missing.
+- [ ] Add a minimal internal query for active difficulty level by id or current difficulty code if missing.
+- [ ] Include only fields needed by the game shell: activity id, engine type, age range, topic references, difficulty id/code, difficulty parameters.
 
-### Boundary
-- [ ] Expose the use case through a session port that game can consume later.
-- [ ] Do not make game read session persistence directly.
-- [ ] Keep existing session heartbeat behavior compatible.
+### Validation
+- [ ] Ensure inactive or draft activities cannot start a game.
+- [ ] Ensure inactive difficulty levels cannot start a game.
+- [ ] Ensure content age-range metadata remains available for future 3-4 filtering.
 
 ### Tests
-- [ ] Unit test active session heartbeat updates `lastActivityAt`.
-- [ ] Unit test expired, expelled, or closed sessions are rejected.
-- [ ] Unit test unknown session id is rejected.
-- [ ] Integration test persistence update if Testcontainers is available.
+- [ ] Unit test active activity can be loaded for game.
+- [ ] Unit test inactive activity is rejected.
+- [ ] Unit test active difficulty can be loaded for game.
+- [ ] Unit test missing activity or difficulty returns a clear domain error.
 
 ## Manual Tests
-- Start backend locally.
-- Create/open a child session using existing session flow.
-- Trigger the heartbeat use case through an existing endpoint or test fixture.
-- Confirm `lastActivityAt` changes.
+- Start backend locally with seed content.
+- Use existing content APIs or test fixtures to verify one active activity and difficulty can be resolved.
+- Confirm inactive/draft content is not returned as playable.
 
 ## Risks
-- Creating a second heartbeat source could make inactivity behavior inconsistent.
-- Direct game-to-session persistence access would break module boundaries.
+- Expanding content APIs too much could turn this into a frontend catalog sprint.
+- Direct game access to content repositories would break module boundaries.
 
 ## Dependencies
-- Session module implemented through Sprint 008.
-- FEAT-007 heartbeat flow.
+- Content module completed through Sprint 015.
+- FEAT-003 Content Module.
+- FEAT-007 requires content lookup before game start.
 
 ## Agent Instruction
-- Keep this sprint inside session/application boundaries.
-- Do not implement `GAME_HEARTBEAT` WebSocket handling yet.
-- Prefer reusing existing heartbeat logic instead of adding duplicate code.
+- Keep this sprint content-focused and minimal.
+- Do not implement game orchestration.
+- Do not add public read APIs unless they already belong to FEAT-003 and are required for manual verification.
 
 ## Notes
-This prepares the coordination required by FEAT-007 between `GameState.lastActivityAt` and `ChildSession.lastActivityAt`.
+This sprint makes game start possible without deciding any concrete minigame behavior.
 
 ## Review
 
