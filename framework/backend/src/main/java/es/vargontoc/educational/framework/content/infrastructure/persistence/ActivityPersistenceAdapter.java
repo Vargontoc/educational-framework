@@ -30,6 +30,12 @@ public class ActivityPersistenceAdapter implements ActivityRepository {
     }
 
     @Override
+    public Optional<Activity> findByIdAndStatus(Long id, ContentStatus status) {
+        return jpaRepository.findByIdAndStatus(id, status.name())
+            .map(entity -> toDomain(entity, getActivityTopicIds(entity.getId())));
+    }
+
+    @Override
     public List<Activity> findAll() {
         return jpaRepository.findAll().stream()
             .map(entity -> toDomain(entity, getActivityTopicIds(entity.getId())))

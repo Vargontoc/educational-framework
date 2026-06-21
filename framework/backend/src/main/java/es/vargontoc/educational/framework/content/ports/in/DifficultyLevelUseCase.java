@@ -12,4 +12,8 @@ public interface DifficultyLevelUseCase {
     List<DifficultyLevel> listByActivity(Long activityId);
 
     DifficultyLevel updateDifficultyLevel(Long id, DifficultyCode difficultyCode, String engineParams, String adaptiveThresholdConfig);
+
+    DifficultyLevel getGameReadyDifficultyLevel(Long difficultyLevelId);
+
+    DifficultyLevel getEasiestDifficultyLevel(Long activityId);
 }

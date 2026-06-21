@@ -6,6 +6,7 @@ import es.vargontoc.educational.framework.content.ports.in.ActivityUseCase;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.validation.ActivityValidator;
+import es.vargontoc.educational.framework.shared.exception.ContentNotReadyException;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +57,13 @@ public class ActivityService implements ActivityUseCase {
     public Activity getActivity(Long id) {
         return activityRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Activity not found with id: " + id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Activity getGameReadyActivity(Long activityId) {
+        return activityRepository.findByIdAndStatus(activityId, ContentStatus.ACTIVE)
+            .orElseThrow(() -> new ContentNotReadyException("Activity is not ready for game: " + activityId));
     }
 
     @Override

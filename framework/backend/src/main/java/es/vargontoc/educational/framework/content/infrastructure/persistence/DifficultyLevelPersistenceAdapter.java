@@ -24,10 +24,22 @@ public class DifficultyLevelPersistenceAdapter implements DifficultyLevelReposit
     }
 
     @Override
+    public Optional<DifficultyLevel> findByIdAndEngineParamsIsNotNull(Long id) {
+        return jpaRepository.findByIdAndEngineParamsIsNotNull(id)
+            .map(DifficultyLevelPersistenceAdapter::toDomain);
+    }
+
+    @Override
     public List<DifficultyLevel> findByActivityId(Long activityId) {
         return jpaRepository.findByActivityId(activityId).stream()
             .map(DifficultyLevelPersistenceAdapter::toDomain)
             .toList();
+    }
+
+    @Override
+    public Optional<DifficultyLevel> findFirstByActivityIdOrderByDifficultyCodeAsc(Long activityId) {
+        return jpaRepository.findFirstByActivityIdOrderByDifficultyCodeAsc(activityId)
+            .map(DifficultyLevelPersistenceAdapter::toDomain);
     }
 
     @Override
