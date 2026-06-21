@@ -11,6 +11,8 @@ public interface ActivityUseCase {
 
     Activity getActivity(Long id);
 
+    Activity getGameReadyActivity(Long activityId);
+
     List<Activity> listActivities();
 
     List<Activity> listActivitiesByTopic(Long topicId);

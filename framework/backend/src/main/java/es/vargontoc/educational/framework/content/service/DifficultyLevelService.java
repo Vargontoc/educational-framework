@@ -6,6 +6,7 @@ import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCas
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.validation.DifficultyLevelValidator;
+import es.vargontoc.educational.framework.shared.exception.ContentNotReadyException;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,5 +63,19 @@ public class DifficultyLevelService implements DifficultyLevelUseCase {
         existing.setUpdatedAt(LocalDateTime.now());
 
         return difficultyLevelRepository.save(existing);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DifficultyLevel getGameReadyDifficultyLevel(Long difficultyLevelId) {
+        return difficultyLevelRepository.findByIdAndEngineParamsIsNotNull(difficultyLevelId)
+            .orElseThrow(() -> new ContentNotReadyException("DifficultyLevel is not ready for game: " + difficultyLevelId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DifficultyLevel getEasiestDifficultyLevel(Long activityId) {
+        return difficultyLevelRepository.findFirstByActivityIdOrderByDifficultyCodeAsc(activityId)
+            .orElseThrow(() -> new ContentNotReadyException("No difficulty level found for activity: " + activityId));
     }
 }

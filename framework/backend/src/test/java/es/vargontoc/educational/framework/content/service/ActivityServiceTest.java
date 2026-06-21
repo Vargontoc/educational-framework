@@ -5,6 +5,7 @@ import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
+import es.vargontoc.educational.framework.shared.exception.ContentNotReadyException;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,5 +85,27 @@ class ActivityServiceTest {
         when(activityRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> activityService.getActivity(99L));
+    }
+
+    @Test
+    void getGameReadyActivity_happyPath() {
+        var activity = new Activity();
+        activity.setId(1L);
+        activity.setName("Test Activity");
+        activity.setStatus(ContentStatus.ACTIVE);
+
+        when(activityRepository.findByIdAndStatus(1L, ContentStatus.ACTIVE)).thenReturn(Optional.of(activity));
+
+        var result = activityService.getGameReadyActivity(1L);
+
+        assertEquals("Test Activity", result.getName());
+        assertEquals(ContentStatus.ACTIVE, result.getStatus());
+    }
+
+    @Test
+    void getGameReadyActivity_notActive_throwsContentNotReady() {
+        when(activityRepository.findByIdAndStatus(1L, ContentStatus.ACTIVE)).thenReturn(Optional.empty());
+
+        assertThrows(ContentNotReadyException.class, () -> activityService.getGameReadyActivity(1L));
     }
 }

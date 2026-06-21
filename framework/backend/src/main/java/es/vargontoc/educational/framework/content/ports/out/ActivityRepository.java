@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.content.ports.out;
 
 import es.vargontoc.educational.framework.content.model.Activity;
+import es.vargontoc.educational.framework.content.model.ContentStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,6 +9,8 @@ import java.util.Optional;
 public interface ActivityRepository {
 
     Optional<Activity> findById(Long id);
+
+    Optional<Activity> findByIdAndStatus(Long id, ContentStatus status);
 
     List<Activity> findAll();
 

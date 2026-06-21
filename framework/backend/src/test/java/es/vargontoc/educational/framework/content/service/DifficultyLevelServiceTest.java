@@ -5,6 +5,7 @@ import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
+import es.vargontoc.educational.framework.shared.exception.ContentNotReadyException;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,5 +92,50 @@ class DifficultyLevelServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () ->
             difficultyLevelService.updateDifficultyLevel(99L, DifficultyCode.HARD, null, null));
+    }
+
+    @Test
+    void getGameReadyDifficultyLevel_happyPath() {
+        var difficultyLevel = new DifficultyLevel();
+        difficultyLevel.setId(1L);
+        difficultyLevel.setActivityId(1L);
+        difficultyLevel.setDifficultyCode(DifficultyCode.MEDIUM);
+        difficultyLevel.setEngineParams("{\"speed\":2}");
+
+        when(difficultyLevelRepository.findByIdAndEngineParamsIsNotNull(1L)).thenReturn(Optional.of(difficultyLevel));
+
+        var result = difficultyLevelService.getGameReadyDifficultyLevel(1L);
+
+        assertEquals(DifficultyCode.MEDIUM, result.getDifficultyCode());
+        assertNotNull(result.getEngineParams());
+    }
+
+    @Test
+    void getGameReadyDifficultyLevel_noEngineParams_throwsContentNotReady() {
+        when(difficultyLevelRepository.findByIdAndEngineParamsIsNotNull(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ContentNotReadyException.class, () -> difficultyLevelService.getGameReadyDifficultyLevel(1L));
+    }
+
+    @Test
+    void getEasiestDifficultyLevel_happyPath() {
+        var difficultyLevel = new DifficultyLevel();
+        difficultyLevel.setId(1L);
+        difficultyLevel.setActivityId(1L);
+        difficultyLevel.setDifficultyCode(DifficultyCode.EASY);
+        difficultyLevel.setEngineParams("{\"speed\":1}");
+
+        when(difficultyLevelRepository.findFirstByActivityIdOrderByDifficultyCodeAsc(1L)).thenReturn(Optional.of(difficultyLevel));
+
+        var result = difficultyLevelService.getEasiestDifficultyLevel(1L);
+
+        assertEquals(DifficultyCode.EASY, result.getDifficultyCode());
+    }
+
+    @Test
+    void getEasiestDifficultyLevel_noDifficultyLevels_throwsContentNotReady() {
+        when(difficultyLevelRepository.findFirstByActivityIdOrderByDifficultyCodeAsc(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ContentNotReadyException.class, () -> difficultyLevelService.getEasiestDifficultyLevel(1L));
     }
 }
