@@ -148,6 +148,10 @@
                   "enum": ["CORRECT", "INCORRECT", "TIMEOUT"],
                   "description": "Normalized result of the action."
                 },
+                "updatedState": {
+                  "$ref": "#/components/schemas/GameStatePayload",
+                  "description": "Current game state after the action was applied."
+                },
                 "difficultyChanged": {
                   "type": "boolean",
                   "description": "True when difficulty level was adjusted by adaptive difficulty service."

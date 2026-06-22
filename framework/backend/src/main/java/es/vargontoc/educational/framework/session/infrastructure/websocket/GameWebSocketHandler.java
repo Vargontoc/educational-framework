@@ -457,7 +457,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private Map<String, Object> toPayload(GameActionResponse response) {
         Map<String, Object> payload = new java.util.HashMap<>();
         payload.put("resultType", response.resultType().name());
-        payload.put("updatedState", response.updatedState());
+        payload.put("updatedState", gameStateToPayload(response.updatedState()));
         payload.put("difficultyChanged", response.difficultyChanged());
         if (response.newDifficultyLevelId() != null) {
             payload.put("newDifficultyLevelId", response.newDifficultyLevelId());
