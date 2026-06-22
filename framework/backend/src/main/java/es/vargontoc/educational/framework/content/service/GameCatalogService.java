@@ -1,8 +1,8 @@
 package es.vargontoc.educational.framework.content.service;
 
-import es.vargontoc.educational.framework.content.infrastructure.dto.GameCatalogReadiness;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
+import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
 import es.vargontoc.educational.framework.content.ports.in.ActivityUseCase;
 import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;

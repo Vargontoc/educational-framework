@@ -28,7 +28,11 @@ import es.vargontoc.educational.framework.content.service.LearningPathStepServic
 import es.vargontoc.educational.framework.content.service.StoryPageService;
 import es.vargontoc.educational.framework.content.service.StoryService;
 import es.vargontoc.educational.framework.content.service.TopicService;
+import es.vargontoc.educational.framework.content.ports.in.ActivityUseCase;
+import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
+import es.vargontoc.educational.framework.content.service.GameCatalogService;
 import es.vargontoc.educational.framework.content.service.TracingPatternService;
+import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -98,6 +102,14 @@ class ContentModuleConfiguration {
     @Bean
     StoryPageService storyPageService(StoryPageRepository storyPageRepository, StoryRepository storyRepository) {
         return new StoryPageService(storyPageRepository, storyRepository);
+    }
+
+    @Bean
+    GameCatalogService gameCatalogService(
+            ActivityUseCase activityUseCase,
+            DifficultyLevelUseCase difficultyLevelUseCase,
+            ActivitySummaryRepository activitySummaryRepository) {
+        return new GameCatalogService(activityUseCase, difficultyLevelUseCase, activitySummaryRepository);
     }
 
     @Bean

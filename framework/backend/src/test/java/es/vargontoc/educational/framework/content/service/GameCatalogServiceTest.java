@@ -1,6 +1,5 @@
 package es.vargontoc.educational.framework.content.service;
 
-import es.vargontoc.educational.framework.content.infrastructure.dto.GameCatalogReadiness;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
