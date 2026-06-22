@@ -3,7 +3,7 @@
   "info": {
     "title": "Educational Framework WebSocket Contract",
     "description": "Baseline real-time contract for FEAT-002 session events.",
-    "version": "1.4.0"
+    "version": "1.5.0"
   },
   "channels": {
     "/ws/parent": {
@@ -167,11 +167,11 @@
                     "type": "object",
                     "properties": {
                       "achievementCode": { "type": "string" },
-                      "childProfileId": { "type": "integer", "format": "int64" },
-                      "unlockedAt": { "type": "string", "format": "date-time" }
+                      "activityId": { "type": "integer", "format": "int64" },
+                      "topicId": { "type": "integer", "format": "int64" }
                     }
                   },
-                  "description": "Achievements unlocked by this action. Empty if none."
+                  "description": "Achievements unlocked by this action. Contains achievementCode, activityId, and topicId."
                 },
                 "attemptContext": {
                   "type": "string",

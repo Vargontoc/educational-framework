@@ -41,6 +41,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -339,5 +340,54 @@ class GameOrchestratorServiceTest {
         verify(registerActivityAttemptUseCase, never()).register(
             anyLong(), anyLong(), anyLong(), any(), anyLong(), any(), any(), any()
         );
+    }
+
+    @Test
+    void processAction_trackingFails_continuesWithoutTracking() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), anyLong(), any(), any(), any()))
+            .thenThrow(new RuntimeException("Tracking service unavailable"));
+
+        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+
+        assertEquals(ActionResultType.CORRECT, result.resultType());
+        assertTrue(result.unlockedAchievements().isEmpty());
+    }
+
+    @Test
+    void abandonGameForSession_trackingFails_stillAbandonsGame() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doThrow(new RuntimeException("Tracking unavailable"))
+            .when(registerGameSessionSummaryUseCase).registerGameSessionSummary(
+                anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), anyInt(), anyInt(), anyInt(), anyInt(),
+                any(), any(), any()
+            );
+
+        orchestratorService.abandonGameForSession(100L);
+
+        assertEquals(GameStatus.ABANDONED, storedState.getStatus());
+        verify(gameStateRegistry).remove(1L);
+    }
+
+    @Test
+    void processAction_withDifferentGameIds_runConcurrently() {
+        GameState state1 = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState state2 = createRealGameState(2L, 101L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(state1));
+        when(gameStateRegistry.findByGameId(2L)).thenReturn(Optional.of(state2));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+
+        ActionProcessingResult result1 = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+        ActionProcessingResult result2 = orchestratorService.processAction(2L, "CORRECT:1", null, 2000);
+
+        assertEquals(ActionResultType.CORRECT, result1.resultType());
+        assertEquals(ActionResultType.CORRECT, result2.resultType());
     }
 }
