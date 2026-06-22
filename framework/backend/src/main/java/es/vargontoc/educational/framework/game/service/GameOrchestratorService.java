@@ -8,31 +8,55 @@ import es.vargontoc.educational.framework.game.engine.FakeGameEngine;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
+import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.ActionResult;
+import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
+import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
+import es.vargontoc.educational.framework.tracking.model.AttemptResult;
+import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
+import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
+import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GameOrchestratorService implements GameOrchestrator {
 
+    private static final Logger log = LoggerFactory.getLogger(GameOrchestratorService.class);
+
     private final GameCatalogUseCase gameCatalogUseCase;
     private final GameStateRegistry gameStateRegistry;
+    private final RegisterActivityAttemptUseCase registerActivityAttemptUseCase;
+    private final EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase;
+    private final RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase;
     private final Environment environment;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
 
     public GameOrchestratorService(
             GameCatalogUseCase gameCatalogUseCase,
             GameStateRegistry gameStateRegistry,
+            RegisterActivityAttemptUseCase registerActivityAttemptUseCase,
+            EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase,
+            RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase,
             Environment environment) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
+        this.registerActivityAttemptUseCase = registerActivityAttemptUseCase;
+        this.evaluateGameCompletionAchievementsUseCase = evaluateGameCompletionAchievementsUseCase;
+        this.registerGameSessionSummaryUseCase = registerGameSessionSummaryUseCase;
         this.environment = environment;
     }
 
@@ -81,7 +105,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     }
 
     @Override
-    public GameState processAction(Long gameId, String actionPayload) {
+    public ActionProcessingResult processAction(Long gameId, String actionPayload, Long topicId, Integer responseTimeMs) {
         GameState state = gameStateRegistry.findByGameId(gameId)
             .orElseThrow(() -> new GameNotFoundException(gameId));
 
@@ -90,19 +114,92 @@ public class GameOrchestratorService implements GameOrchestrator {
         }
 
         GameEnginePort engine = resolveEngine(state);
-        ActionResult result = engine.processAction(state, actionPayload);
+        ActionResult engineResult = engine.processAction(state, actionPayload);
 
         state.setLastActivityAt(LocalDateTime.now());
 
-        if (result.isCompleted()) {
+        AttemptResult trackingResult = mapToTrackingResult(engineResult.getResultType());
+
+        List<UnlockedAchievement> allUnlockedAchievements = new ArrayList<>();
+        boolean difficultyChanged = false;
+        Long newDifficultyLevelId = null;
+
+        try {
+            AttemptRegistrationResult attemptResult = registerActivityAttemptUseCase.register(
+                state.getChildSessionId(),
+                state.getActivityId(),
+                gameId,
+                topicId,
+                state.getDifficultyLevelId(),
+                trackingResult,
+                responseTimeMs,
+                engineResult.getAttemptContext()
+            );
+
+            if (attemptResult != null && attemptResult.unlockedAchievements() != null) {
+                allUnlockedAchievements.addAll(attemptResult.unlockedAchievements());
+            }
+
+            if (attemptResult != null && attemptResult.difficultyChanged()
+                    && attemptResult.newDifficultyLevelId() != null
+                    && !attemptResult.newDifficultyLevelId().equals(state.getDifficultyLevelId())) {
+                difficultyChanged = true;
+                newDifficultyLevelId = attemptResult.newDifficultyLevelId();
+                state.setDifficultyLevelId(newDifficultyLevelId);
+            }
+        } catch (Exception e) {
+            log.warn("Tracking operation failed, continuing without tracking update: {}", e.getMessage());
+        }
+
+        boolean gameCompleted = engineResult.isCompleted();
+
+        if (gameCompleted) {
             state.setStatus(GameStatus.COMPLETED);
             state.setCompletedAt(LocalDateTime.now());
+
+            try {
+                List<UnlockedAchievement> completionAchievements = evaluateGameCompletionAchievementsUseCase.evaluate(
+                    state.getChildSessionId(),
+                    state.getActivityId(),
+                    topicId
+                );
+                if (completionAchievements != null) {
+                    allUnlockedAchievements.addAll(completionAchievements);
+                }
+
+                registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                    state.getChildSessionId(),
+                    gameId,
+                    state.getActivityId(),
+                    state.getDifficultyLevelId(),
+                    newDifficultyLevelId != null ? newDifficultyLevelId : state.getDifficultyLevelId(),
+                    state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
+                    state.getAttempts() != null ? state.getAttempts() : 0,
+                    state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
+                    state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
+                    state.getStartedAt(),
+                    LocalDateTime.now(),
+                    GameSessionFinalStatus.COMPLETED
+                );
+            } catch (Exception e) {
+                log.warn("Game completion tracking failed: {}", e.getMessage());
+            }
+
             gameStateRegistry.remove(gameId);
         } else {
             gameStateRegistry.save(state);
         }
 
-        return state;
+        return new ActionProcessingResult(
+            engineResult.getResultType(),
+            responseTimeMs,
+            state,
+            difficultyChanged,
+            newDifficultyLevelId,
+            gameCompleted,
+            allUnlockedAchievements,
+            engineResult.getAttemptContext()
+        );
     }
 
     @Override
@@ -153,5 +250,13 @@ public class GameOrchestratorService implements GameOrchestrator {
 
     private Long generateGameId() {
         return System.currentTimeMillis();
+    }
+
+    private AttemptResult mapToTrackingResult(ActionResultType actionResultType) {
+        return switch (actionResultType) {
+            case CORRECT -> AttemptResult.CORRECT;
+            case INCORRECT -> AttemptResult.INCORRECT;
+            case TIMEOUT -> AttemptResult.TIMEOUT;
+        };
     }
 }

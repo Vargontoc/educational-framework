@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.game.ports.in;
 
+import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.GameState;
 
 public interface GameOrchestrator {
@@ -8,7 +9,7 @@ public interface GameOrchestrator {
 
     GameState readyGame(Long gameId);
 
-    GameState processAction(Long gameId, String actionPayload);
+    ActionProcessingResult processAction(Long gameId, String actionPayload, Long topicId, Integer responseTimeMs);
 
     GameState abandonGame(Long gameId);
 }

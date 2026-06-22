@@ -1,17 +1,22 @@
 package es.vargontoc.educational.framework.game.service;
 
-import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
+import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
-import es.vargontoc.educational.framework.game.engine.FakeGameEngine;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
+import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
+import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
+import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
+import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,12 +25,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.env.MockEnvironment;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,15 +51,28 @@ class GameOrchestratorServiceTest {
     @Mock
     private GameStateRegistry gameStateRegistry;
 
+    @Mock
+    private RegisterActivityAttemptUseCase registerActivityAttemptUseCase;
+
+    @Mock
+    private EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase;
+
+    @Mock
+    private RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase;
+
     private GameOrchestratorService orchestratorService;
     private MockEnvironment environment;
 
     @BeforeEach
     void setUp() {
         environment = new MockEnvironment();
+        environment.addActiveProfile("dev");
         orchestratorService = new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
+            registerActivityAttemptUseCase,
+            evaluateGameCompletionAchievementsUseCase,
+            registerGameSessionSummaryUseCase,
             environment
         );
     }
@@ -111,8 +135,6 @@ class GameOrchestratorServiceTest {
     void readyGame_transitionsToStartingThenInProgress() {
         GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.WAITING);
 
-        environment.addActiveProfile("dev");
-
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
@@ -132,21 +154,44 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void processAction_completesGame_whenEngineReturnsCompleted() {
+    void processAction_correctAction_calls_tracking() {
         GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
-
-        environment.addActiveProfile("dev");
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
-        orchestratorService.processAction(1L, "CORRECT:1");
-        orchestratorService.processAction(1L, "CORRECT:2");
-        GameState result = orchestratorService.processAction(1L, "CORRECT:3");
+        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
 
-        assertEquals(GameStatus.COMPLETED, result.getStatus());
-        assertNotNull(result.getCompletedAt());
-        verify(gameStateRegistry).remove(1L);
+        assertEquals(es.vargontoc.educational.framework.game.model.ActionResultType.CORRECT, result.resultType());
+        assertNotNull(result.updatedState());
+        verify(registerActivityAttemptUseCase).register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any());
+    }
+
+    @Test
+    void processAction_completedAction_calls_game_completion_and_summary() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
+        when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
+            .thenReturn(List.of());
+
+        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+        orchestratorService.processAction(1L, "CORRECT:2", null, 2000);
+        ActionProcessingResult finalResult = orchestratorService.processAction(1L, "CORRECT:3", null, 2000);
+
+        assertTrue(finalResult.gameCompleted());
+        verify(evaluateGameCompletionAchievementsUseCase).evaluate(anyLong(), anyLong(), isNull());
+        verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
+            anyLong(), anyLong(), anyLong(), anyLong(), anyLong(),
+            any(), any(), any(), any(), any(), any(), any()
+        );
+        verify(gameStateRegistry).remove(anyLong());
     }
 
     @Test
@@ -156,7 +201,7 @@ class GameOrchestratorServiceTest {
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
         assertThrows(InvalidStateTransitionException.class,
-            () -> orchestratorService.processAction(1L, "CORRECT:1"));
+            () -> orchestratorService.processAction(1L, "CORRECT:1", null, 2000));
     }
 
     @Test
@@ -185,6 +230,16 @@ class GameOrchestratorServiceTest {
 
     @Test
     void readyGame_notDevProfile_throwsEngineNotAvailable() {
+        environment = new MockEnvironment();
+        orchestratorService = new GameOrchestratorService(
+            gameCatalogUseCase,
+            gameStateRegistry,
+            registerActivityAttemptUseCase,
+            evaluateGameCompletionAchievementsUseCase,
+            registerGameSessionSummaryUseCase,
+            environment
+        );
+
         GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.WAITING);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
@@ -201,12 +256,35 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void processAction_notDevProfile_throwsEngineNotAvailable() {
+    void processAction_unlocked_achievements_returned() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        UnlockedAchievement achievement = new UnlockedAchievement("FIRST_CORRECT_STREAK", 1L, null);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(achievement)));
+
+        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+
+        assertFalse(result.unlockedAchievements().isEmpty());
+        assertEquals("FIRST_CORRECT_STREAK", result.unlockedAchievements().get(0).achievementCode());
+    }
+
+    @Test
+    void processAction_difficulty_change_updates_state() {
         GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(), true, 10L));
 
-        assertThrows(es.vargontoc.educational.framework.game.exception.EngineNotAvailableException.class,
-            () -> orchestratorService.processAction(1L, "CORRECT:1"));
+        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+
+        assertTrue(result.difficultyChanged());
+        assertEquals(10L, result.newDifficultyLevelId());
+        assertEquals(10L, result.updatedState().getDifficultyLevelId());
     }
 }

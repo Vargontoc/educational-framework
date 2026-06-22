@@ -75,6 +75,14 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
                 achievementEvaluationService.evaluateAttemptAchievements(childProfileId, activityId, topicId, result);
         allUnlocked.addAll(attemptAchievements);
 
-        return new AttemptRegistrationResult(saved.getId(), saved.getCreatedAt(), allUnlocked);
+        boolean difficultyChanged = false;
+        Long newDifficultyLevelId = null;
+        if (difficultyResult != null && difficultyResult.action() != AdaptiveDifficultyAction.MAINTAIN
+                && difficultyResult.newDifficultyLevelId() != null) {
+            difficultyChanged = true;
+            newDifficultyLevelId = difficultyResult.newDifficultyLevelId();
+        }
+
+        return new AttemptRegistrationResult(saved.getId(), saved.getCreatedAt(), allUnlocked, difficultyChanged, newDifficultyLevelId);
     }
 }

@@ -65,7 +65,7 @@ public class AdaptiveDifficultyService {
             if (newLevel != null && !newLevel.equals(currentDifficultyLevelId)) {
                 updateDifficulty(summary, newLevel);
                 return new AdaptiveDifficultyResult(AdaptiveDifficultyAction.INCREASE,
-                        "score " + String.format("%.2f", adaptiveScore) + " exceeded threshold");
+                        "score " + String.format("%.2f", adaptiveScore) + " exceeded threshold", newLevel);
             }
         }
 
@@ -74,7 +74,7 @@ public class AdaptiveDifficultyService {
             if (newLevel != null && !newLevel.equals(currentDifficultyLevelId)) {
                 updateDifficulty(summary, newLevel);
                 return new AdaptiveDifficultyResult(AdaptiveDifficultyAction.DECREASE,
-                        "score " + String.format("%.2f", adaptiveScore) + " below threshold");
+                        "score " + String.format("%.2f", adaptiveScore) + " below threshold", newLevel);
             }
         }
 
