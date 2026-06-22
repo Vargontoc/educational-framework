@@ -3,6 +3,15 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
+import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
+import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
+import es.vargontoc.educational.framework.game.infrastructure.websocket.GameErrorCode;
+import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.GameActionRequest;
+import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.GameActionResponse;
+import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
+import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
+import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
@@ -34,6 +43,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final ChildSessionUseCase childSessionUseCase;
     private final ObjectMapper objectMapper;
     private final AvatarLifecycleService avatarLifecycleService;
+    private final GameOrchestrator gameOrchestrator;
+    private final GameStateRegistry gameStateRegistry;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -44,10 +55,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     });
 
     public GameWebSocketHandler(ChildSessionUseCase childSessionUseCase, ObjectMapper objectMapper,
-                             AvatarLifecycleService avatarLifecycleService) {
+                             AvatarLifecycleService avatarLifecycleService,
+                             GameOrchestrator gameOrchestrator,
+                             GameStateRegistry gameStateRegistry) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarLifecycleService = avatarLifecycleService;
+        this.gameOrchestrator = gameOrchestrator;
+        this.gameStateRegistry = gameStateRegistry;
     }
 
     @Override
@@ -236,7 +251,99 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private void handleGameAction(WebSocketSession session, Long childSessionId, JsonNode root) {
         LOGGER.debug("Game action received from childSessionId={}: {}", childSessionId, root);
-        // Placeholder: game module will process actions via GameOrchestrator
+
+        GameActionRequest request;
+        try {
+            Long gameId = root.has("gameId") && !root.get("gameId").isNull() ? root.get("gameId").asLong() : null;
+            String action = root.has("action") && !root.get("action").isNull() ? root.get("action").asText() : null;
+            Long topicId = root.has("topicId") && !root.get("topicId").isNull() ? root.get("topicId").asLong() : null;
+            Integer responseTimeMs = root.has("responseTimeMs") && !root.get("responseTimeMs").isNull()
+                ? root.get("responseTimeMs").asInt() : null;
+
+            if (gameId == null) {
+                var gameState = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+                if (gameState == null) {
+                    sendGameError(childSessionId, GameErrorCode.GAME_NOT_FOUND, null);
+                    return;
+                }
+                gameId = gameState.getGameId();
+            }
+
+            request = new GameActionRequest(gameId, action, topicId, responseTimeMs);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to parse game action from childSessionId={}: {}", childSessionId, e.getMessage());
+            sendGameError(childSessionId, GameErrorCode.PARSING_ERROR, null);
+            return;
+        }
+
+        try {
+            ActionProcessingResult result = gameOrchestrator.processAction(
+                request.gameId(),
+                request.action(),
+                request.topicId(),
+                request.responseTimeMs()
+            );
+
+            GameActionResponse response = GameActionResponse.fromProcessingResult(result);
+            SessionEvent event = SessionEvent.of(SessionEventType.GAME_ACTION_RESULT, childSessionId, toPayload(response));
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+
+            if (result.gameCompleted()) {
+                SessionEvent completedEvent = SessionEvent.of(SessionEventType.GAME_COMPLETED, childSessionId);
+                sendToSession(childSessionId, objectMapper.writeValueAsString(completedEvent));
+            }
+
+        } catch (InvalidStateTransitionException e) {
+            LOGGER.debug("Game action rejected - invalid state: childSessionId={}, gameId={}",
+                childSessionId, request.gameId());
+            sendGameError(childSessionId, GameErrorCode.GAME_NOT_IN_PROGRESS, request.gameId());
+
+        } catch (EngineNotAvailableException e) {
+            LOGGER.error("Engine not available for game action: childSessionId={}, gameId={}",
+                childSessionId, request.gameId());
+            sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, request.gameId());
+
+        } catch (GameNotFoundException e) {
+            LOGGER.debug("Game not found: childSessionId={}, gameId={}", childSessionId, request.gameId());
+            sendGameError(childSessionId, GameErrorCode.GAME_NOT_FOUND, request.gameId());
+
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error processing game action: childSessionId={}, gameId={}, error={}",
+                childSessionId, request.gameId(), e.getMessage());
+            sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, request.gameId());
+        }
+    }
+
+    private void sendGameError(Long childSessionId, GameErrorCode code, Long gameId) {
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("code", code.name());
+        if (gameId != null) {
+            payload.put("gameId", gameId);
+        }
+        SessionEvent event = SessionEvent.of(SessionEventType.GAME_ERROR, childSessionId, payload);
+        try {
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+        } catch (Exception e) {
+            LOGGER.error("Failed to send game error to childSessionId={}: {}", childSessionId, e.getMessage());
+        }
+    }
+
+    private Map<String, Object> toPayload(GameActionResponse response) {
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("resultType", response.resultType().name());
+        payload.put("updatedState", response.updatedState());
+        payload.put("difficultyChanged", response.difficultyChanged());
+        if (response.newDifficultyLevelId() != null) {
+            payload.put("newDifficultyLevelId", response.newDifficultyLevelId());
+        }
+        payload.put("gameCompleted", response.gameCompleted());
+        if (response.unlockedAchievements() != null && !response.unlockedAchievements().isEmpty()) {
+            payload.put("unlockedAchievements", response.unlockedAchievements());
+        }
+        if (response.attemptContext() != null) {
+            payload.put("attemptContext", response.attemptContext());
+        }
+        return payload;
     }
 
     private boolean isAuthenticated(WebSocketSession session) {

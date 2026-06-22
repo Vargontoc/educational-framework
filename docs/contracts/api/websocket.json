@@ -41,6 +41,7 @@
         "message": {
           "oneOf": [
             { "$ref": "#/components/messages/SessionEvent" },
+            { "$ref": "#/components/messages/GameActionResponse" },
             { "$ref": "#/components/messages/GameAvatarEvent" }
           ]
         }
@@ -69,7 +70,10 @@
                 "CHILD_TTS_DEACTIVATED",
                 "CHILD_AGENT_ACTIVATED",
                 "CHILD_AGENT_DEACTIVATED",
-                "GAME_AVATAR_EVENT"
+                "GAME_AVATAR_EVENT",
+                "GAME_ACTION_RESULT",
+                "GAME_COMPLETED",
+                "GAME_ERROR"
               ]
             },
             "sessionId": {
@@ -118,6 +122,63 @@
           }
         }
       },
+      "GameActionResponse": {
+        "name": "GameActionResponse",
+        "description": "Result of a processed game action. Sent after a GameActionMessage is processed by the orchestrator.",
+        "payload": {
+          "type": "object",
+          "required": ["event", "sessionId", "payload"],
+          "properties": {
+            "event": {
+              "type": "string",
+              "const": "GAME_ACTION_RESULT"
+            },
+            "sessionId": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "resultType": {
+                  "type": "string",
+                  "enum": ["CORRECT", "INCORRECT", "TIMEOUT"],
+                  "description": "Normalized result of the action."
+                },
+                "difficultyChanged": {
+                  "type": "boolean",
+                  "description": "True when difficulty level was adjusted by adaptive difficulty service."
+                },
+                "newDifficultyLevelId": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "New difficulty level ID. Present when difficultyChanged is true."
+                },
+                "gameCompleted": {
+                  "type": "boolean",
+                  "description": "True when this action completed the game."
+                },
+                "unlockedAchievements": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "achievementCode": { "type": "string" },
+                      "childProfileId": { "type": "integer", "format": "int64" },
+                      "unlockedAt": { "type": "string", "format": "date-time" }
+                    }
+                  },
+                  "description": "Achievements unlocked by this action. Empty if none."
+                },
+                "attemptContext": {
+                  "type": "string",
+                  "description": "Contextual info about the attempt, e.g. 'streak:3'."
+                }
+              }
+            }
+          }
+        }
+      },
       "GameClientMessage": {
         "name": "GameClientMessage",
         "description": "Messages sent from the game client to the server.",
@@ -145,12 +206,15 @@
             },
             {
               "title": "GameActionMessage",
-              "description": "Placeholder for future game engine actions. Only valid after successful auth.",
+              "description": "Game action processed by the engine. Only valid after successful auth.",
               "properties": {
                 "type": { "type": "string", "const": "game_action" },
-                "payload": { "type": "object" }
+                "gameId": { "type": "integer", "format": "int64", "description": "Target game ID. Optional if childSession has exactly one active game." },
+                "action": { "type": "string", "description": "Action payload, e.g. 'CORRECT:answer' or 'INCORRECT:answer'" },
+                "topicId": { "type": "integer", "format": "int64", "description": "Optional topic context for the action." },
+                "responseTimeMs": { "type": "integer", "format": "int32", "description": "Client-measured response time in milliseconds." }
               },
-              "required": ["type"]
+              "required": ["type", "action"]
             }
           ]
         }
@@ -196,6 +260,18 @@
       "SESSION_DISCONNECTED": {
         "direction": "server_to_client",
         "description": "Lifecycle subtype: farewell avatar sent before backend-initiated session close. Text: 'Vaya, parece que es hora de despedirnos. Hasta la proxima.'"
+      },
+      "GAME_ACTION_RESULT": {
+        "direction": "server_to_client",
+        "description": "Result of a game action processed by the orchestrator. Contains resultType, difficulty info, achievements, and completion status."
+      },
+      "GAME_COMPLETED": {
+        "direction": "server_to_client",
+        "description": "Game session has completed successfully. Sent after the final GAME_ACTION_RESULT when gameCompleted is true."
+      },
+      "GAME_ERROR": {
+        "direction": "server_to_client",
+        "description": "Game action failed with an error. Contains error code: GAME_NOT_FOUND, INVALID_ACTION, GAME_NOT_IN_PROGRESS, ENGINE_ERROR, PARSING_ERROR."
       }
     },
     "schemas": {
@@ -203,6 +279,24 @@
         "name": "BinaryAudioFrame",
         "description": "Binary frame containing MP3 audio data. Follows a GameAvatarEvent JSON frame when audioAvailable=true. Format: [4 bytes: audioId length as big-endian int32][N bytes: audioId UTF-8][remaining bytes: MP3 audio data]. The audioId field in the preceding JSON frame is used to correlate the binary frame.",
         "contentType": "application/octet-stream"
+      },
+      "GameActionErrorPayload": {
+        "name": "GameActionErrorPayload",
+        "description": "Error payload for GAME_ERROR events.",
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": ["GAME_NOT_FOUND", "INVALID_ACTION", "GAME_NOT_IN_PROGRESS", "ENGINE_ERROR", "PARSING_ERROR"],
+            "description": "Error code describing what went wrong."
+          },
+          "gameId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The game ID that caused the error. Present when applicable."
+          }
+        }
       }
     }
   }

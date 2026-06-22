@@ -3,6 +3,14 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.avatar.infrastructure.dto.GameAvatarEvent;
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
+import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
+import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
+import es.vargontoc.educational.framework.game.model.ActionResultType;
+import es.vargontoc.educational.framework.game.model.GameState;
+import es.vargontoc.educational.framework.game.model.GameStatus;
+import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
+import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
@@ -20,6 +28,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,10 +36,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
 
 @ExtendWith(MockitoExtension.class)
 class GameWebSocketHandlerTest {
@@ -42,13 +54,20 @@ class GameWebSocketHandlerTest {
     private AvatarLifecycleService avatarLifecycleService;
 
     @Mock
+    private GameOrchestrator gameOrchestrator;
+
+    @Mock
+    private GameStateRegistry gameStateRegistry;
+
+    @Mock
     private WebSocketSession session;
 
     private GameWebSocketHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarLifecycleService);
+        handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarLifecycleService,
+            gameOrchestrator, gameStateRegistry);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
     }
@@ -246,10 +265,153 @@ class GameWebSocketHandlerTest {
         assertEquals("mp3-test-data", new String(extractedAudio));
     }
 
+    @Test
+    void gameAction_beforeAuth_closesWithPolicyViolation() throws IOException {
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_action\",\"action\":\"CORRECT:1\"}"));
+
+        verify(session).close(CloseStatus.POLICY_VIOLATION);
+        verify(gameOrchestrator, never()).processAction(any(), any(), any(), any());
+    }
+
+    @Test
+    void gameAction_validAction_returnsResult() throws IOException {
+        var childSession = childSession(10L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(10L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":10}"));
+
+        var gameState = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        when(gameOrchestrator.processAction(eq(1L), eq("CORRECT:1"), isNull(), eq(2000)))
+            .thenReturn(new ActionProcessingResult(
+                ActionResultType.CORRECT, 2000, gameState, false, null, false, "streak:1"
+            ));
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_action\",\"gameId\":1,\"action\":\"CORRECT:1\",\"responseTimeMs\":2000}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ACTION_RESULT")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("CORRECT")));
+    }
+
+    @Test
+    void gameAction_gameNotFound_returnsError() throws IOException {
+        var childSession = childSession(11L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(11L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+        when(gameStateRegistry.findByChildSessionId(11L)).thenReturn(Optional.empty());
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":11}"));
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_action\",\"action\":\"CORRECT:1\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ERROR")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_NOT_FOUND")));
+    }
+
+    @Test
+    void gameAction_gameNotInProgress_returnsError() throws IOException {
+        var childSession = childSession(12L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(12L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":12}"));
+
+        when(gameOrchestrator.processAction(eq(1L), eq("CORRECT:1"), isNull(), isNull()))
+            .thenThrow(new InvalidStateTransitionException(GameStatus.WAITING, GameStatus.IN_PROGRESS));
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_action\",\"gameId\":1,\"action\":\"CORRECT:1\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ERROR")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_NOT_IN_PROGRESS")));
+    }
+
+    @Test
+    void gameAction_engineError_returnsError() throws IOException {
+        var childSession = childSession(13L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(13L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":13}"));
+
+        when(gameOrchestrator.processAction(eq(1L), any(), any(), any()))
+            .thenThrow(new EngineNotAvailableException("fake"));
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_action\",\"gameId\":1,\"action\":\"CORRECT:1\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ERROR")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("ENGINE_ERROR")));
+    }
+
+    @Test
+    void gameAction_gameCompleted_sendsGameCompleted() throws IOException {
+        var childSession = childSession(14L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(14L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":14}"));
+
+        var gameState = createGameState(1L, 14L, 100L, 1L, GameStatus.COMPLETED);
+        when(gameOrchestrator.processAction(eq(1L), eq("CORRECT:1"), isNull(), isNull()))
+            .thenReturn(new ActionProcessingResult(
+                ActionResultType.CORRECT, 2000, gameState, false, null, true, "completed"
+            ));
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_action\",\"gameId\":1,\"action\":\"CORRECT:1\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_COMPLETED")));
+    }
+
     private ChildSession childSession(Long id, ChildSessionStatus status) {
         var s = new ChildSession();
         s.setId(id);
         s.setStatus(status);
         return s;
+    }
+
+    private GameState createGameState(Long gameId, Long childSessionId, Long activityId, Long difficultyLevelId, GameStatus status) {
+        var state = new GameState();
+        state.setGameId(gameId);
+        state.setChildSessionId(childSessionId);
+        state.setActivityId(activityId);
+        state.setDifficultyLevelId(difficultyLevelId);
+        state.setStatus(status);
+        state.setSequenceNumber(0);
+        state.setAttempts(0);
+        state.setCorrectAttempts(0);
+        state.setIncorrectAttempts(0);
+        state.setTimeoutAttempts(0);
+        state.setCurrentScore(BigDecimal.ZERO);
+        state.setCurrentStreak(0);
+        state.setStarsEarned(0);
+        return state;
     }
 }

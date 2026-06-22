@@ -14,6 +14,9 @@ public enum SessionEventType {
     CHILD_AGENT_ACTIVATED(  "Agent Child model is activated for the child"),
     CHILD_AGENT_DEACTIVATED("Agent Child model is desactivated for the child"),
     GAME_AVATAR_EVENT("Avatar audio event sent to game client."),
+    GAME_ACTION_RESULT("Result of a game action processed by the orchestrator."),
+    GAME_COMPLETED("Game session has completed successfully."),
+    GAME_ERROR("Game action failed with an error code."),
     SESSION_CONNECTED("Game client authenticated and avatar welcome sent."),
     SESSION_DISCONNECTED("Backend-initiated session end with avatar farewell sent.");
 

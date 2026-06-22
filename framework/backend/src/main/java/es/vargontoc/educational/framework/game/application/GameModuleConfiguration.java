@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.game.application;
 
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
+import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.service.GameOrchestratorService;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
@@ -14,7 +15,7 @@ import org.springframework.core.env.Environment;
 class GameModuleConfiguration {
 
     @Bean
-    GameOrchestratorService gameOrchestratorService(
+    GameOrchestrator gameOrchestrator(
             GameCatalogUseCase gameCatalogUseCase,
             GameStateRegistry gameStateRegistry,
             RegisterActivityAttemptUseCase registerActivityAttemptUseCase,
