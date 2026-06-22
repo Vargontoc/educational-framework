@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class GameOrchestratorService implements GameOrchestrator {
 
@@ -44,6 +45,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase;
     private final Environment environment;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
+    private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
 
     public GameOrchestratorService(
             GameCatalogUseCase gameCatalogUseCase,
@@ -106,116 +108,214 @@ public class GameOrchestratorService implements GameOrchestrator {
 
     @Override
     public ActionProcessingResult processAction(Long gameId, String actionPayload, Long topicId, Integer responseTimeMs) {
-        GameState state = gameStateRegistry.findByGameId(gameId)
-            .orElseThrow(() -> new GameNotFoundException(gameId));
-
-        if (state.getStatus() != GameStatus.IN_PROGRESS) {
-            throw new InvalidStateTransitionException(state.getStatus(), GameStatus.IN_PROGRESS);
-        }
-
-        GameEnginePort engine = resolveEngine(state);
-        ActionResult engineResult = engine.processAction(state, actionPayload);
-
-        state.setLastActivityAt(LocalDateTime.now());
-
-        AttemptResult trackingResult = mapToTrackingResult(engineResult.getResultType());
-
-        List<UnlockedAchievement> allUnlockedAchievements = new ArrayList<>();
-        boolean difficultyChanged = false;
-        Long newDifficultyLevelId = null;
-
+        ReentrantLock lock = getLock(gameId);
+        lock.lock();
         try {
-            AttemptRegistrationResult attemptResult = registerActivityAttemptUseCase.register(
-                state.getChildSessionId(),
-                state.getActivityId(),
-                gameId,
-                topicId,
-                state.getDifficultyLevelId(),
-                trackingResult,
-                responseTimeMs,
-                engineResult.getAttemptContext()
-            );
+            GameState state = gameStateRegistry.findByGameId(gameId)
+                .orElseThrow(() -> new GameNotFoundException(gameId));
 
-            if (attemptResult != null && attemptResult.unlockedAchievements() != null) {
-                allUnlockedAchievements.addAll(attemptResult.unlockedAchievements());
+            if (state.getStatus() != GameStatus.IN_PROGRESS) {
+                throw new InvalidStateTransitionException(state.getStatus(), GameStatus.IN_PROGRESS);
             }
 
-            if (attemptResult != null && attemptResult.difficultyChanged()
-                    && attemptResult.newDifficultyLevelId() != null
-                    && !attemptResult.newDifficultyLevelId().equals(state.getDifficultyLevelId())) {
-                difficultyChanged = true;
-                newDifficultyLevelId = attemptResult.newDifficultyLevelId();
-                state.setDifficultyLevelId(newDifficultyLevelId);
+            if (state.isSystemEventPending()) {
+                log.debug("Discarding action for gameId={} due to pending system event", gameId);
+                return new ActionProcessingResult(
+                    ActionResultType.CORRECT,
+                    responseTimeMs,
+                    state,
+                    false,
+                    null,
+                    false,
+                    List.of(),
+                    "discarded_system_event_pending"
+                );
             }
-        } catch (Exception e) {
-            log.warn("Tracking operation failed, continuing without tracking update: {}", e.getMessage());
-        }
 
-        boolean gameCompleted = engineResult.isCompleted();
+            GameEnginePort engine = resolveEngine(state);
+            ActionResult engineResult = engine.processAction(state, actionPayload);
 
-        if (gameCompleted) {
-            state.setStatus(GameStatus.COMPLETED);
-            state.setCompletedAt(LocalDateTime.now());
+            state.setLastActivityAt(LocalDateTime.now());
+
+            AttemptResult trackingResult = mapToTrackingResult(engineResult.getResultType());
+
+            List<UnlockedAchievement> allUnlockedAchievements = new ArrayList<>();
+            boolean difficultyChanged = false;
+            Long newDifficultyLevelId = null;
 
             try {
-                List<UnlockedAchievement> completionAchievements = evaluateGameCompletionAchievementsUseCase.evaluate(
+                AttemptRegistrationResult attemptResult = registerActivityAttemptUseCase.register(
                     state.getChildSessionId(),
                     state.getActivityId(),
-                    topicId
+                    gameId,
+                    topicId,
+                    state.getDifficultyLevelId(),
+                    trackingResult,
+                    responseTimeMs,
+                    engineResult.getAttemptContext()
                 );
-                if (completionAchievements != null) {
-                    allUnlockedAchievements.addAll(completionAchievements);
+
+                if (attemptResult != null && attemptResult.unlockedAchievements() != null) {
+                    allUnlockedAchievements.addAll(attemptResult.unlockedAchievements());
                 }
 
+                if (attemptResult != null && attemptResult.difficultyChanged()
+                        && attemptResult.newDifficultyLevelId() != null
+                        && !attemptResult.newDifficultyLevelId().equals(state.getDifficultyLevelId())) {
+                    difficultyChanged = true;
+                    newDifficultyLevelId = attemptResult.newDifficultyLevelId();
+                    state.setDifficultyLevelId(newDifficultyLevelId);
+                }
+            } catch (Exception e) {
+                log.warn("Tracking operation failed, continuing without tracking update: {}", e.getMessage());
+            }
+
+            boolean gameCompleted = engineResult.isCompleted();
+
+            if (gameCompleted) {
+                state.setStatus(GameStatus.COMPLETED);
+                state.setCompletedAt(LocalDateTime.now());
+
+                try {
+                    List<UnlockedAchievement> completionAchievements = evaluateGameCompletionAchievementsUseCase.evaluate(
+                        state.getChildSessionId(),
+                        state.getActivityId(),
+                        topicId
+                    );
+                    if (completionAchievements != null) {
+                        allUnlockedAchievements.addAll(completionAchievements);
+                    }
+
+                    registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                        state.getChildSessionId(),
+                        gameId,
+                        state.getActivityId(),
+                        state.getDifficultyLevelId(),
+                        newDifficultyLevelId != null ? newDifficultyLevelId : state.getDifficultyLevelId(),
+                        state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
+                        state.getAttempts() != null ? state.getAttempts() : 0,
+                        state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
+                        state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
+                        state.getStartedAt(),
+                        LocalDateTime.now(),
+                        GameSessionFinalStatus.COMPLETED
+                    );
+                } catch (Exception e) {
+                    log.warn("Game completion tracking failed: {}", e.getMessage());
+                }
+
+                gameStateRegistry.remove(gameId);
+            } else {
+                gameStateRegistry.save(state);
+            }
+
+            return new ActionProcessingResult(
+                engineResult.getResultType(),
+                responseTimeMs,
+                state,
+                difficultyChanged,
+                newDifficultyLevelId,
+                gameCompleted,
+                allUnlockedAchievements,
+                engineResult.getAttemptContext()
+            );
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public GameState abandonGame(Long gameId) {
+        ReentrantLock lock = getLock(gameId);
+        lock.lock();
+        try {
+            GameState state = gameStateRegistry.findByGameId(gameId)
+                .orElseThrow(() -> new GameNotFoundException(gameId));
+
+            if (!isActive(state.getStatus())) {
+                throw new InvalidStateTransitionException(state.getStatus(), GameStatus.ABANDONED);
+            }
+
+            state.setStatus(GameStatus.ABANDONED);
+            state.setLastActivityAt(LocalDateTime.now());
+
+            try {
                 registerGameSessionSummaryUseCase.registerGameSessionSummary(
                     state.getChildSessionId(),
                     gameId,
                     state.getActivityId(),
                     state.getDifficultyLevelId(),
-                    newDifficultyLevelId != null ? newDifficultyLevelId : state.getDifficultyLevelId(),
+                    state.getDifficultyLevelId(),
                     state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
                     state.getAttempts() != null ? state.getAttempts() : 0,
                     state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
                     state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
                     state.getStartedAt(),
                     LocalDateTime.now(),
-                    GameSessionFinalStatus.COMPLETED
+                    GameSessionFinalStatus.ABANDONED
                 );
             } catch (Exception e) {
-                log.warn("Game completion tracking failed: {}", e.getMessage());
+                log.warn("Failed to register game session summary for client-abandoned game: {}", e.getMessage());
             }
 
             gameStateRegistry.remove(gameId);
-        } else {
-            gameStateRegistry.save(state);
-        }
 
-        return new ActionProcessingResult(
-            engineResult.getResultType(),
-            responseTimeMs,
-            state,
-            difficultyChanged,
-            newDifficultyLevelId,
-            gameCompleted,
-            allUnlockedAchievements,
-            engineResult.getAttemptContext()
-        );
+            return state;
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
-    public GameState abandonGame(Long gameId) {
-        GameState state = gameStateRegistry.findByGameId(gameId)
-            .orElseThrow(() -> new GameNotFoundException(gameId));
-
-        if (!isActive(state.getStatus())) {
-            throw new InvalidStateTransitionException(state.getStatus(), GameStatus.ABANDONED);
+    public void abandonGameForSession(Long childSessionId) {
+        var gameState = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+        if (gameState == null) {
+            log.debug("No active game found for childSessionId={}", childSessionId);
+            return;
         }
 
-        state.setStatus(GameStatus.ABANDONED);
-        state.setLastActivityAt(LocalDateTime.now());
-        gameStateRegistry.remove(gameId);
+        Long gameId = gameState.getGameId();
+        ReentrantLock lock = getLock(gameId);
+        lock.lock();
+        try {
+            var state = gameStateRegistry.findByGameId(gameId).orElse(null);
+            if (state == null || !isActive(state.getStatus())) {
+                return;
+            }
 
-        return state;
+            state.setSystemEventPending(true);
+            state.setStatus(GameStatus.ABANDONED);
+            state.setLastActivityAt(LocalDateTime.now());
+
+            try {
+                registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                    state.getChildSessionId(),
+                    gameId,
+                    state.getActivityId(),
+                    state.getDifficultyLevelId(),
+                    state.getDifficultyLevelId(),
+                    state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
+                    state.getAttempts() != null ? state.getAttempts() : 0,
+                    state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
+                    state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
+                    state.getStartedAt(),
+                    LocalDateTime.now(),
+                    GameSessionFinalStatus.ABANDONED
+                );
+            } catch (Exception e) {
+                log.warn("Failed to register game session summary for abandoned game: {}", e.getMessage());
+            }
+
+            gameStateRegistry.remove(gameId);
+            log.info("Game {} abandoned due to system event for childSessionId={}", gameId, childSessionId);
+
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private ReentrantLock getLock(Long gameId) {
+        return gameLocks.computeIfAbsent(gameId, k -> new ReentrantLock());
     }
 
     private GameEnginePort resolveEngine(GameState state) {

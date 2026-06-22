@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.session.service;
 
+import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +39,9 @@ class ChildSessionServiceTest {
 
     @Mock
     private SessionEventPublisher sessionEventPublisher;
+
+    @Mock
+    private GameOrchestrator gameOrchestrator;
 
     @InjectMocks
     private ChildSessionService childSessionService;
@@ -111,7 +116,7 @@ class ChildSessionServiceTest {
     }
 
     @Test
-    void expelChild_setsStatusExpelled() {
+    void expelChild_setsStatusExpelledAndAbandonsGame() {
         var session = activeSession();
         session.setStartedAt(LocalDateTime.now().minusSeconds(5));
 
@@ -123,6 +128,21 @@ class ChildSessionServiceTest {
         assertEquals(ChildSessionStatus.EXPELLED, result.getStatus());
         assertNotNull(result.getEndedAt());
         assertTrue(result.getDurationSeconds() > 0);
+        verify(gameOrchestrator).abandonGameForSession(1L);
+    }
+
+    @Test
+    void expelChild_ignoresAbandonmentError() {
+        var session = activeSession();
+        session.setStartedAt(LocalDateTime.now().minusSeconds(5));
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+        when(childSessionRepository.save(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        doThrow(new RuntimeException("Game abandon failed")).when(gameOrchestrator).abandonGameForSession(1L);
+
+        var result = childSessionService.expelChild(1L);
+
+        assertEquals(ChildSessionStatus.EXPELLED, result.getStatus());
     }
 
     @Test
@@ -166,6 +186,19 @@ class ChildSessionServiceTest {
 
         assertThrows(es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException.class,
             () -> childSessionService.getSession(99L));
+    }
+
+    @Test
+    void expireInactiveSessions_callsAbandonGameForSession() {
+        var session = activeSession();
+        session.setId(55L);
+        var cutoff = LocalDateTime.now().minusMinutes(1);
+
+        when(childSessionRepository.findExpirableSessions(cutoff)).thenReturn(List.of(session));
+
+        childSessionService.expireInactiveSessions(cutoff);
+
+        verify(gameOrchestrator).abandonGameForSession(55L);
     }
 
     @Test

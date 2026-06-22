@@ -3,7 +3,7 @@
   "info": {
     "title": "Educational Framework WebSocket Contract",
     "description": "Baseline real-time contract for FEAT-002 session events.",
-    "version": "1.3.0"
+    "version": "1.4.0"
   },
   "channels": {
     "/ws/parent": {
@@ -310,7 +310,7 @@
       },
       "GAME_ABANDONED": {
         "direction": "server_to_client",
-        "description": "Game was abandoned by client. Payload contains gameId, status (ABANDONED)."
+        "description": "Game was abandoned. Can be triggered by client (game_abandon message) or by system events (SESSION_EXPIRED, CHILD_EXPELLED, PARENT_BLOCK). Payload contains gameId, status (ABANDONED)."
       }
     },
     "schemas": {

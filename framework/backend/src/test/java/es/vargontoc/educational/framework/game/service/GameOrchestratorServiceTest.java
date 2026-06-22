@@ -9,6 +9,7 @@ import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
+import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
@@ -35,9 +36,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -205,10 +209,8 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void abandonGame_removesFromRegistry() {
+    void abandonGame_removesFromRegistryAndRegistersSummary() {
         GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
-
-        environment.addActiveProfile("dev");
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
@@ -216,6 +218,10 @@ class GameOrchestratorServiceTest {
 
         assertEquals(GameStatus.ABANDONED, result.getStatus());
         verify(gameStateRegistry).remove(1L);
+        verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
+            eq(100L), eq(1L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
+            any(), any(), eq(es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus.ABANDONED)
+        );
     }
 
     @Test
@@ -286,5 +292,52 @@ class GameOrchestratorServiceTest {
         assertTrue(result.difficultyChanged());
         assertEquals(10L, result.newDifficultyLevelId());
         assertEquals(10L, result.updatedState().getDifficultyLevelId());
+    }
+
+    @Test
+    void abandonGameForSession_withActiveGame_abandonsAndRegistersSummary() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+
+        orchestratorService.abandonGameForSession(100L);
+
+        assertTrue(storedState.isSystemEventPending());
+        assertEquals(GameStatus.ABANDONED, storedState.getStatus());
+        verify(gameStateRegistry).remove(1L);
+        verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
+            eq(100L), eq(1L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
+            any(), any(), eq(es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus.ABANDONED)
+        );
+    }
+
+    @Test
+    void abandonGameForSession_withoutActiveGame_doesNothing() {
+        when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.empty());
+
+        orchestratorService.abandonGameForSession(100L);
+
+        verify(gameStateRegistry, never()).remove(anyLong());
+        verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
+            anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), anyInt(), anyInt(), anyInt(), anyInt(),
+            any(), any(), any()
+        );
+    }
+
+    @Test
+    void processAction_withSystemEventPending_discardsActionAndDoesNotRegisterAttempt() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        storedState.setSystemEventPending(true);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+
+        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+
+        assertEquals(ActionResultType.CORRECT, result.resultType());
+        assertEquals("discarded_system_event_pending", result.attemptContext());
+        verify(registerActivityAttemptUseCase, never()).register(
+            anyLong(), anyLong(), anyLong(), any(), anyLong(), any(), any(), any()
+        );
     }
 }

@@ -12,4 +12,6 @@ public interface GameOrchestrator {
     ActionProcessingResult processAction(Long gameId, String actionPayload, Long topicId, Integer responseTimeMs);
 
     GameState abandonGame(Long gameId);
+
+    void abandonGameForSession(Long childSessionId);
 }

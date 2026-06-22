@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.session.service;
 
+import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.session.model.ChildSessionHeartbeatResult;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
@@ -25,12 +26,15 @@ public class ChildSessionService implements ChildSessionUseCase {
 
     private final ChildSessionRepository childSessionRepository;
     private final SessionEventPublisher sessionEventPublisher;
+    private final GameOrchestrator gameOrchestrator;
 
     public ChildSessionService(
             ChildSessionRepository childSessionRepository,
-            @Lazy SessionEventPublisher sessionEventPublisher) {
+            @Lazy SessionEventPublisher sessionEventPublisher,
+            @Lazy GameOrchestrator gameOrchestrator) {
         this.childSessionRepository = childSessionRepository;
         this.sessionEventPublisher = sessionEventPublisher;
+        this.gameOrchestrator = gameOrchestrator;
     }
 
     @Override
@@ -73,6 +77,7 @@ public class ChildSessionService implements ChildSessionUseCase {
     @Override
     public ChildSession expelChild(Long id) {
         var session = findById(id);
+        Long childSessionId = session.getId();
         closeExistingSession(session, LocalDateTime.now(), ChildSessionStatus.EXPELLED);
         var saved = childSessionRepository.save(session);
 
@@ -81,6 +86,12 @@ public class ChildSessionService implements ChildSessionUseCase {
             saved.getFamilyId(),
             SessionEvent.of(SessionEventType.CHILD_EXPELLED, saved.getId())
         );
+
+        try {
+            gameOrchestrator.abandonGameForSession(childSessionId);
+        } catch (Exception e) {
+            // Log but don't fail the session close
+        }
 
         return saved;
     }
@@ -140,12 +151,19 @@ public class ChildSessionService implements ChildSessionUseCase {
         childSessionRepository.saveAll(sessions);
 
         for (ChildSession session : sessions) {
+            Long childSessionId = session.getId();
             sessionEventPublisher.notifyChildWithFarewellAndParent(
                 session.getId(),
                 session.getFamilyId(),
                 SessionEvent.of(SessionEventType.SESSION_EXPIRED, session.getId(),
                     Map.of("reason", "inactivity"))
             );
+
+            try {
+                gameOrchestrator.abandonGameForSession(childSessionId);
+            } catch (Exception e) {
+                // Log but don't fail the batch
+            }
         }
 
         return sessions.size();
