@@ -93,6 +93,30 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     }
                     handleHeartbeat(getChildSessionId(session));
                 }
+                case "game_start" -> {
+                    if (!isAuthenticated(session)) {
+                        LOGGER.warn("game_start received before auth from session {}", session.getId());
+                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+                        return;
+                    }
+                    handleGameStart(session, getChildSessionId(session), root);
+                }
+                case "game_ready" -> {
+                    if (!isAuthenticated(session)) {
+                        LOGGER.warn("game_ready received before auth from session {}", session.getId());
+                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+                        return;
+                    }
+                    handleGameReady(session, getChildSessionId(session), root);
+                }
+                case "game_abandon" -> {
+                    if (!isAuthenticated(session)) {
+                        LOGGER.warn("game_abandon received before auth from session {}", session.getId());
+                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+                        return;
+                    }
+                    handleGameAbandon(session, getChildSessionId(session), root);
+                }
                 case "game_action" -> {
                     if (!isAuthenticated(session)) {
                         LOGGER.warn("game_action received before auth from session {}", session.getId());
@@ -314,6 +338,108 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    private void handleGameStart(WebSocketSession session, Long childSessionId, JsonNode root) {
+        LOGGER.debug("Game start received from childSessionId={}: {}", childSessionId, root);
+
+        try {
+            Long activityId = root.has("activityId") && !root.get("activityId").isNull()
+                ? root.get("activityId").asLong() : null;
+
+            if (activityId == null) {
+                sendGameError(childSessionId, GameErrorCode.PARSING_ERROR, null);
+                return;
+            }
+
+            var existingGame = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+            if (existingGame != null) {
+                try {
+                    gameOrchestrator.abandonGame(existingGame.getGameId());
+                    LOGGER.debug("Abandoned existing game {} before starting new one", existingGame.getGameId());
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to abandon existing game before start: {}", e.getMessage());
+                }
+            }
+
+            var childSession = childSessionUseCase.getSession(childSessionId);
+            Long childProfileId = childSession.getChildProfileId();
+
+            var gameState = gameOrchestrator.startGame(childProfileId, activityId);
+
+            SessionEvent event = SessionEvent.of(SessionEventType.GAME_STARTED, childSessionId, gameStateToPayload(gameState));
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+
+        } catch (InvalidStateTransitionException e) {
+            LOGGER.debug("Game start rejected - invalid state: childSessionId={}", childSessionId);
+            sendGameError(childSessionId, GameErrorCode.INVALID_STATE_TRANSITION, null);
+
+        } catch (EngineNotAvailableException e) {
+            LOGGER.error("Engine not available for game start: childSessionId={}", childSessionId);
+            sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, null);
+
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error starting game: childSessionId={}, error={}", childSessionId, e.getMessage());
+            sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, null);
+        }
+    }
+
+    private void handleGameReady(WebSocketSession session, Long childSessionId, JsonNode root) {
+        LOGGER.debug("Game ready received from childSessionId={}: {}", childSessionId, root);
+
+        try {
+            var gameState = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+            if (gameState == null) {
+                sendGameError(childSessionId, GameErrorCode.NO_ACTIVE_GAME, null);
+                return;
+            }
+
+            var updatedState = gameOrchestrator.readyGame(gameState.getGameId());
+
+            SessionEvent event = SessionEvent.of(SessionEventType.GAME_READY, childSessionId, gameStateToPayload(updatedState));
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+
+        } catch (InvalidStateTransitionException e) {
+            LOGGER.debug("Game ready rejected - invalid state: childSessionId={}", childSessionId);
+            sendGameError(childSessionId, GameErrorCode.INVALID_STATE_TRANSITION, null);
+
+        } catch (EngineNotAvailableException e) {
+            LOGGER.error("Engine not available for game ready: childSessionId={}", childSessionId);
+            sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, null);
+
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error readying game: childSessionId={}, error={}", childSessionId, e.getMessage());
+            sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, null);
+        }
+    }
+
+    private void handleGameAbandon(WebSocketSession session, Long childSessionId, JsonNode root) {
+        LOGGER.debug("Game abandon received from childSessionId={}: {}", childSessionId, root);
+
+        try {
+            var gameState = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+            if (gameState == null) {
+                sendGameError(childSessionId, GameErrorCode.NO_ACTIVE_GAME, null);
+                return;
+            }
+
+            var abandonedState = gameOrchestrator.abandonGame(gameState.getGameId());
+
+            SessionEvent event = SessionEvent.of(SessionEventType.GAME_ABANDONED, childSessionId, gameStateToPayload(abandonedState));
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+
+        } catch (InvalidStateTransitionException e) {
+            LOGGER.debug("Game abandon rejected - invalid state: childSessionId={}", childSessionId);
+            sendGameError(childSessionId, GameErrorCode.INVALID_STATE_TRANSITION, null);
+
+        } catch (GameNotFoundException e) {
+            LOGGER.debug("Game not found for abandon: childSessionId={}", childSessionId);
+            sendGameError(childSessionId, GameErrorCode.GAME_NOT_FOUND, null);
+
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error abandoning game: childSessionId={}, error={}", childSessionId, e.getMessage());
+            sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, null);
+        }
+    }
+
     private void sendGameError(Long childSessionId, GameErrorCode code, Long gameId) {
         Map<String, Object> payload = new java.util.HashMap<>();
         payload.put("code", code.name());
@@ -342,6 +468,30 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
         if (response.attemptContext() != null) {
             payload.put("attemptContext", response.attemptContext());
+        }
+        return payload;
+    }
+
+    private Map<String, Object> gameStateToPayload(es.vargontoc.educational.framework.game.model.GameState state) {
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("gameId", state.getGameId());
+        payload.put("status", state.getStatus().name());
+        payload.put("activityId", state.getActivityId());
+        payload.put("difficultyLevelId", state.getDifficultyLevelId());
+        if (state.getCurrentScore() != null) {
+            payload.put("currentScore", state.getCurrentScore());
+        }
+        if (state.getCurrentStreak() != null) {
+            payload.put("currentStreak", state.getCurrentStreak());
+        }
+        if (state.getAttempts() != null) {
+            payload.put("attempts", state.getAttempts());
+        }
+        if (state.getStartedAt() != null) {
+            payload.put("startedAt", state.getStartedAt());
+        }
+        if (state.getCompletedAt() != null) {
+            payload.put("completedAt", state.getCompletedAt());
         }
         return payload;
     }

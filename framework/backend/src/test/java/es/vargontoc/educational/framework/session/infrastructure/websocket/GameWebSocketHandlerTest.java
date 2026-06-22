@@ -390,10 +390,194 @@ class GameWebSocketHandlerTest {
             .anyMatch(m -> m.getPayload().contains("GAME_COMPLETED")));
     }
 
+    @Test
+    void gameStart_beforeAuth_closesWithPolicyViolation() throws IOException {
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_start\",\"activityId\":1}"));
+
+        verify(session).close(CloseStatus.POLICY_VIOLATION);
+        verify(gameOrchestrator, never()).startGame(any(), any());
+    }
+
+    @Test
+    void gameStart_validActivityId_returnsGAME_STARTED() throws IOException {
+        var childSession = childSession(10L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(10L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":10}"));
+
+        var gameState = createGameState(1L, 10L, 100L, 1L, GameStatus.WAITING);
+        when(gameOrchestrator.startGame(100L, 1L)).thenReturn(gameState);
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_start\",\"activityId\":1}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_STARTED")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("WAITING")));
+    }
+
+    @Test
+    void gameStart_missingActivityId_returnsGAME_ERROR() throws IOException {
+        var childSession = childSession(11L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(11L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":11}"));
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_start\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ERROR")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("PARSING_ERROR")));
+    }
+
+    @Test
+    void gameStart_withExistingGame_abandonsPrevious() throws IOException {
+        var childSession = childSession(12L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(12L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":12}"));
+
+        var existingGame = createGameState(99L, 12L, 100L, 1L, GameStatus.IN_PROGRESS);
+        when(gameStateRegistry.findByChildSessionId(12L)).thenReturn(Optional.of(existingGame));
+
+        var newGameState = createGameState(100L, 12L, 100L, 2L, GameStatus.WAITING);
+        when(gameOrchestrator.startGame(100L, 2L)).thenReturn(newGameState);
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_start\",\"activityId\":2}"));
+
+        verify(gameOrchestrator).abandonGame(99L);
+        verify(gameOrchestrator).startGame(100L, 2L);
+    }
+
+    @Test
+    void gameReady_beforeAuth_closesWithPolicyViolation() throws IOException {
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_ready\"}"));
+
+        verify(session).close(CloseStatus.POLICY_VIOLATION);
+        verify(gameOrchestrator, never()).readyGame(any());
+    }
+
+    @Test
+    void gameReady_noActiveGame_returnsGAME_ERROR() throws IOException {
+        var childSession = childSession(13L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(13L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+        when(gameStateRegistry.findByChildSessionId(13L)).thenReturn(Optional.empty());
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":13}"));
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_ready\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ERROR")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("NO_ACTIVE_GAME")));
+    }
+
+    @Test
+    void gameReady_validGame_returnsGAME_READY() throws IOException {
+        var childSession = childSession(14L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(14L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":14}"));
+
+        var existingGame = createGameState(1L, 14L, 100L, 5L, GameStatus.WAITING);
+        when(gameStateRegistry.findByChildSessionId(14L)).thenReturn(Optional.of(existingGame));
+
+        var readyGame = createGameState(1L, 14L, 100L, 5L, GameStatus.IN_PROGRESS);
+        when(gameOrchestrator.readyGame(1L)).thenReturn(readyGame);
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_ready\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_READY")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("IN_PROGRESS")));
+    }
+
+    @Test
+    void gameAbandon_beforeAuth_closesWithPolicyViolation() throws IOException {
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_abandon\"}"));
+
+        verify(session).close(CloseStatus.POLICY_VIOLATION);
+        verify(gameOrchestrator, never()).abandonGame(any());
+    }
+
+    @Test
+    void gameAbandon_noActiveGame_returnsGAME_ERROR() throws IOException {
+        var childSession = childSession(15L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(15L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+        when(gameStateRegistry.findByChildSessionId(15L)).thenReturn(Optional.empty());
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":15}"));
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_abandon\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ERROR")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("NO_ACTIVE_GAME")));
+    }
+
+    @Test
+    void gameAbandon_validGame_returnsGAME_ABANDONED() throws IOException {
+        var childSession = childSession(16L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(16L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":16}"));
+
+        var existingGame = createGameState(1L, 16L, 100L, 5L, GameStatus.IN_PROGRESS);
+        when(gameStateRegistry.findByChildSessionId(16L)).thenReturn(Optional.of(existingGame));
+
+        var abandonedGame = createGameState(1L, 16L, 100L, 5L, GameStatus.ABANDONED);
+        when(gameOrchestrator.abandonGame(1L)).thenReturn(abandonedGame);
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_abandon\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ABANDONED")));
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("ABANDONED")));
+    }
+
     private ChildSession childSession(Long id, ChildSessionStatus status) {
         var s = new ChildSession();
         s.setId(id);
         s.setStatus(status);
+        s.setChildProfileId(100L);
         return s;
     }
 

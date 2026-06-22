@@ -17,6 +17,9 @@ public enum SessionEventType {
     GAME_ACTION_RESULT("Result of a game action processed by the orchestrator."),
     GAME_COMPLETED("Game session has completed successfully."),
     GAME_ERROR("Game action failed with an error code."),
+    GAME_STARTED("Game created and waiting to be ready."),
+    GAME_READY("Game transitioned to IN_PROGRESS and ready for actions."),
+    GAME_ABANDONED("Game was abandoned by client."),
     SESSION_CONNECTED("Game client authenticated and avatar welcome sent."),
     SESSION_DISCONNECTED("Backend-initiated session end with avatar farewell sent.");
 
