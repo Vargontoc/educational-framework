@@ -5,9 +5,9 @@
 Add `ActivityProposalLog` in tracking to record activity proposals shown by `world` before a game exists.
 
 ## Status
-status: planned
-started_at:
-closed_at:
+status: completed
+started_at: 2026-06-23
+closed_at: 2026-06-23
 blocked_by:
 waiting_for:
 
@@ -45,24 +45,24 @@ Tracking-owned persistent record for an activity proposal shown by `world` befor
 ## Tasks
 
 ### Tracking Schema
-- [ ] Add `ActivityProposalLog` domain model with the properties listed in `Model Properties`.
-- [ ] Add `ActivityProposalOutcome` enum with the values listed in `Model Properties`.
-- [ ] Add JPA entity and repository.
-- [ ] Add Liquibase migration for `activity_proposal_log`.
-- [ ] Store all fields listed in `Model Properties`.
-- [ ] Add indexes for `childProfileId`, `childSessionId`, `activityId`, `topicId`, and `proposedAt`.
+- [x] Add `ActivityProposalLog` domain model with the properties listed in `Model Properties`.
+- [x] Add `ActivityProposalOutcome` enum with the values listed in `Model Properties`.
+- [x] Add JPA entity and repository.
+- [x] Add Liquibase migration for `activity_proposal_log`.
+- [x] Store all fields listed in `Model Properties`.
+- [x] Add indexes for `childProfileId`, `childSessionId`, `activityId`, `topicId`, and `proposedAt`.
 
 ### Tracking Ports
-- [ ] Add internal use case `registerActivityProposal(childProfileId, childSessionId, activityId, topicId)`.
-- [ ] Add internal use case `resolveActivityProposal(proposalId, outcome)`.
-- [ ] Prevent resolving the same proposal twice.
-- [ ] Implement the validation rules listed in `Model Properties`.
+- [x] Add internal use case `registerActivityProposal(childProfileId, childSessionId, activityId, topicId)`.
+- [x] Add internal use case `resolveActivityProposal(proposalId, outcome)`.
+- [x] Prevent resolving the same proposal twice.
+- [x] Implement the validation rules listed in `Model Properties`.
 
 ### Tests
-- [ ] Unit test registering a proposal creates a pending log.
-- [ ] Unit test resolving as `STARTED`.
-- [ ] Unit test resolving as `IGNORED`.
-- [ ] Unit test double resolution is rejected.
+- [x] Unit test registering a proposal creates a pending log.
+- [x] Unit test resolving as `STARTED`.
+- [x] Unit test resolving as `IGNORED`.
+- [x] Unit test double resolution is rejected.
 - [ ] Persistence/integration test if Testcontainers is available.
 
 ## Manual Tests
@@ -92,11 +92,31 @@ This log captures the pre-game proposal phase; completed/abandoned games remain 
 ## Review
 
 completed_tasks:
+- Created ActivityProposalOutcome enum with STARTED and IGNORED values
+- Created ActivityProposalLog domain model
+- Created ActivityProposalLogResult record
+- Created ActivityProposalLogJpaEntity
+- Created ActivityProposalLogJpaRepository
+- Created ActivityProposalLogRepository port interface
+- Created ActivityProposalLogPersistenceAdapter
+- Created ActivityProposalLogValidator with registration and resolution validation
+- Created RegisterActivityProposalUseCase interface
+- Created ResolveActivityProposalUseCase interface
+- Created ActivityProposalLogService implementing both use cases
+- Updated TrackingModuleConfiguration with beans for both use cases
+- Added Liquibase migration 021__create_activity_proposal_log.xml
+- Updated db.changelog-master.xml to include migration 021
+- Created ActivityProposalLogServiceTest with 13 unit tests
 
 incomplete_tasks:
+- Persistence/integration test if Testcontainers is available (skipped - no Testcontainers setup)
 
 contract_changes:
+- None (internal ports only)
 
 learnings:
+- Static method references in lambda expressions require class name prefix (e.g., `ActivityProposalLogPersistenceAdapter::toDomain`)
+- topicId can be null for non-topic-bound activities
 
 next_sprint_suggestions:
+- Sprint 048: Activity engagement summary tracking

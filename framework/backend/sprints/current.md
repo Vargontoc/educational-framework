@@ -1,121 +1,87 @@
-# Sprint 046 - backend
+# Sprint 048 - backend
 # -----------------------------------------------
 
 ## Goal
-Expose internal content read ports for World Map catalog data so `world` can query active hosts, situations, discovery elements, and compatible activities without reading content persistence directly.
+Add the parental dashboard read model `ActivityEngagementSummary` using `ActivityProposalLog` and `GameSessionSummary`.
 
 ## Status
-status: completed
-started_at: 2026-06-23
-closed_at: 2026-06-23
+status: planned
+started_at:
+closed_at:
 blocked_by:
 waiting_for:
 
 ## Model Properties
 
-### WorldHostProjection
+### ActivityEngagementSummary
 
-Internal content projection returned to `world`. It must not be a JPA entity.
+Read-only parental dashboard projection. It is descriptive, not diagnostic.
 
-- `id`: Long, required.
-- `code`: String, required.
-- `displayName`: String, required.
-- `biome`: String or enum, required.
-- `description`: String, nullable.
-- `minAge`: Integer, required.
-- `maxAge`: Integer, required.
-- `visualAssetKey`: String, nullable.
-- `sortOrder`: Integer, nullable.
-
-### WorldNarrativeSituationProjection
-
-Internal content projection for narrative destination construction.
-
-- `id`: Long, required.
-- `code`: String, required.
-- `displayText`: String, required.
-- `situationType`: String or enum, required.
-- `tone`: String or enum, nullable.
-- `minAge`: Integer, required.
-- `maxAge`: Integer, required.
-- `sortOrder`: Integer, nullable.
-
-### WorldDiscoveryElementProjection
-
-Internal content projection for elements shown during the walk.
-
-- `id`: Long, required.
-- `code`: String, required.
-- `displayName`: String, required.
-- `elementType`: String or enum, required: `DECORATIVE`, `SIMPLE_INTERACTIVE`, `DISCOVERY`.
-- `biome`: String or enum, required.
-- `minAge`: Integer, required.
-- `maxAge`: Integer, required.
-- `activityId`: Long, nullable. Only present for playable discovery elements.
-- `topicId`: Long, nullable.
-- `visualAssetKey`: String, nullable.
-- `interactionCueType`: String or enum, nullable.
-- `sortOrder`: Integer, nullable.
-
-### CompatibleActivityProjection
-
-Internal content projection used by `world` to choose an activity for a selected topic.
-
-- `activityId`: Long, required.
-- `activityCode`: String, nullable if current Activity model has no code.
-- `displayName`: String, required if available in content.
 - `engineType`: String or enum, required.
-- `topicIds`: List<Long>, required, can be empty only for non-topic activities.
-- `minAge`: Integer, required.
-- `maxAge`: Integer, required.
-- `difficultyLevelIds`: List<Long>, required, can be empty if difficulty is resolved elsewhere.
+- `startedCount`: long/integer, required, default `0`.
+- `ignoredCount`: long/integer, required, default `0`.
+- `completedCount`: long/integer, required, default `0`.
+- `abandonedCount`: long/integer, required, default `0`.
 
-### Query Rules
+### Response Shape
 
-- Only `ACTIVE` catalog rows are returned.
-- Records must match the requested age: `minAge <= targetAge <= maxAge`.
-- Internal projections must not expose persistence entities.
-- Internal projections must not include child progress, proposal outcomes, ignored counts, or engagement labels.
+If exposed by REST, follow the existing tracking dashboard response wrapper pattern.
+
+- `childProfileId`: Long, required in path or parent response context.
+- `items`: List<ActivityEngagementSummary>, required, can be empty.
+
+### Aggregation Rules
+
+- `startedCount` comes from `ActivityProposalLog.outcome = STARTED`.
+- `ignoredCount` comes from `ActivityProposalLog.outcome = IGNORED`.
+- `completedCount` comes from `GameSessionSummary.finalStatus = COMPLETED`.
+- `abandonedCount` comes from `GameSessionSummary.finalStatus = ABANDONED`.
+- Group by content `Activity.engineType`.
+- Do not produce recommendations, scores, warnings, or diagnostic labels.
 
 ## Tasks
 
-### Content Ports
-- [ ] Add internal query/use case to list active world hosts for a target age.
-- [ ] Add internal query/use case to list active narrative situations for a target age.
-- [ ] Add internal query/use case to list active discovery elements for a target age.
-- [ ] Add internal query/use case to find active activities compatible with a `topicId`.
-- [ ] Ensure inactive/draft content is never returned to `world`.
+### Dashboard Query
+- [ ] Add read use case for activity engagement summary by child profile.
+- [ ] Aggregate `STARTED` and `IGNORED` counts from `ActivityProposalLog`.
+- [ ] Aggregate `COMPLETED` and `ABANDONED` counts from `GameSessionSummary`.
+- [ ] Group results by activity `engineType`.
+- [ ] Return `ActivityEngagementSummary` with the properties listed in `Model Properties`.
+- [ ] Apply the aggregation rules listed in `Model Properties`.
 
-### DTO/Domain Projection
-- [ ] Return lightweight content projections with the properties listed in `Model Properties`.
-- [ ] Keep frontend-facing REST DTOs separate from internal world projections.
-- [ ] Apply the query rules listed in `Model Properties`.
+### REST Contract
+- [ ] Add read-only dashboard endpoint if consistent with existing tracking dashboard pattern.
+- [ ] Update `docs/contracts/api/openapi.json` if an endpoint is added.
+- [ ] Ensure no write endpoint is exposed.
 
 ### Tests
-- [ ] Unit test active host lookup by age.
-- [ ] Unit test inactive host is excluded.
-- [ ] Unit test active activity lookup by topic.
-- [ ] Unit test missing compatible activity returns an empty list, not an exception.
+- [ ] Unit test aggregation with started/ignored proposals.
+- [ ] Unit test aggregation with completed/abandoned sessions.
+- [ ] Unit test empty data returns zero/empty summary consistently.
+- [ ] Integration test endpoint authorization if REST endpoint is added.
 
 ## Manual Tests
-- Optional: use a dev fixture or test runner to query active world catalog data.
-- Confirm only active records in the correct age range are returned.
+- Start backend locally.
+- Seed or create proposal/session summary rows.
+- Call the dashboard endpoint if implemented.
+- Verify counts by `engineType` match the test data.
 
 ## Risks
-- Exposing public REST endpoints by accident would expand FEAT-008 scope.
-- Returning full JPA entities could leak content persistence details to `world`.
+- Joining content for `engineType` can introduce direct persistence coupling if not done through accepted patterns.
+- Dashboard wording must remain descriptive, not diagnostic.
 
 ## Dependencies
-- Sprint 045 completed.
-- Sprint 035 content game catalog readiness completed.
+- Sprint 047 completed.
+- Sprint 032 completed.
+- Sprint 029 tracking dashboard API completed.
 
 ## Agent Instruction
-- Keep this sprint inside content/application boundaries.
-- Do not add world package code yet.
-- Do not add public REST endpoints unless a separate frontend/content feature requires them.
+- Keep this as a read-only dashboard sprint.
+- Do not add recommendations, scores, labels, or diagnoses.
+- Do not expose child-facing data.
 
 ## Notes
-This sprint gives `world` safe read access to static data while preserving content ownership.
+This query helps parents observe started/ignored/completed/abandoned activity patterns without interpreting them automatically.
 
 ## Review
 

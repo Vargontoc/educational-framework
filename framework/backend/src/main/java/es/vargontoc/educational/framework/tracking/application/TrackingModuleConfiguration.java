@@ -11,6 +11,7 @@ import es.vargontoc.educational.framework.tracking.ports.in.RegisterCuriosityVie
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.ResetCuriosityCycleUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.ActivityProposalLogRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildAchievementRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningCompletedStepRepository;
@@ -22,6 +23,7 @@ import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelNavi
 import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
+import es.vargontoc.educational.framework.tracking.service.ActivityProposalLogService;
 import es.vargontoc.educational.framework.tracking.service.AdaptiveDifficultyService;
 import es.vargontoc.educational.framework.tracking.service.AchievementEvaluationService;
 import es.vargontoc.educational.framework.tracking.service.ChildAchievementService;
@@ -128,5 +130,10 @@ class TrackingModuleConfiguration {
                 childLearningProgressRepository,
                 childLearningCompletedStepRepository,
                 difficultyEvolutionRepository);
+    }
+
+    @Bean
+    ActivityProposalLogService activityProposalLogService(ActivityProposalLogRepository repository) {
+        return new ActivityProposalLogService(repository);
     }
 }
