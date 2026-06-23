@@ -1,7 +1,10 @@
 package es.vargontoc.educational.framework.content.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.content.infrastructure.ActivityInformationPortImpl;
+import es.vargontoc.educational.framework.content.infrastructure.persistence.ActivityJpaRepository;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedService;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityResourceRepository;
@@ -150,5 +153,11 @@ class ContentModuleConfiguration {
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
             learningPathStepRepository, tracingPatternRepository, storyRepository, storyPageRepository,
             worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository, objectMapper);
+    }
+
+    @Bean
+    ActivityInformationPort activityInformationPort(
+            ActivityJpaRepository activityJpaRepository) {
+        return new ActivityInformationPortImpl(activityJpaRepository);
     }
 }

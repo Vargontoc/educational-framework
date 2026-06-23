@@ -8,8 +8,10 @@ import es.vargontoc.educational.framework.shared.exception.ForbiddenException;
 import es.vargontoc.educational.framework.tracking.infrastructure.dto.ChildTrackingSummaryResponse;
 import es.vargontoc.educational.framework.tracking.infrastructure.dto.DifficultyEvolutionResponse;
 import es.vargontoc.educational.framework.tracking.infrastructure.dto.ResponseTimeMetricsResponse;
+import es.vargontoc.educational.framework.tracking.model.ActivityEngagementSummaryResult;
 import es.vargontoc.educational.framework.tracking.model.ChildAchievement;
 import es.vargontoc.educational.framework.tracking.model.ChildLearningProgress;
+import es.vargontoc.educational.framework.tracking.ports.in.GetActivityEngagementSummaryUseCase;
 import es.vargontoc.educational.framework.tracking.service.TrackingDashboardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,14 +27,17 @@ import java.util.List;
 public class TrackingDashboardController {
 
     private final TrackingDashboardService dashboardService;
+    private final GetActivityEngagementSummaryUseCase engagementSummaryUseCase;
     private final FamilyUseCase familyUseCase;
     private final ChildProfileUseCase childProfileUseCase;
 
     public TrackingDashboardController(
             TrackingDashboardService dashboardService,
+            GetActivityEngagementSummaryUseCase engagementSummaryUseCase,
             FamilyUseCase familyUseCase,
             ChildProfileUseCase childProfileUseCase) {
         this.dashboardService = dashboardService;
+        this.engagementSummaryUseCase = engagementSummaryUseCase;
         this.familyUseCase = familyUseCase;
         this.childProfileUseCase = childProfileUseCase;
     }
@@ -90,6 +95,14 @@ public class TrackingDashboardController {
         verifyChildBelongsToFamily(childProfileId);
         var progress = dashboardService.getChildLearningProgress(childProfileId, learningPathId);
         return ResponseEntity.ok(ApiResponse.ok(progress));
+    }
+
+    @GetMapping("/{childProfileId}/engagement")
+    public ResponseEntity<ApiResponse<ActivityEngagementSummaryResult>> getActivityEngagementSummary(
+            @PathVariable Long childProfileId) {
+        verifyChildBelongsToFamily(childProfileId);
+        var result = engagementSummaryUseCase.getActivityEngagementSummary(childProfileId);
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     private void verifyChildBelongsToFamily(Long childProfileId) {

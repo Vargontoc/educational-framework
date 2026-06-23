@@ -5,6 +5,7 @@ import es.vargontoc.educational.framework.tracking.model.ActivityProposalOutcome
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityProposalLogRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -24,6 +25,13 @@ public class ActivityProposalLogPersistenceAdapter implements ActivityProposalLo
     @Override
     public Optional<ActivityProposalLog> findById(Long id) {
         return jpaRepository.findById(id).map(ActivityProposalLogPersistenceAdapter::toDomain);
+    }
+
+    @Override
+    public List<ActivityProposalLog> findByChildProfileId(Long childProfileId) {
+        return jpaRepository.findByChildProfileId(childProfileId).stream()
+            .map(ActivityProposalLogPersistenceAdapter::toDomain)
+            .toList();
     }
 
     static ActivityProposalLog toDomain(ActivityProposalLogJpaEntity source) {

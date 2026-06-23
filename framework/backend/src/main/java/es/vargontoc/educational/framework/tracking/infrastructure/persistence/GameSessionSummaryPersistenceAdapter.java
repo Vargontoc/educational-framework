@@ -5,6 +5,8 @@ import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public class GameSessionSummaryPersistenceAdapter implements GameSessionSummaryRepository {
 
@@ -17,6 +19,13 @@ public class GameSessionSummaryPersistenceAdapter implements GameSessionSummaryR
     @Override
     public GameSessionSummary save(GameSessionSummary summary) {
         return toDomain(jpaRepository.save(toJpa(summary)));
+    }
+
+    @Override
+    public List<GameSessionSummary> findByChildProfileId(Long childProfileId) {
+        return jpaRepository.findByChildProfileId(childProfileId).stream()
+            .map(GameSessionSummaryPersistenceAdapter::toDomain)
+            .toList();
     }
 
     static GameSessionSummary toDomain(GameSessionSummaryJpaEntity source) {

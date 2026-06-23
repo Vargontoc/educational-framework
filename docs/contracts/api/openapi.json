@@ -2497,6 +2497,37 @@
       }
     }
   },
+  "/api/v1/tracking/children/{childProfileId}/engagement": {
+    "get": {
+      "tags": [
+        "tracking-dashboard-controller"
+      ],
+      "operationId": "getActivityEngagementSummary",
+      "parameters": [
+        {
+          "name": "childProfileId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "OK",
+          "content": {
+            "*/*": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiResponseActivityEngagementSummaryResult"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "/api/v1/tracking/children/{childProfileId}/learning-progress": {
     "get": {
       "tags": [
@@ -4976,6 +5007,32 @@
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/ChildLearningProgress" } },
           "message": { "type": "string" },
           "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ApiResponseActivityEngagementSummaryResult": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "$ref": "#/components/schemas/ActivityEngagementSummaryResult" },
+          "message": { "type": "string" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ActivityEngagementSummaryResult": {
+        "type": "object",
+        "properties": {
+          "childProfileId": { "type": "integer", "format": "int64" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ActivityEngagementSummary" } }
+        }
+      },
+      "ActivityEngagementSummary": {
+        "type": "object",
+        "properties": {
+          "gameEngineType": { "type": "string" },
+          "startedCount": { "type": "integer", "format": "int64" },
+          "ignoredCount": { "type": "integer", "format": "int64" },
+          "completedCount": { "type": "integer", "format": "int64" },
+          "abandonedCount": { "type": "integer", "format": "int64" }
         }
       }
     }

@@ -3,6 +3,7 @@ package es.vargontoc.educational.framework.tracking.application;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProperties;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.GetActivityEngagementSummaryUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetChildAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetViewedCuriositiesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
@@ -11,6 +12,7 @@ import es.vargontoc.educational.framework.tracking.ports.in.RegisterCuriosityVie
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.ResetCuriosityCycleUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityProposalLogRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildAchievementRepository;
@@ -23,6 +25,7 @@ import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelNavi
 import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
+import es.vargontoc.educational.framework.tracking.service.ActivityEngagementSummaryService;
 import es.vargontoc.educational.framework.tracking.service.ActivityProposalLogService;
 import es.vargontoc.educational.framework.tracking.service.AdaptiveDifficultyService;
 import es.vargontoc.educational.framework.tracking.service.AchievementEvaluationService;
@@ -135,5 +138,13 @@ class TrackingModuleConfiguration {
     @Bean
     ActivityProposalLogService activityProposalLogService(ActivityProposalLogRepository repository) {
         return new ActivityProposalLogService(repository);
+    }
+
+    @Bean
+    GetActivityEngagementSummaryUseCase getActivityEngagementSummaryUseCase(
+            ActivityProposalLogRepository proposalLogRepository,
+            GameSessionSummaryRepository sessionSummaryRepository,
+            ActivityInformationPort activityInformationPort) {
+        return new ActivityEngagementSummaryService(proposalLogRepository, sessionSummaryRepository, activityInformationPort);
     }
 }
