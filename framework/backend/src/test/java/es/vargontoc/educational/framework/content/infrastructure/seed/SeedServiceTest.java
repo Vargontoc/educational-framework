@@ -16,6 +16,9 @@ import es.vargontoc.educational.framework.content.ports.out.StoryPageRepository;
 import es.vargontoc.educational.framework.content.ports.out.StoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,6 +77,15 @@ class SeedServiceTest {
     @Mock
     private StoryPageRepository storyPageRepository;
 
+    @Mock
+    private WorldHostRepository worldHostRepository;
+
+    @Mock
+    private WorldNarrativeSituationRepository worldNarrativeSituationRepository;
+
+    @Mock
+    private WorldDiscoveryElementRepository worldDiscoveryElementRepository;
+
     private SeedService seedService;
 
     @BeforeEach
@@ -83,7 +95,8 @@ class SeedServiceTest {
             seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository,
             learningPathRepository, learningPathStepRepository, tracingPatternRepository,
-            storyRepository, storyPageRepository, objectMapper
+            storyRepository, storyPageRepository, worldHostRepository, worldNarrativeSituationRepository,
+            worldDiscoveryElementRepository, objectMapper
         );
     }
 
@@ -142,6 +155,9 @@ class SeedServiceTest {
             return obj;
         });
         when(storyPageRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(worldHostRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(worldNarrativeSituationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(worldDiscoveryElementRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(learningPathRepository.findAll()).thenReturn(List.of());
         when(activityRepository.findAll()).thenReturn(List.of());
         when(storyRepository.findAll()).thenReturn(List.of());

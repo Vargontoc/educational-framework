@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="020__create_world_catalog" author="vargontoc">
+        <!-- World Host table -->
+        <createTable tableName="world_host">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="code" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="biome" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="min_age" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_age" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INTEGER"/>
+            <column name="visual_asset_key" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createIndex indexName="idx_world_host_status" tableName="world_host">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_world_host_biome" tableName="world_host">
+            <column name="biome"/>
+        </createIndex>
+
+        <!-- World Narrative Situation table -->
+        <createTable tableName="world_narrative_situation">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="code" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="display_text" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="situation_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tone" type="VARCHAR(20)"/>
+            <column name="min_age" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_age" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INTEGER"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createIndex indexName="idx_world_narrative_situation_status" tableName="world_narrative_situation">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_world_narrative_situation_situation_type" tableName="world_narrative_situation">
+            <column name="situation_type"/>
+        </createIndex>
+
+        <!-- World Discovery Element table -->
+        <createTable tableName="world_discovery_element">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="code" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="element_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="biome" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="min_age" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_age" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity_id" type="BIGINT"/>
+            <column name="topic_id" type="BIGINT"/>
+            <column name="visual_asset_key" type="VARCHAR(100)"/>
+            <column name="interaction_cue_type" type="VARCHAR(50)"/>
+            <column name="sort_order" type="INTEGER"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createIndex indexName="idx_world_discovery_element_status" tableName="world_discovery_element">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_world_discovery_element_biome" tableName="world_discovery_element">
+            <column name="biome"/>
+        </createIndex>
+
+        <createIndex indexName="idx_world_discovery_element_element_type" tableName="world_discovery_element">
+            <column name="element_type"/>
+        </createIndex>
+
+        <createIndex indexName="idx_world_discovery_element_activity_id" tableName="world_discovery_element">
+            <column name="activity_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

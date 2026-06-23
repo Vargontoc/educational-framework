@@ -1,0 +1,13 @@
+[
+  {
+    "code": "MEADOW_DOG",
+    "displayName": "Dog",
+    "biome": "MEADOW",
+    "description": "A friendly dog living in the meadow",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "sortOrder": 1,
+    "visualAssetKey": "host_dog_meadow"
+  }
+]

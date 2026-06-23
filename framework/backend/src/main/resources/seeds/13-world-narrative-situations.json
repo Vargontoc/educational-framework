@@ -1,0 +1,12 @@
+[
+  {
+    "code": "HOST_FOUND_SOMETHING",
+    "displayText": "The dog found something interesting!",
+    "situationType": "FOUND_OBJECT",
+    "tone": "JOYFUL",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "sortOrder": 1
+  }
+]

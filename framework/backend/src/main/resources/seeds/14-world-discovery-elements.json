@@ -1,0 +1,16 @@
+[
+  {
+    "code": "MEADOW_SHINY_FLOWER",
+    "displayName": "Shiny Flower",
+    "elementType": "DISCOVERY",
+    "biome": "MEADOW",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "activityId": null,
+    "topicId": null,
+    "visualAssetKey": "element_shiny_flower",
+    "interactionCueType": "BREATHING_GLOW",
+    "sortOrder": 1
+  }
+]

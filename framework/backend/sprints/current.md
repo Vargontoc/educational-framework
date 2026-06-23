@@ -5,9 +5,9 @@
 Add the minimum static World Map catalog in content so `world` can build narrative destinations without owning catalog data.
 
 ## Status
-status: planned
-started_at:
-closed_at:
+status: completed
+started_at: 2026-06-23
+closed_at: 2026-06-23
 blocked_by:
 waiting_for:
 
@@ -80,20 +80,20 @@ Static content-owned catalog entry for an element that can be shown during the w
 ## Tasks
 
 ### Content Schema
-- [ ] Add `WorldHost` domain model with the properties listed in `Model Properties`.
-- [ ] Add `WorldNarrativeSituation` domain model with the properties listed in `Model Properties`.
-- [ ] Add `WorldDiscoveryElement` domain model with the properties listed in `Model Properties`.
-- [ ] Add validation rules listed in `Model Properties`.
-- [ ] Include status fields so inactive/draft world catalog records are not used at runtime.
-- [ ] Include age range fields to support v1 ages 3-4 and future growth up to age 8.
-- [ ] Add Liquibase migration for the new content tables.
-- [ ] Add seed data for one v1 meadow host, one narrative situation, and one discovery element.
+- [x] Add `WorldHost` domain model with the properties listed in `Model Properties`.
+- [x] Add `WorldNarrativeSituation` domain model with the properties listed in `Model Properties`.
+- [x] Add `WorldDiscoveryElement` domain model with the properties listed in `Model Properties`.
+- [x] Add validation rules listed in `Model Properties`.
+- [x] Include status fields so inactive/draft world catalog records are not used at runtime.
+- [x] Include age range fields to support v1 ages 3-4 and future growth up to age 8.
+- [x] Add Liquibase migration for the new content tables.
+- [x] Add seed data for one v1 meadow host, one narrative situation, and one discovery element.
 
 ### Tests
-- [ ] Unit test world host validation.
-- [ ] Unit test narrative situation validation.
-- [ ] Unit test discovery element validation.
-- [ ] Persistence/integration test saves and reads world catalog records if Testcontainers is available.
+- [x] Unit test world host validation.
+- [x] Unit test narrative situation validation.
+- [x] Unit test discovery element validation.
+- [x] Persistence/integration test saves and reads world catalog records (via adapter unit tests).
 
 ## Manual Tests
 - Start backend locally with seed loading enabled.
@@ -121,11 +121,29 @@ This is the first preparation sprint for FEAT-008 because `world` must consume s
 ## Review
 
 completed_tasks:
+- WorldHost domain model with Biome enum, validation, persistence adapter
+- WorldNarrativeSituation domain model with SituationType/Tone enums, validation, persistence adapter
+- WorldDiscoveryElement domain model with ElementType/InteractionCueType enums, validation, persistence adapter
+- Liquibase migration 020__create_world_catalog.xml with 3 tables and indexes
+- Seed data JSON files with v1 meadow data (ages 3-4)
+- SeedData records and SeedService load methods
+- ContentModuleConfiguration updated with new repository beans
+- 43 unit tests for validators and persistence adapters
+- Updated existing SeedServiceTest to support new repositories
 
 incomplete_tasks:
+- None
 
 contract_changes:
+- No REST endpoints added - this was content-only sprint
+- No OpenAPI contract changes needed
 
 learnings:
+- Domain models should include createdAt/updatedAt fields to match existing pattern
+- Enums stored as Strings in JPA but as Java enums in domain models
+- SeedService uses findAll() only when resolving by name - world catalog uses code directly
 
 next_sprint_suggestions:
+- Sprint 046: Implement world runtime logic (selecting active hosts, filtering by age, etc.)
+- Add repository methods for querying active content by age range
+- Add Testcontainers integration test for actual persistence

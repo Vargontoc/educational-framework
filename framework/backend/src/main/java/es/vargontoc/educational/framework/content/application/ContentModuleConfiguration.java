@@ -16,6 +16,9 @@ import es.vargontoc.educational.framework.content.ports.out.StoryPageRepository;
 import es.vargontoc.educational.framework.content.ports.out.StoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
 import es.vargontoc.educational.framework.content.service.ActivityResourceService;
 import es.vargontoc.educational.framework.content.service.ActivityService;
 import es.vargontoc.educational.framework.content.service.AvatarEventCatalogService;
@@ -126,9 +129,13 @@ class ContentModuleConfiguration {
             TracingPatternRepository tracingPatternRepository,
             StoryRepository storyRepository,
             StoryPageRepository storyPageRepository,
+            WorldHostRepository worldHostRepository,
+            WorldNarrativeSituationRepository worldNarrativeSituationRepository,
+            WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             ObjectMapper objectMapper) {
         return new SeedService(seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
-            learningPathStepRepository, tracingPatternRepository, storyRepository, storyPageRepository, objectMapper);
+            learningPathStepRepository, tracingPatternRepository, storyRepository, storyPageRepository,
+            worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository, objectMapper);
     }
 }

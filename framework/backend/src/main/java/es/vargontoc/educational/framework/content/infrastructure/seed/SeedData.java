@@ -99,4 +99,42 @@ public final class SeedData {
         String text,
         String status
     ) {}
+
+    public record WorldHostSeed(
+        String code,
+        String displayName,
+        String biome,
+        String description,
+        Integer minAge,
+        Integer maxAge,
+        String status,
+        Integer sortOrder,
+        String visualAssetKey
+    ) {}
+
+    public record WorldNarrativeSituationSeed(
+        String code,
+        String displayText,
+        String situationType,
+        String tone,
+        Integer minAge,
+        Integer maxAge,
+        String status,
+        Integer sortOrder
+    ) {}
+
+    public record WorldDiscoveryElementSeed(
+        String code,
+        String displayName,
+        String elementType,
+        String biome,
+        Integer minAge,
+        Integer maxAge,
+        String status,
+        Long activityId,
+        Long topicId,
+        String visualAssetKey,
+        String interactionCueType,
+        Integer sortOrder
+    ) {}
 }

@@ -18,6 +18,9 @@ import es.vargontoc.educational.framework.content.model.Story;
 import es.vargontoc.educational.framework.content.model.StoryPage;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.model.TracingPattern;
+import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
+import es.vargontoc.educational.framework.content.model.WorldHost;
+import es.vargontoc.educational.framework.content.model.WorldNarrativeSituation;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
@@ -29,6 +32,9 @@ import es.vargontoc.educational.framework.content.ports.out.StoryPageRepository;
 import es.vargontoc.educational.framework.content.ports.out.StoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
+import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -58,6 +64,9 @@ public class SeedService {
     private final TracingPatternRepository tracingPatternRepository;
     private final StoryRepository storyRepository;
     private final StoryPageRepository storyPageRepository;
+    private final WorldHostRepository worldHostRepository;
+    private final WorldNarrativeSituationRepository worldNarrativeSituationRepository;
+    private final WorldDiscoveryElementRepository worldDiscoveryElementRepository;
     private final ObjectMapper objectMapper;
 
     private final Map<String, Long> categoryCache = new HashMap<>();
@@ -79,6 +88,9 @@ public class SeedService {
             TracingPatternRepository tracingPatternRepository,
             StoryRepository storyRepository,
             StoryPageRepository storyPageRepository,
+            WorldHostRepository worldHostRepository,
+            WorldNarrativeSituationRepository worldNarrativeSituationRepository,
+            WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             ObjectMapper objectMapper) {
         this.seedStateRepository = seedStateRepository;
         this.categoryRepository = categoryRepository;
@@ -92,6 +104,9 @@ public class SeedService {
         this.tracingPatternRepository = tracingPatternRepository;
         this.storyRepository = storyRepository;
         this.storyPageRepository = storyPageRepository;
+        this.worldHostRepository = worldHostRepository;
+        this.worldNarrativeSituationRepository = worldNarrativeSituationRepository;
+        this.worldDiscoveryElementRepository = worldDiscoveryElementRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -109,6 +124,9 @@ public class SeedService {
         loaded += loadTracingPatterns();
         loaded += loadStories();
         loaded += loadStoryPages();
+        loaded += loadWorldHosts();
+        loaded += loadWorldNarrativeSituations();
+        loaded += loadWorldDiscoveryElements();
         log.info("Seed loading complete. {} records loaded.", loaded);
     }
 
@@ -444,6 +462,97 @@ public class SeedService {
             page.setStatus(ContentStatus.valueOf(seed.status()));
             page.setCreatedAt(LocalDateTime.now());
             storyPageRepository.save(page);
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+        return count;
+    }
+
+    private int loadWorldHosts() {
+        String file = "12-world-hosts.json";
+        var seeds = readSeedFile(file, new TypeReference<List<SeedData.WorldHostSeed>>() {});
+        int count = 0;
+        for (var seed : seeds) {
+            String key = "world-host:" + seed.code().toLowerCase();
+            if (alreadyLoaded(key)) {
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+            var worldHost = new WorldHost();
+            worldHost.setCode(seed.code());
+            worldHost.setDisplayName(seed.displayName());
+            worldHost.setBiome(es.vargontoc.educational.framework.content.model.Biome.valueOf(seed.biome()));
+            worldHost.setDescription(seed.description());
+            worldHost.setMinAge(seed.minAge());
+            worldHost.setMaxAge(seed.maxAge());
+            worldHost.setStatus(ContentStatus.valueOf(seed.status()));
+            worldHost.setSortOrder(seed.sortOrder());
+            worldHost.setVisualAssetKey(seed.visualAssetKey());
+            worldHost.setCreatedAt(LocalDateTime.now());
+            worldHostRepository.save(worldHost);
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+        return count;
+    }
+
+    private int loadWorldNarrativeSituations() {
+        String file = "13-world-narrative-situations.json";
+        var seeds = readSeedFile(file, new TypeReference<List<SeedData.WorldNarrativeSituationSeed>>() {});
+        int count = 0;
+        for (var seed : seeds) {
+            String key = "world-narrative-situation:" + seed.code().toLowerCase();
+            if (alreadyLoaded(key)) {
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+            var situation = new WorldNarrativeSituation();
+            situation.setCode(seed.code());
+            situation.setDisplayText(seed.displayText());
+            situation.setSituationType(es.vargontoc.educational.framework.content.model.SituationType.valueOf(seed.situationType()));
+            situation.setTone(seed.tone() != null ? es.vargontoc.educational.framework.content.model.Tone.valueOf(seed.tone()) : null);
+            situation.setMinAge(seed.minAge());
+            situation.setMaxAge(seed.maxAge());
+            situation.setStatus(ContentStatus.valueOf(seed.status()));
+            situation.setSortOrder(seed.sortOrder());
+            situation.setCreatedAt(LocalDateTime.now());
+            worldNarrativeSituationRepository.save(situation);
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+        return count;
+    }
+
+    private int loadWorldDiscoveryElements() {
+        String file = "14-world-discovery-elements.json";
+        var seeds = readSeedFile(file, new TypeReference<List<SeedData.WorldDiscoveryElementSeed>>() {});
+        int count = 0;
+        for (var seed : seeds) {
+            String key = "world-discovery-element:" + seed.code().toLowerCase();
+            if (alreadyLoaded(key)) {
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+            var element = new WorldDiscoveryElement();
+            element.setCode(seed.code());
+            element.setDisplayName(seed.displayName());
+            element.setElementType(es.vargontoc.educational.framework.content.model.ElementType.valueOf(seed.elementType()));
+            element.setBiome(es.vargontoc.educational.framework.content.model.Biome.valueOf(seed.biome()));
+            element.setMinAge(seed.minAge());
+            element.setMaxAge(seed.maxAge());
+            element.setStatus(ContentStatus.valueOf(seed.status()));
+            element.setActivityId(seed.activityId());
+            element.setTopicId(seed.topicId());
+            element.setVisualAssetKey(seed.visualAssetKey());
+            element.setInteractionCueType(seed.interactionCueType() != null
+                    ? es.vargontoc.educational.framework.content.model.InteractionCueType.valueOf(seed.interactionCueType())
+                    : null);
+            element.setSortOrder(seed.sortOrder());
+            element.setCreatedAt(LocalDateTime.now());
+            worldDiscoveryElementRepository.save(element);
             markLoaded(key, file);
             count++;
             log.info("Loaded seed: {}", key);
