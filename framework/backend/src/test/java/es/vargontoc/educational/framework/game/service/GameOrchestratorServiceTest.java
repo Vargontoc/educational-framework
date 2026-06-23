@@ -12,6 +12,7 @@ import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
+import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.env.MockEnvironment;
 
 import java.math.BigDecimal;
@@ -65,6 +67,9 @@ class GameOrchestratorServiceTest {
     @Mock
     private RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private GameOrchestratorService orchestratorService;
     private MockEnvironment environment;
 
@@ -78,7 +83,8 @@ class GameOrchestratorServiceTest {
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
-            environment
+            environment,
+            eventPublisher
         );
     }
 
@@ -172,6 +178,7 @@ class GameOrchestratorServiceTest {
         assertEquals(es.vargontoc.educational.framework.game.model.ActionResultType.CORRECT, result.resultType());
         assertNotNull(result.updatedState());
         verify(registerActivityAttemptUseCase).register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any());
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 
     @Test
@@ -244,7 +251,8 @@ class GameOrchestratorServiceTest {
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
-            environment
+            environment,
+            eventPublisher
         );
 
         GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.WAITING);
@@ -389,5 +397,47 @@ class GameOrchestratorServiceTest {
 
         assertEquals(ActionResultType.CORRECT, result1.resultType());
         assertEquals(ActionResultType.CORRECT, result2.resultType());
+    }
+
+    @Test
+    void processAction_completedAction_publishesGameSessionCompletedEvent() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
+        when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
+            .thenReturn(List.of());
+
+        orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+        orchestratorService.processAction(1L, "CORRECT:2", null, 2000);
+        orchestratorService.processAction(1L, "CORRECT:3", null, 2000);
+
+        verify(eventPublisher).publishEvent(any(GameSessionCompletedEvent.class));
+    }
+
+    @Test
+    void abandonGame_publishesGameSessionCompletedEvent() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+
+        orchestratorService.abandonGame(1L);
+
+        verify(eventPublisher).publishEvent(any(GameSessionCompletedEvent.class));
+    }
+
+    @Test
+    void abandonGameForSession_publishesGameSessionCompletedEvent() {
+        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+
+        orchestratorService.abandonGameForSession(100L);
+
+        verify(eventPublisher).publishEvent(any(GameSessionCompletedEvent.class));
     }
 }

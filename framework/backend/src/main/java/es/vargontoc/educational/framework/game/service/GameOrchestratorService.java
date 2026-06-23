@@ -13,6 +13,7 @@ import es.vargontoc.educational.framework.game.model.ActionResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
+import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
@@ -25,6 +26,7 @@ import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAtte
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.env.Environment;
 
 import java.time.LocalDateTime;
@@ -44,6 +46,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase;
     private final RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase;
     private final Environment environment;
+    private final ApplicationEventPublisher eventPublisher;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
 
@@ -53,13 +56,15 @@ public class GameOrchestratorService implements GameOrchestrator {
             RegisterActivityAttemptUseCase registerActivityAttemptUseCase,
             EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase,
             RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase,
-            Environment environment) {
+            Environment environment,
+            ApplicationEventPublisher eventPublisher) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.registerActivityAttemptUseCase = registerActivityAttemptUseCase;
         this.evaluateGameCompletionAchievementsUseCase = evaluateGameCompletionAchievementsUseCase;
         this.registerGameSessionSummaryUseCase = registerGameSessionSummaryUseCase;
         this.environment = environment;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -205,6 +210,8 @@ public class GameOrchestratorService implements GameOrchestrator {
                 }
 
                 gameStateRegistry.remove(gameId);
+
+                publishGameCompletedEvent(gameId, state.getChildSessionId(), state.getActivityId(), GameSessionFinalStatus.COMPLETED);
             } else {
                 gameStateRegistry.save(state);
             }
@@ -260,6 +267,8 @@ public class GameOrchestratorService implements GameOrchestrator {
 
             gameStateRegistry.remove(gameId);
 
+            publishGameCompletedEvent(gameId, state.getChildSessionId(), state.getActivityId(), GameSessionFinalStatus.ABANDONED);
+
             return state;
         } finally {
             lock.unlock();
@@ -307,6 +316,8 @@ public class GameOrchestratorService implements GameOrchestrator {
             }
 
             gameStateRegistry.remove(gameId);
+
+            publishGameCompletedEvent(gameId, state.getChildSessionId(), state.getActivityId(), GameSessionFinalStatus.ABANDONED);
             log.info("Game {} abandoned due to system event for childSessionId={}", gameId, childSessionId);
 
         } finally {
@@ -358,5 +369,21 @@ public class GameOrchestratorService implements GameOrchestrator {
             case INCORRECT -> AttemptResult.INCORRECT;
             case TIMEOUT -> AttemptResult.TIMEOUT;
         };
+    }
+
+    private void publishGameCompletedEvent(Long gameId, Long childSessionId, Long activityId, GameSessionFinalStatus status) {
+        try {
+            GameSessionCompletedEvent event = new GameSessionCompletedEvent(
+                gameId,
+                childSessionId,
+                activityId,
+                status,
+                LocalDateTime.now()
+            );
+            eventPublisher.publishEvent(event);
+            log.debug("Published GameSessionCompletedEvent: gameId={}, status={}", gameId, status);
+        } catch (Exception e) {
+            log.warn("Failed to publish GameSessionCompletedEvent: {}", e.getMessage());
+        }
     }
 }
