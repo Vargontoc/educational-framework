@@ -19,10 +19,7 @@ public class WorldHostPersistenceAdapter implements WorldHostRepository {
 
     @Override
     public Optional<WorldHost> findByCode(String code) {
-        return jpaRepository.findAll().stream()
-                .filter(entity -> entity.getCode().equals(code))
-                .findFirst()
-                .map(this::toDomain);
+        return jpaRepository.findByCode(code).map(this::toDomain);
     }
 
     @Override
@@ -49,6 +46,8 @@ public class WorldHostPersistenceAdapter implements WorldHostRepository {
         target.setStatus(ContentStatus.valueOf(source.getStatus()));
         target.setSortOrder(source.getSortOrder());
         target.setVisualAssetKey(source.getVisualAssetKey());
+        target.setCreatedAt(source.getCreatedAt());
+        target.setUpdatedAt(source.getUpdatedAt());
         return target;
     }
 

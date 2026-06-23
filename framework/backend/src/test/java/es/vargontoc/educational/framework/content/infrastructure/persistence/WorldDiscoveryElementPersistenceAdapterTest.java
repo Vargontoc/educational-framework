@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,7 +68,7 @@ class WorldDiscoveryElementPersistenceAdapterTest {
 
     @Test
     void findByCode_existingCode_returnsWorldDiscoveryElement() {
-        when(jpaRepository.findAll()).thenReturn(java.util.List.of(buildJpaEntity()));
+        when(jpaRepository.findByCode("MEADOW_SHINY_FLOWER")).thenReturn(Optional.of(buildJpaEntity()));
 
         var result = adapter.findByCode("MEADOW_SHINY_FLOWER");
 
@@ -76,11 +77,12 @@ class WorldDiscoveryElementPersistenceAdapterTest {
         assertEquals(ElementType.DISCOVERY, result.get().getElementType());
         assertEquals(Biome.MEADOW, result.get().getBiome());
         assertEquals(InteractionCueType.BREATHING_GLOW, result.get().getInteractionCueType());
+        assertNotNull(result.get().getCreatedAt());
     }
 
     @Test
     void findByCode_nonExistingCode_returnsEmpty() {
-        when(jpaRepository.findAll()).thenReturn(java.util.List.of());
+        when(jpaRepository.findByCode("NON_EXISTING")).thenReturn(Optional.empty());
 
         var result = adapter.findByCode("NON_EXISTING");
 

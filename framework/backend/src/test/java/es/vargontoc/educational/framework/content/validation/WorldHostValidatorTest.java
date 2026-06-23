@@ -115,6 +115,30 @@ class WorldHostValidatorTest {
     }
 
     @Test
+    void nullMinAge_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForCreate(
+                "MEADOW_DOG",
+                "Dog",
+                Biome.MEADOW,
+                null,
+                4,
+                ContentStatus.ACTIVE
+        ));
+    }
+
+    @Test
+    void nullMaxAge_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForCreate(
+                "MEADOW_DOG",
+                "Dog",
+                Biome.MEADOW,
+                3,
+                null,
+                ContentStatus.ACTIVE
+        ));
+    }
+
+    @Test
     void sameMinAndMaxAge_passes() {
         assertDoesNotThrow(() -> validator.validateForCreate(
                 "MEADOW_DOG",

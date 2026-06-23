@@ -21,10 +21,7 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
 
     @Override
     public Optional<WorldDiscoveryElement> findByCode(String code) {
-        return jpaRepository.findAll().stream()
-                .filter(entity -> entity.getCode().equals(code))
-                .findFirst()
-                .map(this::toDomain);
+        return jpaRepository.findByCode(code).map(this::toDomain);
     }
 
     @Override
@@ -57,6 +54,8 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
                         ? InteractionCueType.valueOf(source.getInteractionCueType())
                         : null);
         target.setSortOrder(source.getSortOrder());
+        target.setCreatedAt(source.getCreatedAt());
+        target.setUpdatedAt(source.getUpdatedAt());
         return target;
     }
 

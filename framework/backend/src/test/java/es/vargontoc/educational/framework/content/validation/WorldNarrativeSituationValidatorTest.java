@@ -124,6 +124,32 @@ class WorldNarrativeSituationValidatorTest {
     }
 
     @Test
+    void nullMinAge_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForCreate(
+                "HOST_FOUND_SOMETHING",
+                "The dog found something interesting!",
+                SituationType.FOUND_OBJECT,
+                Tone.JOYFUL,
+                null,
+                4,
+                ContentStatus.ACTIVE
+        ));
+    }
+
+    @Test
+    void nullMaxAge_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForCreate(
+                "HOST_FOUND_SOMETHING",
+                "The dog found something interesting!",
+                SituationType.FOUND_OBJECT,
+                Tone.JOYFUL,
+                3,
+                null,
+                ContentStatus.ACTIVE
+        ));
+    }
+
+    @Test
     void nullTone_passes() {
         assertDoesNotThrow(() -> validator.validateForCreate(
                 "HOST_FOUND_SOMETHING",

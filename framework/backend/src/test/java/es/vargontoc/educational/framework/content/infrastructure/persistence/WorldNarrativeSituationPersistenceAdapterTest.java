@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -50,7 +51,7 @@ class WorldNarrativeSituationPersistenceAdapterTest {
 
     @Test
     void findByCode_existingCode_returnsWorldNarrativeSituation() {
-        when(jpaRepository.findAll()).thenReturn(java.util.List.of(buildJpaEntity()));
+        when(jpaRepository.findByCode("HOST_FOUND_SOMETHING")).thenReturn(Optional.of(buildJpaEntity()));
 
         var result = adapter.findByCode("HOST_FOUND_SOMETHING");
 
@@ -58,11 +59,12 @@ class WorldNarrativeSituationPersistenceAdapterTest {
         assertEquals("HOST_FOUND_SOMETHING", result.get().getCode());
         assertEquals(SituationType.FOUND_OBJECT, result.get().getSituationType());
         assertEquals(Tone.JOYFUL, result.get().getTone());
+        assertNotNull(result.get().getCreatedAt());
     }
 
     @Test
     void findByCode_nonExistingCode_returnsEmpty() {
-        when(jpaRepository.findAll()).thenReturn(java.util.List.of());
+        when(jpaRepository.findByCode("NON_EXISTING")).thenReturn(Optional.empty());
 
         var result = adapter.findByCode("NON_EXISTING");
 

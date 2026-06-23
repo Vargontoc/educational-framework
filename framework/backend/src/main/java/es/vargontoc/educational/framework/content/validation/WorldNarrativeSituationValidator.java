@@ -23,10 +23,12 @@ public class WorldNarrativeSituationValidator extends AbstractValidator<WorldNar
     }
 
     private void validateAgeRange(Integer minAge, Integer maxAge) {
-        if (minAge != null && minAge < 0) {
+        requireNonNull(minAge, "minAge");
+        requireNonNull(maxAge, "maxAge");
+        if (minAge < 0) {
             throw new ValidationException("minAge must be greater than or equal to 0");
         }
-        if (maxAge != null && minAge != null && maxAge < minAge) {
+        if (maxAge < minAge) {
             throw new ValidationException("maxAge must be greater than or equal to minAge");
         }
     }

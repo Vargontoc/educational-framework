@@ -181,6 +181,38 @@ class WorldDiscoveryElementValidatorTest {
     }
 
     @Test
+    void nullMinAge_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForCreate(
+                "MEADOW_SHINY_FLOWER",
+                "Shiny Flower",
+                ElementType.DISCOVERY,
+                Biome.MEADOW,
+                null,
+                4,
+                ContentStatus.ACTIVE,
+                1L,
+                null,
+                InteractionCueType.BREATHING_GLOW
+        ));
+    }
+
+    @Test
+    void nullMaxAge_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForCreate(
+                "MEADOW_SHINY_FLOWER",
+                "Shiny Flower",
+                ElementType.DISCOVERY,
+                Biome.MEADOW,
+                3,
+                null,
+                ContentStatus.ACTIVE,
+                1L,
+                null,
+                InteractionCueType.BREATHING_GLOW
+        ));
+    }
+
+    @Test
     void maxAgeLessThanMinAge_throwsValidationException() {
         assertThrows(ValidationException.class, () -> validator.validateForCreate(
                 "MEADOW_SHINY_FLOWER",
