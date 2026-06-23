@@ -1,8 +1,8 @@
-# Sprint 052 - backend
+# Sprint 053 - backend
 # -----------------------------------------------
 
 ## Goal
-Implement the in-memory `WorldStateRegistry` used to store one active World Map runtime state per child session.
+Implement `engagementThresholdConfig(childProfileId)` for world engagement pattern detection using v1 global defaults.
 
 ## Status
 status: planned
@@ -13,63 +13,79 @@ waiting_for:
 
 ## Model Properties
 
-### WorldStateRegistry
+### WorldEngagementThresholdConfig
 
-Port/interface for runtime-only world state storage.
+Runtime configuration for detecting temporary engagement patterns.
 
-- `save(WorldState state)`: stores or replaces a world state for `state.childSessionId`.
-- `findByChildSessionId(Long childSessionId)`: returns optional active state.
-- `existsByChildSessionId(Long childSessionId)`: returns true when active state exists.
-- `removeByChildSessionId(Long childSessionId)`: removes state and returns removed state if useful.
-- `clearClosed()`: optional helper only if useful for cleanup tests.
+- `childProfileId`: Long, nullable in v1 because defaults are global.
+- `windowSize`: Integer, required, v1 default `3`.
+- `abandonmentThreshold`: Integer, required, v1 default `2`.
 
-### InMemoryWorldStateRegistry
+### WorldEngineEngagementPattern
 
-- Backing storage: `Map<Long, WorldState>` keyed by `childSessionId`.
-- Persistence: none.
-- Max expected size: small single-family usage.
+Result of evaluating recent signals for one engine type.
 
-### Behavior Rules
+- `engineType`: String or enum, required.
+- `windowSize`: Integer, required.
+- `abandonmentCount`: Integer, required.
+- `patternDetected`: boolean, required.
 
-- At most one active `WorldState` per `childSessionId`.
-- Saving a new active state for the same `childSessionId` may replace the previous state only if tests document the behavior.
-- Missing state lookups return empty/optional, not exceptions.
-- Removing a missing state is a no-op.
-- Registry must not serialize or persist state to database.
+### WorldEnginePriorityAdjustment
+
+Soft runtime adjustment applied by world destination selection.
+
+- `engineType`: String or enum, required.
+- `priorityMultiplier`: decimal, required, greater than `0`, less than or equal to `1`.
+- `reason`: String, optional, internal only. Do not expose to child-facing payloads.
+
+### Rules
+
+- v1 defaults are `windowSize = 3` and `abandonmentThreshold = 2`.
+- One abandonment never triggers a pattern.
+- `IGNORED` proposals do not affect priority in v1.
+- Adjustment is temporary and in-memory for the current `ChildSession` only.
+- Never exclude an engine completely; only reduce probability/priority softly.
 
 ## Tasks
 
-### Registry
-- [ ] Add `WorldStateRegistry` port/interface with the methods listed in `Model Properties`.
-- [ ] Add `InMemoryWorldStateRegistry` backed by the map described in `Model Properties`.
-- [ ] Store and retrieve by `childSessionId`.
-- [ ] Enforce at most one active world state per child session.
-- [ ] Remove state when world session closes or child session ends.
-- [ ] Apply the behavior rules listed in `Model Properties`.
+### Configuration
+- [ ] Add `WorldEngagementThresholdConfig` model with the properties listed in `Model Properties`.
+- [ ] Add internal port/use case `engagementThresholdConfig(childProfileId)`.
+- [ ] Return v1 defaults `N=3`, `M=2`.
+- [ ] Keep implementation ready for future per-child override without adding persistence now.
+
+### Pattern Evaluation
+- [ ] Add small service that evaluates abandoned games by `engineType` inside a `ChildSession` window.
+- [ ] Return `WorldEngineEngagementPattern` and `WorldEnginePriorityAdjustment` using the properties listed in `Model Properties`.
+- [ ] Ensure one abandonment never triggers a pattern.
+- [ ] Ensure `IGNORED` proposals do not affect priority in v1.
+- [ ] Return a soft priority adjustment, never total exclusion.
+- [ ] Apply the rules listed in `Model Properties`.
 
 ### Tests
-- [ ] Unit test save and find by child session id.
-- [ ] Unit test replacing or rejecting duplicate active state follows documented behavior.
-- [ ] Unit test remove closed state.
-- [ ] Unit test missing state returns empty result.
+- [ ] Unit test default config returns N=3 and M=2.
+- [ ] Unit test one abandonment does not trigger adjustment.
+- [ ] Unit test two of last three abandonments for same engine triggers adjustment.
+- [ ] Unit test ignored proposals do not trigger adjustment.
+- [ ] Unit test adjustment is temporary/in-memory only.
 
 ## Manual Tests
-- Not required. This is an in-memory infrastructure sprint.
+- Not required. This is pure domain/application logic.
 
 ## Risks
-- Persisting `WorldState` would contradict FEAT-008 v1.
-- Multiple active states per child session would make proposals ambiguous.
+- Persisting engagement labels would violate FEAT-008.
+- Treating ignored elements as priority signal in v1 could over-interpret normal child behavior.
 
 ## Dependencies
 - Sprint 051 completed.
 
 ## Agent Instruction
-- Do not add Redis or database persistence.
-- Keep implementation simple for single-family usage.
-- Make behavior deterministic and unit-testable.
+- Do not add database tables for engagement config.
+- Do not add parent override UI/API.
+- Do not generate diagnostic labels.
 
 ## Notes
-World state is runtime-only, like game state, and is lost on backend process restart.
+This sprint prepares scalable behavior while keeping v1 simple and safe for ages 3-4.
 
 ## Review
 
