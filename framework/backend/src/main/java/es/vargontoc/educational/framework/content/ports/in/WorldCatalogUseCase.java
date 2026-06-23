@@ -1,10 +1,10 @@
 package es.vargontoc.educational.framework.content.ports.in;
 
-import es.vargontoc.educational.framework.content.infrastructure.dto.CompatibleActivityProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldDiscoveryElementProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldHostProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldNarrativeSituationProjection;
 import es.vargontoc.educational.framework.content.model.Biome;
+import es.vargontoc.educational.framework.content.model.CompatibleActivityProjection;
+import es.vargontoc.educational.framework.content.model.WorldDiscoveryElementProjection;
+import es.vargontoc.educational.framework.content.model.WorldHostProjection;
+import es.vargontoc.educational.framework.content.model.WorldNarrativeSituationProjection;
 
 import java.util.List;
 
@@ -18,5 +18,5 @@ public interface WorldCatalogUseCase {
 
     List<WorldDiscoveryElementProjection> listActiveElementsByBiomeAndAge(Biome biome, Integer targetAge);
 
-    List<CompatibleActivityProjection> listCompatibleActivitiesByTopic(Long topicId);
+    List<CompatibleActivityProjection> listCompatibleActivitiesByTopic(Long topicId, Integer targetAge);
 }

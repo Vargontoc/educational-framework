@@ -1,8 +1,4 @@
-package es.vargontoc.educational.framework.content.infrastructure.dto;
-
-import es.vargontoc.educational.framework.content.model.Biome;
-import es.vargontoc.educational.framework.content.model.ElementType;
-import es.vargontoc.educational.framework.content.model.InteractionCueType;
+package es.vargontoc.educational.framework.content.model;
 
 public record WorldDiscoveryElementProjection(
     Long id,

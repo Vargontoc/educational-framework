@@ -1,11 +1,11 @@
-package es.vargontoc.educational.framework.content.infrastructure.dto;
+package es.vargontoc.educational.framework.content.model;
 
 import java.util.List;
 
 public record CompatibleActivityProjection(
     Long activityId,
     String displayName,
-    String gameEngineType,
+    String engineType,
     List<Long> topicIds,
     Integer minAge,
     Integer maxAge,

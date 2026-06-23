@@ -1,7 +1,4 @@
-package es.vargontoc.educational.framework.content.infrastructure.dto;
-
-import es.vargontoc.educational.framework.content.model.SituationType;
-import es.vargontoc.educational.framework.content.model.Tone;
+package es.vargontoc.educational.framework.content.model;
 
 public record WorldNarrativeSituationProjection(
     Long id,

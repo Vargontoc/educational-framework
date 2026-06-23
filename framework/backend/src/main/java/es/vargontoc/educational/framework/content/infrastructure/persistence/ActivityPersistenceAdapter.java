@@ -54,8 +54,8 @@ public class ActivityPersistenceAdapter implements ActivityRepository {
     }
 
     @Override
-    public List<Activity> findByStatusAndTopicId(Long topicId, ContentStatus status) {
-        return jpaRepository.findByStatusAndTopicId(topicId, status.name()).stream()
+    public List<Activity> findByStatusAndTopicId(Long topicId, ContentStatus status, Integer targetAge) {
+        return jpaRepository.findByStatusAndTopicId(topicId, status.name(), targetAge).stream()
             .map(entity -> toDomain(entity, getActivityTopicIds(entity.getId())))
             .toList();
     }

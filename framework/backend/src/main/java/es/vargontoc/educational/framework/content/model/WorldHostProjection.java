@@ -1,6 +1,4 @@
-package es.vargontoc.educational.framework.content.infrastructure.dto;
-
-import es.vargontoc.educational.framework.content.model.Biome;
+package es.vargontoc.educational.framework.content.model;
 
 public record WorldHostProjection(
     Long id,

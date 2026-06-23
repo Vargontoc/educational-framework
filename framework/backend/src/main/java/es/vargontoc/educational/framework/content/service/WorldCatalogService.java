@@ -1,9 +1,9 @@
 package es.vargontoc.educational.framework.content.service;
 
-import es.vargontoc.educational.framework.content.infrastructure.dto.CompatibleActivityProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldDiscoveryElementProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldHostProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldNarrativeSituationProjection;
+import es.vargontoc.educational.framework.content.model.CompatibleActivityProjection;
+import es.vargontoc.educational.framework.content.model.WorldDiscoveryElementProjection;
+import es.vargontoc.educational.framework.content.model.WorldHostProjection;
+import es.vargontoc.educational.framework.content.model.WorldNarrativeSituationProjection;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
@@ -17,13 +17,11 @@ import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepos
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 
-@Service
 @Transactional(readOnly = true)
 public class WorldCatalogService implements WorldCatalogUseCase {
 
@@ -78,11 +76,11 @@ public class WorldCatalogService implements WorldCatalogUseCase {
     }
 
     @Override
-    public List<CompatibleActivityProjection> listCompatibleActivitiesByTopic(Long topicId) {
+    public List<CompatibleActivityProjection> listCompatibleActivitiesByTopic(Long topicId, Integer targetAge) {
         if (topicId == null) {
             return Collections.emptyList();
         }
-        List<Activity> activities = activityRepository.findByStatusAndTopicId(topicId, ContentStatus.ACTIVE);
+        List<Activity> activities = activityRepository.findByStatusAndTopicId(topicId, ContentStatus.ACTIVE, targetAge);
         return activities.stream().map(this::toCompatibleActivityProjection).toList();
     }
 

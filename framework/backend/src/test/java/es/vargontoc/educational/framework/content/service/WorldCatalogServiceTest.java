@@ -1,9 +1,9 @@
 package es.vargontoc.educational.framework.content.service;
 
-import es.vargontoc.educational.framework.content.infrastructure.dto.CompatibleActivityProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldDiscoveryElementProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldHostProjection;
-import es.vargontoc.educational.framework.content.infrastructure.dto.WorldNarrativeSituationProjection;
+import es.vargontoc.educational.framework.content.model.CompatibleActivityProjection;
+import es.vargontoc.educational.framework.content.model.WorldDiscoveryElementProjection;
+import es.vargontoc.educational.framework.content.model.WorldHostProjection;
+import es.vargontoc.educational.framework.content.model.WorldNarrativeSituationProjection;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
@@ -112,10 +112,10 @@ class WorldCatalogServiceTest {
 
     @Test
     void listCompatibleActivitiesByTopic_returnsEmptyList_whenNoMatch() {
-        when(activityRepository.findByStatusAndTopicId(1L, ContentStatus.ACTIVE))
+        when(activityRepository.findByStatusAndTopicId(1L, ContentStatus.ACTIVE, 3))
             .thenReturn(Collections.emptyList());
 
-        List<CompatibleActivityProjection> result = service.listCompatibleActivitiesByTopic(1L);
+        List<CompatibleActivityProjection> result = service.listCompatibleActivitiesByTopic(1L, 3);
 
         assertTrue(result.isEmpty());
     }
@@ -124,22 +124,22 @@ class WorldCatalogServiceTest {
     void listCompatibleActivitiesByTopic_returnsMatchingActivities() {
         Activity activity = createActivity(1L, "Counting Game", "SIMPLE", 3, 4);
         DifficultyLevel difficultyLevel = createDifficultyLevel(1L, 1L);
-        when(activityRepository.findByStatusAndTopicId(1L, ContentStatus.ACTIVE))
+        when(activityRepository.findByStatusAndTopicId(1L, ContentStatus.ACTIVE, 3))
             .thenReturn(List.of(activity));
         when(difficultyLevelRepository.findByActivityId(1L))
             .thenReturn(List.of(difficultyLevel));
 
-        List<CompatibleActivityProjection> result = service.listCompatibleActivitiesByTopic(1L);
+        List<CompatibleActivityProjection> result = service.listCompatibleActivitiesByTopic(1L, 3);
 
         assertEquals(1, result.size());
         assertEquals("Counting Game", result.get(0).displayName());
-        assertEquals("SIMPLE", result.get(0).gameEngineType());
+        assertEquals("SIMPLE", result.get(0).engineType());
         assertEquals(1, result.get(0).difficultyLevelIds().size());
     }
 
     @Test
     void listCompatibleActivitiesByTopic_returnsEmptyList_whenTopicIdIsNull() {
-        List<CompatibleActivityProjection> result = service.listCompatibleActivitiesByTopic(null);
+        List<CompatibleActivityProjection> result = service.listCompatibleActivitiesByTopic(null, 3);
 
         assertTrue(result.isEmpty());
     }
