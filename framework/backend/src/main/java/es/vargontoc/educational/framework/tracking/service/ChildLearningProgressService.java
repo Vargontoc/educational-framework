@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.tracking.service;
 
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
+import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 import es.vargontoc.educational.framework.tracking.model.ChildLearningProgressResponse;
 import es.vargontoc.educational.framework.tracking.model.CompletedStepInfo;
@@ -8,6 +9,7 @@ import es.vargontoc.educational.framework.tracking.model.ChildLearningCompletedS
 import es.vargontoc.educational.framework.tracking.model.ChildLearningProgress;
 import es.vargontoc.educational.framework.tracking.ports.in.GetChildLearningProgressUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterChildLearningCompletedStepUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.RegisterLearningPathStepProgressUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.UpdateChildLearningProgressUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningCompletedStepRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningProgressRepository;
@@ -20,19 +22,23 @@ import java.util.List;
 public class ChildLearningProgressService implements
         UpdateChildLearningProgressUseCase,
         RegisterChildLearningCompletedStepUseCase,
-        GetChildLearningProgressUseCase {
+        GetChildLearningProgressUseCase,
+        RegisterLearningPathStepProgressUseCase {
 
     private final ChildLearningProgressRepository progressRepository;
     private final ChildLearningCompletedStepRepository completedStepRepository;
     private final LearningPathRepository learningPathRepository;
+    private final LearningPathStepRepository learningPathStepRepository;
 
     public ChildLearningProgressService(
             ChildLearningProgressRepository progressRepository,
             ChildLearningCompletedStepRepository completedStepRepository,
-            LearningPathRepository learningPathRepository) {
+            LearningPathRepository learningPathRepository,
+            LearningPathStepRepository learningPathStepRepository) {
         this.progressRepository = progressRepository;
         this.completedStepRepository = completedStepRepository;
         this.learningPathRepository = learningPathRepository;
+        this.learningPathStepRepository = learningPathStepRepository;
     }
 
     @Override
@@ -97,5 +103,58 @@ public class ChildLearningProgressService implements
         response.setCompletedSteps(stepInfos);
 
         return response;
+    }
+
+    @Override
+    public ChildLearningProgressResponse registerLearningPathStepProgress(
+            Long childProfileId,
+            Long learningPathId,
+            Long learningPathStepId) {
+
+        if (childProfileId == null) {
+            throw new ValidationException("childProfileId is required");
+        }
+        if (learningPathId == null) {
+            throw new ValidationException("learningPathId is required");
+        }
+        if (learningPathStepId == null) {
+            throw new ValidationException("learningPathStepId is required");
+        }
+
+        var existingPath = learningPathRepository.findById(learningPathId);
+        if (existingPath.isEmpty()) {
+            throw new ValidationException("Learning path not found: " + learningPathId);
+        }
+
+        var stepsForPath = learningPathStepRepository.findByLearningPathId(learningPathId);
+        boolean stepBelongsToPath = stepsForPath.stream()
+                .anyMatch(step -> step.getId().equals(learningPathStepId));
+        if (!stepBelongsToPath) {
+            throw new ValidationException("Learning path step " + learningPathStepId + " does not belong to learning path " + learningPathId);
+        }
+
+        var progress = progressRepository.findByChildProfileIdAndLearningPathId(childProfileId, learningPathId)
+                .orElseGet(() -> {
+                    var newProgress = new ChildLearningProgress();
+                    newProgress.setChildProfileId(childProfileId);
+                    newProgress.setLearningPathId(learningPathId);
+                    return newProgress;
+                });
+
+        progress.setCurrentLearningPathStepId(learningPathStepId);
+        progressRepository.save(progress);
+
+        var existingCompletedStep = completedStepRepository.findByChildProfileIdAndLearningPathIdAndStepId(
+                childProfileId, learningPathId, learningPathStepId);
+        if (existingCompletedStep.isEmpty()) {
+            var completedStep = new ChildLearningCompletedStep();
+            completedStep.setChildProfileId(childProfileId);
+            completedStep.setLearningPathId(learningPathId);
+            completedStep.setLearningPathStepId(learningPathStepId);
+            completedStep.setCompletedAt(LocalDateTime.now());
+            completedStepRepository.save(completedStep);
+        }
+
+        return getChildLearningProgress(childProfileId, learningPathId);
     }
 }

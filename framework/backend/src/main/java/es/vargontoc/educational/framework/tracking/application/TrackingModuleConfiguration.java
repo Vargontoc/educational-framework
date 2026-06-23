@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.tracking.application;
 
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
+import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
 import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProperties;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetActivityEngagementSummaryUseCase;
@@ -109,8 +110,9 @@ class TrackingModuleConfiguration {
     ChildLearningProgressService childLearningProgressService(
             ChildLearningProgressRepository progressRepository,
             ChildLearningCompletedStepRepository completedStepRepository,
-            LearningPathRepository learningPathRepository) {
-        return new ChildLearningProgressService(progressRepository, completedStepRepository, learningPathRepository);
+            LearningPathRepository learningPathRepository,
+            LearningPathStepRepository learningPathStepRepository) {
+        return new ChildLearningProgressService(progressRepository, completedStepRepository, learningPathRepository, learningPathStepRepository);
     }
 
     @Bean

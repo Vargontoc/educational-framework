@@ -1,8 +1,8 @@
-# Sprint 048 - backend
+# Sprint 050 - backend
 # -----------------------------------------------
 
 ## Goal
-Add the parental dashboard read model `ActivityEngagementSummary` using `ActivityProposalLog` and `GameSessionSummary`.
+Publish a domain event when a game session completes or is abandoned so `world` can react without `game` depending on `world`.
 
 ## Status
 status: planned
@@ -13,75 +13,62 @@ waiting_for:
 
 ## Model Properties
 
-### ActivityEngagementSummary
+### GameSessionCompletedEvent
 
-Read-only parental dashboard projection. It is descriptive, not diagnostic.
+Internal application event published by `game`. It must not depend on `world`.
 
-- `engineType`: String or enum, required.
-- `startedCount`: long/integer, required, default `0`.
-- `ignoredCount`: long/integer, required, default `0`.
-- `completedCount`: long/integer, required, default `0`.
-- `abandonedCount`: long/integer, required, default `0`.
+- `gameId`: Long, required.
+- `childSessionId`: Long, required.
+- `activityId`: Long, required.
+- `finalStatus`: GameSessionFinalStatus or equivalent enum, required: `COMPLETED`, `ABANDONED`.
+- `occurredAt`: timestamp/string following existing backend timestamp pattern, required.
 
-### Response Shape
+### Event Rules
 
-If exposed by REST, follow the existing tracking dashboard response wrapper pattern.
-
-- `childProfileId`: Long, required in path or parent response context.
-- `items`: List<ActivityEngagementSummary>, required, can be empty.
-
-### Aggregation Rules
-
-- `startedCount` comes from `ActivityProposalLog.outcome = STARTED`.
-- `ignoredCount` comes from `ActivityProposalLog.outcome = IGNORED`.
-- `completedCount` comes from `GameSessionSummary.finalStatus = COMPLETED`.
-- `abandonedCount` comes from `GameSessionSummary.finalStatus = ABANDONED`.
-- Group by content `Activity.engineType`.
-- Do not produce recommendations, scores, warnings, or diagnostic labels.
+- Publish once for each transition to `COMPLETED`.
+- Publish once for each transition to `ABANDONED`, including system and client abandonment paths.
+- Do not publish for `WAITING`, `STARTING`, or `IN_PROGRESS`.
+- The event is internal only; it does not update `docs/contracts/api/websocket.json` by itself.
+- `game` must not import or reference `world` packages.
 
 ## Tasks
 
-### Dashboard Query
-- [ ] Add read use case for activity engagement summary by child profile.
-- [ ] Aggregate `STARTED` and `IGNORED` counts from `ActivityProposalLog`.
-- [ ] Aggregate `COMPLETED` and `ABANDONED` counts from `GameSessionSummary`.
-- [ ] Group results by activity `engineType`.
-- [ ] Return `ActivityEngagementSummary` with the properties listed in `Model Properties`.
-- [ ] Apply the aggregation rules listed in `Model Properties`.
+### Domain Event
+- [ ] Add `GameSessionCompletedEvent` or equivalent application event with the properties listed in `Model Properties`.
+- [ ] Publish the event on `COMPLETED` transition.
+- [ ] Publish the event on `ABANDONED` transition, including system and client abandonment paths.
+- [ ] Use Spring `ApplicationEventPublisher` or existing application event pattern.
+- [ ] Apply the event rules listed in `Model Properties`.
 
-### REST Contract
-- [ ] Add read-only dashboard endpoint if consistent with existing tracking dashboard pattern.
-- [ ] Update `docs/contracts/api/openapi.json` if an endpoint is added.
-- [ ] Ensure no write endpoint is exposed.
+### Boundary
+- [ ] Ensure `game` does not reference `world` packages.
+- [ ] Ensure listeners are optional; game works if nobody listens.
 
 ### Tests
-- [ ] Unit test aggregation with started/ignored proposals.
-- [ ] Unit test aggregation with completed/abandoned sessions.
-- [ ] Unit test empty data returns zero/empty summary consistently.
-- [ ] Integration test endpoint authorization if REST endpoint is added.
+- [ ] Unit test event is published on completed game.
+- [ ] Unit test event is published on abandoned game.
+- [ ] Unit test no event is published for normal in-progress actions.
+- [ ] Unit test game has no dependency on `world`.
 
 ## Manual Tests
-- Start backend locally.
-- Seed or create proposal/session summary rows.
-- Call the dashboard endpoint if implemented.
-- Verify counts by `engineType` match the test data.
+- Not required. This is internal event plumbing.
 
 ## Risks
-- Joining content for `engineType` can introduce direct persistence coupling if not done through accepted patterns.
-- Dashboard wording must remain descriptive, not diagnostic.
+- Missing client-requested abandon path would make world miss some returns to map.
+- Coupling game to world would violate FEAT-008.
 
 ## Dependencies
-- Sprint 047 completed.
-- Sprint 032 completed.
-- Sprint 029 tracking dashboard API completed.
+- Sprint 040 completed.
+- Sprint 043 completed.
+- Sprint 044 completed.
 
 ## Agent Instruction
-- Keep this as a read-only dashboard sprint.
-- Do not add recommendations, scores, labels, or diagnoses.
-- Do not expose child-facing data.
+- Keep event payload minimal.
+- Do not implement `world` listener in this sprint.
+- Do not add external message broker infrastructure.
 
 ## Notes
-This query helps parents observe started/ignored/completed/abandoned activity patterns without interpreting them automatically.
+FEAT-008 depends on asynchronous game completion notification because a game can last minutes.
 
 ## Review
 
