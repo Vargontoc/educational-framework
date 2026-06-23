@@ -5,9 +5,9 @@
 Expose internal content read ports for World Map catalog data so `world` can query active hosts, situations, discovery elements, and compatible activities without reading content persistence directly.
 
 ## Status
-status: planned
-started_at:
-closed_at:
+status: completed
+started_at: 2026-06-23
+closed_at: 2026-06-23
 blocked_by:
 waiting_for:
 

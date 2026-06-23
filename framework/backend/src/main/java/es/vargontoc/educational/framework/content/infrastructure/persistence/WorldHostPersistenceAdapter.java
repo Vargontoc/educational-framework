@@ -6,6 +6,7 @@ import es.vargontoc.educational.framework.content.model.WorldHost;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -32,6 +33,14 @@ public class WorldHostPersistenceAdapter implements WorldHostRepository {
     @Override
     public boolean existsByCode(String code) {
         return jpaRepository.existsByCode(code);
+    }
+
+    @Override
+    public List<WorldHost> findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+        ContentStatus status, Integer targetAge) {
+        return jpaRepository.findByStatusAndAgeRange(
+                status.name(), targetAge
+            ).stream().map(this::toDomain).toList();
     }
 
     private WorldHost toDomain(WorldHostJpaEntity source) {

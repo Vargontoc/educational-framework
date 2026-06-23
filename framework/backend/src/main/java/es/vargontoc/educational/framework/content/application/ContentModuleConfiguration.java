@@ -33,8 +33,10 @@ import es.vargontoc.educational.framework.content.service.StoryService;
 import es.vargontoc.educational.framework.content.service.TopicService;
 import es.vargontoc.educational.framework.content.ports.in.ActivityUseCase;
 import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
+import es.vargontoc.educational.framework.content.ports.in.WorldCatalogUseCase;
 import es.vargontoc.educational.framework.content.service.GameCatalogService;
 import es.vargontoc.educational.framework.content.service.TracingPatternService;
+import es.vargontoc.educational.framework.content.service.WorldCatalogService;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -113,6 +115,17 @@ class ContentModuleConfiguration {
             DifficultyLevelUseCase difficultyLevelUseCase,
             ActivitySummaryRepository activitySummaryRepository) {
         return new GameCatalogService(activityUseCase, difficultyLevelUseCase, activitySummaryRepository);
+    }
+
+    @Bean
+    WorldCatalogUseCase worldCatalogUseCase(
+            WorldHostRepository worldHostRepository,
+            WorldNarrativeSituationRepository worldNarrativeSituationRepository,
+            WorldDiscoveryElementRepository worldDiscoveryElementRepository,
+            ActivityRepository activityRepository,
+            DifficultyLevelRepository difficultyLevelRepository) {
+        return new WorldCatalogService(worldHostRepository, worldNarrativeSituationRepository,
+            worldDiscoveryElementRepository, activityRepository, difficultyLevelRepository);
     }
 
     @Bean

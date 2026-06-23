@@ -54,6 +54,13 @@ public class ActivityPersistenceAdapter implements ActivityRepository {
     }
 
     @Override
+    public List<Activity> findByStatusAndTopicId(Long topicId, ContentStatus status) {
+        return jpaRepository.findByStatusAndTopicId(topicId, status.name()).stream()
+            .map(entity -> toDomain(entity, getActivityTopicIds(entity.getId())))
+            .toList();
+    }
+
+    @Override
     @Transactional
     public Activity save(Activity activity) {
         var saved = jpaRepository.save(toJpa(activity));

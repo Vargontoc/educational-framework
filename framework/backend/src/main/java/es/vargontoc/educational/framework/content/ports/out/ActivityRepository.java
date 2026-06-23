@@ -17,4 +17,6 @@ public interface ActivityRepository {
     List<Activity> findByTopicId(Long topicId);
 
     Activity save(Activity activity);
+
+    List<Activity> findByStatusAndTopicId(Long topicId, ContentStatus status);
 }

@@ -8,6 +8,7 @@ import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -34,6 +35,22 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
     @Override
     public boolean existsByCode(String code) {
         return jpaRepository.existsByCode(code);
+    }
+
+    @Override
+    public List<WorldDiscoveryElement> findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+        ContentStatus status, Integer targetAge) {
+        return jpaRepository.findByStatusAndAgeRange(
+                status.name(), targetAge
+            ).stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<WorldDiscoveryElement> findByStatusAndBiomeAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+        ContentStatus status, Biome biome, Integer targetAge) {
+        return jpaRepository.findByStatusAndBiomeAndAgeRange(
+                status.name(), biome.name(), targetAge
+            ).stream().map(this::toDomain).toList();
     }
 
     private WorldDiscoveryElement toDomain(WorldDiscoveryElementJpaEntity source) {

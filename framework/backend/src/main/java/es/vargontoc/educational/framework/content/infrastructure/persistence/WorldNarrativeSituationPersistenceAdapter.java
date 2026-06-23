@@ -7,6 +7,7 @@ import es.vargontoc.educational.framework.content.model.WorldNarrativeSituation;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -33,6 +34,14 @@ public class WorldNarrativeSituationPersistenceAdapter implements WorldNarrative
     @Override
     public boolean existsByCode(String code) {
         return jpaRepository.existsByCode(code);
+    }
+
+    @Override
+    public List<WorldNarrativeSituation> findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+        ContentStatus status, Integer targetAge) {
+        return jpaRepository.findByStatusAndAgeRange(
+                status.name(), targetAge
+            ).stream().map(this::toDomain).toList();
     }
 
     private WorldNarrativeSituation toDomain(WorldNarrativeSituationJpaEntity source) {
