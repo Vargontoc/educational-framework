@@ -1,8 +1,8 @@
-# Sprint 053 - backend
+# Sprint 054 - backend
 # -----------------------------------------------
 
 ## Goal
-Implement `engagementThresholdConfig(childProfileId)` for world engagement pattern detection using v1 global defaults.
+Implement world destination selection using tracking topic selection, content catalog data, and temporary engine priority adjustment.
 
 ## Status
 status: planned
@@ -13,79 +13,76 @@ waiting_for:
 
 ## Model Properties
 
-### WorldEngagementThresholdConfig
+### WorldDestinationSelectionResult
 
-Runtime configuration for detecting temporary engagement patterns.
+Application result returned by destination selection.
 
-- `childProfileId`: Long, nullable in v1 because defaults are global.
-- `windowSize`: Integer, required, v1 default `3`.
-- `abandonmentThreshold`: Integer, required, v1 default `2`.
+- `childSessionId`: Long, required.
+- `topicId`: Long, nullable if tracking cannot recommend a topic.
+- `destination`: WorldDestination, required.
+- `selectedActivity`: SelectedWorldActivity, nullable when destination is decorative/narrative only.
+- `priorityAdjustmentApplied`: boolean, required.
 
-### WorldEngineEngagementPattern
+### SelectedWorldActivity
 
-Result of evaluating recent signals for one engine type.
+Internal activity choice made by `world`.
 
+- `activityId`: Long, required.
 - `engineType`: String or enum, required.
-- `windowSize`: Integer, required.
-- `abandonmentCount`: Integer, required.
-- `patternDetected`: boolean, required.
+- `topicId`: Long, nullable.
+- `source`: String or enum, required. Suggested values: `TOPIC_RECOMMENDATION`, `FALLBACK`.
 
-### WorldEnginePriorityAdjustment
+### Destination Selection Rules
 
-Soft runtime adjustment applied by world destination selection.
-
-- `engineType`: String or enum, required.
-- `priorityMultiplier`: decimal, required, greater than `0`, less than or equal to `1`.
-- `reason`: String, optional, internal only. Do not expose to child-facing payloads.
-
-### Rules
-
-- v1 defaults are `windowSize = 3` and `abandonmentThreshold = 2`.
-- One abandonment never triggers a pattern.
-- `IGNORED` proposals do not affect priority in v1.
-- Adjustment is temporary and in-memory for the current `ChildSession` only.
-- Never exclude an engine completely; only reduce probability/priority softly.
+- `world` calls tracking to select topic; it does not classify topics itself.
+- `world` queries content for compatible active activities; it does not read content persistence directly.
+- If no activity is available, return a destination with `selectedActivity = null`.
+- Do not include LearningPath progress, locks, completion status, diagnostic labels, or engagement labels.
 
 ## Tasks
 
-### Configuration
-- [ ] Add `WorldEngagementThresholdConfig` model with the properties listed in `Model Properties`.
-- [ ] Add internal port/use case `engagementThresholdConfig(childProfileId)`.
-- [ ] Return v1 defaults `N=3`, `M=2`.
-- [ ] Keep implementation ready for future per-child override without adding persistence now.
+### Selection Flow
+- [ ] Add `WorldOrchestrator` or selection service skeleton.
+- [ ] Call tracking `TopicSelectionService` to select a recommended `topicId`.
+- [ ] Query content for active activities compatible with that topic.
+- [ ] Apply temporary engine priority adjustment from world engagement logic.
+- [ ] Select one activity when available.
+- [ ] Select host, narrative situation, and discovery element from content catalog.
+- [ ] Build `WorldDestinationSelectionResult` with the properties listed in `Model Properties`.
+- [ ] Build `WorldDestination` without exposing progress/diagnostic fields.
+- [ ] Apply the destination selection rules listed in `Model Properties`.
 
-### Pattern Evaluation
-- [ ] Add small service that evaluates abandoned games by `engineType` inside a `ChildSession` window.
-- [ ] Return `WorldEngineEngagementPattern` and `WorldEnginePriorityAdjustment` using the properties listed in `Model Properties`.
-- [ ] Ensure one abandonment never triggers a pattern.
-- [ ] Ensure `IGNORED` proposals do not affect priority in v1.
-- [ ] Return a soft priority adjustment, never total exclusion.
-- [ ] Apply the rules listed in `Model Properties`.
+### Fallbacks
+- [ ] If no compatible activity exists, build a decorative/narrative destination with no playable element.
+- [ ] If a selected activity is later rejected by game, leave fallback handling for Sprint 056.
 
 ### Tests
-- [ ] Unit test default config returns N=3 and M=2.
-- [ ] Unit test one abandonment does not trigger adjustment.
-- [ ] Unit test two of last three abandonments for same engine triggers adjustment.
-- [ ] Unit test ignored proposals do not trigger adjustment.
-- [ ] Unit test adjustment is temporary/in-memory only.
+- [ ] Unit test topic selection is called.
+- [ ] Unit test compatible active activity is selected.
+- [ ] Unit test temporary priority adjustment changes activity choice softly.
+- [ ] Unit test no compatible activity returns destination without game proposal.
+- [ ] Unit test destination payload has no child-facing diagnostic labels.
 
 ## Manual Tests
-- Not required. This is pure domain/application logic.
+- Optional: run a dev/test fixture that builds a destination for one child session.
+- Confirm logs or returned data include host, situation, discovery element, and optional activity.
 
 ## Risks
-- Persisting engagement labels would violate FEAT-008.
-- Treating ignored elements as priority signal in v1 could over-interpret normal child behavior.
+- Reimplementing topic selection in world would violate tracking ownership.
+- Returning hidden progress fields to frontend would break FEAT-011.
 
 ## Dependencies
-- Sprint 051 completed.
+- Sprint 046 completed.
+- Sprint 028 completed (`TopicSelectionService`).
+- Sprint 053 completed.
 
 ## Agent Instruction
-- Do not add database tables for engagement config.
-- Do not add parent override UI/API.
-- Do not generate diagnostic labels.
+- World chooses activity and narrative context; tracking chooses topic.
+- Do not expose LearningPath progress to the child-facing payload.
+- Do not call game yet in this sprint.
 
 ## Notes
-This sprint prepares scalable behavior while keeping v1 simple and safe for ages 3-4.
+This sprint makes world capable of deciding the next narrative destination without starting games.
 
 ## Review
 
