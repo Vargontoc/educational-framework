@@ -12,6 +12,8 @@ public interface WorldStateRegistry {
 
     boolean existsByChildSessionId(Long childSessionId);
 
+    Optional<Long> getPendingProposalId(Long childSessionId);
+
     Optional<WorldState> removeByChildSessionId(Long childSessionId);
 
     void clearClosed();

@@ -1,8 +1,8 @@
-# Sprint 055 - backend
+# Sprint 056 - backend
 # -----------------------------------------------
 
 ## Goal
-Implement activity proposal tracking in `world`, including `STARTED`, `IGNORED`, and automatic cleanup of pending proposals.
+Integrate `world` with `GameOrchestrator.startGame(childSessionId, activityId)` to start games from discovery elements safely.
 
 ## Status
 status: planned
@@ -13,71 +13,83 @@ waiting_for:
 
 ## Model Properties
 
-### WorldActivityProposalResult
+### WorldGameStartResult
 
-Application result when `world` registers or updates a proposal.
+Safe result returned by `world` after trying to start a game from a discovery element.
 
 - `childSessionId`: Long, required.
-- `proposalRuntimeId`: String or Long, required.
-- `trackingProposalId`: Long, required.
 - `activityId`: Long, required.
-- `topicId`: Long, nullable.
-- `status`: String or enum, required. Suggested values: `PENDING`, `STARTED`, `IGNORED`.
+- `gameId`: Long, nullable; present only when game start succeeds or existing game is reused.
+- `status`: WorldGameStartStatus, required.
+- `safeFallbackDestination`: WorldDestination, nullable, used when the walk should continue without game.
 
-### WorldProposalResolutionResult
+### WorldGameStartStatus
 
-Application result when `world` resolves a pending proposal.
+- `STARTED`: Game was started successfully.
+- `EXISTING_GAME_ACTIVE`: A game already exists and frontend should transition/sync safely.
+- `FALLBACK_DESTINATION`: Game could not start, but world built a safe non-technical fallback.
+- `BLOCKED`: Profile/session is blocked; child-facing payload must still be safe and non-technical.
 
-- `trackingProposalId`: Long, required.
-- `outcome`: ActivityProposalOutcome, required: `STARTED`, `IGNORED`.
-- `resolvedAt`: timestamp/string following existing backend timestamp pattern, required.
+### Internal Rejection Reasons
 
-### Child-Facing Rule
+These can exist internally for logs/tests but must not be sent as child-facing labels.
 
-- `status = IGNORED` and `outcome = IGNORED` are internal/tracking data only.
-- Do not send `IGNORED`, `ignored`, `abandoned`, `low engagement`, or diagnostic labels in child-facing payloads.
+- `PROFILE_BLOCKED`
+- `ACTIVITY_INACTIVE`
+- `ACTIVE_GAME_EXISTS`
+- `NO_ALTERNATIVE_ACTIVITY`
+- `ENGINE_UNAVAILABLE`
+
+### Rules
+
+- `world` decides `activityId`, not `difficultyLevelId`.
+- Technical rejection reasons are internal only.
+- If game start is rejected, the child should see a continued walk or safe transition, not an error.
 
 ## Tasks
 
-### Proposal Lifecycle
-- [ ] Register an activity proposal through tracking when a discovery element with activity is presented.
-- [ ] Store the pending proposal id in `WorldState`.
-- [ ] Resolve proposal as `STARTED` when the child chooses the discovery element and game start is attempted.
-- [ ] Resolve proposal as `IGNORED` when the interaction window ends without child interaction.
-- [ ] Resolve existing pending proposal as `IGNORED` before creating a new proposal.
-- [ ] Resolve pending proposal as `IGNORED` when the world state closes.
-- [ ] Return `WorldActivityProposalResult` and `WorldProposalResolutionResult` with the properties listed in `Model Properties`.
-- [ ] Apply the child-facing rule listed in `Model Properties`.
+### Game Start
+- [ ] Add world use case to start the activity tied to the current pending proposal.
+- [ ] Call `GameOrchestrator.startGame(childSessionId, activityId)` or the real internal equivalent.
+- [ ] Resolve proposal as `STARTED` only when game start succeeds or is accepted by the game shell.
+- [ ] Return `WorldGameStartResult` with the properties listed in `Model Properties`.
+
+### Rejection Handling
+- [ ] Handle blocked profile rejection without showing technical error to child.
+- [ ] Handle inactive activity rejection by selecting an alternative compatible activity when possible.
+- [ ] Handle already-active-game rejection with a safe no-op or transition to existing game state.
+- [ ] If no alternative exists, continue with decorative/narrative destination.
+- [ ] Apply the rules listed in `Model Properties`.
 
 ### Tests
-- [ ] Unit test proposal is registered when destination contains activity.
-- [ ] Unit test proposal resolves as `STARTED`.
-- [ ] Unit test proposal resolves as `IGNORED`.
-- [ ] Unit test creating a new proposal closes previous pending proposal as `IGNORED`.
-- [ ] Unit test closing world state resolves pending proposal as `IGNORED`.
+- [ ] Unit test successful game start resolves proposal as `STARTED`.
+- [ ] Unit test rejected inactive activity falls back safely.
+- [ ] Unit test blocked profile does not expose technical error.
+- [ ] Unit test already active game is handled safely.
+- [ ] Unit test no direct dependency from game to world exists.
 
 ## Manual Tests
-- Simulate a destination with a discovery element and no interaction.
-- Confirm tracking receives `IGNORED`.
-- Simulate a child interaction.
-- Confirm tracking receives `STARTED`.
+- Use fake/dev game engine.
+- Generate a world destination with a discovery element.
+- Trigger the discovery interaction.
+- Confirm game starts or the world continues safely if rejected.
 
 ## Risks
-- Pending proposals can remain unresolved if session/system events are missed.
-- Labeling ignored proposals in child-facing payload would violate FEAT-008.
+- Existing game start contract may differ between WebSocket and internal orchestrator; adapt to the real code, not the older draft contract.
+- Incorrect rejection handling can block the child's walk.
 
 ## Dependencies
-- Sprint 047 completed.
-- Sprint 052 completed.
-- Sprint 054 completed.
+- Sprint 050 completed if game event/result shape changes are needed.
+- Sprint 055 completed.
+- Sprint 039-044 completed.
 
 ## Agent Instruction
-- Do not expose `IGNORED` to the child-facing frontend payload.
-- Keep v1 cleanup simple and document any hardening warning.
-- Do not start games yet except as a mocked boundary in tests.
+- World decides activity, not difficulty.
+- Do not pass `difficultyLevelId` unless the current game port explicitly requires it.
+- Never expose raw rejection reasons as child-facing messages.
 
 ## Notes
-This sprint captures a common child behavior: seeing something optional and not interacting with it.
+FEAT-008 is aligned with the implemented game shell where `activityId` is the main game start input.
 
 ## Review
 

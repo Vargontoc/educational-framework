@@ -33,6 +33,13 @@ public class InMemoryWorldStateRegistry implements WorldStateRegistry {
     }
 
     @Override
+    public Optional<Long> getPendingProposalId(Long childSessionId) {
+        return findByChildSessionId(childSessionId)
+            .map(WorldState::getPendingProposalId)
+            .filter(proposalId -> proposalId != null);
+    }
+
+    @Override
     public Optional<WorldState> removeByChildSessionId(Long childSessionId) {
         return Optional.ofNullable(stateByChildSession.remove(childSessionId));
     }
