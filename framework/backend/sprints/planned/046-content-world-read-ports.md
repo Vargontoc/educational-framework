@@ -11,6 +11,72 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## Model Properties
+
+### WorldHostProjection
+
+Internal content projection returned to `world`. It must not be a JPA entity.
+
+- `id`: Long, required.
+- `code`: String, required.
+- `displayName`: String, required.
+- `biome`: String or enum, required.
+- `description`: String, nullable.
+- `minAge`: Integer, required.
+- `maxAge`: Integer, required.
+- `visualAssetKey`: String, nullable.
+- `sortOrder`: Integer, nullable.
+
+### WorldNarrativeSituationProjection
+
+Internal content projection for narrative destination construction.
+
+- `id`: Long, required.
+- `code`: String, required.
+- `displayText`: String, required.
+- `situationType`: String or enum, required.
+- `tone`: String or enum, nullable.
+- `minAge`: Integer, required.
+- `maxAge`: Integer, required.
+- `sortOrder`: Integer, nullable.
+
+### WorldDiscoveryElementProjection
+
+Internal content projection for elements shown during the walk.
+
+- `id`: Long, required.
+- `code`: String, required.
+- `displayName`: String, required.
+- `elementType`: String or enum, required: `DECORATIVE`, `SIMPLE_INTERACTIVE`, `DISCOVERY`.
+- `biome`: String or enum, required.
+- `minAge`: Integer, required.
+- `maxAge`: Integer, required.
+- `activityId`: Long, nullable. Only present for playable discovery elements.
+- `topicId`: Long, nullable.
+- `visualAssetKey`: String, nullable.
+- `interactionCueType`: String or enum, nullable.
+- `sortOrder`: Integer, nullable.
+
+### CompatibleActivityProjection
+
+Internal content projection used by `world` to choose an activity for a selected topic.
+
+- `activityId`: Long, required.
+- `activityCode`: String, nullable if current Activity model has no code.
+- `displayName`: String, required if available in content.
+- `engineType`: String or enum, required.
+- `topicIds`: List<Long>, required, can be empty only for non-topic activities.
+- `minAge`: Integer, required.
+- `maxAge`: Integer, required.
+- `difficultyLevelIds`: List<Long>, required, can be empty if difficulty is resolved elsewhere.
+
+### Query Rules
+
+- Only `ACTIVE` catalog rows are returned.
+- Records must match the requested age: `minAge <= targetAge <= maxAge`.
+- Internal projections must not expose persistence entities.
+- Internal projections must not include child progress, proposal outcomes, ignored counts, or engagement labels.
+
 ## Tasks
 
 ### Content Ports
@@ -21,8 +87,9 @@ waiting_for:
 - [ ] Ensure inactive/draft content is never returned to `world`.
 
 ### DTO/Domain Projection
-- [ ] Return lightweight content projections with ids and display metadata only.
+- [ ] Return lightweight content projections with the properties listed in `Model Properties`.
 - [ ] Keep frontend-facing REST DTOs separate from internal world projections.
+- [ ] Apply the query rules listed in `Model Properties`.
 
 ### Tests
 - [ ] Unit test active host lookup by age.

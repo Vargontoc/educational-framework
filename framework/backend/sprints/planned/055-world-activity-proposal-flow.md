@@ -11,6 +11,32 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## Model Properties
+
+### WorldActivityProposalResult
+
+Application result when `world` registers or updates a proposal.
+
+- `childSessionId`: Long, required.
+- `proposalRuntimeId`: String or Long, required.
+- `trackingProposalId`: Long, required.
+- `activityId`: Long, required.
+- `topicId`: Long, nullable.
+- `status`: String or enum, required. Suggested values: `PENDING`, `STARTED`, `IGNORED`.
+
+### WorldProposalResolutionResult
+
+Application result when `world` resolves a pending proposal.
+
+- `trackingProposalId`: Long, required.
+- `outcome`: ActivityProposalOutcome, required: `STARTED`, `IGNORED`.
+- `resolvedAt`: timestamp/string following existing backend timestamp pattern, required.
+
+### Child-Facing Rule
+
+- `status = IGNORED` and `outcome = IGNORED` are internal/tracking data only.
+- Do not send `IGNORED`, `ignored`, `abandoned`, `low engagement`, or diagnostic labels in child-facing payloads.
+
 ## Tasks
 
 ### Proposal Lifecycle
@@ -20,6 +46,8 @@ waiting_for:
 - [ ] Resolve proposal as `IGNORED` when the interaction window ends without child interaction.
 - [ ] Resolve existing pending proposal as `IGNORED` before creating a new proposal.
 - [ ] Resolve pending proposal as `IGNORED` when the world state closes.
+- [ ] Return `WorldActivityProposalResult` and `WorldProposalResolutionResult` with the properties listed in `Model Properties`.
+- [ ] Apply the child-facing rule listed in `Model Properties`.
 
 ### Tests
 - [ ] Unit test proposal is registered when destination contains activity.

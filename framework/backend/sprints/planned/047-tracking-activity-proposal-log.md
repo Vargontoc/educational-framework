@@ -11,21 +11,52 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## Model Properties
+
+### ActivityProposalLog
+
+Tracking-owned persistent record for an activity proposal shown by `world` before a game exists.
+
+- `id`: Long, inherited from `BaseEntity`.
+- `childProfileId`: Long, required.
+- `childSessionId`: Long, required.
+- `activityId`: Long, required.
+- `topicId`: Long, nullable because not every activity is topic-bound.
+- `outcome`: ActivityProposalOutcome, nullable while pending; set to `STARTED` or `IGNORED` when resolved.
+- `proposedAt`: timestamp/string following existing tracking timestamp pattern, required.
+- `resolvedAt`: timestamp/string following existing tracking timestamp pattern, nullable until resolved.
+- `createdAt`: inherited from `BaseEntity`.
+- `updatedAt`: inherited from `BaseEntity`.
+
+### ActivityProposalOutcome
+
+- `STARTED`: The child interacted with the discovery element and world attempted/accepted game start.
+- `IGNORED`: The proposal window ended, another proposal replaced it, or the session/system flow closed it without game start.
+
+### Validation Rules
+
+- `childProfileId`, `childSessionId`, `activityId`, and `proposedAt` are required.
+- `resolvedAt` must be null while `outcome` is null.
+- `resolvedAt` is required when `outcome` is set.
+- `resolvedAt` must not be before `proposedAt`.
+- A resolved proposal must not be resolved again.
+- `IGNORED` is descriptive dashboard data, not a child-facing failure or diagnosis.
+
 ## Tasks
 
 ### Tracking Schema
-- [ ] Add `ActivityProposalLog` domain model.
-- [ ] Add `ActivityProposalOutcome` enum with `STARTED` and `IGNORED`.
+- [ ] Add `ActivityProposalLog` domain model with the properties listed in `Model Properties`.
+- [ ] Add `ActivityProposalOutcome` enum with the values listed in `Model Properties`.
 - [ ] Add JPA entity and repository.
 - [ ] Add Liquibase migration for `activity_proposal_log`.
-- [ ] Store `childProfileId`, `childSessionId`, `activityId`, nullable `topicId`, `outcome`, `proposedAt`, `resolvedAt`, `createdAt`, and `updatedAt`.
+- [ ] Store all fields listed in `Model Properties`.
 - [ ] Add indexes for `childProfileId`, `childSessionId`, `activityId`, `topicId`, and `proposedAt`.
 
 ### Tracking Ports
 - [ ] Add internal use case `registerActivityProposal(childProfileId, childSessionId, activityId, topicId)`.
 - [ ] Add internal use case `resolveActivityProposal(proposalId, outcome)`.
 - [ ] Prevent resolving the same proposal twice.
-- [ ] Validate `resolvedAt` is not before `proposedAt`.
+- [ ] Implement the validation rules listed in `Model Properties`.
 
 ### Tests
 - [ ] Unit test registering a proposal creates a pending log.

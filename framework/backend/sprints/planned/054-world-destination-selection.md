@@ -11,6 +11,34 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## Model Properties
+
+### WorldDestinationSelectionResult
+
+Application result returned by destination selection.
+
+- `childSessionId`: Long, required.
+- `topicId`: Long, nullable if tracking cannot recommend a topic.
+- `destination`: WorldDestination, required.
+- `selectedActivity`: SelectedWorldActivity, nullable when destination is decorative/narrative only.
+- `priorityAdjustmentApplied`: boolean, required.
+
+### SelectedWorldActivity
+
+Internal activity choice made by `world`.
+
+- `activityId`: Long, required.
+- `engineType`: String or enum, required.
+- `topicId`: Long, nullable.
+- `source`: String or enum, required. Suggested values: `TOPIC_RECOMMENDATION`, `FALLBACK`.
+
+### Destination Selection Rules
+
+- `world` calls tracking to select topic; it does not classify topics itself.
+- `world` queries content for compatible active activities; it does not read content persistence directly.
+- If no activity is available, return a destination with `selectedActivity = null`.
+- Do not include LearningPath progress, locks, completion status, diagnostic labels, or engagement labels.
+
 ## Tasks
 
 ### Selection Flow
@@ -20,7 +48,9 @@ waiting_for:
 - [ ] Apply temporary engine priority adjustment from world engagement logic.
 - [ ] Select one activity when available.
 - [ ] Select host, narrative situation, and discovery element from content catalog.
+- [ ] Build `WorldDestinationSelectionResult` with the properties listed in `Model Properties`.
 - [ ] Build `WorldDestination` without exposing progress/diagnostic fields.
+- [ ] Apply the destination selection rules listed in `Model Properties`.
 
 ### Fallbacks
 - [ ] If no compatible activity exists, build a decorative/narrative destination with no playable element.

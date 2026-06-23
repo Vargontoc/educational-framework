@@ -11,6 +11,34 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## Model Properties
+
+### ActivityEngagementSummary
+
+Read-only parental dashboard projection. It is descriptive, not diagnostic.
+
+- `engineType`: String or enum, required.
+- `startedCount`: long/integer, required, default `0`.
+- `ignoredCount`: long/integer, required, default `0`.
+- `completedCount`: long/integer, required, default `0`.
+- `abandonedCount`: long/integer, required, default `0`.
+
+### Response Shape
+
+If exposed by REST, follow the existing tracking dashboard response wrapper pattern.
+
+- `childProfileId`: Long, required in path or parent response context.
+- `items`: List<ActivityEngagementSummary>, required, can be empty.
+
+### Aggregation Rules
+
+- `startedCount` comes from `ActivityProposalLog.outcome = STARTED`.
+- `ignoredCount` comes from `ActivityProposalLog.outcome = IGNORED`.
+- `completedCount` comes from `GameSessionSummary.finalStatus = COMPLETED`.
+- `abandonedCount` comes from `GameSessionSummary.finalStatus = ABANDONED`.
+- Group by content `Activity.engineType`.
+- Do not produce recommendations, scores, warnings, or diagnostic labels.
+
 ## Tasks
 
 ### Dashboard Query
@@ -18,7 +46,8 @@ waiting_for:
 - [ ] Aggregate `STARTED` and `IGNORED` counts from `ActivityProposalLog`.
 - [ ] Aggregate `COMPLETED` and `ABANDONED` counts from `GameSessionSummary`.
 - [ ] Group results by activity `engineType`.
-- [ ] Return `engineType`, `startedCount`, `ignoredCount`, `completedCount`, and `abandonedCount`.
+- [ ] Return `ActivityEngagementSummary` with the properties listed in `Model Properties`.
+- [ ] Apply the aggregation rules listed in `Model Properties`.
 
 ### REST Contract
 - [ ] Add read-only dashboard endpoint if consistent with existing tracking dashboard pattern.

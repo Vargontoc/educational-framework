@@ -11,14 +11,34 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## Model Properties
+
+### GameSessionCompletedEvent
+
+Internal application event published by `game`. It must not depend on `world`.
+
+- `gameId`: Long, required.
+- `childSessionId`: Long, required.
+- `activityId`: Long, required.
+- `finalStatus`: GameSessionFinalStatus or equivalent enum, required: `COMPLETED`, `ABANDONED`.
+- `occurredAt`: timestamp/string following existing backend timestamp pattern, required.
+
+### Event Rules
+
+- Publish once for each transition to `COMPLETED`.
+- Publish once for each transition to `ABANDONED`, including system and client abandonment paths.
+- Do not publish for `WAITING`, `STARTING`, or `IN_PROGRESS`.
+- The event is internal only; it does not update `docs/contracts/api/websocket.json` by itself.
+- `game` must not import or reference `world` packages.
+
 ## Tasks
 
 ### Domain Event
-- [ ] Add `GameSessionCompletedEvent` or equivalent application event.
-- [ ] Include `gameId`, `childSessionId`, `activityId`, and `finalStatus`.
+- [ ] Add `GameSessionCompletedEvent` or equivalent application event with the properties listed in `Model Properties`.
 - [ ] Publish the event on `COMPLETED` transition.
 - [ ] Publish the event on `ABANDONED` transition, including system and client abandonment paths.
 - [ ] Use Spring `ApplicationEventPublisher` or existing application event pattern.
+- [ ] Apply the event rules listed in `Model Properties`.
 
 ### Boundary
 - [ ] Ensure `game` does not reference `world` packages.

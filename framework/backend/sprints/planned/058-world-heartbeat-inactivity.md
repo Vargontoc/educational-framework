@@ -11,6 +11,40 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## Model Properties
+
+### WorldHeartbeatResult
+
+Result of handling `WORLD_HEARTBEAT`.
+
+- `childSessionId`: Long, required.
+- `worldStateFound`: boolean, required.
+- `lastWorldActivityAt`: timestamp/string following existing backend timestamp pattern, nullable when no state exists.
+- `childSessionActivityUpdated`: boolean, required.
+
+### WorldInactivityResult
+
+Result of world inactivity detection/cleanup.
+
+- `childSessionId`: Long, required.
+- `status`: WorldInactivityStatus, required.
+- `closedWorldState`: boolean, required.
+- `resolvedPendingProposalAsIgnored`: boolean, required.
+- `occurredAt`: timestamp/string following existing backend timestamp pattern, required.
+
+### WorldInactivityStatus
+
+- `ACTIVE`: World state is still active.
+- `INACTIVE_CLOSED`: World state was closed due to inactivity.
+- `NO_WORLD_STATE`: Nothing to close.
+
+### Rules
+
+- `WORLD_HEARTBEAT` updates `WorldState.lastWorldActivityAt` and `ChildSession.lastActivityAt`.
+- `WORLD_HEARTBEAT` must not update or abandon `GameState`.
+- Inactivity threshold must be more permissive than game inactivity.
+- Pending proposal is resolved as `IGNORED` on world inactivity, but this is not child-facing.
+
 ## Tasks
 
 ### Heartbeat
@@ -18,13 +52,15 @@ waiting_for:
 - [ ] Update `WorldState.lastWorldActivityAt`.
 - [ ] Update `ChildSession.lastActivityAt` through the session heartbeat/activity use case.
 - [ ] Keep `WORLD_HEARTBEAT` separate from `GAME_HEARTBEAT`.
+- [ ] Return `WorldHeartbeatResult` with the properties listed in `Model Properties`.
 
 ### Inactivity
 - [ ] Add configurable world inactivity threshold, more permissive than game inactivity.
 - [ ] Detect inactive world states.
 - [ ] Close inactive world state in memory.
 - [ ] Resolve pending proposal as `IGNORED` on inactivity.
-- [ ] Return or emit a safe system inactivity result for the frontend.
+- [ ] Return `WorldInactivityResult` with the properties listed in `Model Properties`.
+- [ ] Apply the rules listed in `Model Properties`.
 
 ### Tests
 - [ ] Unit test heartbeat updates world timestamp.

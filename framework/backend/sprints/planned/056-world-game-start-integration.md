@@ -11,19 +11,55 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## Model Properties
+
+### WorldGameStartResult
+
+Safe result returned by `world` after trying to start a game from a discovery element.
+
+- `childSessionId`: Long, required.
+- `activityId`: Long, required.
+- `gameId`: Long, nullable; present only when game start succeeds or existing game is reused.
+- `status`: WorldGameStartStatus, required.
+- `safeFallbackDestination`: WorldDestination, nullable, used when the walk should continue without game.
+
+### WorldGameStartStatus
+
+- `STARTED`: Game was started successfully.
+- `EXISTING_GAME_ACTIVE`: A game already exists and frontend should transition/sync safely.
+- `FALLBACK_DESTINATION`: Game could not start, but world built a safe non-technical fallback.
+- `BLOCKED`: Profile/session is blocked; child-facing payload must still be safe and non-technical.
+
+### Internal Rejection Reasons
+
+These can exist internally for logs/tests but must not be sent as child-facing labels.
+
+- `PROFILE_BLOCKED`
+- `ACTIVITY_INACTIVE`
+- `ACTIVE_GAME_EXISTS`
+- `NO_ALTERNATIVE_ACTIVITY`
+- `ENGINE_UNAVAILABLE`
+
+### Rules
+
+- `world` decides `activityId`, not `difficultyLevelId`.
+- Technical rejection reasons are internal only.
+- If game start is rejected, the child should see a continued walk or safe transition, not an error.
+
 ## Tasks
 
 ### Game Start
 - [ ] Add world use case to start the activity tied to the current pending proposal.
 - [ ] Call `GameOrchestrator.startGame(childSessionId, activityId)` or the real internal equivalent.
 - [ ] Resolve proposal as `STARTED` only when game start succeeds or is accepted by the game shell.
-- [ ] Return a world-safe result that lets frontend transition to game.
+- [ ] Return `WorldGameStartResult` with the properties listed in `Model Properties`.
 
 ### Rejection Handling
 - [ ] Handle blocked profile rejection without showing technical error to child.
 - [ ] Handle inactive activity rejection by selecting an alternative compatible activity when possible.
 - [ ] Handle already-active-game rejection with a safe no-op or transition to existing game state.
 - [ ] If no alternative exists, continue with decorative/narrative destination.
+- [ ] Apply the rules listed in `Model Properties`.
 
 ### Tests
 - [ ] Unit test successful game start resolves proposal as `STARTED`.

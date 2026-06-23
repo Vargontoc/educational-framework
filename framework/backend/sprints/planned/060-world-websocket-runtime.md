@@ -11,6 +11,84 @@ closed_at:
 blocked_by:
 waiting_for:
 
+## DTO Properties
+
+### WorldHeartbeatRequest
+
+- `type`: String, required.
+- `timestamp`: timestamp/string, nullable.
+
+### WorldDiscoveryInteractedRequest
+
+- `type`: String, required.
+- `proposalRuntimeId`: String or Long, required.
+- `discoveryElementId`: Long, nullable if `proposalRuntimeId` is enough to resolve the element.
+
+### WorldStateSyncResponse
+
+- `event`: String, required, value `WORLD_STATE_SYNC`.
+- `sessionId`: Long, required.
+- `payload`: WorldStateSyncPayload, required.
+
+### WorldStateSyncPayload
+
+- `status`: String, required.
+- `destination`: WorldDestinationPayload, nullable.
+
+### WorldDestinationPayload
+
+- `destinationId`: String or Long, required.
+- `host`: WorldHostPayload, required.
+- `narrativeSituation`: WorldNarrativeSituationPayload, required.
+- `biome`: String or enum, required.
+- `discoveryElements`: List<WorldDiscoveryElementPayload>, required, can be empty.
+
+### WorldHostPayload
+
+- `id`: Long, required.
+- `code`: String, required.
+- `displayName`: String, required.
+- `visualAssetKey`: String, nullable.
+
+### WorldNarrativeSituationPayload
+
+- `id`: Long, required.
+- `code`: String, required.
+- `displayText`: String, nullable.
+- `tone`: String or enum, nullable.
+
+### WorldDiscoveryElementPayload
+
+- `proposalRuntimeId`: String or Long, required.
+- `discoveryElementId`: Long, required.
+- `code`: String, required.
+- `displayName`: String, required.
+- `elementType`: String or enum, required.
+- `visualAssetKey`: String, nullable.
+- `interactionCueType`: String or enum, nullable.
+- `hasActivity`: boolean, required.
+
+### WorldActivityStartedResponse
+
+- `event`: String, required, value `WORLD_ACTIVITY_STARTED`.
+- `sessionId`: Long, required.
+- `payload.gameId`: Long, required.
+- `payload.activityId`: Long, required.
+- `payload.transition`: String, required, child-safe value such as `START_GAME`.
+
+### Safe Error Payload
+
+- `event`: String, required, safe error event according to existing WebSocket conventions.
+- `sessionId`: Long, required.
+- `payload.code`: String, required, child-safe/general code.
+- `payload.message`: String, nullable, child-safe if rendered.
+
+### Mapping Rules
+
+- Never map internal `IGNORED`, `ABANDONED`, engagement scores, LearningPath progress, or technical rejection reasons into child-facing DTOs.
+- Convert domain models into DTOs explicitly; do not serialize domain objects directly.
+- Keep world heartbeat separate from game heartbeat in request routing.
+
 ## Tasks
 
 ### WebSocket Handling
@@ -20,11 +98,13 @@ waiting_for:
 - [ ] Send destination-ready payloads using the contract from Sprint 059.
 - [ ] Send safe activity-start result when world starts a game.
 - [ ] Send safe system inactivity event when world closes due to inactivity.
+- [ ] Use DTOs with the properties listed in `DTO Properties`.
 
 ### Error Handling
 - [ ] Return safe errors for missing world state.
 - [ ] Return safe errors for invalid discovery interaction.
 - [ ] Do not expose technical rejection reasons to child-facing payloads.
+- [ ] Apply the mapping rules listed in `DTO Properties`.
 
 ### Tests
 - [ ] Unit test world heartbeat WebSocket handling.
