@@ -1,8 +1,8 @@
-# Sprint 054 - backend
+# Sprint 055 - backend
 # -----------------------------------------------
 
 ## Goal
-Implement world destination selection using tracking topic selection, content catalog data, and temporary engine priority adjustment.
+Implement activity proposal tracking in `world`, including `STARTED`, `IGNORED`, and automatic cleanup of pending proposals.
 
 ## Status
 status: planned
@@ -13,76 +13,71 @@ waiting_for:
 
 ## Model Properties
 
-### WorldDestinationSelectionResult
+### WorldActivityProposalResult
 
-Application result returned by destination selection.
+Application result when `world` registers or updates a proposal.
 
 - `childSessionId`: Long, required.
-- `topicId`: Long, nullable if tracking cannot recommend a topic.
-- `destination`: WorldDestination, required.
-- `selectedActivity`: SelectedWorldActivity, nullable when destination is decorative/narrative only.
-- `priorityAdjustmentApplied`: boolean, required.
-
-### SelectedWorldActivity
-
-Internal activity choice made by `world`.
-
+- `proposalRuntimeId`: String or Long, required.
+- `trackingProposalId`: Long, required.
 - `activityId`: Long, required.
-- `engineType`: String or enum, required.
 - `topicId`: Long, nullable.
-- `source`: String or enum, required. Suggested values: `TOPIC_RECOMMENDATION`, `FALLBACK`.
+- `status`: String or enum, required. Suggested values: `PENDING`, `STARTED`, `IGNORED`.
 
-### Destination Selection Rules
+### WorldProposalResolutionResult
 
-- `world` calls tracking to select topic; it does not classify topics itself.
-- `world` queries content for compatible active activities; it does not read content persistence directly.
-- If no activity is available, return a destination with `selectedActivity = null`.
-- Do not include LearningPath progress, locks, completion status, diagnostic labels, or engagement labels.
+Application result when `world` resolves a pending proposal.
+
+- `trackingProposalId`: Long, required.
+- `outcome`: ActivityProposalOutcome, required: `STARTED`, `IGNORED`.
+- `resolvedAt`: timestamp/string following existing backend timestamp pattern, required.
+
+### Child-Facing Rule
+
+- `status = IGNORED` and `outcome = IGNORED` are internal/tracking data only.
+- Do not send `IGNORED`, `ignored`, `abandoned`, `low engagement`, or diagnostic labels in child-facing payloads.
 
 ## Tasks
 
-### Selection Flow
-- [ ] Add `WorldOrchestrator` or selection service skeleton.
-- [ ] Call tracking `TopicSelectionService` to select a recommended `topicId`.
-- [ ] Query content for active activities compatible with that topic.
-- [ ] Apply temporary engine priority adjustment from world engagement logic.
-- [ ] Select one activity when available.
-- [ ] Select host, narrative situation, and discovery element from content catalog.
-- [ ] Build `WorldDestinationSelectionResult` with the properties listed in `Model Properties`.
-- [ ] Build `WorldDestination` without exposing progress/diagnostic fields.
-- [ ] Apply the destination selection rules listed in `Model Properties`.
-
-### Fallbacks
-- [ ] If no compatible activity exists, build a decorative/narrative destination with no playable element.
-- [ ] If a selected activity is later rejected by game, leave fallback handling for Sprint 056.
+### Proposal Lifecycle
+- [ ] Register an activity proposal through tracking when a discovery element with activity is presented.
+- [ ] Store the pending proposal id in `WorldState`.
+- [ ] Resolve proposal as `STARTED` when the child chooses the discovery element and game start is attempted.
+- [ ] Resolve proposal as `IGNORED` when the interaction window ends without child interaction.
+- [ ] Resolve existing pending proposal as `IGNORED` before creating a new proposal.
+- [ ] Resolve pending proposal as `IGNORED` when the world state closes.
+- [ ] Return `WorldActivityProposalResult` and `WorldProposalResolutionResult` with the properties listed in `Model Properties`.
+- [ ] Apply the child-facing rule listed in `Model Properties`.
 
 ### Tests
-- [ ] Unit test topic selection is called.
-- [ ] Unit test compatible active activity is selected.
-- [ ] Unit test temporary priority adjustment changes activity choice softly.
-- [ ] Unit test no compatible activity returns destination without game proposal.
-- [ ] Unit test destination payload has no child-facing diagnostic labels.
+- [ ] Unit test proposal is registered when destination contains activity.
+- [ ] Unit test proposal resolves as `STARTED`.
+- [ ] Unit test proposal resolves as `IGNORED`.
+- [ ] Unit test creating a new proposal closes previous pending proposal as `IGNORED`.
+- [ ] Unit test closing world state resolves pending proposal as `IGNORED`.
 
 ## Manual Tests
-- Optional: run a dev/test fixture that builds a destination for one child session.
-- Confirm logs or returned data include host, situation, discovery element, and optional activity.
+- Simulate a destination with a discovery element and no interaction.
+- Confirm tracking receives `IGNORED`.
+- Simulate a child interaction.
+- Confirm tracking receives `STARTED`.
 
 ## Risks
-- Reimplementing topic selection in world would violate tracking ownership.
-- Returning hidden progress fields to frontend would break FEAT-011.
+- Pending proposals can remain unresolved if session/system events are missed.
+- Labeling ignored proposals in child-facing payload would violate FEAT-008.
 
 ## Dependencies
-- Sprint 046 completed.
-- Sprint 028 completed (`TopicSelectionService`).
-- Sprint 053 completed.
+- Sprint 047 completed.
+- Sprint 052 completed.
+- Sprint 054 completed.
 
 ## Agent Instruction
-- World chooses activity and narrative context; tracking chooses topic.
-- Do not expose LearningPath progress to the child-facing payload.
-- Do not call game yet in this sprint.
+- Do not expose `IGNORED` to the child-facing frontend payload.
+- Keep v1 cleanup simple and document any hardening warning.
+- Do not start games yet except as a mocked boundary in tests.
 
 ## Notes
-This sprint makes world capable of deciding the next narrative destination without starting games.
+This sprint captures a common child behavior: seeing something optional and not interacting with it.
 
 ## Review
 
