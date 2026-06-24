@@ -12,6 +12,11 @@ import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSession;
+import es.vargontoc.educational.framework.world.model.WorldHeartbeatResult;
+import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
+import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
+import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
+import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
@@ -60,6 +65,15 @@ class GameWebSocketHandlerTest {
     private GameStateRegistry gameStateRegistry;
 
     @Mock
+    private WorldHeartbeatUseCase worldHeartbeatUseCase;
+
+    @Mock
+    private WorldGameStartUseCase worldGameStartUseCase;
+
+    @Mock
+    private es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry worldStateRegistry;
+
+    @Mock
     private WebSocketSession session;
 
     private GameWebSocketHandler handler;
@@ -67,7 +81,8 @@ class GameWebSocketHandlerTest {
     @BeforeEach
     void setUp() {
         handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarLifecycleService,
-            gameOrchestrator, gameStateRegistry);
+            gameOrchestrator, gameStateRegistry,
+            worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
     }

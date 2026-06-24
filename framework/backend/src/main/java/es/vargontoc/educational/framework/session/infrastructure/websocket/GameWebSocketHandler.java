@@ -13,6 +13,18 @@ import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
+import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldActivityStartedPayload;
+import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldDestinationPayload;
+import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldDiscoveryElementPayload;
+import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldHostPayload;
+import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldNarrativeSituationPayload;
+import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldStateSyncPayload;
+import es.vargontoc.educational.framework.world.model.WorldDestination;
+import es.vargontoc.educational.framework.world.model.WorldDiscoveryProposal;
+import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
+import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
+import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
+import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import jakarta.annotation.PreDestroy;
@@ -27,6 +39,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -45,6 +58,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final AvatarLifecycleService avatarLifecycleService;
     private final GameOrchestrator gameOrchestrator;
     private final GameStateRegistry gameStateRegistry;
+    private final WorldHeartbeatUseCase worldHeartbeatUseCase;
+    private final WorldGameStartUseCase worldGameStartUseCase;
+    private final WorldStateRegistry worldStateRegistry;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -57,12 +73,18 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     public GameWebSocketHandler(ChildSessionUseCase childSessionUseCase, ObjectMapper objectMapper,
                              AvatarLifecycleService avatarLifecycleService,
                              GameOrchestrator gameOrchestrator,
-                             GameStateRegistry gameStateRegistry) {
+                             GameStateRegistry gameStateRegistry,
+                             WorldHeartbeatUseCase worldHeartbeatUseCase,
+                             WorldGameStartUseCase worldGameStartUseCase,
+                             WorldStateRegistry worldStateRegistry) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarLifecycleService = avatarLifecycleService;
         this.gameOrchestrator = gameOrchestrator;
         this.gameStateRegistry = gameStateRegistry;
+        this.worldHeartbeatUseCase = worldHeartbeatUseCase;
+        this.worldGameStartUseCase = worldGameStartUseCase;
+        this.worldStateRegistry = worldStateRegistry;
     }
 
     @Override
@@ -124,6 +146,22 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         return;
                     }
                     handleGameAction(session, getChildSessionId(session), root);
+                }
+                case "world_heartbeat" -> {
+                    if (!isAuthenticated(session)) {
+                        LOGGER.warn("world_heartbeat received before auth from session {}", session.getId());
+                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+                        return;
+                    }
+                    handleWorldHeartbeat(session, getChildSessionId(session));
+                }
+                case "world_discovery_interacted" -> {
+                    if (!isAuthenticated(session)) {
+                        LOGGER.warn("world_discovery_interacted received before auth from session {}", session.getId());
+                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+                        return;
+                    }
+                    handleWorldDiscoveryInteracted(session, getChildSessionId(session), root);
                 }
                 default -> LOGGER.warn("Unknown game message type: {} from session={}", type, session.getId());
             }
@@ -494,6 +532,206 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             payload.put("completedAt", state.getCompletedAt());
         }
         return payload;
+    }
+
+    private void handleWorldHeartbeat(WebSocketSession session, Long childSessionId) {
+        try {
+            var heartbeatResult = worldHeartbeatUseCase.recordHeartbeat(childSessionId);
+            String status = heartbeatResult.getStatus().name();
+            WorldDestinationPayload destinationPayload = null;
+            if (heartbeatResult.getStatus() == WorldInactivityStatus.ACTIVE) {
+                var worldState = worldStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+                if (worldState != null && worldState.getCurrentDestination() != null) {
+                    destinationPayload = toDestinationPayload(worldState.getCurrentDestination());
+                }
+            }
+            WorldStateSyncPayload syncPayload = new WorldStateSyncPayload(status, destinationPayload);
+            SessionEvent event = SessionEvent.of(SessionEventType.WORLD_STATE_SYNC, childSessionId, toPayload(syncPayload));
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+        } catch (Exception exception) {
+            LOGGER.error("World heartbeat failed for childSessionId={}: {}", childSessionId, exception.getMessage());
+        }
+    }
+
+    private void handleWorldDiscoveryInteracted(WebSocketSession session, Long childSessionId, JsonNode root) {
+        try {
+            String proposalRuntimeId = root.has("proposalRuntimeId") && !root.get("proposalRuntimeId").isNull()
+                ? root.get("proposalRuntimeId").asText() : null;
+            Long discoveryElementId = root.has("discoveryElementId") && !root.get("discoveryElementId").isNull()
+                ? root.get("discoveryElementId").asLong() : null;
+
+            if (proposalRuntimeId == null || discoveryElementId == null) {
+                sendWorldError(childSessionId, "INVALID_REQUEST", null);
+                return;
+            }
+
+            var worldState = worldStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+            if (worldState == null) {
+                sendWorldError(childSessionId, "NO_WORLD_STATE", null);
+                return;
+            }
+
+            var currentDestination = worldState.getCurrentDestination();
+            if (currentDestination == null) {
+                sendWorldError(childSessionId, "NO_DESTINATION", null);
+                return;
+            }
+
+            Long activityId = findActivityIdByProposal(currentDestination, proposalRuntimeId, discoveryElementId);
+            if (activityId == null) {
+                sendWorldError(childSessionId, "ELEMENT_NOT_FOUND", null);
+                return;
+            }
+
+            var startResult = worldGameStartUseCase.startGameFromProposal(childSessionId, activityId);
+
+            if (startResult.getStatus() == es.vargontoc.educational.framework.world.model.WorldGameStartStatus.STARTED) {
+                WorldActivityStartedPayload activityPayload = new WorldActivityStartedPayload(
+                    startResult.getGameId(),
+                    startResult.getActivityId(),
+                    "START_GAME"
+                );
+                Map<String, Object> payload = new java.util.HashMap<>();
+                payload.put("gameId", activityPayload.gameId());
+                payload.put("activityId", activityPayload.activityId());
+                payload.put("transition", activityPayload.transition());
+                SessionEvent event = SessionEvent.of(SessionEventType.WORLD_ACTIVITY_STARTED, childSessionId, payload);
+                sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+            } else {
+                sendWorldError(childSessionId, "GAME_START_FAILED", null);
+            }
+        } catch (Exception exception) {
+            LOGGER.error("World discovery interaction failed for childSessionId={}: {}", childSessionId, exception.getMessage());
+            sendWorldError(childSessionId, "INTERNAL_ERROR", null);
+        }
+    }
+
+    private Long findActivityIdByProposal(WorldDestination destination, String proposalRuntimeId, Long discoveryElementId) {
+        if (destination.getDiscoveryProposals() == null) {
+            return null;
+        }
+        for (WorldDiscoveryProposal proposal : destination.getDiscoveryProposals()) {
+            if (proposal.getProposalRuntimeId() != null && proposal.getProposalRuntimeId().equals(proposalRuntimeId)) {
+                return proposal.getActivityId();
+            }
+        }
+        return null;
+    }
+
+    private WorldDestinationPayload toDestinationPayload(WorldDestination destination) {
+        WorldHostPayload hostPayload = new WorldHostPayload(
+            destination.getHostId(),
+            destination.getHostCode(),
+            destination.getHostDisplayName(),
+            null
+        );
+        WorldNarrativeSituationPayload situationPayload = new WorldNarrativeSituationPayload(
+            destination.getNarrativeSituationId(),
+            destination.getNarrativeSituationCode(),
+            destination.getDisplayText(),
+            null
+        );
+        List<WorldDiscoveryElementPayload> elementPayloads = destination.getDiscoveryProposals() != null
+            ? destination.getDiscoveryProposals().stream()
+                .map(this::toDiscoveryElementPayload)
+                .toList()
+            : List.of();
+        return new WorldDestinationPayload(
+            destination.getDestinationId(),
+            hostPayload,
+            situationPayload,
+            destination.getBiome(),
+            elementPayloads
+        );
+    }
+
+    private WorldDiscoveryElementPayload toDiscoveryElementPayload(WorldDiscoveryProposal proposal) {
+        return new WorldDiscoveryElementPayload(
+            proposal.getProposalRuntimeId(),
+            proposal.getDiscoveryElementId(),
+            proposal.getDiscoveryElementCode(),
+            proposal.getDisplayName(),
+            proposal.getElementType(),
+            proposal.getVisualAssetKey(),
+            proposal.getInteractionCueType(),
+            proposal.getActivityId() != null
+        );
+    }
+
+    private Map<String, Object> toPayload(WorldStateSyncPayload payload) {
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("status", payload.status());
+        if (payload.destination() != null) {
+            result.put("destination", toPayload(payload.destination()));
+        }
+        return result;
+    }
+
+    private Map<String, Object> toPayload(WorldDestinationPayload destination) {
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("destinationId", destination.destinationId());
+        result.put("host", toPayload(destination.host()));
+        result.put("narrativeSituation", toPayload(destination.narrativeSituation()));
+        result.put("biome", destination.biome());
+        result.put("discoveryElements", destination.discoveryElements().stream()
+            .map(this::toPayload)
+            .toList());
+        return result;
+    }
+
+    private Map<String, Object> toPayload(WorldHostPayload host) {
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("id", host.id());
+        result.put("code", host.code());
+        result.put("displayName", host.displayName());
+        if (host.visualAssetKey() != null) {
+            result.put("visualAssetKey", host.visualAssetKey());
+        }
+        return result;
+    }
+
+    private Map<String, Object> toPayload(WorldNarrativeSituationPayload situation) {
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("id", situation.id());
+        result.put("code", situation.code());
+        if (situation.displayText() != null) {
+            result.put("displayText", situation.displayText());
+        }
+        if (situation.tone() != null) {
+            result.put("tone", situation.tone());
+        }
+        return result;
+    }
+
+    private Map<String, Object> toPayload(WorldDiscoveryElementPayload element) {
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("proposalRuntimeId", element.proposalRuntimeId());
+        result.put("discoveryElementId", element.discoveryElementId());
+        result.put("code", element.code());
+        result.put("displayName", element.displayName());
+        result.put("elementType", element.elementType());
+        if (element.visualAssetKey() != null) {
+            result.put("visualAssetKey", element.visualAssetKey());
+        }
+        if (element.interactionCueType() != null) {
+            result.put("interactionCueType", element.interactionCueType());
+        }
+        result.put("hasActivity", element.hasActivity());
+        return result;
+    }
+
+    private void sendWorldError(Long childSessionId, String code, String message) {
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("code", code);
+        if (message != null) {
+            payload.put("message", message);
+        }
+        SessionEvent event = SessionEvent.of(SessionEventType.WORLD_STATE_SYNC, childSessionId, payload);
+        try {
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+        } catch (Exception e) {
+            LOGGER.error("Failed to send world error to childSessionId={}: {}", childSessionId, e.getMessage());
+        }
     }
 
     private boolean isAuthenticated(WebSocketSession session) {

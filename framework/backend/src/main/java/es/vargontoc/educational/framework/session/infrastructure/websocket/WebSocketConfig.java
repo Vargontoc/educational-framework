@@ -7,6 +7,9 @@ import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.stomp.StompSubscribeInterceptor;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.session.ports.in.FamilySessionUseCase;
+import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
+import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
+import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -34,6 +37,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final AvatarLifecycleService avatarLifecycleService;
     private final GameOrchestrator gameOrchestrator;
     private final GameStateRegistry gameStateRegistry;
+    private final WorldHeartbeatUseCase worldHeartbeatUseCase;
+    private final WorldGameStartUseCase worldGameStartUseCase;
+    private final WorldStateRegistry worldStateRegistry;
 
     public WebSocketConfig(
             FamilySessionUseCase familySessionUseCase,
@@ -42,7 +48,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             StompSubscribeInterceptor stompSubscribeInterceptor,
             AvatarLifecycleService avatarLifecycleService,
             GameOrchestrator gameOrchestrator,
-            GameStateRegistry gameStateRegistry) {
+            GameStateRegistry gameStateRegistry,
+            WorldHeartbeatUseCase worldHeartbeatUseCase,
+            WorldGameStartUseCase worldGameStartUseCase,
+            WorldStateRegistry worldStateRegistry) {
         this.familySessionUseCase = familySessionUseCase;
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
@@ -50,6 +59,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.avatarLifecycleService = avatarLifecycleService;
         this.gameOrchestrator = gameOrchestrator;
         this.gameStateRegistry = gameStateRegistry;
+        this.worldHeartbeatUseCase = worldHeartbeatUseCase;
+        this.worldGameStartUseCase = worldGameStartUseCase;
+        this.worldStateRegistry = worldStateRegistry;
     }
 
     // ── STOMP (parental channel) ──────────────────────────────────────
@@ -102,6 +114,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Bean
     public GameWebSocketHandler gameWebSocketHandler() {
         return new GameWebSocketHandler(childSessionUseCase, objectMapper, avatarLifecycleService,
-            gameOrchestrator, gameStateRegistry);
+            gameOrchestrator, gameStateRegistry,
+            worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry);
     }
 }
