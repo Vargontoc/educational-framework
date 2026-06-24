@@ -1,8 +1,8 @@
-# Sprint 058 - backend
+# Sprint 059 - backend
 # -----------------------------------------------
 
 ## Goal
-Implement `WORLD_HEARTBEAT`, world inactivity tracking, and safe cleanup when the child is exploring without an active game.
+Document World Map WebSocket events and payloads in `docs/contracts/api/websocket.json`.
 
 ## Status
 status: planned
@@ -11,85 +11,111 @@ closed_at:
 blocked_by:
 waiting_for:
 
-## Model Properties
+## Contract Payload Properties
 
-### WorldHeartbeatResult
+### Incoming: WORLD_HEARTBEAT
 
-Result of handling `WORLD_HEARTBEAT`.
+- `type`: String, required, value `world_heartbeat` or existing contract naming convention.
+- `timestamp`: timestamp/string, optional client timestamp.
 
-- `childSessionId`: Long, required.
-- `worldStateFound`: boolean, required.
-- `lastWorldActivityAt`: timestamp/string following existing backend timestamp pattern, nullable when no state exists.
-- `childSessionActivityUpdated`: boolean, required.
+### Incoming: WORLD_DISCOVERY_INTERACTED
 
-### WorldInactivityResult
+- `type`: String, required, value `world_discovery_interacted` or existing contract naming convention.
+- `proposalRuntimeId`: String or Long, required.
+- `discoveryElementId`: Long, required if frontend has it.
 
-Result of world inactivity detection/cleanup.
+### Outgoing: WORLD_STATE_SYNC
 
-- `childSessionId`: Long, required.
-- `status`: WorldInactivityStatus, required.
-- `closedWorldState`: boolean, required.
-- `resolvedPendingProposalAsIgnored`: boolean, required.
-- `occurredAt`: timestamp/string following existing backend timestamp pattern, required.
+- `event`: String, required, value `WORLD_STATE_SYNC`.
+- `sessionId`: Long, required, following existing child WebSocket convention.
+- `payload.status`: String, required, safe world runtime status.
+- `payload.destination`: World destination payload, nullable when no active world state exists.
 
-### WorldInactivityStatus
+### Outgoing: WORLD_DESTINATION_READY
 
-- `ACTIVE`: World state is still active.
-- `INACTIVE_CLOSED`: World state was closed due to inactivity.
-- `NO_WORLD_STATE`: Nothing to close.
+- `event`: String, required, value `WORLD_DESTINATION_READY`.
+- `sessionId`: Long, required.
+- `payload.destinationId`: String or Long, required.
+- `payload.host`: object, required, with `id`, `code`, `displayName`, `visualAssetKey?`.
+- `payload.narrativeSituation`: object, required, with `id`, `code`, `displayText?`, `tone?`.
+- `payload.biome`: String or enum, required.
+- `payload.discoveryElements`: array, required, can be empty.
 
-### Rules
+### Outgoing Discovery Element Payload
 
-- `WORLD_HEARTBEAT` updates `WorldState.lastWorldActivityAt` and `ChildSession.lastActivityAt`.
-- `WORLD_HEARTBEAT` must not update or abandon `GameState`.
-- Inactivity threshold must be more permissive than game inactivity.
-- Pending proposal is resolved as `IGNORED` on world inactivity, but this is not child-facing.
+- `proposalRuntimeId`: String or Long, required.
+- `discoveryElementId`: Long, required.
+- `code`: String, required.
+- `displayName`: String, required.
+- `elementType`: String or enum, required.
+- `visualAssetKey`: String, nullable.
+- `interactionCueType`: String or enum, nullable.
+- `hasActivity`: boolean, required.
+
+### Outgoing: WORLD_ACTIVITY_STARTED
+
+- `event`: String, required, value `WORLD_ACTIVITY_STARTED`.
+- `sessionId`: Long, required.
+- `payload.gameId`: Long, required.
+- `payload.activityId`: Long, required.
+- `payload.transition`: String, required, child-safe value such as `START_GAME`.
+
+### Forbidden Child-Facing Fields
+
+The WebSocket contract must not expose these fields in child-facing payloads:
+
+- `ignored`
+- `abandoned`
+- `lowEngagement`
+- `engagementScore`
+- `diagnosis`
+- `learningPathProgress`
+- `completedStepIds`
+- raw technical rejection reasons such as `ACTIVITY_INACTIVE` or `PROFILE_BLOCKED`
 
 ## Tasks
 
-### Heartbeat
-- [ ] Add world heartbeat use case by `childSessionId`.
-- [ ] Update `WorldState.lastWorldActivityAt`.
-- [ ] Update `ChildSession.lastActivityAt` through the session heartbeat/activity use case.
-- [ ] Keep `WORLD_HEARTBEAT` separate from `GAME_HEARTBEAT`.
-- [ ] Return `WorldHeartbeatResult` with the properties listed in `Model Properties`.
+### Contract Events
+- [ ] Define client-to-backend `WORLD_HEARTBEAT`.
+- [ ] Define client-to-backend discovery interaction event, such as `WORLD_DISCOVERY_INTERACTED`.
+- [ ] Define backend-to-client `WORLD_STATE_SYNC`.
+- [ ] Define backend-to-client `WORLD_DESTINATION_READY`.
+- [ ] Define backend-to-client `WORLD_DISCOVERY_PROPOSED` if needed by frontend.
+- [ ] Define backend-to-client `WORLD_ACTIVITY_STARTED` or transition result if game launch succeeds.
+- [ ] Reuse existing system events where appropriate, especially `SYSTEM_INACTIVITY`.
 
-### Inactivity
-- [ ] Add configurable world inactivity threshold, more permissive than game inactivity.
-- [ ] Detect inactive world states.
-- [ ] Close inactive world state in memory.
-- [ ] Resolve pending proposal as `IGNORED` on inactivity.
-- [ ] Return `WorldInactivityResult` with the properties listed in `Model Properties`.
-- [ ] Apply the rules listed in `Model Properties`.
+### Payload Rules
+- [ ] Include `childSessionId` or session correlation according to existing WebSocket convention.
+- [ ] Include host/situation/discovery metadata needed by frontend.
+- [ ] Exclude hidden progress, diagnostics, `IGNORED`, `ABANDONED`, and engagement labels from child-facing payloads.
+- [ ] Document that visual signal remains primary and avatar/audio is optional reinforcement.
+- [ ] Document payloads using the properties listed in `Contract Payload Properties`.
+- [ ] Verify forbidden child-facing fields are absent from all world payloads.
 
 ### Tests
-- [ ] Unit test heartbeat updates world timestamp.
-- [ ] Unit test heartbeat calls session activity use case.
-- [ ] Unit test world inactivity closes state.
-- [ ] Unit test pending proposal resolves as `IGNORED` on inactivity.
-- [ ] Unit test narrative pauses do not trigger inactivity with default threshold.
+- [ ] Validate `websocket.json` is valid JSON.
+- [ ] Add DTO mapping tests if DTOs are introduced in this sprint.
 
 ## Manual Tests
-- Start a world state without active game.
-- Send `WORLD_HEARTBEAT` and verify child session remains active.
-- Stop heartbeat and verify world state closes after threshold.
+- Inspect `docs/contracts/api/websocket.json` with frontend expectations.
+- Confirm the child-facing contract contains no diagnostic fields.
 
 ## Risks
-- If session heartbeat is not updated, the child session can expire while the child is only exploring the map.
-- Threshold too strict can punish normal narrative pauses.
+- Contract drift can block FEAT-011 frontend implementation.
+- Exposing tracking outcomes to the child frontend would violate FEAT-008.
 
 ## Dependencies
-- Sprint 034 completed.
-- Sprint 052 completed.
+- Sprint 054 completed.
 - Sprint 055 completed.
+- Sprint 058 recommended.
 
 ## Agent Instruction
-- Do not reuse `GAME_HEARTBEAT` for world.
-- Do not abandon a `GameState` from world heartbeat logic.
-- Keep thresholds configurable through world settings/config.
+- This is a contract sprint; keep runtime changes minimal.
+- Update only `docs/contracts/api/websocket.json` if no code DTOs are required yet.
+- Keep event names stable and consistent with existing game WebSocket conventions.
 
 ## Notes
-The walk includes legitimate pauses; inactivity must be forgiving for ages 3-4.
+Frontend must not infer progression or engagement from hidden backend data.
 
 ## Review
 

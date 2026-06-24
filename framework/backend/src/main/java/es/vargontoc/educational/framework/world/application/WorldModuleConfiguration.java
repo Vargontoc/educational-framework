@@ -3,6 +3,7 @@ package es.vargontoc.educational.framework.world.application;
 import es.vargontoc.educational.framework.content.ports.in.WorldCatalogUseCase;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
+import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityProposalUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterLearningPathStepProgressUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.ResolveActivityProposalUseCase;
@@ -10,14 +11,17 @@ import es.vargontoc.educational.framework.tracking.ports.in.SelectTopicsForDiffi
 import es.vargontoc.educational.framework.world.ports.in.EngagementThresholdConfigUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldActivityProposalUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
+import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldNarrativeCompletionUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.ports.in.WorldProposalResolutionUseCase;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.world.service.EngagementThresholdConfigService;
 import es.vargontoc.educational.framework.world.service.WorldEngagementEvaluator;
-import es.vargontoc.educational.framework.world.service.WorldGameStartService;
 import es.vargontoc.educational.framework.world.service.WorldGameCompletionListener;
+import es.vargontoc.educational.framework.world.service.WorldGameStartService;
+import es.vargontoc.educational.framework.world.service.WorldHeartbeatService;
+import es.vargontoc.educational.framework.world.service.WorldInactivityConfig;
 import es.vargontoc.educational.framework.world.service.WorldNarrativeCompletionService;
 import es.vargontoc.educational.framework.world.service.WorldOrchestratorService;
 import es.vargontoc.educational.framework.world.service.WorldProposalService;
@@ -35,6 +39,11 @@ class WorldModuleConfiguration {
     @Bean
     WorldEngagementEvaluator worldEngagementEvaluator() {
         return new WorldEngagementEvaluator();
+    }
+
+    @Bean
+    WorldInactivityConfig worldInactivityConfig() {
+        return new WorldInactivityConfig();
     }
 
     @Bean
@@ -72,5 +81,13 @@ class WorldModuleConfiguration {
     @Bean
     WorldGameCompletionListener worldGameCompletionListener(WorldStateRegistry worldStateRegistry) {
         return new WorldGameCompletionListener(worldStateRegistry);
+    }
+
+    @Bean
+    WorldHeartbeatUseCase worldHeartbeatUseCase(WorldStateRegistry worldStateRegistry,
+                                                WorldProposalService worldProposalService,
+                                                ChildSessionUseCase childSessionUseCase,
+                                                WorldInactivityConfig inactivityConfig) {
+        return new WorldHeartbeatService(worldStateRegistry, worldProposalService, childSessionUseCase, inactivityConfig);
     }
 }
