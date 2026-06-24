@@ -12,6 +12,7 @@ public class WorldState {
     private WorldDestination currentDestination;
     private List<WorldDiscoveryProposal> visibleDiscoveryElements = new ArrayList<>();
     private Long pendingProposalId;
+    private WorldNarrativeCompletionStatus narrativeCompletionStatus = WorldNarrativeCompletionStatus.NO_PENDING;
     private LocalDateTime lastWorldActivityAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -62,6 +63,14 @@ public class WorldState {
 
     public void setPendingProposalId(Long pendingProposalId) {
         this.pendingProposalId = pendingProposalId;
+    }
+
+    public WorldNarrativeCompletionStatus getNarrativeCompletionStatus() {
+        return narrativeCompletionStatus;
+    }
+
+    public void setNarrativeCompletionStatus(WorldNarrativeCompletionStatus narrativeCompletionStatus) {
+        this.narrativeCompletionStatus = narrativeCompletionStatus;
     }
 
     public LocalDateTime getLastWorldActivityAt() {
