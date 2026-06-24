@@ -98,6 +98,8 @@ function handleGameAvatarEvent(event: GameAvatarEvent) {
       pendingAudioId = null
       doEventGame(capturedEventType, false)
     }, MAX_BINARY_WAIT_MS)
+  } else {
+    doEventGame(event.eventType, false)
   }
 }
 
@@ -156,7 +158,7 @@ function onWsMessage(event: MessageEvent) {
 
 
 
-function doEventGame(eventType: String | null, _hasAudio: boolean) {
+function doEventGame(eventType: string | null, _hasAudio: boolean) {
   const capturedEventType = eventType
   pendingAvatarEventType = null
 
@@ -221,7 +223,7 @@ onUnmounted(() => {
       <p class="game-view__loader-text">{{ t('game.loaderText') }}</p>
     </div>
 
-    <section v-else class="game-view__world" aria-label="World map">
+    <section v-else class="game-view__world">
       <div class="game-view__cloud game-view__cloud--one" aria-hidden="true"></div>
       <div class="game-view__cloud game-view__cloud--two" aria-hidden="true"></div>
 
@@ -236,11 +238,6 @@ onUnmounted(() => {
         <div class="game-view__bush game-view__bush--right"></div>
       </div>
 
-      <div class="game-view__companion" aria-hidden="true">
-        <img src="@/assets/animations/base-idle.png" alt="" class="game-view__companion-img" />
-      </div>
-
-      <div class="game-view__destination" aria-label="Current destination"></div>
     </section>
   </main>
 </template>
@@ -405,41 +402,6 @@ onUnmounted(() => {
   width: 52px;
   height: 38px;
   background: radial-gradient(circle at 40% 40%, #9dc89d, #7aaa7a);
-}
-
-.game-view__companion {
-  position: absolute;
-  left: 18%;
-  bottom: 22%;
-  width: 140px;
-  height: 140px;
-}
-
-.game-view__companion-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.game-view__destination {
-  position: absolute;
-  right: 18%;
-  bottom: 22%;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(43, 91, 224, 0.12) 0%, rgba(43, 91, 224, 0.04) 60%, transparent 100%);
-  box-shadow: 0 0 0 8px rgba(43, 91, 224, 0.06), 0 0 32px 12px rgba(43, 91, 224, 0.08);
-  animation: destination-pulse 3s ease-in-out infinite;
-}
-
-@keyframes destination-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 8px rgba(43, 91, 224, 0.06), 0 0 32px 12px rgba(43, 91, 224, 0.08);
-  }
-  50% {
-    box-shadow: 0 0 0 12px rgba(43, 91, 224, 0.04), 0 0 48px 20px rgba(43, 91, 224, 0.06);
-  }
 }
 
 @keyframes spin {
