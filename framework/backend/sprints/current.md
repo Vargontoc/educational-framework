@@ -1,8 +1,8 @@
-# Sprint 059 - backend
+# Sprint 060 - backend
 # -----------------------------------------------
 
 ## Goal
-Document World Map WebSocket events and payloads in `docs/contracts/api/websocket.json`.
+Connect the world runtime to the existing child WebSocket channel so the frontend can receive destinations and send world interactions.
 
 ## Status
 status: planned
@@ -11,37 +11,53 @@ closed_at:
 blocked_by:
 waiting_for:
 
-## Contract Payload Properties
+## DTO Properties
 
-### Incoming: WORLD_HEARTBEAT
+### WorldHeartbeatRequest
 
-- `type`: String, required, value `world_heartbeat` or existing contract naming convention.
-- `timestamp`: timestamp/string, optional client timestamp.
+- `type`: String, required.
+- `timestamp`: timestamp/string, nullable.
 
-### Incoming: WORLD_DISCOVERY_INTERACTED
+### WorldDiscoveryInteractedRequest
 
-- `type`: String, required, value `world_discovery_interacted` or existing contract naming convention.
+- `type`: String, required.
 - `proposalRuntimeId`: String or Long, required.
-- `discoveryElementId`: Long, required if frontend has it.
+- `discoveryElementId`: Long, nullable if `proposalRuntimeId` is enough to resolve the element.
 
-### Outgoing: WORLD_STATE_SYNC
+### WorldStateSyncResponse
 
 - `event`: String, required, value `WORLD_STATE_SYNC`.
-- `sessionId`: Long, required, following existing child WebSocket convention.
-- `payload.status`: String, required, safe world runtime status.
-- `payload.destination`: World destination payload, nullable when no active world state exists.
-
-### Outgoing: WORLD_DESTINATION_READY
-
-- `event`: String, required, value `WORLD_DESTINATION_READY`.
 - `sessionId`: Long, required.
-- `payload.destinationId`: String or Long, required.
-- `payload.host`: object, required, with `id`, `code`, `displayName`, `visualAssetKey?`.
-- `payload.narrativeSituation`: object, required, with `id`, `code`, `displayText?`, `tone?`.
-- `payload.biome`: String or enum, required.
-- `payload.discoveryElements`: array, required, can be empty.
+- `payload`: WorldStateSyncPayload, required.
 
-### Outgoing Discovery Element Payload
+### WorldStateSyncPayload
+
+- `status`: String, required.
+- `destination`: WorldDestinationPayload, nullable.
+
+### WorldDestinationPayload
+
+- `destinationId`: String or Long, required.
+- `host`: WorldHostPayload, required.
+- `narrativeSituation`: WorldNarrativeSituationPayload, required.
+- `biome`: String or enum, required.
+- `discoveryElements`: List<WorldDiscoveryElementPayload>, required, can be empty.
+
+### WorldHostPayload
+
+- `id`: Long, required.
+- `code`: String, required.
+- `displayName`: String, required.
+- `visualAssetKey`: String, nullable.
+
+### WorldNarrativeSituationPayload
+
+- `id`: Long, required.
+- `code`: String, required.
+- `displayText`: String, nullable.
+- `tone`: String or enum, nullable.
+
+### WorldDiscoveryElementPayload
 
 - `proposalRuntimeId`: String or Long, required.
 - `discoveryElementId`: Long, required.
@@ -52,7 +68,7 @@ waiting_for:
 - `interactionCueType`: String or enum, nullable.
 - `hasActivity`: boolean, required.
 
-### Outgoing: WORLD_ACTIVITY_STARTED
+### WorldActivityStartedResponse
 
 - `event`: String, required, value `WORLD_ACTIVITY_STARTED`.
 - `sessionId`: Long, required.
@@ -60,62 +76,66 @@ waiting_for:
 - `payload.activityId`: Long, required.
 - `payload.transition`: String, required, child-safe value such as `START_GAME`.
 
-### Forbidden Child-Facing Fields
+### Safe Error Payload
 
-The WebSocket contract must not expose these fields in child-facing payloads:
+- `event`: String, required, safe error event according to existing WebSocket conventions.
+- `sessionId`: Long, required.
+- `payload.code`: String, required, child-safe/general code.
+- `payload.message`: String, nullable, child-safe if rendered.
 
-- `ignored`
-- `abandoned`
-- `lowEngagement`
-- `engagementScore`
-- `diagnosis`
-- `learningPathProgress`
-- `completedStepIds`
-- raw technical rejection reasons such as `ACTIVITY_INACTIVE` or `PROFILE_BLOCKED`
+### Mapping Rules
+
+- Never map internal `IGNORED`, `ABANDONED`, engagement scores, LearningPath progress, or technical rejection reasons into child-facing DTOs.
+- Convert domain models into DTOs explicitly; do not serialize domain objects directly.
+- Keep world heartbeat separate from game heartbeat in request routing.
 
 ## Tasks
 
-### Contract Events
-- [ ] Define client-to-backend `WORLD_HEARTBEAT`.
-- [ ] Define client-to-backend discovery interaction event, such as `WORLD_DISCOVERY_INTERACTED`.
-- [ ] Define backend-to-client `WORLD_STATE_SYNC`.
-- [ ] Define backend-to-client `WORLD_DESTINATION_READY`.
-- [ ] Define backend-to-client `WORLD_DISCOVERY_PROPOSED` if needed by frontend.
-- [ ] Define backend-to-client `WORLD_ACTIVITY_STARTED` or transition result if game launch succeeds.
-- [ ] Reuse existing system events where appropriate, especially `SYSTEM_INACTIVITY`.
+### WebSocket Handling
+- [ ] Add handling for `WORLD_HEARTBEAT`.
+- [ ] Add handling for world state sync/start if needed by frontend lifecycle.
+- [ ] Add handling for discovery interaction.
+- [ ] Send destination-ready payloads using the contract from Sprint 059.
+- [ ] Send safe activity-start result when world starts a game.
+- [ ] Send safe system inactivity event when world closes due to inactivity.
+- [ ] Use DTOs with the properties listed in `DTO Properties`.
 
-### Payload Rules
-- [ ] Include `childSessionId` or session correlation according to existing WebSocket convention.
-- [ ] Include host/situation/discovery metadata needed by frontend.
-- [ ] Exclude hidden progress, diagnostics, `IGNORED`, `ABANDONED`, and engagement labels from child-facing payloads.
-- [ ] Document that visual signal remains primary and avatar/audio is optional reinforcement.
-- [ ] Document payloads using the properties listed in `Contract Payload Properties`.
-- [ ] Verify forbidden child-facing fields are absent from all world payloads.
+### Error Handling
+- [ ] Return safe errors for missing world state.
+- [ ] Return safe errors for invalid discovery interaction.
+- [ ] Do not expose technical rejection reasons to child-facing payloads.
+- [ ] Apply the mapping rules listed in `DTO Properties`.
 
 ### Tests
-- [ ] Validate `websocket.json` is valid JSON.
-- [ ] Add DTO mapping tests if DTOs are introduced in this sprint.
+- [ ] Unit test world heartbeat WebSocket handling.
+- [ ] Unit test destination sync WebSocket response.
+- [ ] Unit test discovery interaction starts game or returns safe fallback.
+- [ ] Unit test ignored proposal is not exposed to frontend.
+- [ ] Unit test invalid message returns safe error.
 
 ## Manual Tests
-- Inspect `docs/contracts/api/websocket.json` with frontend expectations.
-- Confirm the child-facing contract contains no diagnostic fields.
+- Open a child session locally.
+- Request/sync world state.
+- Receive one destination payload.
+- Send discovery interaction.
+- Confirm game starts or world continues safely.
 
 ## Risks
-- Contract drift can block FEAT-011 frontend implementation.
-- Exposing tracking outcomes to the child frontend would violate FEAT-008.
+- Existing game WebSocket handler may become too large; keep world handling cohesive.
+- Mixing game and world heartbeat semantics can cause session bugs.
 
 ## Dependencies
-- Sprint 054 completed.
-- Sprint 055 completed.
-- Sprint 058 recommended.
+- Sprint 056 completed.
+- Sprint 058 completed.
+- Sprint 059 completed.
 
 ## Agent Instruction
-- This is a contract sprint; keep runtime changes minimal.
-- Update only `docs/contracts/api/websocket.json` if no code DTOs are required yet.
-- Keep event names stable and consistent with existing game WebSocket conventions.
+- Reuse existing child WebSocket authentication/session conventions.
+- Keep child-facing payloads simple and narrative.
+- Do not add STOMP parental channel behavior here.
 
 ## Notes
-Frontend must not infer progression or engagement from hidden backend data.
+This sprint is the runtime bridge between FEAT-008 backend world and FEAT-011 frontend world map.
 
 ## Review
 

@@ -3,7 +3,7 @@
   "info": {
     "title": "Educational Framework WebSocket Contract",
     "description": "Baseline real-time contract for FEAT-002 session events.",
-    "version": "1.5.0"
+    "version": "1.6.0"
   },
   "channels": {
     "/ws/parent": {
@@ -76,7 +76,10 @@
                 "GAME_ERROR",
                 "GAME_STARTED",
                 "GAME_READY",
-                "GAME_ABANDONED"
+                "GAME_ABANDONED",
+                "WORLD_STATE_SYNC",
+                "WORLD_DESTINATION_READY",
+                "WORLD_ACTIVITY_STARTED"
               ]
             },
             "sessionId": {
@@ -246,6 +249,25 @@
                 "responseTimeMs": { "type": "integer", "format": "int32", "description": "Client-measured response time in milliseconds." }
               },
               "required": ["type", "action"]
+            },
+            {
+              "title": "WorldHeartbeatMessage",
+              "description": "Sent periodically to keep the world state alive while child explores the map. Only valid after successful auth.",
+              "properties": {
+                "type": { "type": "string", "const": "world_heartbeat" },
+                "timestamp": { "type": "string", "format": "date-time", "description": "Optional client timestamp." }
+              },
+              "required": ["type"]
+            },
+            {
+              "title": "WorldDiscoveryInteractedMessage",
+              "description": "Child interacted with a discovery element in the world map.",
+              "properties": {
+                "type": { "type": "string", "const": "world_discovery_interacted" },
+                "proposalRuntimeId": { "type": "string", "description": "Runtime identifier of the proposal." },
+                "discoveryElementId": { "type": "integer", "format": "int64", "description": "Identifier of the discovery element." }
+              },
+              "required": ["type", "proposalRuntimeId", "discoveryElementId"]
             }
           ]
         }
@@ -315,6 +337,18 @@
       "GAME_ABANDONED": {
         "direction": "server_to_client",
         "description": "Game was abandoned. Can be triggered by client (game_abandon message) or by system events (SESSION_EXPIRED, CHILD_EXPELLED, PARENT_BLOCK). Payload contains gameId, status (ABANDONED)."
+      },
+      "WORLD_STATE_SYNC": {
+        "direction": "server_to_client",
+        "description": "World map state synchronization. Sent after world heartbeat, inactivity close, or game completion when world is still active."
+      },
+      "WORLD_DESTINATION_READY": {
+        "direction": "server_to_client",
+        "description": "Child has arrived at a world destination with discovery elements. Contains host, narrative situation, biome, and discovery elements."
+      },
+      "WORLD_ACTIVITY_STARTED": {
+        "direction": "server_to_client",
+        "description": "Child started an activity from the world map. Contains gameId, activityId, and transition type."
       }
     },
     "schemas": {
@@ -355,6 +389,174 @@
           "attempts": { "type": "integer" },
           "startedAt": { "type": "string", "format": "date-time" },
           "completedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WorldStateSyncPayload": {
+        "name": "WorldStateSyncPayload",
+        "description": "Payload for WORLD_STATE_SYNC events. Contains world runtime status and current destination if any.",
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "INACTIVE_CLOSED", "NO_WORLD_STATE"],
+            "description": "Current world state status. ACTIVE: world is open. INACTIVE_CLOSED: world was closed due to inactivity. NO_WORLD_STATE: no world state exists for this session."
+          },
+          "destination": {
+            "$ref": "#/components/schemas/WorldDestinationPayload",
+            "description": "Current world destination. Null when status is CLOSED or NO_STATE.",
+            "nullable": true
+          }
+        }
+      },
+      "WorldDestinationPayload": {
+        "name": "WorldDestinationPayload",
+        "description": "World destination payload for WORLD_DESTINATION_READY events.",
+        "type": "object",
+        "required": ["destinationId", "host", "narrativeSituation", "biome", "discoveryElements"],
+        "properties": {
+          "destinationId": {
+            "type": "string",
+            "description": "Unique identifier for the destination."
+          },
+          "host": {
+            "$ref": "#/components/schemas/WorldHostPayload",
+            "description": "Host information for the destination."
+          },
+          "narrativeSituation": {
+            "$ref": "#/components/schemas/WorldNarrativeSituationPayload",
+            "description": "Narrative situation context for the destination."
+          },
+          "biome": {
+            "type": "string",
+            "description": "Biome identifier for the destination."
+          },
+          "discoveryElements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorldDiscoveryElementPayload"
+            },
+            "description": "Available discovery elements at this destination. Empty array if no proposals are active."
+          }
+        }
+      },
+      "WorldHostPayload": {
+        "name": "WorldHostPayload",
+        "description": "Host information for a world destination.",
+        "type": "object",
+        "required": ["id", "code", "displayName"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Host identifier."
+          },
+          "code": {
+            "type": "string",
+            "description": "Host code identifier."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable host name."
+          },
+          "visualAssetKey": {
+            "type": "string",
+            "description": "Visual asset key for the host. Null if no asset is configured.",
+            "nullable": true
+          }
+        }
+      },
+      "WorldNarrativeSituationPayload": {
+        "name": "WorldNarrativeSituationPayload",
+        "description": "Narrative situation context for a world destination.",
+        "type": "object",
+        "required": ["id", "code"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Situation identifier."
+          },
+          "code": {
+            "type": "string",
+            "description": "Situation code identifier."
+          },
+          "displayText": {
+            "type": "string",
+            "description": "Human-readable narrative text. Null if no display text is configured.",
+            "nullable": true
+          },
+          "tone": {
+            "type": "string",
+            "description": "Narrative tone. Null if no tone is configured.",
+            "nullable": true
+          }
+        }
+      },
+      "WorldDiscoveryElementPayload": {
+        "name": "WorldDiscoveryElementPayload",
+        "description": "Discovery element in a world destination.",
+        "type": "object",
+        "required": ["proposalRuntimeId", "discoveryElementId", "code", "displayName", "elementType", "hasActivity"],
+        "properties": {
+          "proposalRuntimeId": {
+            "type": "string",
+            "description": "Runtime identifier for the proposal."
+          },
+          "discoveryElementId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Discovery element identifier."
+          },
+          "code": {
+            "type": "string",
+            "description": "Discovery element code."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable discovery element name."
+          },
+          "elementType": {
+            "type": "string",
+            "description": "Type of discovery element."
+          },
+          "visualAssetKey": {
+            "type": "string",
+            "description": "Visual asset key for the element. Null if no asset is configured.",
+            "nullable": true
+          },
+          "interactionCueType": {
+            "type": "string",
+            "description": "Type of interaction cue. Null if no cue is configured.",
+            "nullable": true
+          },
+          "hasActivity": {
+            "type": "boolean",
+            "description": "True when this discovery element has an associated activity."
+          }
+        }
+      },
+      "WorldActivityStartedPayload": {
+        "name": "WorldActivityStartedPayload",
+        "description": "Payload for WORLD_ACTIVITY_STARTED events.",
+        "type": "object",
+        "required": ["gameId", "activityId", "transition"],
+        "properties": {
+          "gameId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The created game ID."
+          },
+          "activityId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The activity that was started."
+          },
+          "transition": {
+            "type": "string",
+            "const": "START_GAME",
+            "description": "Transition type indicating the game should start."
+          }
         }
       }
     }
