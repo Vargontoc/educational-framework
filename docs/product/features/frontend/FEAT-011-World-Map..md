@@ -3,11 +3,11 @@
 ## Status
 
 state: proposal
-user_history: World Map as a discovery walk for the child experience
-depends_on: FEAT-007-Game-View-Shell, FEAT-010-Greetings-And-Farwell-Event, docs/contracts/api/openapi.json, docs/contracts/api/websocket.json
+user_history: World Map as a backend-driven discovery walk for the child experience
+depends_on: FEAT-007-Game-View-Shell, FEAT-010-Greetings-And-Farwell-Event, docs/product/features/backend/FEAT-008-World-Module.md, docs/contracts/api/openapi.json, docs/contracts/api/websocket.json
 owned_by: frontend
-scope: frontend implementation of the World Map as a horizontal discovery walk with living world layers, discovery objects, NPC/avatar placeholder support, and animation state preparation. No backend implementation, LearningPath progression logic, activity selection logic, tracking interpretation, or contract changes are included.
-test: GameView renders the World Map without level tiles, locked/completed/available nodes, engine icons, visible progress, or child-facing diagnostics; discovery elements use visual-first organic signaling; avatar/NPC placeholder state can be prepared through frontend animation state without owning narrative or progression logic.
+scope: frontend implementation of the child-facing World Map for ages 3-4 inside GameView, driven by contracted backend world events over `/ws/game`. Includes loading while world state is requested, rendering valid backend world destinations, discovery element visual signaling, `world_heartbeat`, `world_discovery_interacted`, avatar/NPC placeholder support, animation state preparation, and a reusable generic child-safe error screen with backend-provided `GAME_AVATAR_EVENT` audio. No backend implementation, minigame rendering, LearningPath progression logic, activity selection logic, tracking interpretation, REST world integration, local fallback map, or contract changes are included.
+test: GameView does not render a provisional map while loading; valid `WORLD_DESTINATION_READY` or `WORLD_STATE_SYNC` with `ACTIVE` destination renders the World Map; invalid/missing world state shows the generic child-safe error screen and plays backend-provided error audio at most once per error entry; discovery elements from backend show a whitish pulsing visual cue and send `world_discovery_interacted` only when their contracted runtime identifiers are present.
 
 ## Description
 
@@ -16,6 +16,8 @@ The World Map is the child's main screen and acts as the connection point betwee
 It must not feel like a level selector or a traditional progress map.
 
 The child should feel that they are taking a walk with the avatar, discovering world elements and visiting friendly characters. Progress exists internally in the system, but it is presented as a narrative journey. The child never perceives it as progress.
+
+FEAT-008 makes the backend `world` module the source of truth for runtime world decisions: destination, host, narrative situation, biome, discovery elements, activity proposal lifecycle, and engagement interpretation. This frontend feature renders those decisions when they arrive through the contracted Game WebSocket.
 
 ## Design Principles
 
@@ -63,133 +65,105 @@ These behaviors can come from many factors outside the content, such as distract
 
 Usage information is presented to the parent as descriptive observation, never as diagnosis. Interpretation belongs to the adult, not to the system.
 
-## General Structure
+## Contract Alignment
 
-### Current Destination
+### REST API
 
-The walk always has a visible destination: a host character. The destination gives narrative context to the route and is the child's main emotional reference.
+`docs/contracts/api/openapi.json` does not define a child-facing World Map REST endpoint.
 
-Children remember characters better than places. Hosts are the memory anchor of the world.
+Frontend must not use `/api/v1/dev/content/*` endpoints to render the child World Map. Those endpoints are development/content administration APIs, not the runtime child experience.
 
-In v1, while final assets do not exist, the host or NPC can be represented through a visual placeholder. The feature does not require final animations or Lottie assets to be implementable, but the visual structure must allow the placeholder to be replaced by the final character without redesigning the screen.
+### Game WebSocket
 
-### Basic Flow
+World Map runtime integration uses `/ws/game` from `docs/contracts/api/websocket.json`.
 
-```text
-Start walk
-      |
-Avatar introduces destination with host name
-      |
-Horizontal scroll through the scenery
-      |
-World elements: decorative, simple interactive, discovery
-      |
-Arrival at host character
-      |
-Narrative microinteraction with host
-      |
-Soft celebration
-      |
-Narrative pause: 2-3 seconds
-      |
-Avatar proposes new destination and automatic transition starts
-```
+The frontend sends:
 
-### Destination Transition
+- `auth` with `childSessionId`, after opening `/ws/game`.
+- `world_heartbeat`, only while world state is active and no minigame is active.
+- `world_discovery_interacted`, only for backend-provided discovery elements with valid `proposalRuntimeId` and `discoveryElementId`.
 
-The transition is automatic. After the arrival celebration finishes, the avatar makes a continuity comment and the scroll starts toward the next destination without child intervention.
+The frontend receives and handles:
 
-Before starting, there is a 2-3 second pause. Its purpose is to give the child time to assimilate the close of the previous destination before starting the next one. It is not a loading screen and does not require interaction.
+- `AUTH_ACK`.
+- `GAME_AVATAR_EVENT`.
+- `WORLD_DESTINATION_READY`.
+- `WORLD_STATE_SYNC`.
+- `WORLD_ACTIVITY_STARTED`.
+- Existing terminal session events: `SESSION_EXPIRED`, `SESSION_INVALIDATED`, `CHILD_EXPELLED`, and `PARENT_BLOCK`.
 
-### Walk Pace Control
+The frontend must use the contractual `event` field for incoming WebSocket messages.
 
-The World Map uses slow automatic horizontal movement, but it is not rigidly continuous. The world moves by itself to create a feeling of travel and discovery, but it responds to the child's exploration.
+## World Loading Flow
 
-#### Interaction Pause
+GameView does not render a provisional World Map while waiting for backend world state.
 
-When the child touches a world element:
+Flow:
 
-1. The scroll stops temporarily.
-2. The element plays its corresponding visual or audio reaction.
-3. A small exploration window opens.
-4. If the child interacts again during that window, the timer restarts.
-5. If there are no new interactions, the walk continues automatically.
+1. Child enters GameView through the FEAT-007 child session flow.
+2. GameView shows a child-facing loading screen with the existing avatar placeholder image.
+3. GameView opens `/ws/game`.
+4. GameView sends the contracted `auth` message with `childSessionId`.
+5. After `AUTH_ACK`, GameView waits for a valid backend world payload.
+6. GameView renders the World Map only after receiving `WORLD_DESTINATION_READY` or `WORLD_STATE_SYNC` with `status: ACTIVE` and a valid `destination`.
+7. If world loading fails, times out, closes, or receives invalid/no world state, GameView shows the generic child-safe error screen instead of rendering a fallback map.
 
-The goal is for the child to feel that the world walks with them, not that it drags them forward.
+The frontend does not fabricate biome, destination, host, narrative situation, discovery elements, activity availability, proposal runtime ids, or world progression while loading.
 
-#### Reappearance Of Appreciated Elements
+## World Rendering
 
-Simple interactive elements can reappear later during the walk. The reappearance does not have to be identical. The system can use small visual or contextual variations to reinforce discovery while avoiding exact repetition.
+The World Map is rendered only from backend-provided world payloads.
 
-Examples:
+### Valid Payloads
 
-- A cloud can create rain in one appearance and a rainbow in another.
-- A bird can sing different sounds.
-- A frog can perform different jump animations.
+The frontend can render from:
 
-## Host Characters
+- `WORLD_DESTINATION_READY` payload using `WorldDestinationPayload`.
+- `WORLD_STATE_SYNC` payload using `WorldStateSyncPayload` when `status` is `ACTIVE` and `destination` is present.
 
-Hosts are the emotional reference of the world. The same biome can contain several hosts.
+### Destination Rendering
 
-### v1 Asset State
+The destination is the child's narrative anchor. It is rendered from:
 
-Host characters can start as visual placeholders. The v1 goal is to validate the walk model, narrative destination, and organic signaling, not to finalize the animation system.
+- `destinationId`.
+- `host`.
+- `narrativeSituation`.
+- `biome`.
+- `discoveryElements`.
 
-The frontend can prepare basic visual states for the avatar/NPC even if final animations do not exist yet:
+If `discoveryElements` is an empty array but the destination payload is otherwise valid, the frontend renders the destination without discovery elements.
 
-- Idle.
-- Waiting.
-- Speaking.
-- Curious.
-- Celebrating.
-- Transitioning.
+If the destination itself is missing or invalid, the frontend does not render the map and enters the generic child-safe error screen.
 
-These states do not imply frontend-owned narrative logic. They are a presentation layer prepared to react to current or future events.
+### Host Rendering
 
-### Meadow: v1
+The host is rendered from `WorldHostPayload`:
 
-- Dog.
-- Rabbit.
-- Hedgehog.
+- `id` and `code` are runtime identifiers.
+- `displayName` can be used as supportive copy when needed.
+- `visualAssetKey` selects the host asset when available.
 
-### Forest: v1.2+
+If `visualAssetKey` is missing or unknown, the frontend uses the existing avatar/NPC placeholder. Placeholders are allowed for missing assets, not for missing backend data.
 
-- Owl.
-- Squirrel.
-- Fox.
-- Bear cub.
+### Narrative Situation Rendering
 
-### Lake: v1.2+
+The narrative situation is rendered from `WorldNarrativeSituationPayload`:
 
-- Frog.
-- Duck.
-- Beaver.
+- `code` identifies the situation.
+- `displayText` can be shown as sparse supportive copy for the adult-child moment.
+- `tone` can influence presentation styling only when supported.
 
-### Beach: v1.2+
+The child must not be required to read text to understand the experience.
 
-- Crab.
-- Turtle.
-- Seagull.
+### Biome Rendering
 
-## Biome System
+The frontend uses `biome` as a visual skin key for the background layer.
 
-### Goal
-
-Allow future scalability without changing the main World Map logic.
-
-### v1
-
-Single scenery: meadow. The destination and host concepts already exist internally.
-
-### v1.2+
-
-Introduce differentiated biomes. Each biome contributes its own background, music, environmental elements, and host characters.
-
-The background component is designed from v1 as an interchangeable slot. The biome is a layer, not hardcoded logic.
+For v1, the expected supported biome is the meadow/grass baseline. If a biome is unknown, the frontend may use a neutral supported background while preserving the backend destination, host, and discovery element data. This is an asset fallback, not a world-data fallback.
 
 ## World Elements
 
-The world is composed of three layers with distinct behavior and signaling.
+The world is composed of visual layers with distinct behavior and signaling.
 
 ### Layer 1: Living World
 
@@ -201,11 +175,13 @@ Examples: clouds, flowers, butterflies, birds, leaves.
 
 Signaling: none. Their movement is environmental, not interactive.
 
+Decorative elements may be local visual scenery, but they must never be reported to backend as discovery interaction and must never imply backend content that was not received.
+
 ### Layer 2: Simple Interactive Elements
 
-Elements that respond to the child's touch. They do not start activities or minigames.
+Simple interactive elements can provide immediate local sensory feedback, but they do not start activities or minigames.
 
-Behavior: no active prior signal. When the child touches them, they provide an immediate, brief, satisfying reaction. The discovery belongs to the child, not to the system.
+Behavior: no active prior signal. When the child touches them, they can provide an immediate, brief, satisfying reaction. The discovery belongs to the child, not to the system.
 
 Examples:
 
@@ -214,23 +190,34 @@ Examples:
 - The tree drops leaves.
 - The cloud creates rain.
 
-Signaling: very soft idle movement or none. No glow and no call-to-action animation. The avatar can comment on them occasionally, but not systematically.
+Signaling: very soft idle movement or none. No glow and no call-to-action animation. The avatar can comment on them occasionally when backend/avatar events support it, but not systematically.
 
-Consequence: none on progression. They are immediate sensory rewards.
+Consequence: none on progression. They are immediate sensory rewards and must not be persisted by frontend.
 
 ### Layer 3: Discovery Elements
 
-Elements that can start an activity or minigame. They are the entry point to LearningPath content.
+Discovery elements are backend-provided world elements that can represent entry points to activities.
 
-Behavior: they emit an active signal to communicate that something is here without looking like a button.
+They are rendered from `WorldDiscoveryElementPayload`:
 
-Primary visual signal: a slow inner-to-outer pulsing glow, as if the element were breathing more intensely than the rest of the world. This is the main signal and works independently. It must be enough for the child to identify the element without any audio signal.
+- `proposalRuntimeId`.
+- `discoveryElementId`.
+- `code`.
+- `displayName`.
+- `elementType`.
+- `visualAssetKey`.
+- `interactionCueType`.
+- `hasActivity`.
 
-Complementary audio signal: when the avatar is active, it always makes a contextual comment when a discovery element appears. This reinforces the visual signal but does not replace it. If the parent has muted the avatar, the visual signal works by itself without a degraded mode.
+The frontend renders discovery elements immediately when they arrive in `WORLD_DESTINATION_READY` or active `WORLD_STATE_SYNC` payloads.
 
-Examples: curious cloud, mystery box, shiny puddle, special flower.
+First version visual signal: a soft whitish shadow with a small, slow pulse. This signal is the primary channel and must be enough for the child to notice the element without audio.
 
-Interaction: always optional. If the child does not interact, the scroll continues without penalty.
+Later versions can specialize the cue by `elementType`, `visualAssetKey`, or `interactionCueType`, but this feature only requires the generic whitish pulse.
+
+Interaction: if the child touches a backend-provided discovery element with `hasActivity: true`, `proposalRuntimeId`, and `discoveryElementId`, the frontend sends `world_discovery_interacted` to backend.
+
+If the element is missing required identifiers, the frontend can show it visually but must not send `world_discovery_interacted`.
 
 ## Visual Philosophy
 
@@ -252,13 +239,93 @@ Interesting elements stand out through natural behavior: soft swaying, breathing
 
 The difference between layers is perceptible but not explicit:
 
-| Layer | Visual signal | Avatar audio signal |
+| Layer | Visual signal | Backend interaction |
 |---|---|---|
 | Living world | Periodic environmental movement | Never |
-| Simple interactive | Soft idle movement or none | Occasional |
-| Discovery element | Active breathing glow as primary, autonomous signal | Complementary, only when the avatar is active |
+| Simple interactive | Soft idle movement or none | Never in v1 |
+| Discovery element | Whitish shadow with small pulse | `world_discovery_interacted` when contracted identifiers are present |
 
 The visual signal is always the main channel. Audio is reinforcement, never a dependency.
+
+## World Interaction
+
+### World Heartbeat
+
+After the world is active, the frontend sends `world_heartbeat` periodically to keep the world session alive while the child explores the map.
+
+The frontend starts `world_heartbeat` only after:
+
+- WebSocket auth succeeded with `AUTH_ACK`.
+- A valid active world payload was received.
+
+The frontend stops `world_heartbeat` when:
+
+- GameView unmounts.
+- A terminal session event arrives.
+- World loading or rendering enters the generic child-safe error screen.
+- A minigame transition starts.
+- The WebSocket closes.
+
+### Discovery Interaction
+
+When the child touches a discovery element from backend, the frontend sends:
+
+```json
+{
+  "type": "world_discovery_interacted",
+  "proposalRuntimeId": "runtime-id",
+  "discoveryElementId": 123
+}
+```
+
+The frontend sends this message only for discovery elements received from backend. It never sends this message for decorative or locally rendered simple interactive elements.
+
+### Activity Started
+
+When the frontend receives `WORLD_ACTIVITY_STARTED`, it must not attempt to render a minigame in this feature.
+
+Until minigame rendering exists, the frontend should move to a safe transition/loading state using the avatar placeholder and avoid child-facing technical errors.
+
+## Generic Child-Safe Error Screen
+
+The generic child-safe error screen is a reusable frontend pattern for states where GameView cannot safely show the requested child experience.
+
+In FEAT-011, it is used when the World Map cannot be loaded or rendered.
+
+Future reuse includes portrait orientation handling when the device is rotated vertically.
+
+### Triggers In This Feature
+
+- World loading timeout.
+- WebSocket closes before a valid world payload is received.
+- `WORLD_STATE_SYNC` with `status: NO_WORLD_STATE`.
+- `WORLD_STATE_SYNC` with `status: INACTIVE_CLOSED` when no terminal navigation is triggered.
+- Missing or invalid destination payload.
+- Missing required discovery identifiers when interaction would otherwise be sent.
+- Any world payload shape that cannot be rendered safely.
+
+### Visual Behavior
+
+The screen shows:
+
+- Existing avatar placeholder image.
+- Calm child-safe layout.
+- No technical error text.
+- No provisional map.
+- No child-facing retry pressure.
+- Minimal visible copy through i18n only if product decides visible copy is needed.
+
+### Error Audio
+
+The error audio comes from backend as `GAME_AVATAR_EVENT`.
+
+The frontend must not generate local audio, call TTS directly, or call Coqui directly.
+
+The frontend plays the backend-provided error audio at most once per entry into the generic error state.
+
+The same error audio must not replay on every heartbeat, `world_heartbeat`, reconnect attempt, duplicated error event, or repeated render of the same error state.
+
+If audio is unavailable, late, blocked by autoplay, invalid, or playback fails, the visual error state remains sufficient.
 
 ## Frontend Animation Preparation
 
@@ -276,12 +343,14 @@ The store can manage simple visual states:
 - `curious`
 - `celebrating`
 - `transitioning`
+- `error`
 
 The store can expose presentation actions such as:
 
 - Change the current visual context.
 - Activate the speaking state while an avatar event is playing.
 - Return to idle after an interaction ends.
+- Enter an error state once when world loading fails.
 - Interrupt a visual animation on navigation, system event, or new interaction.
 
 ### Restrictions
@@ -297,13 +366,6 @@ The `useAnimationStore` does not decide:
 
 The store is a visual rendering tool, not a source of truth for the experience.
 
-### Associated Design Criteria
-
-- Animations must be interruptible.
-- The experience must work even if final animations do not exist.
-- The discovery visual signal must not depend on audio.
-- The current placeholder must be replaceable by final assets without changing the main World Map flow.
-
 ## Progression And LearningPath
 
 ### The LearningPath Is Invisible To The Child
@@ -316,154 +378,152 @@ The type of minigame contained by a discovery element is not associated with the
 
 ### Ignored Elements
 
-Ignoring a discovery element is not interpreted as a failure or a definitive rejection of the associated content. The backend can use it as a light engagement signal, but never as an isolated pedagogical data point.
+Ignoring a discovery element is not interpreted by frontend as a failure or a definitive rejection of the associated content.
 
-If the system detects a consistent pattern of ignored elements or abandoned activities for a specific engine type during the session, it temporarily reduces that engine's priority and rotates toward another content type. When a new session starts, all engines become available again.
+Backend `world` and `tracking` own the proposal lifecycle and any `ActivityProposalLog` state. The frontend only sends the contracted interaction message when the child interacts with a backend-provided discovery element.
 
-The definition of what constitutes a consistent pattern is backend criteria, not part of this frontend feature.
+The frontend never shows child-facing labels such as `ignored`, `abandoned`, `low engagement`, or diagnostic equivalents.
 
 ### Parent Dashboard Data
 
-Usage patterns are visible in the Parent Control dashboard as descriptive information:
+Dashboard data is outside this frontend feature.
 
-- Frequently started activities.
-- Frequently ignored activities.
-- Activities abandoned before completion.
-- Average times, successes, and failures by engine type.
-
-The system does not automatically interpret these behaviors. The information supports family observation, not diagnosis.
+Backend/tracking can later expose descriptive information such as started, ignored, completed, and abandoned counts by engine type. The frontend child experience does not display this information.
 
 ## Combinatorial Situation System
 
 Characters can repeat. Situations do not.
 
-Each visit is built dynamically by combining:
+Backend `world` builds each visit dynamically by combining:
 
-- Host character: owl, frog, dog, etc.
-- Emotional state: curious, happy, surprised, thoughtful.
-- Situation: found something, wants to show something, is looking for something, saw something strange.
-- Object: cloud, flower, leaf, star, shiny stone.
+- Host character.
+- Emotional state or narrative tone.
+- Narrative situation.
+- Object or discovery element.
+- Biome.
 
-This creates variety by reusing the same characters without making the child perceive repetition.
+The frontend receives the resolved combination as world payload and renders it. The frontend does not generate combinations locally.
 
 ## Host Interaction
 
-Arrival at a host is not only a transition between destinations. Each host has a small narrative microinteraction that reinforces their identity as a world character.
+Arrival at a host is not only a transition between destinations. Each host can have a small narrative microinteraction that reinforces their identity as a world character.
 
-### Goals
+In this frontend feature, host interaction is limited to presentation:
 
-- Make hosts memorable characters.
-- Reinforce the emotional bond with the world.
-- Provide narrative closure to the walk.
-- Avoid making hosts feel like checkpoints.
+- Render the host placeholder or asset.
+- Render sparse supportive narrative copy when backend provides it.
+- Use simple visual states from `useAnimationStore` when available.
+- Keep the interaction calm and non-blocking.
 
-### v1 Implementation
+Backend remains responsible for deciding when a destination is ready and when the next destination should be selected.
 
-Use a short greeting interaction.
+## Minigame Transition And Exit
 
-Flow:
+No minigame is rendered in this feature.
 
-```text
-Arrival at host
-      |
-Host characteristic animation
-      |
-Greeting between avatar and host
-      |
-Small soft visual celebration
-      |
-Narrative pause: 2-3 seconds
-      |
-Avatar proposes new destination and automatic transition starts
-```
+When `WORLD_ACTIVITY_STARTED` arrives, the frontend must move into a safe transition/loading state and wait for a future minigame feature to own the actual engine rendering.
 
-Example avatar phrase:
-
-> We made it! Hello, Frog!
-
-## Minigame Exit
-
-### Inactivity Timeout: Natural Exit For The Child
-
-The minigame engine implements a two-threshold inactivity system:
-
-- First threshold: if the child stops interacting for X seconds, the avatar makes a comment inviting the child to continue the walk.
-- Second threshold: if the child still does not interact after the avatar comment, the system automatically returns to the World Map without child action.
-
-The exit is quiet and without drama. The child does not feel that they failed or exited anything. The walk simply continues.
-
-Concrete threshold values are a backend decision and must be added to minigame engine specifications.
-
-### Parent Gesture: Manual Exit
-
-The parent can leave an activity at any time through a long press on the avatar.
-
-After holding the avatar for a few seconds, it performs a short contextual interaction:
-
-> Shall we keep walking?
-
-The system then returns naturally to the World Map.
-
-Design reasons:
-
-- Easy for the adult to remember.
-- Consistent across all minigames.
-- Does not require visible buttons that break the aesthetic.
-- Fits narratively with the avatar's role as the walk companion.
-
-The long press is clearly differentiated from any normal interaction used by minigames.
-
-Pending: define the exact long-press duration and visual feedback behavior during the press in the GameView specifications.
+When future minigames exist, game completion or abandonment will return the child to the backend world flow. Backend `world` decides whether the LearningPath advances after the complete narrative arrival sequence, not immediately when `GAME_COMPLETED` is received.
 
 ## Behavior Without Adult Present
 
-The avatar acts as a sufficient guide when the adult is not available. The primary visual signal, the breathing glow, allows the child to identify discovery elements even if the avatar is muted.
+The avatar acts as a sufficient guide when the adult is not available. The primary visual signal on discovery elements allows the child to identify interesting elements even if the avatar is muted.
 
-If the child does not react to an element, the scroll continues and the content reappears later with a different narrative context. There are no repeated calls for attention and no urgency animations.
+If the child does not react to an element, the scroll or world flow continues according to backend `world` decisions. There are no repeated calls for attention and no urgency animations.
 
 ## Frontend Responsibilities
 
-The frontend scope of this feature is to present the World Map experience as a narrative walk.
+The frontend scope of this feature is to present the backend-driven World Map experience as a narrative walk.
 
 The frontend is responsible for:
 
-- Rendering the World Map as a horizontal walk, not a level selector.
-- Removing any visual representation based on tiles, nodes, locked states, or visible progress.
-- Showing scenery, visual layers, avatar/NPC placeholder, and world elements.
-- Visually differentiating living world, simple interactive elements, and discovery elements.
-- Applying organic signaling for discovery elements through breathing glow or equivalent visual behavior.
-- Keeping the visual signal as the main channel when the avatar is muted or audio fails.
-- Managing local visual pauses when the child interacts with world elements.
-- Maintaining appropriate touch areas for children aged 3-4.
+- Entering GameView only through the existing FEAT-007 child session flow.
+- Opening `/ws/game` and sending the contracted `auth` message.
+- Keeping the loading screen visible until valid backend world state is received.
+- Rendering the World Map only from `WORLD_DESTINATION_READY` or active `WORLD_STATE_SYNC` payloads.
+- Validating world payloads before rendering.
+- Rendering destination, host, narrative situation, biome, and discovery elements from backend payloads.
+- Using visual placeholders only for missing/unknown assets, not for missing world data.
+- Rendering backend discovery elements with a first-version whitish shadow and small pulse.
+- Starting `world_heartbeat` only when world state is active.
+- Stopping `world_heartbeat` on error, terminal events, unmount, WebSocket close, or minigame transition.
+- Sending `world_discovery_interacted` only for backend discovery elements with valid `proposalRuntimeId`, `discoveryElementId`, and `hasActivity: true`.
+- Showing the generic child-safe error screen when world cannot be loaded or rendered safely.
+- Playing backend-provided `GAME_AVATAR_EVENT` error audio at most once per entry into the generic error state.
 - Preparing `useAnimationStore` for avatar/NPC visual states.
 - Reacting to contracted events without inferring the child's intention, ability, or interest.
 
 The frontend must not:
 
+- Render a provisional local World Map while waiting for backend state.
+- Render a meadow fallback if backend world state is unavailable.
+- Fabricate `destinationId`, `host`, `narrativeSituation`, `biome`, `discoveryElements`, `proposalRuntimeId`, `discoveryElementId`, `hasActivity`, or activity availability.
+- Use `/api/v1/dev/content/*` endpoints to render the child World Map.
 - Interpret ignored elements, abandoned activities, or lack of interaction as pedagogical signals.
 - Decide LearningPath progression.
 - Decide engine or activity priority.
 - Persist engagement data on its own initiative.
 - Show diagnostics, progress percentages, levels, unlocks, or locked states to the child.
+- Replay error audio on every heartbeat, reconnect, duplicated event, or repeated render of the same error state.
 
 ## Backend Responsibilities
 
-The backend remains the source of truth for progression, content selection, and descriptive tracking.
+Backend responsibilities are owned by `docs/product/features/backend/FEAT-008-World-Module.md` and related modules.
 
-The backend is responsible for:
+Backend is responsible for:
 
 - Deciding the current destination and next destination.
-- Selecting host, narrative situation, object, and associated activity.
+- Selecting host, narrative situation, object, biome, and associated activity.
+- Emitting `WORLD_DESTINATION_READY`.
+- Emitting `WORLD_STATE_SYNC`.
+- Emitting `WORLD_ACTIVITY_STARTED` when a discovery interaction starts an activity.
+- Defining and owning `WorldDestinationPayload`, `WorldHostPayload`, `WorldNarrativeSituationPayload`, and `WorldDiscoveryElementPayload`.
 - Managing the LearningPath that remains invisible to the child.
 - Deciding which engine or minigame each discovery element contains.
-- Managing consistent patterns of ignored elements, abandoned activities, or engagement when applicable.
-- Defining what constitutes a consistent pattern and how it temporarily affects engine priority.
-- Defining inactivity thresholds and automatic minigame exit.
-- Recording started, ignored, abandoned, and completed activities.
+- Managing proposal lifecycle through tracking, including started and ignored outcomes.
+- Managing consistent patterns of abandoned activities or engagement when applicable.
+- Defining inactivity thresholds for world exploration.
+- Recording started, ignored, abandoned, and completed activity data through the proper tracking ports.
 - Providing descriptive data for the parent dashboard.
+- Emitting backend-provided `GAME_AVATAR_EVENT` audio for the generic child-safe error state when applicable.
 - Avoiding diagnoses or automatic pedagogical conclusions from isolated signals.
 
-If the backend must send destinations, hosts, world elements, narrative states, or animation metadata, this must be formalized in the contract before full frontend implementation.
+Backend must not send child-facing labels such as `ignored`, `abandoned`, `low engagement`, or diagnostic equivalents to the child World Map UI.
+
+## Out Of Scope
+
+- Backend implementation.
+- Contract changes.
+- REST world integration.
+- Local fallback World Map rendering.
+- Minigame engines.
+- Starting games directly from frontend without backend world flow.
+- Rendering real minigames after `WORLD_ACTIVITY_STARTED`.
+- Dashboard tracking UI.
+- Local engagement persistence.
+- Lottie integration if no Lottie avatar assets are available yet.
+- Final per-element visual cue specialization.
+
+## Acceptance Criteria
+
+- GameView shows the loading screen with the existing avatar placeholder while waiting for world state.
+- GameView does not render a World Map during loading.
+- GameView does not render a local fallback map if backend world state is unavailable.
+- Valid `WORLD_DESTINATION_READY` renders the World Map.
+- Valid `WORLD_STATE_SYNC` with `status: ACTIVE` and `destination` renders the World Map.
+- `WORLD_STATE_SYNC` with `NO_WORLD_STATE` shows the generic child-safe error screen.
+- `WORLD_STATE_SYNC` with `INACTIVE_CLOSED` shows the generic child-safe error screen unless a terminal navigation flow is triggered.
+- Invalid or missing destination payload shows the generic child-safe error screen.
+- The generic child-safe error screen shows the avatar placeholder and no technical child-facing error.
+- Backend-provided `GAME_AVATAR_EVENT` error audio is played at most once per entry into the generic error state.
+- Heartbeats, world heartbeats, reconnect attempts, duplicated errors, or repeated renders do not replay the same error audio.
+- `world_heartbeat` starts only after a valid active world payload is received.
+- `world_heartbeat` stops on unmount, terminal events, WebSocket close, generic error state, or minigame transition.
+- Backend discovery elements are rendered immediately with a whitish shadow and small pulse.
+- `world_discovery_interacted` is sent only for backend-provided discovery elements with valid `proposalRuntimeId`, `discoveryElementId`, and `hasActivity: true`.
+- `WORLD_ACTIVITY_STARTED` moves the UI to a safe transition/loading state and does not attempt to render a minigame.
+- Existing terminal session events still close the socket, clear child session state, and navigate Home according to FEAT-007 behavior.
+- No level tiles, nodes, numbered levels, progress percentages, unlock stars, engine icons, child-facing diagnostics, or locked states are shown.
 
 ## Emotional Goal
 
