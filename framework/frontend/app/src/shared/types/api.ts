@@ -404,9 +404,60 @@ export type SessionEventType =
   | 'CHILD_AGENT_ACTIVATED'
   | 'CHILD_AGENT_DEACTIVATED'
   | 'GAME_AVATAR_EVENT'
+  | 'WORLD_DESTINATION_READY'
+  | 'WORLD_STATE_SYNC'
+  | 'WORLD_ACTIVITY_STARTED'
+  | 'GAME_COMPLETED'
+  | 'GAME_ABANDONED'
 
 export interface SessionEvent {
   event: SessionEventType
   sessionId?: number
   payload?: unknown
+}
+
+// ── World Map Types ─────────────────────────────────────────────────────────
+
+export interface WorldHostPayload {
+  id: number
+  code: string
+  displayName: string
+  visualAssetKey: string | null
+}
+
+export interface WorldNarrativeSituationPayload {
+  id: number
+  code: string
+  displayText: string | null
+  tone: string | null
+}
+
+export interface WorldDiscoveryElementPayload {
+  proposalRuntimeId: string
+  discoveryElementId: number
+  code: string
+  displayName: string
+  elementType: string
+  visualAssetKey: string | null
+  interactionCueType: string | null
+  hasActivity: boolean
+}
+
+export interface WorldDestinationPayload {
+  destinationId: string
+  host: WorldHostPayload
+  narrativeSituation: WorldNarrativeSituationPayload
+  biome: string
+  discoveryElements: WorldDiscoveryElementPayload[]
+}
+
+export interface WorldStateSyncPayload {
+  status: 'ACTIVE' | 'INACTIVE_CLOSED' | 'NO_WORLD_STATE'
+  destination: WorldDestinationPayload | null
+}
+
+export interface WorldActivityStartedPayload {
+  gameId: number
+  activityId: number
+  transition: 'START_GAME'
 }
