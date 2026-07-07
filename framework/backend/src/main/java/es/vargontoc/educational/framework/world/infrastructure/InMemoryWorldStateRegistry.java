@@ -16,7 +16,7 @@ public class InMemoryWorldStateRegistry implements WorldStateRegistry {
 
     @Override
     public void save(WorldState state) {
-        if (state.getChildSessionId() != null) {
+        if (state != null  && state.getChildSessionId() != null && !stateByChildSession.containsKey(state.getChildSessionId())) {
             stateByChildSession.put(state.getChildSessionId(), state);
         }
     }

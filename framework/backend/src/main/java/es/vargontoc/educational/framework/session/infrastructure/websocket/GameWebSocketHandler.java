@@ -2,6 +2,7 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
@@ -28,6 +29,7 @@ import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import jakarta.annotation.PreDestroy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.BinaryMessage;
@@ -47,6 +49,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
+import es.vargontoc.educational.framework.world.model.WorldState;
+import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
+
+
 public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GameWebSocketHandler.class);
@@ -61,6 +68,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final WorldHeartbeatUseCase worldHeartbeatUseCase;
     private final WorldGameStartUseCase worldGameStartUseCase;
     private final WorldStateRegistry worldStateRegistry;
+    private final WorldOrchestrator worldOrchestrator;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -76,7 +84,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                              GameStateRegistry gameStateRegistry,
                              WorldHeartbeatUseCase worldHeartbeatUseCase,
                              WorldGameStartUseCase worldGameStartUseCase,
-                             WorldStateRegistry worldStateRegistry) {
+                             WorldStateRegistry worldStateRegistry,
+                            WorldOrchestrator worldOrchestrator) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarLifecycleService = avatarLifecycleService;
@@ -85,6 +94,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         this.worldHeartbeatUseCase = worldHeartbeatUseCase;
         this.worldGameStartUseCase = worldGameStartUseCase;
         this.worldStateRegistry = worldStateRegistry;
+        this.worldOrchestrator = worldOrchestrator;
     }
 
     @Override
@@ -206,6 +216,21 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+
+    private WorldState getNewWorld(Long childSessionId) {
+
+        Long profileId = childSessionUseCase.getSession(childSessionId).getChildProfileId();
+
+        WorldState ws = new WorldState();
+        ws.setChildSessionId(childSessionId);
+        ws.setChildProfileId(profileId);
+        ws.setStatus(WorldRuntimeStatus.ACTIVE);
+        
+        var select = worldOrchestrator.selectDestination(childSessionId, profileId, null, 3);
+        ws.setCurrentDestination(select.getDestination());
+        return ws;
+    }
+
     public boolean hasActiveSession(Long childSessionId) {
         WebSocketSession session = sessionsByChildSessionId.get(childSessionId);
         return session != null && session.isOpen();
@@ -288,6 +313,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             sessionsByChildSessionId.put(childSessionId, session);
             cancelPendingTimeout(session);
             LOGGER.info("Game WebSocket authenticated: childSessionId={}", childSessionId);
+            worldStateRegistry.save(getNewWorld(childSessionId));
+
             SessionEvent ack = SessionEvent.of(SessionEventType.AUTH_ACK, childSessionId);
             sendToSession(childSessionId, objectMapper.writeValueAsString(ack));
             sendWelcomeAvatar(childSessionId);

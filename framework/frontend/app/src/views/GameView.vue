@@ -37,6 +37,7 @@ const sentProposals = new Set<string>()
 
 function startHeartbeat() {
   stopHeartbeat()
+  sendMessage({ type: 'heartbeat' })
   heartbeatTimer = setInterval(() => {
     sendMessage({ type: 'heartbeat' })
   }, HEARTBEAT_INTERVAL_MS)
@@ -51,6 +52,7 @@ function stopHeartbeat() {
 
 function startWorldHeartbeat() {
   stopWorldHeartbeat()
+  sendMessage({ type: 'world_heartbeat' })
   worldHeartbeatTimer = setInterval(() => {
     sendMessage({ type: 'world_heartbeat' })
   }, WORLD_HEARTBEAT_INTERVAL_MS)
@@ -163,6 +165,7 @@ function onWsMessage(event: MessageEvent) {
           startWorldLoadingTimer()
           break
         case 'HEARTBEAT_ACK':
+          startWorldHeartbeat()
           break
         case 'GAME_STATE_UPDATE':
           break
