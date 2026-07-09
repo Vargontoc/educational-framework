@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/components/ui/Modal.vue'
 import AvatarPicker from '@/components/shared/AvatarPicker.vue'
-import type { ChildProfileResponse, UpdateChildProfileRequest } from '@/shared/types/api'
+import type { ChildProfileResponse, UpdateChildProfileRequest, ColorVisionMode } from '@/shared/types/api'
 import { updateChild, deleteChild } from '@/services/childService'
 
 const { t } = useI18n()
@@ -28,11 +28,56 @@ const birthday = ref('')
 const selectedAvatar = ref<string | null>(null)
 const ttsEnabled = ref(true)
 const agentEnabled = ref(true)
+const colorVisionMode = ref<ColorVisionMode>('NONE')
 const nameError = ref('')
 const birthdayError = ref('')
 const serverError = ref('')
 const submitting = ref(false)
 const deleteConfirmOpen = ref(false)
+
+const colorVisionModes: Array<{
+  value: ColorVisionMode
+  shape: 'circle' | 'triangle' | 'square' | 'diamond' | 'gray'
+  color: string
+  labelKey: string
+  subtitleKey: string
+}> = [
+  {
+    value: 'PROTANOPIA',
+    shape: 'circle',
+    color: '#CC4444',
+    labelKey: 'panel.children.editModal.colorVisionProtanopiaLabel',
+    subtitleKey: 'panel.children.editModal.colorVisionProtanopiaSubtitle'
+  },
+  {
+    value: 'DEUTERANOMALY',
+    shape: 'triangle',
+    color: '#44AA44',
+    labelKey: 'panel.children.editModal.colorVisionDeuteranomalyLabel',
+    subtitleKey: 'panel.children.editModal.colorVisionDeuteranomalySubtitle'
+  },
+  {
+    value: 'DEUTERANOPIA',
+    shape: 'square',
+    color: '#888800',
+    labelKey: 'panel.children.editModal.colorVisionDeuteranopiaLabel',
+    subtitleKey: 'panel.children.editModal.colorVisionDeuteranopiaSubtitle'
+  },
+  {
+    value: 'TRITANOPIA',
+    shape: 'diamond',
+    color: '#4488CC',
+    labelKey: 'panel.children.editModal.colorVisionTritanopiaLabel',
+    subtitleKey: 'panel.children.editModal.colorVisionTritanopiaSubtitle'
+  },
+  {
+    value: 'ACHROMATOPSIA',
+    shape: 'gray',
+    color: '#888888',
+    labelKey: 'panel.children.editModal.colorVisionAchromatopsiaLabel',
+    subtitleKey: 'panel.children.editModal.colorVisionAchromatopsiaSubtitle'
+  }
+]
 
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
@@ -41,6 +86,7 @@ watch(() => props.open, (isOpen) => {
     selectedAvatar.value = props.child.avatar
     ttsEnabled.value = props.child.ttsEnabled
     agentEnabled.value = props.child.agentEnabled
+    colorVisionMode.value = props.child.colorVisionMode
     nameError.value = ''
     birthdayError.value = ''
     serverError.value = ''
@@ -55,6 +101,7 @@ watch(() => props.child, (newChild) => {
     selectedAvatar.value = newChild.avatar
     ttsEnabled.value = newChild.ttsEnabled
     agentEnabled.value = newChild.agentEnabled
+    colorVisionMode.value = newChild.colorVisionMode
   }
 })
 
@@ -93,7 +140,8 @@ async function handleSubmit() {
     birthday: birthday.value,
     avatar: selectedAvatar.value,
     ttsEnabled: ttsEnabled.value,
-    agentEnabled: agentEnabled.value
+    agentEnabled: agentEnabled.value,
+    colorVisionMode: colorVisionMode.value
   }
 
   try {
@@ -239,6 +287,56 @@ function handleClose() {
         <p v-if="!familyAgentEnabled" class="toggle-reason">
           {{ t('panel.children.editModal.agentDisabledReason') }}
         </p>
+      </div>
+
+      <div class="color-vision-field">
+        <div class="toggle-row">
+          <span class="field-label">{{ t('panel.children.editModal.colorVisionLabel') }}</span>
+          <button
+            id="color-vision-toggle"
+            type="button"
+            class="toggle-btn"
+            :class="{ 'toggle-btn--on': colorVisionMode !== 'NONE' }"
+            :disabled="submitting"
+            :aria-pressed="colorVisionMode !== 'NONE'"
+            @click="colorVisionMode = colorVisionMode === 'NONE' ? 'DEUTERANOMALY' : 'NONE'"
+          >
+            <span class="toggle-knob" />
+          </button>
+        </div>
+
+        <p v-if="colorVisionMode !== 'NONE'" class="color-vision-helper">
+          {{ t('panel.children.editModal.colorVisionHelper') }}
+        </p>
+
+        <div v-if="colorVisionMode !== 'NONE'" class="color-vision-selector" role="radiogroup">
+          <label
+            v-for="mode in colorVisionModes"
+            :key="mode.value"
+            class="color-vision-option"
+            :class="{ 'color-vision-option--selected': colorVisionMode === mode.value }"
+          >
+            <input
+              type="radio"
+              :value="mode.value"
+              v-model="colorVisionMode"
+              class="color-vision-radio"
+            />
+            <span class="color-vision-shape" :class="`color-vision-shape--${mode.shape}`" :style="{ '--shape-color': mode.color }" aria-hidden="true" />
+            <span class="color-vision-content">
+              <span class="color-vision-label">{{ t(mode.labelKey) }}</span>
+              <span class="color-vision-subtitle">{{ t(mode.subtitleKey) }}</span>
+            </span>
+          </label>
+
+          <button
+            type="button"
+            class="not-sure-btn"
+            @click="colorVisionMode = 'DEUTERANOMALY'"
+          >
+            {{ t('panel.children.editModal.colorVisionNotSure') }}
+          </button>
+        </div>
       </div>
 
       <div class="action-row">
@@ -479,5 +577,135 @@ export default { components: { ConfirmModal } }
 .delete-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.color-vision-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.color-vision-helper {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  padding-left: var(--space-xs);
+}
+
+.color-vision-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  background-color: var(--color-neutral-lightest);
+  border-radius: var(--radius-md);
+}
+
+.color-vision-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background-color: white;
+  border: 2px solid var(--color-neutral);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  min-height: var(--touch-target-min);
+  transition: border-color var(--transition-base), background-color var(--transition-base);
+}
+
+.color-vision-option:hover {
+  border-color: var(--color-primary);
+}
+
+.color-vision-option--selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-lightest);
+}
+
+.color-vision-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.color-vision-shape {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.color-vision-shape--circle {
+  border-radius: 50%;
+  background-color: var(--shape-color);
+}
+
+.color-vision-shape--square {
+  border-radius: 3px;
+  background-color: var(--shape-color);
+}
+
+.color-vision-shape--triangle {
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 20px solid var(--shape-color);
+  background: transparent;
+}
+
+.color-vision-shape--diamond {
+  width: 18px;
+  height: 18px;
+  background-color: var(--shape-color);
+  transform: rotate(45deg);
+}
+
+.color-vision-shape--gray {
+  border-radius: 50%;
+  background: repeating-conic-gradient(#888 0% 25%, #aaa 0% 50%) 50% / 8px 8px;
+}
+
+.color-vision-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.color-vision-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.color-vision-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.not-sure-btn {
+  margin-top: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 2px dashed var(--color-neutral);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition-base), color var(--transition-base);
+}
+
+.not-sure-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.not-sure-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 </style>
