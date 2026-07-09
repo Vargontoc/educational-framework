@@ -190,7 +190,12 @@ export const messages = {
         colorVisionTritanopiaLabel: 'Dificultad con azul y amarillo',
         colorVisionTritanopiaSubtitle: 'Tritanopia',
         colorVisionAchromatopsiaLabel: 'No distingue colores',
-        colorVisionAchromatopsiaSubtitle: 'Acromatopsia'
+        colorVisionAchromatopsiaSubtitle: 'Acromatopsia',
+        colorVisionPreviewTitle: 'Vista previa de colores',
+        colorVisionRedLabel: 'Rojo',
+        colorVisionBlueLabel: 'Azul',
+        colorVisionGreenLabel: 'Verde',
+        colorVisionYellowLabel: 'Amarillo'
       },
       confirm: {
         blockTitle: 'Bloquear acceso de {name}?',

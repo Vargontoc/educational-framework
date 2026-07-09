@@ -79,6 +79,24 @@ const colorVisionModes: Array<{
   }
 ]
 
+const colorPreviewSamples = [
+  { identity: 'RED', shape: 'circle', labelKey: 'panel.children.editModal.colorVisionRedLabel' },
+  { identity: 'BLUE', shape: 'square', labelKey: 'panel.children.editModal.colorVisionBlueLabel' },
+  { identity: 'GREEN', shape: 'triangle', labelKey: 'panel.children.editModal.colorVisionGreenLabel' },
+  { identity: 'YELLOW', shape: 'diamond', labelKey: 'panel.children.editModal.colorVisionYellowLabel' }
+]
+
+const colorPreviewFallback: Record<string, Record<ColorVisionMode, string>> = {
+  RED: { NONE: '#FF0000', PROTANOPIA: '#808000', DEUTERANOMALY: '#FF8000', DEUTERANOPIA: '#808000', TRITANOPIA: '#FF0080', ACHROMATOPSIA: '#888888' },
+  BLUE: { NONE: '#0000FF', PROTANOPIA: '#008080', DEUTERANOMALY: '#0080FF', DEUTERANOPIA: '#008080', TRITANOPIA: '#FF8000', ACHROMATOPSIA: '#888888' },
+  GREEN: { NONE: '#00FF00', PROTANOPIA: '#00FF80', DEUTERANOMALY: '#80FF00', DEUTERANOPIA: '#808000', TRITANOPIA: '#00FF80', ACHROMATOPSIA: '#888888' },
+  YELLOW: { NONE: '#FFFF00', PROTANOPIA: '#FFFF00', DEUTERANOMALY: '#FFFF80', DEUTERANOPIA: '#FFFF00', TRITANOPIA: '#00FFFF', ACHROMATOPSIA: '#888888' }
+}
+
+function getPreviewColor(identity: string): string {
+  return colorPreviewFallback[identity]?.[colorVisionMode.value] ?? '#888888'
+}
+
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
     name.value = props.child.name
@@ -336,6 +354,27 @@ function handleClose() {
           >
             {{ t('panel.children.editModal.colorVisionNotSure') }}
           </button>
+
+          <div class="color-vision-preview">
+            <p class="color-vision-preview-title">
+              {{ t('panel.children.editModal.colorVisionPreviewTitle') }}
+            </p>
+            <div class="color-vision-preview-samples">
+              <div
+                v-for="sample in colorPreviewSamples"
+                :key="sample.identity"
+                class="color-vision-sample"
+              >
+                <span
+                  class="color-vision-sample-swatch"
+                  :class="`color-vision-sample-swatch--${sample.shape}`"
+                  :style="{ '--sample-color': getPreviewColor(sample.identity) }"
+                  :aria-label="t(sample.labelKey)"
+                />
+                <span class="color-vision-sample-label">{{ t(sample.labelKey) }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -707,5 +746,68 @@ export default { components: { ConfirmModal } }
 .not-sure-btn:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+.color-vision-preview {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+  background-color: white;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-neutral);
+}
+
+.color-vision-preview-title {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-xs) 0;
+  text-align: center;
+}
+
+.color-vision-preview-samples {
+  display: flex;
+  justify-content: space-around;
+  gap: var(--space-sm);
+}
+
+.color-vision-sample {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.color-vision-sample-swatch {
+  width: 32px;
+  height: 32px;
+  background-color: var(--sample-color);
+}
+
+.color-vision-sample-swatch--circle {
+  border-radius: 50%;
+}
+
+.color-vision-sample-swatch--square {
+  border-radius: 3px;
+}
+
+.color-vision-sample-swatch--triangle {
+  width: 0;
+  height: 0;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-bottom: 28px solid var(--sample-color);
+  background: transparent !important;
+}
+
+.color-vision-sample-swatch--diamond {
+  width: 22px;
+  height: 22px;
+  background-color: var(--sample-color);
+  transform: rotate(45deg);
+}
+
+.color-vision-sample-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 </style>
