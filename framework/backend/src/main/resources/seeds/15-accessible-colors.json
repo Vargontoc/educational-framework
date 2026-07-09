@@ -1,0 +1,66 @@
+[
+  {
+    "conceptualIdentity": "RED",
+    "labelKey": "color.red",
+    "shapeIcon": "circle",
+    "symbol": null,
+    "status": "ACTIVE",
+    "sortOrder": 1,
+    "palettes": [
+      { "colorVisionMode": "NONE", "accessibleColorValue": "#FF0000", "accessibleLabelKey": "color.red" },
+      { "colorVisionMode": "PROTANOPIA", "accessibleColorValue": "#808000", "accessibleLabelKey": "color.red.protan" },
+      { "colorVisionMode": "DEUTERANOMALY", "accessibleColorValue": "#FF8000", "accessibleLabelKey": "color.red.deutan" },
+      { "colorVisionMode": "DEUTERANOPIA", "accessibleColorValue": "#808000", "accessibleLabelKey": "color.red.deutan" },
+      { "colorVisionMode": "TRITANOPIA", "accessibleColorValue": "#FF0080", "accessibleLabelKey": "color.red.tritan" },
+      { "colorVisionMode": "ACHROMATOPSIA", "accessibleColorValue": "GRAY", "accessibleLabelKey": "color.gray" }
+    ]
+  },
+  {
+    "conceptualIdentity": "BLUE",
+    "labelKey": "color.blue",
+    "shapeIcon": "square",
+    "symbol": null,
+    "status": "ACTIVE",
+    "sortOrder": 2,
+    "palettes": [
+      { "colorVisionMode": "NONE", "accessibleColorValue": "#0000FF", "accessibleLabelKey": "color.blue" },
+      { "colorVisionMode": "PROTANOPIA", "accessibleColorValue": "#008080", "accessibleLabelKey": "color.blue.protan" },
+      { "colorVisionMode": "DEUTERANOMALY", "accessibleColorValue": "#0080FF", "accessibleLabelKey": "color.blue.deutan" },
+      { "colorVisionMode": "DEUTERANOPIA", "accessibleColorValue": "#008080", "accessibleLabelKey": "color.blue.deutan" },
+      { "colorVisionMode": "TRITANOPIA", "accessibleColorValue": "#FF8000", "accessibleLabelKey": "color.blue.tritan" },
+      { "colorVisionMode": "ACHROMATOPSIA", "accessibleColorValue": "GRAY", "accessibleLabelKey": "color.gray" }
+    ]
+  },
+  {
+    "conceptualIdentity": "GREEN",
+    "labelKey": "color.green",
+    "shapeIcon": "triangle",
+    "symbol": null,
+    "status": "ACTIVE",
+    "sortOrder": 3,
+    "palettes": [
+      { "colorVisionMode": "NONE", "accessibleColorValue": "#00FF00", "accessibleLabelKey": "color.green" },
+      { "colorVisionMode": "PROTANOPIA", "accessibleColorValue": "#00FF80", "accessibleLabelKey": "color.green.protan" },
+      { "colorVisionMode": "DEUTERANOMALY", "accessibleColorValue": "#80FF00", "accessibleLabelKey": "color.green.deutan" },
+      { "colorVisionMode": "DEUTERANOPIA", "accessibleColorValue": "#808000", "accessibleLabelKey": "color.green.deutan" },
+      { "colorVisionMode": "TRITANOPIA", "accessibleColorValue": "#00FF80", "accessibleLabelKey": "color.green.tritan" },
+      { "colorVisionMode": "ACHROMATOPSIA", "accessibleColorValue": "GRAY", "accessibleLabelKey": "color.gray" }
+    ]
+  },
+  {
+    "conceptualIdentity": "YELLOW",
+    "labelKey": "color.yellow",
+    "shapeIcon": "star",
+    "symbol": null,
+    "status": "ACTIVE",
+    "sortOrder": 4,
+    "palettes": [
+      { "colorVisionMode": "NONE", "accessibleColorValue": "#FFFF00", "accessibleLabelKey": "color.yellow" },
+      { "colorVisionMode": "PROTANOPIA", "accessibleColorValue": "#FFFF00", "accessibleLabelKey": "color.yellow.protan" },
+      { "colorVisionMode": "DEUTERANOMALY", "accessibleColorValue": "#FFFF80", "accessibleLabelKey": "color.yellow.deutan" },
+      { "colorVisionMode": "DEUTERANOPIA", "accessibleColorValue": "#FFFF00", "accessibleLabelKey": "color.yellow.deutan" },
+      { "colorVisionMode": "TRITANOPIA", "accessibleColorValue": "#00FFFF", "accessibleLabelKey": "color.yellow.tritan" },
+      { "colorVisionMode": "ACHROMATOPSIA", "accessibleColorValue": "GRAY", "accessibleLabelKey": "color.gray" }
+    ]
+  }
+]

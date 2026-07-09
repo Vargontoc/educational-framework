@@ -5,7 +5,9 @@
     "description": "Criaturas del mundo animal",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 8
+    "maxAge": 8,
+    "recognitionType": "ANIMAL",
+    "habitatTag": null
   },
   {
     "name": "Plantas",
@@ -13,7 +15,9 @@
     "description": "Flora y vegetación",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 7
+    "maxAge": 7,
+    "recognitionType": null,
+    "habitatTag": null
   },
   {
     "name": "Números",
@@ -21,7 +25,9 @@
     "description": "Contar y calcular",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 6
+    "maxAge": 6,
+    "recognitionType": "NUMBER",
+    "habitatTag": null
   },
   {
     "name": "Formas",
@@ -29,6 +35,8 @@
     "description": "Figuras geométricas básicas",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 6
+    "maxAge": 6,
+    "recognitionType": "SHAPE",
+    "habitatTag": null
   }
 ]

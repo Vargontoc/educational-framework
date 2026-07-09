@@ -1,6 +1,8 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
+import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
+import es.vargontoc.educational.framework.content.model.RecognitionType;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import org.springframework.stereotype.Repository;
@@ -40,6 +42,20 @@ public class TopicPersistenceAdapter implements TopicRepository {
     }
 
     @Override
+    public List<Topic> findByRecognitionType(RecognitionType recognitionType) {
+        return jpaRepository.findByRecognitionType(recognitionType).stream()
+            .map(TopicPersistenceAdapter::toDomain)
+            .toList();
+    }
+
+    @Override
+    public List<Topic> findByRecognitionTypeAndHabitatTag(RecognitionType recognitionType, Biome habitatTag) {
+        return jpaRepository.findByRecognitionTypeAndHabitatTag(recognitionType, habitatTag).stream()
+            .map(TopicPersistenceAdapter::toDomain)
+            .toList();
+    }
+
+    @Override
     public Topic save(Topic topic) {
         var saved = jpaRepository.save(toJpa(topic));
         return toDomain(saved);
@@ -60,6 +76,8 @@ public class TopicPersistenceAdapter implements TopicRepository {
         target.setMinAge(source.getMinAge());
         target.setMaxAge(source.getMaxAge());
         target.setCompatibleVariants(parseVariants(source.getCompatibleVariants()));
+        target.setRecognitionType(source.getRecognitionType());
+        target.setHabitatTag(source.getHabitatTag());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -75,6 +93,8 @@ public class TopicPersistenceAdapter implements TopicRepository {
         target.setMinAge(source.getMinAge());
         target.setMaxAge(source.getMaxAge());
         target.setCompatibleVariants(joinVariants(source.getCompatibleVariants()));
+        target.setRecognitionType(source.getRecognitionType());
+        target.setHabitatTag(source.getHabitatTag());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;

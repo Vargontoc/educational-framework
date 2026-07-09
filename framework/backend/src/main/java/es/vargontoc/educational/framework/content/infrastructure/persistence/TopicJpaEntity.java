@@ -1,8 +1,12 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
+import es.vargontoc.educational.framework.content.model.Biome;
+import es.vargontoc.educational.framework.content.model.RecognitionType;
 import es.vargontoc.educational.framework.shared.model.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 @Entity
@@ -29,6 +33,14 @@ public class TopicJpaEntity extends BaseEntity {
 
     @Column(name = "compatible_variants", columnDefinition = "TEXT")
     private String compatibleVariants;
+
+    @Column(name = "recognition_type", length = 20)
+    @Enumerated(EnumType.STRING)
+    private RecognitionType recognitionType;
+
+    @Column(name = "habitat_tag", length = 20)
+    @Enumerated(EnumType.STRING)
+    private Biome habitatTag;
 
     public Long getCategoryId() {
         return categoryId;
@@ -84,5 +96,21 @@ public class TopicJpaEntity extends BaseEntity {
 
     public void setCompatibleVariants(String compatibleVariants) {
         this.compatibleVariants = compatibleVariants;
+    }
+
+    public RecognitionType getRecognitionType() {
+        return recognitionType;
+    }
+
+    public void setRecognitionType(RecognitionType recognitionType) {
+        this.recognitionType = recognitionType;
+    }
+
+    public Biome getHabitatTag() {
+        return habitatTag;
+    }
+
+    public void setHabitatTag(Biome habitatTag) {
+        this.habitatTag = habitatTag;
     }
 }

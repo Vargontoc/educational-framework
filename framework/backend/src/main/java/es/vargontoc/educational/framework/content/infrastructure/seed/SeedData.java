@@ -19,7 +19,9 @@ public final class SeedData {
         String description,
         String status,
         Integer minAge,
-        Integer maxAge
+        Integer maxAge,
+        String recognitionType,
+        String habitatTag
     ) {}
 
     public record CuriositySeed(
@@ -136,5 +138,21 @@ public final class SeedData {
         String visualAssetKey,
         String interactionCueType,
         Integer sortOrder
+    ) {}
+
+    public record AccessibleColorPaletteSeed(
+        String colorVisionMode,
+        String accessibleColorValue,
+        String accessibleLabelKey
+    ) {}
+
+    public record AccessibleColorSeed(
+        String conceptualIdentity,
+        String labelKey,
+        String shapeIcon,
+        String symbol,
+        String status,
+        Integer sortOrder,
+        List<AccessibleColorPaletteSeed> palettes
     ) {}
 }

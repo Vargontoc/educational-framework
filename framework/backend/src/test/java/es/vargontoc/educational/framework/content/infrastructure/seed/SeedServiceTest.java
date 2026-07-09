@@ -5,6 +5,8 @@ import es.vargontoc.educational.framework.content.infrastructure.persistence.Dev
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
 import es.vargontoc.educational.framework.content.model.Category;
 import es.vargontoc.educational.framework.content.model.Topic;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
@@ -86,6 +88,12 @@ class SeedServiceTest {
     @Mock
     private WorldDiscoveryElementRepository worldDiscoveryElementRepository;
 
+    @Mock
+    private AccessibleColorRepository accessibleColorRepository;
+
+    @Mock
+    private AccessibleColorPaletteRepository accessibleColorPaletteRepository;
+
     private SeedService seedService;
 
     @BeforeEach
@@ -96,7 +104,7 @@ class SeedServiceTest {
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository,
             learningPathRepository, learningPathStepRepository, tracingPatternRepository,
             storyRepository, storyPageRepository, worldHostRepository, worldNarrativeSituationRepository,
-            worldDiscoveryElementRepository, objectMapper
+            worldDiscoveryElementRepository, accessibleColorRepository, accessibleColorPaletteRepository, objectMapper
         );
     }
 
@@ -158,6 +166,12 @@ class SeedServiceTest {
         when(worldHostRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(worldNarrativeSituationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(worldDiscoveryElementRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(accessibleColorRepository.save(any())).thenAnswer(inv -> {
+            var c = inv.getArgument(0, es.vargontoc.educational.framework.content.model.AccessibleColor.class);
+            c.setId(1L);
+            return c;
+        });
+        when(accessibleColorPaletteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(learningPathRepository.findAll()).thenReturn(List.of());
         when(activityRepository.findAll()).thenReturn(List.of());
         when(storyRepository.findAll()).thenReturn(List.of());

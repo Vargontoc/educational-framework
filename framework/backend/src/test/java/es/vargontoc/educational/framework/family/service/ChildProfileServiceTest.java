@@ -174,7 +174,6 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.findById(3L)).thenReturn(Optional.of(child));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(childSessionRepository.findActiveByChildProfileId(3L)).thenReturn(Optional.empty());
 
         var updated = childProfileService.updateChild(
             3L,
@@ -205,7 +204,6 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.findById(4L)).thenReturn(Optional.of(child));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(childSessionRepository.findActiveByChildProfileId(4L)).thenReturn(Optional.empty());
 
         var updated = childProfileService.updateChild(
             4L,

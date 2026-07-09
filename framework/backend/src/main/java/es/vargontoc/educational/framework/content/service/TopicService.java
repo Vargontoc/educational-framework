@@ -1,6 +1,8 @@
 package es.vargontoc.educational.framework.content.service;
 
+import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
+import es.vargontoc.educational.framework.content.model.RecognitionType;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
@@ -69,6 +71,18 @@ public class TopicService implements TopicUseCase {
     @Transactional(readOnly = true)
     public List<Topic> listTopicsByCategory(Long categoryId) {
         return topicRepository.findByCategoryId(categoryId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Topic> listTopicsByRecognitionType(RecognitionType recognitionType) {
+        return topicRepository.findByRecognitionType(recognitionType);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Topic> listTopicsByRecognitionTypeAndHabitat(RecognitionType recognitionType, Biome habitatTag) {
+        return topicRepository.findByRecognitionTypeAndHabitatTag(recognitionType, habitatTag);
     }
 
     @Override

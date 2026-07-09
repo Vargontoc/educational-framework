@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="024__create_accessible_color_tables" author="vargontoc">
+        <createTable tableName="accessible_color">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="conceptual_identity" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label_key" type="VARCHAR(100)"/>
+            <column name="shape_icon" type="VARCHAR(50)"/>
+            <column name="symbol" type="VARCHAR(50)"/>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INT"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <createTable tableName="accessible_color_palette">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="accessible_color_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="color_vision_mode" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="accessible_color_value" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="accessible_label_key" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="accessible_color_palette"
+            baseColumnNames="accessible_color_id"
+            constraintName="fk_accessible_color_palette_color"
+            referencedTableName="accessible_color"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <createIndex indexName="idx_accessible_color_status" tableName="accessible_color">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex indexName="idx_accessible_color_palette_mode" tableName="accessible_color_palette">
+            <column name="color_vision_mode"/>
+        </createIndex>
+
+        <createIndex indexName="idx_accessible_color_palette_color" tableName="accessible_color_palette">
+            <column name="accessible_color_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -6,6 +6,8 @@ import es.vargontoc.educational.framework.content.infrastructure.persistence.Act
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedService;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityResourceRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
@@ -148,11 +150,14 @@ class ContentModuleConfiguration {
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
+            AccessibleColorRepository accessibleColorRepository,
+            AccessibleColorPaletteRepository accessibleColorPaletteRepository,
             ObjectMapper objectMapper) {
         return new SeedService(seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
             learningPathStepRepository, tracingPatternRepository, storyRepository, storyPageRepository,
-            worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository, objectMapper);
+            worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository,
+            accessibleColorRepository, accessibleColorPaletteRepository, objectMapper);
     }
 
     @Bean

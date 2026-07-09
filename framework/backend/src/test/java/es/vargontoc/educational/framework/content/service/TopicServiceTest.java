@@ -1,7 +1,9 @@
 package es.vargontoc.educational.framework.content.service;
 
+import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.Category;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
+import es.vargontoc.educational.framework.content.model.RecognitionType;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
@@ -88,5 +90,44 @@ class TopicServiceTest {
         when(topicRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> topicService.getTopic(99L));
+    }
+
+    @Test
+    void listTopicsByRecognitionType_returnsFiltered() {
+        var topic = new Topic();
+        topic.setRecognitionType(RecognitionType.ANIMAL);
+
+        when(topicRepository.findByRecognitionType(RecognitionType.ANIMAL)).thenReturn(List.of(topic));
+
+        var result = topicService.listTopicsByRecognitionType(RecognitionType.ANIMAL);
+
+        assertEquals(1, result.size());
+        assertEquals(RecognitionType.ANIMAL, result.get(0).getRecognitionType());
+    }
+
+    @Test
+    void listTopicsByRecognitionTypeAndHabitat_returnsFiltered() {
+        var topic = new Topic();
+        topic.setRecognitionType(RecognitionType.ANIMAL);
+        topic.setHabitatTag(Biome.FARM);
+
+        when(topicRepository.findByRecognitionTypeAndHabitatTag(RecognitionType.ANIMAL, Biome.FARM))
+            .thenReturn(List.of(topic));
+
+        var result = topicService.listTopicsByRecognitionTypeAndHabitat(RecognitionType.ANIMAL, Biome.FARM);
+
+        assertEquals(1, result.size());
+        assertEquals(RecognitionType.ANIMAL, result.get(0).getRecognitionType());
+        assertEquals(Biome.FARM, result.get(0).getHabitatTag());
+    }
+
+    @Test
+    void listTopicsByRecognitionTypeAndHabitat_returnsEmptyWhenNoMatch() {
+        when(topicRepository.findByRecognitionTypeAndHabitatTag(RecognitionType.ANIMAL, Biome.JUNGLE))
+            .thenReturn(List.of());
+
+        var result = topicService.listTopicsByRecognitionTypeAndHabitat(RecognitionType.ANIMAL, Biome.JUNGLE);
+
+        assertEquals(0, result.size());
     }
 }

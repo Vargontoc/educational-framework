@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaEntity;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
+import es.vargontoc.educational.framework.content.model.AccessibleColor;
+import es.vargontoc.educational.framework.content.model.AccessibleColorPalette;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarTone;
@@ -21,6 +23,9 @@ import es.vargontoc.educational.framework.content.model.TracingPattern;
 import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
 import es.vargontoc.educational.framework.content.model.WorldHost;
 import es.vargontoc.educational.framework.content.model.WorldNarrativeSituation;
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
@@ -67,6 +72,8 @@ public class SeedService {
     private final WorldHostRepository worldHostRepository;
     private final WorldNarrativeSituationRepository worldNarrativeSituationRepository;
     private final WorldDiscoveryElementRepository worldDiscoveryElementRepository;
+    private final AccessibleColorRepository accessibleColorRepository;
+    private final AccessibleColorPaletteRepository accessibleColorPaletteRepository;
     private final ObjectMapper objectMapper;
 
     private final Map<String, Long> categoryCache = new HashMap<>();
@@ -74,6 +81,7 @@ public class SeedService {
     private final Map<String, Long> activityCache = new HashMap<>();
     private final Map<String, Long> learningPathCache = new HashMap<>();
     private final Map<String, Long> storyCache = new HashMap<>();
+    private final Map<String, Long> accessibleColorCache = new HashMap<>();
 
     public SeedService(
             DevSeedStateJpaRepository seedStateRepository,
@@ -91,6 +99,8 @@ public class SeedService {
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
+            AccessibleColorRepository accessibleColorRepository,
+            AccessibleColorPaletteRepository accessibleColorPaletteRepository,
             ObjectMapper objectMapper) {
         this.seedStateRepository = seedStateRepository;
         this.categoryRepository = categoryRepository;
@@ -107,6 +117,8 @@ public class SeedService {
         this.worldHostRepository = worldHostRepository;
         this.worldNarrativeSituationRepository = worldNarrativeSituationRepository;
         this.worldDiscoveryElementRepository = worldDiscoveryElementRepository;
+        this.accessibleColorRepository = accessibleColorRepository;
+        this.accessibleColorPaletteRepository = accessibleColorPaletteRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -127,6 +139,7 @@ public class SeedService {
         loaded += loadWorldHosts();
         loaded += loadWorldNarrativeSituations();
         loaded += loadWorldDiscoveryElements();
+        loaded += loadAccessibleColors();
         log.info("Seed loading complete. {} records loaded.", loaded);
     }
 
@@ -196,6 +209,12 @@ public class SeedService {
             topic.setMinAge(seed.minAge());
             topic.setMaxAge(seed.maxAge());
             topic.setCreatedAt(LocalDateTime.now());
+            if (seed.recognitionType() != null && !seed.recognitionType().isBlank()) {
+                topic.setRecognitionType(es.vargontoc.educational.framework.content.model.RecognitionType.valueOf(seed.recognitionType()));
+            }
+            if (seed.habitatTag() != null && !seed.habitatTag().isBlank()) {
+                topic.setHabitatTag(es.vargontoc.educational.framework.content.model.Biome.valueOf(seed.habitatTag()));
+            }
             var savedTopic = topicRepository.save(topic);
             markLoaded(key, file);
             topicCache.put(seed.name(), savedTopic.getId());
@@ -613,5 +632,44 @@ public class SeedService {
             .map(Story::getId)
             .findFirst()
             .orElse(null);
+    }
+
+    private int loadAccessibleColors() {
+        String file = "15-accessible-colors.json";
+        var seeds = readSeedFile(file, new TypeReference<List<SeedData.AccessibleColorSeed>>() {});
+        int count = 0;
+        for (var seed : seeds) {
+            String key = "accessible-color:" + seed.conceptualIdentity().toLowerCase();
+            if (alreadyLoaded(key)) {
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+            var color = new AccessibleColor();
+            color.setConceptualIdentity(seed.conceptualIdentity());
+            color.setLabelKey(seed.labelKey());
+            color.setShapeIcon(seed.shapeIcon());
+            color.setSymbol(seed.symbol());
+            color.setStatus(ContentStatus.valueOf(seed.status()));
+            color.setSortOrder(seed.sortOrder());
+            color.setCreatedAt(LocalDateTime.now());
+            var savedColor = accessibleColorRepository.save(color);
+            markLoaded(key, file);
+            accessibleColorCache.put(seed.conceptualIdentity(), savedColor.getId());
+            count++;
+            if (seed.palettes() != null) {
+                for (var paletteSeed : seed.palettes()) {
+                    var palette = new AccessibleColorPalette();
+                    palette.setAccessibleColorId(savedColor.getId());
+                    palette.setColorVisionMode(ColorVisionMode.valueOf(paletteSeed.colorVisionMode()));
+                    palette.setAccessibleColorValue(paletteSeed.accessibleColorValue());
+                    palette.setAccessibleLabelKey(paletteSeed.accessibleLabelKey());
+                    palette.setCreatedAt(LocalDateTime.now());
+                    accessibleColorPaletteRepository.save(palette);
+                    count++;
+                }
+            }
+            log.info("Loaded seed: {}", key);
+        }
+        return count;
     }
 }

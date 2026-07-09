@@ -14,6 +14,8 @@ public class Topic {
     private Integer minAge;
     private Integer maxAge;
     private List<String> compatibleVariants = new ArrayList<>();
+    private RecognitionType recognitionType;
+    private Biome habitatTag;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -79,6 +81,22 @@ public class Topic {
 
     public void setCompatibleVariants(List<String> compatibleVariants) {
         this.compatibleVariants = compatibleVariants != null ? compatibleVariants : new ArrayList<>();
+    }
+
+    public RecognitionType getRecognitionType() {
+        return recognitionType;
+    }
+
+    public void setRecognitionType(RecognitionType recognitionType) {
+        this.recognitionType = recognitionType;
+    }
+
+    public Biome getHabitatTag() {
+        return habitatTag;
+    }
+
+    public void setHabitatTag(Biome habitatTag) {
+        this.habitatTag = habitatTag;
     }
 
     public LocalDateTime getCreatedAt() {
