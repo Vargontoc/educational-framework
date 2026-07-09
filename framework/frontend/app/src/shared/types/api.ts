@@ -50,12 +50,21 @@ export interface LoginResponse {
 
 // ── Child profiles ────────────────────────────────────────────────────────
 
+export type ColorVisionMode = 
+  | 'NONE' 
+  | 'PROTANOPIA' 
+  | 'DEUTERANOMALY' 
+  | 'DEUTERANOPIA' 
+  | 'TRITANOPIA' 
+  | 'ACHROMATOPSIA'
+
 export interface CreateChildProfileRequest {
   name: string
   birthday: string
   avatar?: string | null
   ttsEnabled: boolean
   agentEnabled: boolean
+  colorVisionMode?: ColorVisionMode | null
 }
 
 export interface UpdateChildProfileRequest {
@@ -64,6 +73,7 @@ export interface UpdateChildProfileRequest {
   avatar?: string | null
   ttsEnabled?: boolean | null
   agentEnabled?: boolean | null
+  colorVisionMode?: ColorVisionMode | null
 }
 
 export interface ChildProfileResponse {
@@ -75,6 +85,7 @@ export interface ChildProfileResponse {
   avatar: string
   ttsEnabled: boolean
   agentEnabled: boolean
+  colorVisionMode: ColorVisionMode
   createdAt: string
   updatedAt?: string | null
 }
