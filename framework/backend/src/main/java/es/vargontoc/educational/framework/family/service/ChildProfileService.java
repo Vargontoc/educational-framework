@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.family.service;
 
 import es.vargontoc.educational.framework.family.model.ChildProfile;
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import es.vargontoc.educational.framework.family.model.Family;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
@@ -51,7 +52,8 @@ public class ChildProfileService implements ChildProfileUseCase {
         LocalDate birthday,
         String avatar,
         boolean ttsEnabled,
-        boolean agentEnabled
+        boolean agentEnabled,
+        ColorVisionMode colorVisionMode
     ) {
         Family family = getFamilyOrThrow();
         childProfileValidator.validate(new ChildProfileValidator.ChildProfileValidationInput(name, birthday, avatar));
@@ -64,6 +66,7 @@ public class ChildProfileService implements ChildProfileUseCase {
         child.setActive(true);
         child.setTtsEnabled(applyFamilyCeiling(ttsEnabled, family.isTtsEnabled()));
         child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isAgentEnabled()));
+        child.setColorVisionMode(colorVisionMode != null ? colorVisionMode : ColorVisionMode.NONE);
         child.setCreatedAt(LocalDateTime.now());
 
         return childProfileRepository.save(child);
@@ -89,7 +92,8 @@ public class ChildProfileService implements ChildProfileUseCase {
         LocalDate birthday,
         String avatar,
         boolean ttsEnabled,
-        boolean agentEnabled
+        boolean agentEnabled,
+        ColorVisionMode colorVisionMode
     ) {
         var child = childProfileRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Child profile not found"));
@@ -105,6 +109,9 @@ public class ChildProfileService implements ChildProfileUseCase {
         child.setAvatar(resolveAvatar(avatar));
         child.setTtsEnabled(applyFamilyCeiling(ttsEnabled, family.isTtsEnabled()));
         child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isAgentEnabled()));
+        if (colorVisionMode != null) {
+            child.setColorVisionMode(colorVisionMode);
+        }
         child.setUpdatedAt(LocalDateTime.now());
 
         try {

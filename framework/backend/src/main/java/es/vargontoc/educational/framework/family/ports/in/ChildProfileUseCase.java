@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.family.ports.in;
 
 import es.vargontoc.educational.framework.family.model.ChildProfile;
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,7 +14,8 @@ public interface ChildProfileUseCase {
         LocalDate birthday,
         String avatar,
         boolean ttsEnabled,
-        boolean agentEnabled
+        boolean agentEnabled,
+        ColorVisionMode colorVisionMode
     );
 
     ChildProfile getChild(Long id);
@@ -26,7 +28,8 @@ public interface ChildProfileUseCase {
         LocalDate birthday,
         String avatar,
         boolean ttsEnabled,
-        boolean agentEnabled
+        boolean agentEnabled,
+        ColorVisionMode colorVisionMode
     );
 
     ChildProfile changeActiveState(Long id);

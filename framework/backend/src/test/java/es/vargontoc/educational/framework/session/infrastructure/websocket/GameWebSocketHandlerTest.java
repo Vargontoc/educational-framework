@@ -14,8 +14,10 @@ import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.world.model.WorldHeartbeatResult;
 import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
+import es.vargontoc.educational.framework.world.model.WorldDestinationSelectionResult;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
+import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
@@ -74,6 +76,9 @@ class GameWebSocketHandlerTest {
     private es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry worldStateRegistry;
 
     @Mock
+    private WorldOrchestrator worldOrchestrator;
+
+    @Mock
     private WebSocketSession session;
 
     private GameWebSocketHandler handler;
@@ -82,9 +87,11 @@ class GameWebSocketHandlerTest {
     void setUp() {
         handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarLifecycleService,
             gameOrchestrator, gameStateRegistry,
-            worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry);
+            worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
+        lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))
+            .thenReturn(new WorldDestinationSelectionResult());
     }
 
     @Test

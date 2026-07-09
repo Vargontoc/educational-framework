@@ -43,7 +43,8 @@ public class ChildProfileController {
             request.birthday(),
             request.avatar(),
             request.ttsEnabled(),
-            request.agentEnabled()
+            request.agentEnabled(),
+            request.colorVisionMode()
         );
         return ResponseEntity.status(201).body(ApiResponse.created(toResponse(child)));
     }
@@ -73,7 +74,8 @@ public class ChildProfileController {
             request.birthday(),
             request.avatar(),
             request.ttsEnabled() != null ? request.ttsEnabled() : existing.isTtsEnabled(),
-            request.agentEnabled() != null ? request.agentEnabled() : existing.isAgentEnabled()
+            request.agentEnabled() != null ? request.agentEnabled() : existing.isAgentEnabled(),
+            request.colorVisionMode()
         );
         return ResponseEntity.ok(ApiResponse.ok(toResponse(updated)));
     }
@@ -101,6 +103,7 @@ public class ChildProfileController {
             source.getAvatar(),
             source.isTtsEnabled(),
             source.isAgentEnabled(),
+            source.getColorVisionMode(),
             source.getCreatedAt(),
             source.getUpdatedAt()
         );

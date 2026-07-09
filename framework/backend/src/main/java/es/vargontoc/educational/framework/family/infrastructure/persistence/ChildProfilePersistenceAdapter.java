@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.family.infrastructure.persistence;
 
 import es.vargontoc.educational.framework.family.model.ChildProfile;
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Repository;
@@ -52,6 +53,7 @@ public class ChildProfilePersistenceAdapter implements ChildProfileRepository {
         target.setAvatar(source.getAvatar());
         target.setTtsEnabled(source.isTtsEnabled());
         target.setAgentEnabled(source.isAgentEnabled());
+        target.setColorVisionMode(source.getColorVisionMode() != null ? source.getColorVisionMode() : ColorVisionMode.NONE);
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -67,6 +69,7 @@ public class ChildProfilePersistenceAdapter implements ChildProfileRepository {
         target.setAvatar(source.getAvatar());
         target.setTtsEnabled(source.isTtsEnabled());
         target.setAgentEnabled(source.isAgentEnabled());
+        target.setColorVisionMode(source.getColorVisionMode() != null ? source.getColorVisionMode() : ColorVisionMode.NONE);
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;

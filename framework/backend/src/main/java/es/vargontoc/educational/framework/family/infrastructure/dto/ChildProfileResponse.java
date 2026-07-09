@@ -1,5 +1,7 @@
 package es.vargontoc.educational.framework.family.infrastructure.dto;
 
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -12,6 +14,7 @@ public record ChildProfileResponse(
     String avatar,
     boolean ttsEnabled,
     boolean agentEnabled,
+    ColorVisionMode colorVisionMode,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {

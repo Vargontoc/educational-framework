@@ -85,7 +85,8 @@ class TrackingDashboardControllerTest {
                 LocalDate.of(2015, 6, 15),
                 null,
                 true,
-                true
+                true,
+                null
         );
         childProfileId = child.getId();
 
@@ -102,7 +103,8 @@ class TrackingDashboardControllerTest {
                 LocalDate.of(2018, 1, 1),
                 null,
                 true,
-                true
+                true,
+                null
         );
         otherFamilyChildId = otherChild.getId();
     }

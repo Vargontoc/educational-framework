@@ -57,7 +57,8 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
             LocalDate.now().minusYears(8),
             "avatar-1",
             true,
-            true
+            true,
+            null
         ).getId();
         token = loginAndReturnToken();
     }

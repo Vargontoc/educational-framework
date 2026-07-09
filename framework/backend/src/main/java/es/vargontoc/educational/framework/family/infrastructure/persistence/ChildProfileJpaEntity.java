@@ -1,8 +1,11 @@
 package es.vargontoc.educational.framework.family.infrastructure.persistence;
 
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import es.vargontoc.educational.framework.shared.model.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
@@ -31,6 +34,10 @@ public class ChildProfileJpaEntity extends BaseEntity {
 
     @Column(name = "agent_enabled", nullable = false)
     private boolean agentEnabled;
+
+    @Column(name = "color_vision_mode", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    private ColorVisionMode colorVisionMode;
 
     public Long getFamilyId() {
         return familyId;
@@ -86,5 +93,13 @@ public class ChildProfileJpaEntity extends BaseEntity {
 
     public void setAgentEnabled(boolean agentEnabled) {
         this.agentEnabled = agentEnabled;
+    }
+
+    public ColorVisionMode getColorVisionMode() {
+        return colorVisionMode;
+    }
+
+    public void setColorVisionMode(ColorVisionMode colorVisionMode) {
+        this.colorVisionMode = colorVisionMode;
     }
 }

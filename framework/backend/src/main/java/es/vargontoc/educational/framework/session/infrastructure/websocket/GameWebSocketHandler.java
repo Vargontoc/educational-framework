@@ -23,7 +23,10 @@ import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.Wor
 import es.vargontoc.educational.framework.world.model.WorldDestination;
 import es.vargontoc.educational.framework.world.model.WorldDiscoveryProposal;
 import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
+import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
+import es.vargontoc.educational.framework.world.model.WorldState;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
+import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
@@ -48,10 +51,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
-import es.vargontoc.educational.framework.world.model.WorldState;
-import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 
 
 public class GameWebSocketHandler extends TextWebSocketHandler {
@@ -85,7 +84,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                              WorldHeartbeatUseCase worldHeartbeatUseCase,
                              WorldGameStartUseCase worldGameStartUseCase,
                              WorldStateRegistry worldStateRegistry,
-                            WorldOrchestrator worldOrchestrator) {
+                             WorldOrchestrator worldOrchestrator) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarLifecycleService = avatarLifecycleService;
@@ -217,15 +216,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
 
+
     private WorldState getNewWorld(Long childSessionId) {
-
         Long profileId = childSessionUseCase.getSession(childSessionId).getChildProfileId();
-
         WorldState ws = new WorldState();
         ws.setChildSessionId(childSessionId);
         ws.setChildProfileId(profileId);
         ws.setStatus(WorldRuntimeStatus.ACTIVE);
-        
         var select = worldOrchestrator.selectDestination(childSessionId, profileId, null, 3);
         ws.setCurrentDestination(select.getDestination());
         return ws;

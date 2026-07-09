@@ -13,6 +13,7 @@ public class ChildProfile {
     private String avatar;
     private boolean ttsEnabled;
     private boolean agentEnabled;
+    private ColorVisionMode colorVisionMode;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -78,6 +79,14 @@ public class ChildProfile {
 
     public void setAgentEnabled(boolean agentEnabled) {
         this.agentEnabled = agentEnabled;
+    }
+
+    public ColorVisionMode getColorVisionMode() {
+        return colorVisionMode;
+    }
+
+    public void setColorVisionMode(ColorVisionMode colorVisionMode) {
+        this.colorVisionMode = colorVisionMode;
     }
 
     public LocalDateTime getCreatedAt() {
