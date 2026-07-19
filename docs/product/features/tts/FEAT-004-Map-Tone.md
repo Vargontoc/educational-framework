@@ -45,7 +45,7 @@ Changing the active provider must not change the backend contract. Only the inte
 - `joyful`
 - `enthusiastic`
 - `serious`
-- `neutral`
+- `playful`
 
 ## Provider Mapping
 
@@ -56,12 +56,9 @@ Chatterbox internal mapping may include:
 - `temperature`
 - `audio_prompt`
 
-XTTS v2 internal mapping may include:
-
-- `speaker_wav`
-- `speed`
-
 These fields must not be exposed as stable public API fields in `docs/contracts/api/openapi_tts.json`.
+
+**Nota (2026-07-18)**: XTTS v2 ha sido eliminado como proveedor (ADR-013). Solo se mapean tonos para Chatterbox.
 
 ## Versioning
 

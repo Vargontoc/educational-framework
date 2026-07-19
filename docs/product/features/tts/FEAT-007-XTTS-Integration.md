@@ -2,7 +2,7 @@
 
 ## Status
 
-state: proposal
+state: **ELIMINADO** (2026-07-18) — Chatterbox es el único proveedor TTS. Ver ADR-013.
 user_history: Real adapter integration from `tts-educational` to `coqui-educational` for XTTS v2
 depends_on: `docs/architecture/decisions/ADR-012-Replain-tts-service.md`, `docs/product/features/tts/FEAT-002-Contracts-API.md`, `docs/product/features/tts/FEAT-003-Conversor-WAV-MP3.md`, `docs/product/features/tts/FEAT-004-Map-Tone.md`, `docs/product/features/tts/FEAT-005-Expand-FastAPI.md`
 owned_by: tts
@@ -139,3 +139,21 @@ Required tests:
 ## Notes
 
 This feature integrates only the XTTS adapter path. Provider fallback and provider startup orchestration are handled by later features.
+
+---
+
+## Eliminación (2026-07-18)
+
+**Esta feature ha sido eliminada** siguiendo la decisión de producto ADR-013: "Chatterbox como único proveedor TTS".
+
+**Razón**: Para el contexto monofamiliar (5-6 usuarios), la complejidad de mantener dos proveedores de síntesis de voz no justifica el beneficio. Chatterbox es suficiente para las necesidades de audio infantil.
+
+**Archivos afectados que deben eliminarse o actualizarse**:
+- `framework/tts/app/adapters/xtts.py` — eliminar
+- `framework/tts/app/adapters/factory.py` — eliminar referencia a XTTS
+- `framework/tts/app/config.py` — eliminar configuración de Coqui
+- `framework/tts/envs/.env` — eliminar variables COQUI_*
+- `framework/tts/app/mappings/tone_mapping.py` — eliminar mapeo XTTS
+- `framework/tts/tests/test_xtts_adapter.py` — eliminar
+
+**Esta documentación se mantiene como referencia histórica.**

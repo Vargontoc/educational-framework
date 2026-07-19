@@ -217,6 +217,10 @@ export const messages = {
     backPanel: 'Volver al panel',
     backPanelAriaLabel: 'Volver al panel de control',
     sections: {
+      whoI : {
+        title: 'Quien soy',
+        description: ''
+      },
       gettingStarted: {
         title: 'Primeros pasos',
         description: 'Aprende a crear tu espacio familiar, registrar perfiles de niños y comenzar a usar la aplicación.'

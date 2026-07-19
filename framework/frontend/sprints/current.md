@@ -1,9 +1,9 @@
-# Sprint 026 - frontend
+# Sprint 027 - frontend
 # -----------------------------------------------
 
 ## Goal
 
-Use accessible color catalog metadata when rendering COLOR recognition content so visual values and non-chromatic differentiators match the active child `colorVisionMode`.
+Polish and verify FEAT-012 end to end: child profile visual accessibility configuration, persistence, preview, accessible COLOR rendering where available, responsive behavior, i18n, and acceptance checks.
 
 ## Status
 
@@ -15,71 +15,86 @@ waiting_for:
 
 ## Tasks
 
-### Feature And Existing Flow Review
-- [ ] Review `docs/product/features/frontend/FEAT-012-Vision-Accesibility-Child-Profile.md` backend seed reference values.
-- [ ] Review `docs/product/features/backend/FEAT-009-Recognition-Engine.md` accessibility notes if needed.
-- [ ] Review frontend recognition/content catalog consumption before editing.
-- [ ] Review existing child session/profile state access in GameView or recognition flow.
-- [ ] Do not implement backend endpoints or seed changes.
+### Feature Acceptance Review
+- [ ] Review `docs/product/features/frontend/FEAT-012-Vision-Accesibility-Child-Profile.md` end to end.
+- [ ] Review Sprints 023 through 026 outputs.
+- [ ] Confirm backend enum values are used exactly and not duplicated with alternate names.
+- [ ] Confirm no backend code or backend contracts were changed for this frontend feature.
+- [ ] Confirm any blocker from Sprint 026 is documented before polishing dependent rendering.
 
-### Catalog Metadata Support
-- [ ] Identify the frontend source for recognition COLOR content metadata.
-- [ ] Support accessible color fields when provided: `conceptualIdentity`, `labelKey`, `shapeIcon`, `symbol`, and palettes by `colorVisionMode`.
-- [ ] Resolve the active child `colorVisionMode` from child profile/session state.
-- [ ] Select the matching accessible palette for the active `colorVisionMode`.
-- [ ] Fall back safely to `NONE` palette if a specific mode palette is missing.
-- [ ] Do not fabricate catalog items when backend content is unavailable.
+### Child Profile Flow Acceptance
+- [ ] Verify opening child edit modal renders current `colorVisionMode` from backend response.
+- [ ] Verify saving each backend enum persists and re-renders after refresh.
+- [ ] Verify toggle off saves `NONE`.
+- [ ] Verify toggle on requires or preserves a non-`NONE` selection.
+- [ ] Verify `No estoy seguro` selects and saves `DEUTERANOMALY`.
+- [ ] Verify existing name, birthday, avatar, TTS, and agent behavior is unchanged.
+- [ ] Verify failed save keeps user input and shows adult-facing feedback.
 
-### COLOR Rendering
-- [ ] Render conceptual color identity separately from visual color value.
-- [ ] Apply `accessibleColorValue` for visual display when available.
-- [ ] Render a non-chromatic differentiator such as `shapeIcon`, `symbol`, or accessible label.
-- [ ] Ensure COLOR options are not distinguishable by color alone.
-- [ ] Keep rendering generic enough to work with additional colors beyond current seed values.
+### Preview And COLOR Rendering Acceptance
+- [ ] Verify selector preview updates for every backend enum.
+- [ ] Verify preview does not rely on color alone.
+- [ ] Verify preview copy remains non-diagnostic.
+- [ ] Verify COLOR content, when available, uses accessible palette for active `colorVisionMode`.
+- [ ] Verify COLOR content includes a non-chromatic differentiator.
+- [ ] Verify missing accessible metadata falls back safely without breaking other content.
 
-### Error And Empty States
-- [ ] If accessible metadata is missing, render a safe fallback that still includes a text/shape differentiator.
-- [ ] Avoid child-facing technical error copy.
-- [ ] Log or surface adult/dev diagnostics only through existing project patterns.
-- [ ] Do not block non-COLOR recognition categories.
+### Accessibility, Responsive, And I18n
+- [ ] Verify all visible strings and aria labels resolve through i18n.
+- [ ] Verify keyboard navigation through toggle, options, preview, save, and cancel.
+- [ ] Verify focus management inside the edit modal remains correct.
+- [ ] Verify selected/disabled/error states are not color-only.
+- [ ] Verify adult touch targets are at least 44px.
+- [ ] Verify tablet landscape layout.
+- [ ] Verify mobile landscape layout.
+- [ ] Verify portrait overlay or portrait-compatible behavior remains intact.
+- [ ] Verify no sustained uppercase labels are introduced.
+
+### Code Quality And Cleanup
+- [ ] Remove dead fallback values or helpers that are no longer needed.
+- [ ] Keep fallback preview data clearly scoped if still needed.
+- [ ] Remove debug logs.
+- [ ] Keep functions small and local unless reuse is clear.
+- [ ] Add short comments only where behavior would otherwise be unclear.
+- [ ] Avoid broad refactors unrelated to FEAT-012.
 
 ### Testing And Verification
-- [ ] Add or update tests for palette resolution by `colorVisionMode` if a harness exists.
-- [ ] Verify `NONE`, `DEUTERANOMALY`, `TRITANOPIA`, and `ACHROMATOPSIA` render visibly different or non-color-dependent outputs.
-- [ ] Verify missing palette falls back to `NONE` without crashing.
-- [ ] Verify non-COLOR recognition rendering is unchanged.
+- [ ] Add or update minimal tests if the project has a test harness for touched areas.
+- [ ] Run targeted tests if available for child profile services/components.
 - [ ] Run `npm run build` from `framework/frontend/app`.
+- [ ] Manually verify the FEAT-012 acceptance checklist in the running app if feasible.
 
 ## Risks
 
-- **Endpoint availability**: frontend may not yet have a catalog endpoint exposing accessible color metadata.
-  Mitigation: stop and document the blocker rather than inventing content APIs.
-- **Color-only regression**: rendering may still rely on swatch color.
-  Mitigation: always include non-chromatic differentiators.
-- **Session/profile mismatch**: active child mode may not be available in the recognition route.
-  Mitigation: use existing child profile/session state and fall back to `NONE` safely.
+- **Partial feature completion**: profile UI may work while COLOR rendering remains blocked by catalog availability.
+  Mitigation: document any catalog/API blocker clearly in review and keep profile configuration complete.
+- **Accessibility regression**: visual preview and swatches may become color-only.
+  Mitigation: verify non-chromatic differentiators in both selector and COLOR rendering.
+- **Adult/child UI mixing**: profile configuration belongs to adult panel, while COLOR rendering may be child-facing.
+  Mitigation: keep adult configuration and child content visual languages separate.
+- **Over-polishing scope creep**: final pass could expand into unrelated profile or game improvements.
+  Mitigation: use FEAT-012 acceptance checklist only.
 
 ## Dependencies
 
 - Sprint 023 - child profile color vision contract.
-- Sprint 024 - visual accessibility selector persistence.
-- Sprint 025 - preview fallback patterns.
-- `framework/backend/sprints/history/063-recognition-content-accessible-catalog-2026-07-09.md` - backend catalog support.
-- Existing frontend recognition/content rendering flow.
+- Sprint 024 - visual accessibility selector UI.
+- Sprint 025 - visual preview.
+- Sprint 026 - accessible COLOR catalog rendering.
+- `docs/product/features/frontend/FEAT-012-Vision-Accesibility-Child-Profile.md` - source feature.
 
 ## Agent Instruction
 
-- Implement only frontend rendering support for accessible COLOR content metadata.
+- Complete only FEAT-012 polish and verification.
 - Do not implement backend changes.
 - Do not change backend contracts.
-- Do not create fake catalog endpoints.
-- Do not hardcode seed data as the source of truth for game content.
-- Keep child-facing rendering safe and non-technical.
+- Do not add unrelated child profile, GameView, or recognition features.
+- Keep all visible strings and aria labels in i18n.
 - Keep code, comments, and documentation in English.
 
 ## Notes
 
-- If no frontend-accessible catalog metadata exists, document the blocker in sprint review and keep code changes minimal.
+- After this sprint, FEAT-012 should be ready to archive as frontend complete or have clearly documented blockers.
 
 ## Review
 
@@ -92,4 +107,4 @@ contract_changes:
 learnings:
 
 next_sprint_suggestions:
-- Sprint 027 - complete FEAT-012 accessibility, responsive, and acceptance pass.
+- Archive FEAT-012 frontend sprints if all acceptance criteria pass.

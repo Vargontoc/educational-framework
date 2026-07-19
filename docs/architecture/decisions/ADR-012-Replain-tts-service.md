@@ -4,7 +4,7 @@
 
 status:        accepted
 date:          2026-05-26
-superseded_by: —
+superseded_by: ADR-013-Chatterbox-unico-proveedor-TTS.md (parcialmente — XTTS eliminado como fallback)
 
 ---
 
@@ -212,4 +212,8 @@ Mitigation: Keep the API narrow, provider-agnostic, and covered by `openapi_tts.
 ADR-004 remains valid for the original on-premise/private TTS motivation, but its Coqui-specific implementation is superseded by this ADR for the primary TTS path.
 
 ADR-005 remains valid for XTTS voice reference generation and fallback operation. Chatterbox may reuse voice references if compatible, but it is not required to expose `speaker_wav` through the stable TTS API.
+
+## Nota (2026-07-18)
+
+**ADR-013** ha eliminado XTTS v2 como fallback. Chatterbox es ahora el único proveedor de síntesis de voz. Esta decisión simplifica la operativa para el contexto monofamiliar. Ver `docs/decisions/ADR-013-Chatterbox-unico-proveedor-TTS.md` para detalles.
 

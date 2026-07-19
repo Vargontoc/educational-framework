@@ -3,14 +3,18 @@
 
 ## Goal
 
+**ELIMINADO** (2026-07-18) — Chatterbox es el único proveedor TTS. Ver ADR-013.
+
 Implement real XTTS provider adapter inside `tts-educational` using the same adapter interface as Chatterbox (FEAT-006). Connect to `coqui-educational` via `COQUI_BASE_URL`, apply FEAT-004 tone mapping, always convert WAV→MP3 via FEAT-003, return `audio/mpeg` with proper error codes (503/504/422/500). No real Coqui/XTTS container in tests.
 
 ## Status
 
-status: active
+status: **cancelled**
 started_at: 2026-06-06
+closed_at: 2026-07-18
 blocked_by:
 waiting_for:
+cancelled_reason: ADR-013 — Chatterbox es el único proveedor TTS. XTTS eliminado.
 
 ## Tasks
 

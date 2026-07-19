@@ -16,6 +16,7 @@ type DocSection =
   | 'familyExperiences'
   | 'privacyAndSecurity'
   | 'support'
+  | 'whoI'
 
 interface SectionItem {
   id: DocSection
@@ -25,6 +26,7 @@ interface SectionItem {
 const activeSection = ref<DocSection>('gettingStarted')
 
 const sections: SectionItem[] = [
+  {id: 'whoI', labelKey : 'docs.sections.whoI.title'},
   { id: 'gettingStarted', labelKey: 'docs.sections.gettingStarted.title' },
   { id: 'familyAndProfiles', labelKey: 'docs.sections.familyAndProfiles.title' },
   { id: 'parentControl', labelKey: 'docs.sections.parentControl.title' },
@@ -37,22 +39,6 @@ const sections: SectionItem[] = [
 <template>
   <RotationOverlay>
     <div class="docs-shell">
-      <header class="docs-header">
-        <div class="docs-header__inner">
-          <a
-            href="/"
-            class="docs-header__back"
-            :aria-label="t('docs.backHome')"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            {{ t('docs.backHome') }}
-          </a>
-          <div class="docs-header__brand" aria-hidden="true">A+C</div>
-        </div>
-      </header>
-
       <div class="docs-layout">
         <aside class="docs-nav" aria-label="Documentación">
           <nav>
