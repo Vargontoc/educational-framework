@@ -57,5 +57,3 @@ learnings:
 
 next_sprint_suggestions:
     {agent propose what should go in the next sprint based on incomplete tasks}
-
-  

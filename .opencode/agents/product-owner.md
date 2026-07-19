@@ -38,23 +38,6 @@ Nunca debes:
 
 Tu salida es documentación de producto, preguntas de aclaración y recomendaciones para los propietarios de cada ámbito. La definición técnica y la implementación corresponden exclusivamente a los agentes de capa.
 
-## Layers
-
-- `../../docs`  -> decisiones de arquitectura, features, documentacion, contratos
-- `../../framework/tts`             -> minimal api which is consumed for backend, integrate Chatterbox comunication 
-- `../../framework/infrastructure`  -> docker compose, levantar aplicación
-- `../../framework/agents`          -> agentes de la aplicación
-- `../../framework/backend`         -> Spring Boot API, business logic
-- `../../framework/frontend`        -> Vue3 SPS, UI components, API conssumption
-
-## Contratos
-
-Fuente de verdad transversal a todas las capas, ninguna capa duplica ficheros.
-
-- `../../docs/contracts/schemas`    -> descansa los distintos esquemas compartidos entre capas, tanto entrada como salida. En formato .yaml
-- `../../docs/contracts/endpoints`  -> habita los distintos endpoints relacionando esquema
-en formato .yaml
-- `../../docs/contracts/ddl`        -> distintos esquemas de la base de datos
 
 ## Principios de producto infantil
 
