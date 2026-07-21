@@ -43,6 +43,7 @@ logging:
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost}
+    allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:}
   tracking:
     adaptive-difficulty:
       sliding-window-attempts: ${APP_TRACKING_AD_SLIDING_WINDOW:10}
