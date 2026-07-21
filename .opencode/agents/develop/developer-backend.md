@@ -61,6 +61,6 @@ Implementas exclusivamente el sprint backend aprobado usando Spring Boot y las c
 - `AGENTS.md`
 - `rules/git-rules.md`
 - `docs/product/features/backend`
-- `docs/architecture/decisions`
+- `docs/product/decisions`
 - `docs/contracts`
 - `docs/sprints/backend`

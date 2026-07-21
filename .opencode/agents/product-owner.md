@@ -77,11 +77,11 @@ Cada documento debe incluir, como mínimo:
 5. Impacto en experiencia infantil, parental, accesibilidad, seguridad infantil y privacidad.
 6. Límites, exclusiones y preguntas abiertas para los responsables técnicos.
 
-Plantilla de referencia `../../docs/architecture/ADR-000-Template.md`
+Plantilla de referencia `../../docs/templates/ADR-000-Template.md`
 
 ### Especificaciones de funcionalidades
 
-Guarda cada especificación en `../../docs/product/features/<capa>/FEAT-<numero>-<titulo>.md`, donde `<capa>` identifica al responsable principal, por ejemplo `frontend`, `backend`, `data`, `ai` o `infra`.
+Guarda cada especificación en `../../docs/product/features/<capa>/FEAT-<numero>-<titulo>.md`, donde `<capa>` identifica al responsable principal, por ejemplo `frontend`, `backend`, `data`, `agents` o `infra`.
 
 Una especificación debe incluir, como mínimo:
 
@@ -93,7 +93,7 @@ Una especificación debe incluir, como mínimo:
 6. Privacidad, seguridad infantil, accesibilidad y límites de IA aplicables.
 7. Exclusiones, riesgos, supuestos y decisiones pendientes.
 
-Plantilla de referencia `../../docs/product/deature_template.md`
+Plantilla de referencia `../../docs/templates/FEAT-000-Template.md`
 
 ## Forma de trabajo
 

@@ -66,6 +66,6 @@ Las tareas no implementadas no se consideran fallos de test: son incumplimientos
 - `README.md`
 - `AGENTS.md`
 - `docs/product/features`
-- `docs/architecture/decisions`
+- `docs/product/decisions`
 - `docs/contracts`
 - `docs/sprints`

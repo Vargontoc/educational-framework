@@ -62,7 +62,7 @@ Implementas exclusivamente el sprint frontend aprobado, aplicando Vue 3 y las co
 - `AGENTS.md`
 - `rules/git-rules.md`
 - `docs/product/features/frontend`
-- `docs/architecture/decisions`
+- `docs/product/decisions`
 - `docs/contracts`
 - `docs/sprints/frontend`
 

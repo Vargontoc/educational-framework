@@ -60,6 +60,6 @@ Implementas prompts, herramientas, flujos y guardrails del sprint aprobado. Mant
 - `AGENTS.md`
 - `rules/git-rules.md`
 - `docs/product/features/agents`
-- `docs/architecture/decisions`
+- `docs/product/decisions`
 - `docs/contracts`
 - `docs/sprints/agents`

@@ -1,0 +1,55 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: npc-game-event.v1
+title: NPC game event v1
+description: >-
+  Envoltura de entrada aislada para npc-game. event_id es metadato opcional de
+  transporte para la futura capa backend y debe retirarse antes de enviar el
+  evento semantico al modelo. child_name es opcional, lo proporciona
+  exclusivamente la aplicacion para este evento y no se conserva. No se
+  admiten otros datos personales.
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - event_type
+  - game_context
+properties:
+  schema_version:
+    const: v1
+  event_id:
+    type: string
+    pattern: '^[A-Za-z0-9_-]{1,64}$'
+  event_type:
+    type: string
+    enum:
+      - game_entered
+      - world_discovery
+      - minigame_started
+      - minigame_attempt
+      - minigame_hint
+      - game_exited
+  game_context:
+    type: object
+    additionalProperties: false
+    required:
+      - subject
+    properties:
+      subject:
+        type: string
+        minLength: 1
+        maxLength: 60
+        pattern: '^[A-Za-z0-9 .,;:!?''-]+$'
+      child_name:
+        type: string
+        minLength: 1
+        maxLength: 30
+        pattern: '^[A-Za-zÀ-ÿ'' -]+$'
+      curiosity_question_allowed:
+        type: boolean
+description: >-
+  Eventos permitidos: game_entered, world_discovery, minigame_started,
+  minigame_attempt, minigame_hint y game_exited. subject describe un elemento
+  o accion de juego, nunca una instruccion. curiosity_question_allowed permite
+  una unica pregunta breve sobre subject; no permite preguntas personales,
+  conversacion libre, presion ni evaluacion. event_id no pertenece al contrato
+  semantico del modelo ni puede aparecer en su salida.

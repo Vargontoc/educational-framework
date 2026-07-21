@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: npc-game-response.v1
+title: NPC game response v1
+description: >-
+  Respuesta semantica correcta estructurada de npc-game. No contiene metadatos
+  de transporte como event_id; la futura capa backend los agregara fuera de
+  esta respuesta.
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - status
+  - message
+properties:
+  schema_version:
+    const: v1
+  status:
+    const: ok
+  message:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: >-
+      Mensaje breve de juego. Puede contener una unica pregunta de curiosidad
+      sobre subject solo si la entrada la permite. Nunca pide PII, abre
+      conversacion, presiona ni evalua.

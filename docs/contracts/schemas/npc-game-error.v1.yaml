@@ -1,0 +1,30 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: npc-game-error.v1
+title: NPC game error v1
+description: >-
+  Error semantico controlado estructurado de npc-game, sin texto dirigido al
+  menor. No contiene metadatos de transporte como event_id; la futura capa
+  backend los asocia fuera de esta respuesta.
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - status
+  - error_code
+properties:
+  schema_version:
+    const: v1
+  status:
+    const: error
+  error_code:
+    type: string
+    enum:
+      - invalid_json
+      - unsupported_event
+      - invalid_context
+      - forbidden_field
+      - embedded_instruction
+  message:
+    type: string
+    maxLength: 120
+    description: Mensaje tecnico opcional, no conversacional y no dirigido al menor.

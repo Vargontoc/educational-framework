@@ -64,6 +64,6 @@ No implementas ni corriges codigo de produccion. Compruebas con evidencia que el
 - `AGENTS.md`
 - `rules/git-rules.md`
 - `docs/product/features/tts`
-- `docs/architecture/decisions`
+- `docs/product/decisions`
 - `docs/contracts`
 - `docs/sprints/tts`

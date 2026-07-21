@@ -66,5 +66,6 @@ Siempre documenta:
 
 - `README.md`
 - `AGENTS.md`
-- `docs/architecture/decisions`
+- `docs/product/decisions`
+- `docs/product/agents`
 - `docs/contracts`

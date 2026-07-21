@@ -59,6 +59,6 @@ Implementas el servicio de sintesis, sus contratos, adaptadores, cache, fallback
 - `AGENTS.md`
 - `rules/git-rules.md`
 - `docs/product/features/tts`
-- `docs/architecture/decisions`
+- `docs/product/decisions`
 - `docs/contracts`
 - `docs/sprints/tts`

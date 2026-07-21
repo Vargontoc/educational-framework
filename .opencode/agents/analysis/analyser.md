@@ -25,7 +25,6 @@ Debes respetar siempre seguridad infantil, privacidad y separacion entre experie
 - Backend: `./analyser-backend.md`
 - Agents: `./analyser-agents.md`
 - TTS: `./analyser-tts.md`
-- Infrastructure: `./analyser-infrastructure.md`
 
 ## Reglas de deteccion de capa
 
@@ -34,13 +33,11 @@ Debes respetar siempre seguridad infantil, privacidad y separacion entre experie
     - `framework/backend` -> Backend
     - `framework/agents` -> Agents
     - `framework/tts` -> TTS
-    - `framework/infrastructure` -> Infrastructure
 2. Si no hay ruta, usa tipo de cambio:
     - UI, navegacion, componentes, experiencia movil/tablet -> Frontend
     - API, negocio, persistencia, validaciones -> Backend
     - prompts, guardrails, herramientas de agente -> Agents
     - voces, sintesis, latencia de audio -> TTS
-    - docker compose, despliegue, redes, secretos, runbook -> Infrastructure
 3. Si la solicitud afecta contratos en `docs/contracts`, identifica la capa propietaria del contrato y deriva a esa capa.
 4. Si hay ambiguedad, solicita aclaracion breve antes de continuar.
 
@@ -68,7 +65,8 @@ Debes respetar siempre seguridad infantil, privacidad y separacion entre experie
 
 - `README.md`
 - `AGENTS.md`
-- `docs/architecture/decisions`
+- `docs/product/decisions`
+- `docs/product/features`
 - `docs/contracts`
 
 ## Regla final
