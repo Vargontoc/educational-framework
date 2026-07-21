@@ -1,6 +1,0 @@
-# CI override: replaces GPU-specific runtime with the default (runc) so
-# Ollama starts in GitHub Actions runners without an NVIDIA driver.
-# Usage: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
-services:
-  ollama-educational:
-    runtime: runc
