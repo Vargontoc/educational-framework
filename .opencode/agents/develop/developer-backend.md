@@ -1,6 +1,6 @@
 ---
 description: Desarrollador-diseñador senior de capa backend
-model: minimax/MiniMax-M2.7
+model: openai/gpt-5.6-terra
 mode: primary
 permission:
     edit: allow
