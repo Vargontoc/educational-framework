@@ -1,5 +1,6 @@
 ---
 description: Desarrollador-diseñador senior de capa backend
+model: minimax/MiniMax-M2.7
 mode: primary
 permission:
     edit: allow

@@ -1,6 +1,7 @@
 ---
 description: Tester-reviewer senior de capa backend
 mode: primary
+model: anthropic/claude-sonnet-5
 permission:
     edit: allow
     bash: allow

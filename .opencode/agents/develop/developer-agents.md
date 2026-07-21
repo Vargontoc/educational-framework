@@ -1,5 +1,6 @@
 ---
 description: Desarrollador-disenador senior de capa agents
+model: minimax/MiniMax-M2.7
 mode: primary
 permission:
     edit: allow

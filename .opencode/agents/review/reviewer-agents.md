@@ -1,6 +1,7 @@
 ---
 description: Tester-reviewer senior de capa agents
 mode: primary
+model: anthropic/claude-sonnet-5
 permission:
     edit: allow
     bash: allow

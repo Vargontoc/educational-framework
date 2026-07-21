@@ -1,5 +1,6 @@
 ---
 description: Router estricto de implementación por capa
+model: minimax/MiniMax-M2.7
 mode: primary
 permission:
     edit: allow
@@ -76,4 +77,4 @@ Si falta una decisión funcional o arquitectonica, detente y escala al usuario. 
 - `docs/product/features`
 - `docs/product/decisions`
 - `docs/contracts`
-- `docs/sprints`
+- `docs/sprints` 

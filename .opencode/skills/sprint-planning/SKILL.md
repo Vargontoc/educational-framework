@@ -1,34 +1,45 @@
-# SKILL — analysis/sprint-planning
-# ─────────────────────────────────────────────
-# Use this skill to: generate a sprint proposal for one or more layers
-# based on current project state, pending tasks and detected blockers.
+# SKILL — sprint-review
 
-## Before Planning
-1. Read {layer}/sprints/current.md for every layer
-2. Read docs/contracts/openapi.json to understand contract state
-3. Run dependency-check skill to detect active blockers
-4. Read {layer}/sprints/history/ to understand what was done before
+## Objetivo
+Emitir el veredicto independiente de un sprint y dejarlo listo para cierre o correccion.
 
-## Planning Output
-Produce a sprint proposal following docs/sprints/sprint_template.md exactly.
-The proposal must include:
-  - A clear one-sentence Goal
-  - A concrete Task list derived from pending work
-  - Identified Risks based on inter-layer dependencies
-  - Explicit Dependencies referencing other layers or contracts
-  - Agent Instructions derived from the layer AGENT.md rules
+## Activacion
 
-## Ordering Rule
+- El developer ha entregado tareas en estado `implemented`.
+- Existen evidencias y pruebas asociadas.
+- El usuario solicita revision o el flujo entra en fase de validacion.
 
-When multiple layers need a sprint, propose them in this order:
-  1. infrastructure — environment must be ready first
-  2. agents         -> Agent AI domain
-  3. backend        — contract must exist before frontend can start
-  4. frontend       — depends on backend contract
-  5. If backend sprint is not closed, mark frontend sprint as blocked
+## Procedimiento
 
-## Output Format
+1. Ejecuta `sprint-completeness`.
+2. Ejecuta las pruebas aplicables mediante `test-execution`.
+3. Valida contratos con `contract-validation`.
+4. Revisa cambios mediante `code-review` y la skill especifica de capa.
+5. Registra cada defecto usando `defect-reporting`.
+6. Marca tareas demostradas como `verified` y las fallidas como `rejected`.
+7. Emite un unico veredicto:
+   - `APPROVED`
+   - `APPROVED_WITH_OBSERVATIONS`
+   - `CHANGES_REQUIRED`
+   - `BLOCKED`
+   - `USER_DECISION_REQUIRED`
 
-Present the proposal as a ready-to-copy sprint file.
-State clearly: "Copy this to {layer}/sprints/current.md to activate the sprint."
-Do not write to the file directly — wait for human confirmation.
+## Reglas de cierre
+
+- Solo `APPROVED` y `APPROVED_WITH_OBSERVATIONS` permiten cerrar el sprint.
+- `CHANGES_REQUIRED` vuelve al developer con incidencias concretas.
+- `BLOCKED` mantiene el sprint abierto y explica la dependencia.
+- `USER_DECISION_REQUIRED` se reserva para decisiones funcionales, contractuales o arquitectonicas.
+- No corrijas codigo de produccion durante la revision.
+
+## Seccion de revision
+
+Incluye:
+
+- tareas verificadas y rechazadas;
+- comandos y resultados;
+- contratos revisados;
+- defectos abiertos;
+- limitaciones de la validacion;
+- observaciones no bloqueantes;
+- veredicto y siguiente transicion.

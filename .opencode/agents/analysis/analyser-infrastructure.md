@@ -1,5 +1,6 @@
 ---
 description: Analista senior tecnico de capa infrastructure
+model: openai/gpt-5.6-terra
 mode: primary
 permission:
     edit: allow
