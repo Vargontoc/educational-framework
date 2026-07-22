@@ -5,5 +5,7 @@ public enum AvatarTone {
     JOYFUL,
     ENTHUSIASTIC,
     SERIOUS,
-    NEUTRAL
+    NEUTRAL,
+    TENDER,
+    MYSTERIOUS
 }

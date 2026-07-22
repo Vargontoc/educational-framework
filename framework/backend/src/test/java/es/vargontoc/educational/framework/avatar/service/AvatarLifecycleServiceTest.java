@@ -50,7 +50,7 @@ class AvatarLifecycleServiceTest {
     }
 
     @Test
-    void welcome_usesNpcVoiceProfile() {
+    void welcome_usesNpcContext() {
         ChildSession session = createSession(1L, 100L);
         ChildProfile profile = createProfile(100L, true, true);
         byte[] audioData = "mp3-data".getBytes();
@@ -62,9 +62,9 @@ class AvatarLifecycleServiceTest {
         AvatarLifecycleService.AvatarLifecycleResult result = service.welcome(1L);
 
         assertTrue(result.isPresent());
-        ArgumentCaptor<String> voiceProfileCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ttsClient).synthesize(anyString(), anyString(), any(), voiceProfileCaptor.capture());
-        assertEquals("npc", voiceProfileCaptor.getValue());
+        ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ttsClient).synthesize(anyString(), anyString(), any(), contextCaptor.capture());
+        assertEquals("npc", contextCaptor.getValue());
     }
 
     @Test
@@ -129,7 +129,7 @@ class AvatarLifecycleServiceTest {
     }
 
     @Test
-    void farewell_usesNpcVoiceProfile() {
+    void farewell_usesNpcContext() {
         ChildSession session = createSession(1L, 100L);
         ChildProfile profile = createProfile(100L, true, true);
         byte[] audioData = "mp3-data".getBytes();
@@ -141,9 +141,9 @@ class AvatarLifecycleServiceTest {
         AvatarLifecycleService.AvatarLifecycleResult result = service.farewell(1L);
 
         assertTrue(result.isPresent());
-        ArgumentCaptor<String> voiceProfileCaptor = ArgumentCaptor.forClass(String.class);
-        verify(ttsClient).synthesize(anyString(), anyString(), any(), voiceProfileCaptor.capture());
-        assertEquals("npc", voiceProfileCaptor.getValue());
+        ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ttsClient).synthesize(anyString(), anyString(), any(), contextCaptor.capture());
+        assertEquals("npc", contextCaptor.getValue());
     }
 
     @Test

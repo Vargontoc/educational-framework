@@ -19,7 +19,7 @@ public class AvatarLifecycleService {
     private static final Logger log = LoggerFactory.getLogger(AvatarLifecycleService.class);
     private static final String WELCOME_TEXT = "Hola, vamos a jugar!";
     private static final String FAREWELL_TEXT = "Vaya, parece que es hora de despedirnos. Hasta la proxima.";
-    private static final String VOICE_PROFILE_NPC = "npc";
+    private static final String CONTEXT_NPC = "npc";
     private static final AvatarTone DEFAULT_TONE = AvatarTone.NEUTRAL;
     private static final String DEFAULT_LOCALE = "es";
 
@@ -93,7 +93,7 @@ public class AvatarLifecycleService {
         }
 
         try {
-            byte[] audioData = ttsClient.synthesize(text, DEFAULT_LOCALE, DEFAULT_TONE, VOICE_PROFILE_NPC);
+            byte[] audioData = ttsClient.synthesize(text, DEFAULT_LOCALE, DEFAULT_TONE, CONTEXT_NPC);
             if (audioData != null && audioData.length > 0) {
                 String audioId = UUID.randomUUID().toString();
                 GameAvatarEvent event = isWelcome

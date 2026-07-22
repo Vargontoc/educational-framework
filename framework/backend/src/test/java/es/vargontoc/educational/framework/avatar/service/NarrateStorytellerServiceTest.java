@@ -40,9 +40,9 @@ class NarrateStorytellerServiceTest {
     }
 
     @Test
-    void narrate_usesStorytellerVoiceProfile() {
+    void narrate_usesNarrationContext() {
         byte[] audioData = "mp3-data".getBytes();
-        when(ttsClient.synthesize(anyString(), anyString(), any(), eq("storyteller")))
+        when(ttsClient.synthesize(anyString(), anyString(), any(), eq("narration")))
             .thenReturn(audioData);
 
         NarrateStorytellerRequest request = new NarrateStorytellerRequest("Hello world", "es", AvatarTone.CALM);
@@ -51,7 +51,7 @@ class NarrateStorytellerServiceTest {
         assertNotNull(result);
         assertTrue(result.isAudioAvailable());
         assertEquals("Hello world", result.getText());
-        verify(ttsClient).synthesize("Hello world", "es", AvatarTone.CALM, "storyteller");
+        verify(ttsClient).synthesize("Hello world", "es", AvatarTone.CALM, "narration");
     }
 
     @Test
@@ -69,17 +69,17 @@ class NarrateStorytellerServiceTest {
     }
 
     @Test
-    void storytellerCacheKeyDiffersFromNpc() {
+    void narrationCacheKeyDiffersFromNpc() {
         byte[] audioData = "mp3-data".getBytes();
         when(ttsClient.synthesize(anyString(), anyString(), any(), anyString()))
             .thenReturn(audioData);
 
-        ArgumentCaptor<String> voiceProfileCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
 
         service.narrate(new NarrateStorytellerRequest("Same text", "es", AvatarTone.CALM));
-        verify(ttsClient).synthesize(anyString(), anyString(), any(), voiceProfileCaptor.capture());
+        verify(ttsClient).synthesize(anyString(), anyString(), any(), contextCaptor.capture());
 
-        assertEquals("storyteller", voiceProfileCaptor.getValue());
+        assertEquals("narration", contextCaptor.getValue());
     }
 
     @Test

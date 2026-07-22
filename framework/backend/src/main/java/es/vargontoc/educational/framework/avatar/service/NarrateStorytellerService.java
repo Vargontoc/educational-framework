@@ -14,7 +14,7 @@ import java.util.Map;
 public class NarrateStorytellerService implements NarrateStorytellerUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(NarrateStorytellerService.class);
-    private static final String VOICE_PROFILE_STORYTELLER = "storyteller";
+    private static final String CONTEXT_NARRATION = "narration";
 
     private final TtsClient ttsClient;
     private final NarrateStorytellerValidator validator;
@@ -33,7 +33,7 @@ public class NarrateStorytellerService implements NarrateStorytellerUseCase {
         var tone = request.toneOrDefault();
 
         try {
-            byte[] audioData = ttsClient.synthesize(text, locale, tone, VOICE_PROFILE_STORYTELLER);
+            byte[] audioData = ttsClient.synthesize(text, locale, tone, CONTEXT_NARRATION);
             boolean audioAvailable = audioData != null && audioData.length > 0;
             return createResult(text, audioData, audioAvailable);
         } catch (TtsException e) {

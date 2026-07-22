@@ -89,11 +89,11 @@ class AvatarAudioCacheTest {
     }
 
     @Test
-    void differentVoiceProfile_producesDifferentKey() {
+    void differentContext_producesDifferentKey() {
         byte[] audioData = "mp3".getBytes();
 
         AvatarCacheKey key1 = new AvatarCacheKey("es", "calm", "Text".hashCode(), "npc", 1);
-        AvatarCacheKey key2 = new AvatarCacheKey("es", "calm", "Text".hashCode(), "storyteller", 1);
+        AvatarCacheKey key2 = new AvatarCacheKey("es", "calm", "Text".hashCode(), "narration", 1);
 
         cache.put(key1, audioData);
         byte[] result = cache.get(key2);

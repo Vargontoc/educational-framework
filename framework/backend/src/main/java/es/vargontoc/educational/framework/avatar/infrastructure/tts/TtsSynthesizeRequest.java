@@ -6,8 +6,7 @@ public record TtsSynthesizeRequest(
     String text,
     String locale,
     String tone,
-    @JsonProperty("voice_profile")
-    String voiceProfile
+    String context
 ) {
     public TtsSynthesizeRequest {
         if (locale == null || locale.isBlank()) {
@@ -16,8 +15,8 @@ public record TtsSynthesizeRequest(
         if (tone == null || tone.isBlank()) {
             tone = "calm";
         }
-        if (voiceProfile == null || voiceProfile.isBlank()) {
-            voiceProfile = "npc";
+        if (context == null || context.isBlank()) {
+            context = "npc";
         }
     }
 }

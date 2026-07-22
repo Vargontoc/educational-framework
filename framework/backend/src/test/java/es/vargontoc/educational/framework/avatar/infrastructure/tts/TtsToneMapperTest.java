@@ -41,6 +41,16 @@ class TtsToneMapperTest {
     }
 
     @Test
+    void tender_mapsToTender() {
+        assertEquals("tender", mapper.map(AvatarTone.TENDER));
+    }
+
+    @Test
+    void mysterious_mapsToMysterious() {
+        assertEquals("mysterious", mapper.map(AvatarTone.MYSTERIOUS));
+    }
+
+    @Test
     void null_tone_mapsToCalm() {
         assertEquals("calm", mapper.map(null));
     }

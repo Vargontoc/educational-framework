@@ -102,7 +102,7 @@ public class AvatarAudioCache {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             String combined = key.locale() + "|" + key.tone() + "|" +
-                             key.textHash() + "|" + key.voiceProfile() + "|" +
+                             key.textHash() + "|" + key.context() + "|" +
                              key.audioFormatVersion();
             return md.digest(combined.getBytes());
         } catch (Exception e) {

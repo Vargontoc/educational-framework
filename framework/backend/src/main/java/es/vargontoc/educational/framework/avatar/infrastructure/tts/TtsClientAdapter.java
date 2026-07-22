@@ -39,16 +39,16 @@ public class TtsClientAdapter implements TtsClient {
     }
 
     @Override
-    public byte[] synthesize(String text, String locale, AvatarTone tone, String voiceProfile) {
+    public byte[] synthesize(String text, String locale, AvatarTone tone, String context) {
         if (!properties.isEnabled()) {
             throw new TtsException("TTS is disabled", "TTS_DISABLED", false);
         }
 
         String toneStr = toneMapper.map(tone);
-        TtsSynthesizeRequest request = new TtsSynthesizeRequest(text, locale, toneStr, voiceProfile);
+        TtsSynthesizeRequest request = new TtsSynthesizeRequest(text, locale, toneStr, context);
 
-        log.debug("Synthesizing TTS: text={}, locale={}, tone={}, voiceProfile={}",
-            text, locale, toneStr, voiceProfile);
+        log.debug("Synthesizing TTS: text={}, locale={}, tone={}, context={}",
+            text, locale, toneStr, context);
 
         try {
             ResponseEntity<byte[]> responseEntity = restClient.post()

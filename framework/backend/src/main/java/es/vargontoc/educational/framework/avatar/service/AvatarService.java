@@ -28,7 +28,7 @@ public class AvatarService implements AvatarUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(AvatarService.class);
     private static final String FALLBACK_TEXT = "Thank you for using the educational framework!";
-    private static final String VOICE_PROFILE_NPC = "npc";
+    private static final String CONTEXT_NPC = "npc";
 
     private final ChildSessionRepository childSessionRepository;
     private final ChildProfileRepository childProfileRepository;
@@ -66,7 +66,7 @@ public class AvatarService implements AvatarUseCase {
 
         if (ttsEnabled) {
             try {
-                audioData = ttsClient.synthesize(text, request.locale(), AvatarTone.NEUTRAL, VOICE_PROFILE_NPC);
+                audioData = ttsClient.synthesize(text, request.locale(), AvatarTone.NEUTRAL, CONTEXT_NPC);
                 audioAvailable = true;
                 log.debug("TTS synthesis successful for session {}", session.getId());
             } catch (TtsException e) {

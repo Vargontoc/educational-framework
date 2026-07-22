@@ -4,5 +4,5 @@ import es.vargontoc.educational.framework.content.model.AvatarTone;
 
 public interface TtsClient {
 
-    byte[] synthesize(String text, String locale, AvatarTone tone, String voiceProfile);
+    byte[] synthesize(String text, String locale, AvatarTone tone, String context);
 }

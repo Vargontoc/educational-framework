@@ -7,14 +7,14 @@ public final class AvatarCacheKey {
     private final String locale;
     private final String tone;
     private final int textHash;
-    private final String voiceProfile;
+    private final String context;
     private final int audioFormatVersion;
 
-    public AvatarCacheKey(String locale, String tone, int textHash, String voiceProfile, int audioFormatVersion) {
+    public AvatarCacheKey(String locale, String tone, int textHash, String context, int audioFormatVersion) {
         this.locale = locale != null ? locale : "";
         this.tone = tone != null ? tone : "";
         this.textHash = textHash;
-        this.voiceProfile = voiceProfile != null ? voiceProfile : "";
+        this.context = context != null ? context : "";
         this.audioFormatVersion = audioFormatVersion;
     }
 
@@ -30,8 +30,8 @@ public final class AvatarCacheKey {
         return textHash;
     }
 
-    public String voiceProfile() {
-        return voiceProfile;
+    public String context() {
+        return context;
     }
 
     public int audioFormatVersion() {
@@ -47,18 +47,18 @@ public final class AvatarCacheKey {
                audioFormatVersion == that.audioFormatVersion &&
                Objects.equals(locale, that.locale) &&
                Objects.equals(tone, that.tone) &&
-               Objects.equals(voiceProfile, that.voiceProfile);
+               Objects.equals(context, that.context);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(locale, tone, textHash, voiceProfile, audioFormatVersion);
+        return Objects.hash(locale, tone, textHash, context, audioFormatVersion);
     }
 
     @Override
     public String toString() {
         return "AvatarCacheKey{locale=" + locale + ", tone=" + tone +
-               ", textHash=" + textHash + ", voiceProfile=" + voiceProfile +
+               ", textHash=" + textHash + ", context=" + context +
                ", audioFormatVersion=" + audioFormatVersion + "}";
     }
 }

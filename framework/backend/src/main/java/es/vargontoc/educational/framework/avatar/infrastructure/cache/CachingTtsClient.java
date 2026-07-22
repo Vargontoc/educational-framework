@@ -28,8 +28,8 @@ public class CachingTtsClient implements TtsClient {
     }
 
     @Override
-    public byte[] synthesize(String text, String locale, AvatarTone tone, String voiceProfile) {
-        AvatarCacheKey key = buildKey(text, locale, tone, voiceProfile);
+    public byte[] synthesize(String text, String locale, AvatarTone tone, String context) {
+        AvatarCacheKey key = buildKey(text, locale, tone, context);
 
         byte[] cached = cache.get(key);
         if (cached != null) {
@@ -37,10 +37,10 @@ public class CachingTtsClient implements TtsClient {
             return cached;
         }
 
-        log.debug("Cache miss for avatar audio, calling TTS: text={}, locale={}, tone={}, voiceProfile={}",
-            text, locale, tone, voiceProfile);
+        log.debug("Cache miss for avatar audio, calling TTS: text={}, locale={}, tone={}, context={}",
+            text, locale, tone, context);
 
-        byte[] audioData = delegate.synthesize(text, locale, tone, voiceProfile);
+        byte[] audioData = delegate.synthesize(text, locale, tone, context);
 
         cache.put(key, audioData);
         log.debug("Stored avatar audio in cache: {} bytes, key={}", audioData.length, key);
@@ -48,14 +48,14 @@ public class CachingTtsClient implements TtsClient {
         return audioData;
     }
 
-    private AvatarCacheKey buildKey(String text, String locale, AvatarTone tone, String voiceProfile) {
+    private AvatarCacheKey buildKey(String text, String locale, AvatarTone tone, String context) {
         String mappedTone = toneMapper.map(tone);
         int textHash = text != null ? text.hashCode() : 0;
         return new AvatarCacheKey(
             locale,
             mappedTone,
             textHash,
-            voiceProfile,
+            context,
             properties.getAudioFormatVersion()
         );
     }

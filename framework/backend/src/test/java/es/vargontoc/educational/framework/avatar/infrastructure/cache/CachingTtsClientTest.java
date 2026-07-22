@@ -113,7 +113,7 @@ class CachingTtsClientTest {
     }
 
     @Test
-    void synthesize_differentVoiceProfile_doesNotHitCache() {
+    void synthesize_differentContext_doesNotHitCache() {
         byte[] audio1 = "audio1".getBytes();
         byte[] audio2 = "audio2".getBytes();
         when(delegate.synthesize(anyString(), anyString(), any(), anyString()))
@@ -121,7 +121,7 @@ class CachingTtsClientTest {
             .thenReturn(audio2);
 
         byte[] result1 = cachingClient.synthesize("Hello", "es", AvatarTone.CALM, "npc");
-        byte[] result2 = cachingClient.synthesize("Hello", "es", AvatarTone.CALM, "storyteller");
+        byte[] result2 = cachingClient.synthesize("Hello", "es", AvatarTone.CALM, "narration");
 
         assertArrayEquals(audio1, result1);
         assertArrayEquals(audio2, result2);

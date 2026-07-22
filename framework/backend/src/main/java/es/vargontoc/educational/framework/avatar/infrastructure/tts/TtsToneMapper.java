@@ -14,6 +14,8 @@ public class TtsToneMapper {
             case ENTHUSIASTIC -> "enthusiastic";
             case SERIOUS -> "serious";
             case NEUTRAL -> "calm";
+            case TENDER -> "tender";
+            case MYSTERIOUS -> "mysterious";
         };
     }
 }
