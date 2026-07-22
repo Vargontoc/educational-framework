@@ -179,15 +179,15 @@
         "properties": {
           "provider": {
             "type": "string",
-            "enum": ["chatterbox", "xtts"],
+            "enum": ["chatterbox"],
             "title": "Provider",
-            "description": "Active TTS provider"
+            "description": "Active TTS provider (Chatterbox único)"
           },
           "model": {
             "type": "string",
-            "enum": ["chatterbox", "xtts_v2"],
+            "enum": ["chatterbox"],
             "title": "Model",
-            "description": "TTS model in use"
+            "description": "TTS model in use (Chatterbox)"
           },
           "state": {
             "type": "string",
@@ -200,14 +200,31 @@
         "required": ["provider", "model", "state"],
         "title": "StatusResponse"
       },
+      "ErrorCode": {
+        "type": "string",
+        "title": "ErrorCode",
+        "description": "Códigos de error válidos del servicio TTS",
+        "enum": [
+          "UNSUPPORTED_TONE",
+          "UNSUPPORTED_VOICE_PROFILE",
+          "EMPTY_TEXT",
+          "MISSING_TEXT",
+          "VALIDATION_ERROR",
+          "PROVIDER_UNAVAILABLE",
+          "PROVIDER_ERROR",
+          "PROVIDER_VALIDATION_ERROR",
+          "SYNTHESIS_TIMEOUT",
+          "CONVERSION_ERROR"
+        ]
+      },
       "TTSError": {
         "properties": {
           "error": {
             "properties": {
               "code": {
-                "type": "string",
+                "$ref": "#/components/schemas/ErrorCode",
                 "title": "Code",
-                "description": "Error code (e.g., UNSUPPORTED_TONE, SYNTHESIS_TIMEOUT, PROVIDER_UNAVAILABLE, PROVIDER_ERROR)"
+                "description": "Error code: UNSUPPORTED_TONE, UNSUPPORTED_VOICE_PROFILE, EMPTY_TEXT, MISSING_TEXT, VALIDATION_ERROR, PROVIDER_UNAVAILABLE, PROVIDER_ERROR, PROVIDER_VALIDATION_ERROR, SYNTHESIS_TIMEOUT, CONVERSION_ERROR"
               },
               "message": {
                 "type": "string",
@@ -227,48 +244,6 @@
         "type": "object",
         "required": ["error"],
         "title": "TTSError"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
-      "ValidationError": {
-        "properties": {
-          "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "type": "array",
-            "title": "Location"
-          },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          }
-        },
-        "type": "object",
-        "required": ["loc", "msg", "type"],
-        "title": "ValidationError"
       }
     }
   }

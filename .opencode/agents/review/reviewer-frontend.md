@@ -1,7 +1,7 @@
 ---
 description: Tester-reviewer senior de capa frontend
 mode: primary
-model: anthropic/claude-sonnet-5
+model: alibaba/qwen3-coder-plus
 permission:
     edit: allow
     bash: allow

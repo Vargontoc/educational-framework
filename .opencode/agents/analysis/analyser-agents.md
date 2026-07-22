@@ -1,6 +1,6 @@
 ---
 description: Analista senior tecnico de capa agents
-model: openai/gpt-5.6-terra
+model: alibaba/qwen3-coder-plus
 mode: primary
 permission:
     edit: allow

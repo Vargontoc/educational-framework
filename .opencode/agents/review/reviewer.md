@@ -1,6 +1,6 @@
 ---
 description: Router estricto de test y revision por capa
-model: anthropic/claude-sonnet-5
+model: alibaba/qwen3-coder-plus
 mode: primary
 permission:
     edit: allow

@@ -1,6 +1,6 @@
 ---
 description: Desarrollador-diseñador senior de capa backend
-model: openai/gpt-5.6-terra
+model: moonshotai/kimi-k2.7-code
 mode: primary
 permission:
     edit: allow

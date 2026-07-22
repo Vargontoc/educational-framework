@@ -59,3 +59,104 @@ async def test_timeout_is_contractual_error(monkeypatch) -> None:
 
     assert caught.value.status_code == 504
     assert caught.value.code == "SYNTHESIS_TIMEOUT"
+
+
+@pytest.mark.asyncio
+async def test_sends_npc_voice(monkeypatch) -> None:
+    observed: dict[str, object] = {}
+
+    async def post(self, url, **kwargs):
+        observed["payload"] = kwargs["json"]
+        return httpx.Response(200, content=b"wav", request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", post)
+    await ChatterboxClient(settings()).synthesize(
+        SynthesizeRequest(text="Hola", voice_profile="npc", tone="calm")
+    )
+    assert observed["payload"]["voice"] == "npc-voice"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tone,exaggeration,cfg_weight,temperature",
+    [
+        ("calm", 0.25, 0.30, 0.70),
+        ("joyful", 0.55, 0.45, 0.85),
+        ("enthusiastic", 0.70, 0.50, 0.90),
+        ("playful", 0.60, 0.40, 0.90),
+        ("serious", 0.20, 0.55, 0.65),
+    ],
+)
+async def test_all_five_tones_send_correct_parameters(
+    monkeypatch, tone, exaggeration, cfg_weight, temperature
+) -> None:
+    observed: dict[str, object] = {}
+
+    async def post(self, url, **kwargs):
+        observed["payload"] = kwargs["json"]
+        return httpx.Response(200, content=b"wav", request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", post)
+    await ChatterboxClient(settings()).synthesize(
+        SynthesizeRequest(text="Test", tone=tone)
+    )
+    payload = observed["payload"]
+    assert payload["exaggeration"] == exaggeration
+    assert payload["cfg_weight"] == cfg_weight
+    assert payload["temperature"] == temperature
+
+
+@pytest.mark.asyncio
+async def test_connection_error_is_provider_unavailable(monkeypatch) -> None:
+    async def post(self, url, **kwargs):
+        raise httpx.ConnectError("refused", request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", post)
+    with pytest.raises(TtsError) as caught:
+        await ChatterboxClient(settings()).synthesize(SynthesizeRequest(text="Hola"))
+
+    assert caught.value.status_code == 503
+    assert caught.value.code == "PROVIDER_UNAVAILABLE"
+    assert caught.value.retryable is True
+
+
+@pytest.mark.asyncio
+async def test_server_error_5xx_is_provider_unavailable(monkeypatch) -> None:
+    async def post(self, url, **kwargs):
+        return httpx.Response(500, content=b"error", request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", post)
+    with pytest.raises(TtsError) as caught:
+        await ChatterboxClient(settings()).synthesize(SynthesizeRequest(text="Hola"))
+
+    assert caught.value.status_code == 503
+    assert caught.value.code == "PROVIDER_UNAVAILABLE"
+    assert caught.value.retryable is True
+
+
+@pytest.mark.asyncio
+async def test_client_error_4xx_is_provider_validation_error(monkeypatch) -> None:
+    async def post(self, url, **kwargs):
+        return httpx.Response(400, content=b"bad", request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", post)
+    with pytest.raises(TtsError) as caught:
+        await ChatterboxClient(settings()).synthesize(SynthesizeRequest(text="Hola"))
+
+    assert caught.value.status_code == 422
+    assert caught.value.code == "PROVIDER_VALIDATION_ERROR"
+    assert caught.value.retryable is False
+
+
+@pytest.mark.asyncio
+async def test_empty_response_is_provider_error(monkeypatch) -> None:
+    async def post(self, url, **kwargs):
+        return httpx.Response(200, content=b"", request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx.AsyncClient, "post", post)
+    with pytest.raises(TtsError) as caught:
+        await ChatterboxClient(settings()).synthesize(SynthesizeRequest(text="Hola"))
+
+    assert caught.value.status_code == 500
+    assert caught.value.code == "PROVIDER_ERROR"
+    assert caught.value.retryable is True

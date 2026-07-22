@@ -1,6 +1,6 @@
 ---
 description: Desarrollador-disenador senior de capa tts
-model: openai/gpt-5.6-terra
+model: moonshotai/kimi-k2.7-code
 mode: primary
 permission:
     edit: allow

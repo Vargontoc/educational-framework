@@ -16,10 +16,16 @@ Aplicación web educativa en esta versión (v. 1.0) para niños de 3 a 4 años. 
 
 ### TTS Service
 
-Capa independiente donde habita una pequeña API con funcionalidad minima para generar audio, esta capa se conecta a un contenedor que contiene Chatterbox, este contenedor contendra dos voces (npc-voice y narrative-voice). Se llamará al mismo endpoint con los parametros específicos para cada voz y distintas tonalidades.
+Capa independiente donde habita una pequeña API con funcionalidad mínima para generar audio. Usa **Chatterbox como único proveedor de síntesis de voz** (ver ADR-013), sin fallback automático a otros proveedores.
 
-- npc-voice: es la voz que sonará en las animaciones del npc del juego del niño
-- narrative-voice: es la voz que se oira en la sección de lectura en familia.
+- npc-voice: voz que suena en las animaciones del NPC del juego del niño (perfil `npc`).
+- narrative-voice: voz que se oye en la sección de lectura en familia (perfil `storyteller`).
+
+Si Chatterbox no está disponible, el servicio TTS devuelve un error contractual. Backend y frontend son responsables de mantener la continuidad de la experiencia (juego y lectura) sin audio.
+
+**Configuración**: requiere la variable `CHATTERBOX_BASE_URL` apuntando a una URL de Chatterbox alcanzable desde la red donde corre el contenedor TTS.
+
+**Referencias**: `framework/tts/README.md`, `docs/product/decisions/ADR-013-Chatterbox-unico-proveedor-TTS.md`.
 
 ### Agents
 
@@ -65,13 +71,16 @@ Tiene distintas vistas:
 ## Requisitos del sistema
 
 - Instalado Docker
-- Contendor Chatterbox levantado en el Docker
+- Contenedor Chatterbox levantado y accesible desde la red del contenedor TTS
 - Contenedor Ollama levantado en el Docker
 - Gráfica NVIDIA RTX GeForce 4070 SUPER o superior
+- Infraestructura debe proporcionar una URL de Chatterbox alcanzable desde la red TTS (`CHATTERBOX_BASE_URL`)
 
 ## Installation
 
 ### TTS Service
+
+Requiere `CHATTERBOX_BASE_URL` apuntando a una URL de Chatterbox alcanzable desde la red donde corre el contenedor TTS. En host local, el valor por defecto `http://127.0.0.1:4123` es válido si Chatterbox corre en el mismo host. En Docker, infraestructura debe proporcionar la URL accesible desde la red del contenedor. No define redes Docker externas ni fallback automático de proveedor. Ver `framework/tts/README.md` para detalle completo.
 
 ### Agents
 
