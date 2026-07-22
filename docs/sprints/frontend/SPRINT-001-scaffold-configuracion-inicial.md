@@ -4,7 +4,7 @@
 Crear proyecto Vue 3 + TypeScript + Vite con configuración base verificable en dispositivo real. El directorio `framework/frontend/app` está vacío (greenfield).
 
 ## Status
-status: approved
+status: closed
 started_at: 2026-07-22 00:00:00
 closed_at: 2026-07-22 00:00:00
 blocked_by:
@@ -176,6 +176,7 @@ learnings:
   - Los iconos SVG son placeholders válidos para el manifest PWA en este sprint
   - .dockerignore debe excluir archivos que NO se necesitan en el build, no los que SÍ se necesitan
   - El manifiesto PWA debe referenciar archivos que realmente existen en el directorio public/
+  - ADR-010 fue actualizado post-aprobación del sprint para reflejar la preservación de estado ante recarga, mejorando la usabilidad para niños de 3-4 años
 
 next_sprint_suggestions:
   - Implementar clientes API REST y WebSocket funcionales

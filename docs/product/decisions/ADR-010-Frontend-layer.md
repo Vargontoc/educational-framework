@@ -29,7 +29,7 @@ for this phase.
 | **REST communication** | Centralised service layer with environment variables for the base URL. Separate configuration per environment. |
 | **WebSocket** | Two distinct channels: `GameChannel` and `ParentChannel`. Centralised service independent of Vue components. |
 | **WS reconnection** | Automatic exponential backoff. No offline event queue (events are discarded). Avatar handles the waiting state visually. |
-| **Routing** | Vue Router in `history` mode with `replace` navigation (no history stack). Global guards protect `/panel` and `/game`. Reload always redirects to Home. |
+| **Routing** | Vue Router in `history` mode with `replace` navigation (no history stack). Global guards protect `/panel` and `/game`. Page reload preserves current route and session state for child experience continuity. |
 | **Route protection** | `/panel` requires a PIN validated against the backend. `/game` requires an active child session in the store. No view is directly accessible by URL except Home. |
 | **Orientation** | PWA Manifest with `orientation: landscape` as the primary strategy. User-friendly rotation screen as fallback. |
 | **PWA** | Web App Manifest with `display: standalone` and `orientation: landscape`. No forced installation. Access via URL in the browser. |
@@ -100,8 +100,22 @@ Global navigation guards intercept any direct access to protected routes and red
 All internal navigation uses `router.replace()` instead of `router.push()`, eliminating the
 navigation history stack. The browser back button has no functional effect within the application.
 
-> **Page reload:** There is no route recovery mechanism. The user always returns to Home and must
-> authenticate again. A deliberate decision to simplify state management.
+> **Page reload:** The application preserves the current route and session state across page reloads.
+> If a child is in `/game/:childId` and the page is reloaded (accidental or intentional), the application
+> restores the GameView with the active session. This improves usability for children aged 3-4, where
+> accidental reloads by parents should not disrupt the gaming experience. Session state is persisted
+> in `sessionStorage` and restored on application initialization.
+
+#### Page reload strategy
+
+The application implements route and state preservation across page reloads:
+
+- **Session state persistence:** `useSessionStore` persists active family, selected child, and authentication state in `sessionStorage`.
+- **Route recovery:** On application initialization, the router checks for an active session in the store. If present, it restores the last active route (e.g., `/game/:childId`).
+- **Child experience continuity:** If a child is in GameView and the page reloads, the application returns to GameView with the same child session, avoiding disruption.
+- **Parental controls:** `/panel` route requires PIN re-validation after reload, maintaining security for parental controls.
+
+This decision prioritizes child experience continuity over state management simplicity. The backend remains the single source of truth; the frontend only caches session identifiers to restore the user's context.
 
 ---
 
