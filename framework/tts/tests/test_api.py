@@ -44,7 +44,7 @@ def test_synthesize_returns_mp3(monkeypatch) -> None:
     monkeypatch.setattr("app.main.wav_to_mp3", convert)
     response = TestClient(app).post(
         "/api/v1/tts/synthesize",
-        json={"text": "Hola", "voice_profile": "npc", "tone": "playful"},
+        json={"text": "Hola", "context": "npc", "tone": "playful"},
     )
 
     assert response.status_code == 200
@@ -87,15 +87,15 @@ def test_contract_rejects_unknown_tone() -> None:
     assert isinstance(body["error"]["message"], str)
 
 
-def test_contract_rejects_unknown_voice_profile() -> None:
+def test_contract_rejects_unknown_context() -> None:
     client = TestClient(create_app(settings()))
     response = client.post(
-        "/api/v1/tts/synthesize", json={"text": "Hola", "voice_profile": "robot"}
+        "/api/v1/tts/synthesize", json={"text": "Hola", "context": "robot"}
     )
 
     assert response.status_code == 422
     body = response.json()
-    assert body["error"]["code"] == "UNSUPPORTED_VOICE_PROFILE"
+    assert body["error"]["code"] == "VALIDATION_ERROR"
     assert body["error"]["retryable"] is False
     assert isinstance(body["error"]["message"], str)
 
@@ -124,7 +124,7 @@ def test_contract_rejects_intensity_out_of_range() -> None:
     assert isinstance(body["error"]["message"], str)
 
 
-def test_synthesize_with_npc_profile(monkeypatch) -> None:
+def test_synthesize_with_npc_context(monkeypatch) -> None:
     app = create_app(settings())
 
     async def synthesize(_: object) -> bytes:
@@ -136,14 +136,18 @@ def test_synthesize_with_npc_profile(monkeypatch) -> None:
     monkeypatch.setattr(app.state.chatterbox, "synthesize", synthesize)
     monkeypatch.setattr("app.main.wav_to_mp3", convert)
     response = TestClient(app).post(
-        "/api/v1/tts/synthesize", json={"text": "Hola", "voice_profile": "npc"}
+        "/api/v1/tts/synthesize", json={"text": "Hola", "context": "npc"}
     )
     assert response.status_code == 200
     assert response.headers["content-type"] == "audio/mpeg"
 
 
-@pytest.mark.parametrize("tone", ["calm", "joyful", "enthusiastic", "playful", "serious"])
-def test_all_five_tones_accepted(monkeypatch, tone) -> None:
+@pytest.mark.parametrize("tone,context", [
+    ("calm", "npc"), ("joyful", "npc"), ("enthusiastic", "npc"),
+    ("playful", "npc"), ("serious", "npc"),
+    ("tender", "narration"), ("mysterious", "narration"),
+])
+def test_all_seven_tones_accepted(monkeypatch, tone, context) -> None:
     app = create_app(settings())
 
     async def synthesize(_: object) -> bytes:
@@ -155,7 +159,7 @@ def test_all_five_tones_accepted(monkeypatch, tone) -> None:
     monkeypatch.setattr(app.state.chatterbox, "synthesize", synthesize)
     monkeypatch.setattr("app.main.wav_to_mp3", convert)
     response = TestClient(app).post(
-        "/api/v1/tts/synthesize", json={"text": "Hola", "tone": tone}
+        "/api/v1/tts/synthesize", json={"text": "Hola", "tone": tone, "context": context}
     )
     assert response.status_code == 200
 
@@ -222,3 +226,73 @@ def test_conversion_error_returns_500(monkeypatch) -> None:
     body = response.json()
     assert body["error"]["code"] == "CONVERSION_ERROR"
     assert body["error"]["retryable"] is True
+
+
+def test_tone_context_mismatch_tender_in_npc() -> None:
+    client = TestClient(create_app(settings()))
+    response = client.post(
+        "/api/v1/tts/synthesize",
+        json={"text": "Hola", "context": "npc", "tone": "tender"}
+    )
+    assert response.status_code == 422
+    body = response.json()
+    assert body["error"]["code"] == "TONE_CONTEXT_MISMATCH"
+    assert body["error"]["retryable"] is False
+    assert "tender" in body["error"]["message"]
+    assert "npc" in body["error"]["message"]
+
+
+def test_tone_context_mismatch_mysterious_in_npc() -> None:
+    client = TestClient(create_app(settings()))
+    response = client.post(
+        "/api/v1/tts/synthesize",
+        json={"text": "Hola", "context": "npc", "tone": "mysterious"}
+    )
+    assert response.status_code == 422
+    body = response.json()
+    assert body["error"]["code"] == "TONE_CONTEXT_MISMATCH"
+    assert body["error"]["retryable"] is False
+
+
+def test_tone_context_mismatch_playful_in_narration() -> None:
+    client = TestClient(create_app(settings()))
+    response = client.post(
+        "/api/v1/tts/synthesize",
+        json={"text": "Hola", "context": "narration", "tone": "playful"}
+    )
+    assert response.status_code == 422
+    body = response.json()
+    assert body["error"]["code"] == "TONE_CONTEXT_MISMATCH"
+    assert body["error"]["retryable"] is False
+
+
+def test_tone_context_mismatch_serious_in_narration() -> None:
+    client = TestClient(create_app(settings()))
+    response = client.post(
+        "/api/v1/tts/synthesize",
+        json={"text": "Hola", "context": "narration", "tone": "serious"}
+    )
+    assert response.status_code == 422
+    body = response.json()
+    assert body["error"]["code"] == "TONE_CONTEXT_MISMATCH"
+    assert body["error"]["retryable"] is False
+
+
+@pytest.mark.parametrize("tone", ["tender", "mysterious"])
+def test_narration_context_accepts_narrative_tones(monkeypatch, tone) -> None:
+    app = create_app(settings())
+
+    async def synthesize(_: object) -> bytes:
+        return b"wav"
+
+    async def convert(_: bytes, __: Settings) -> bytes:
+        return b"mp3"
+
+    monkeypatch.setattr(app.state.chatterbox, "synthesize", synthesize)
+    monkeypatch.setattr("app.main.wav_to_mp3", convert)
+
+    response = TestClient(app).post(
+        "/api/v1/tts/synthesize",
+        json={"text": "Hola", "context": "narration", "tone": tone}
+    )
+    assert response.status_code == 200

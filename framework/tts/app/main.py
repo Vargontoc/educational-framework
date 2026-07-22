@@ -11,9 +11,12 @@ from app.errors import TtsError
 from app.models import StatusResponse, SynthesizeRequest
 
 
+from app.tone_mapping import validate_tone_for_context
+
+
 _FIELD_CODE_MAP: dict[tuple[str, str], str] = {
     ("tone", "literal_error"): "UNSUPPORTED_TONE",
-    ("voice_profile", "literal_error"): "UNSUPPORTED_VOICE_PROFILE",
+    ("context", "literal_error"): "VALIDATION_ERROR",
     ("text", "string_too_short"): "EMPTY_TEXT",
     ("text", "missing"): "MISSING_TEXT",
 }
@@ -58,6 +61,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/v1/tts/synthesize", responses={422: {}, 500: {}, 503: {}, 504: {}})
     async def synthesize(request: SynthesizeRequest) -> Response:
+        validate_tone_for_context(request.tone, request.context)
         wav = await app.state.chatterbox.synthesize(request)
         mp3 = await wav_to_mp3(wav, app.state.settings)
         return Response(content=mp3, media_type="audio/mpeg")

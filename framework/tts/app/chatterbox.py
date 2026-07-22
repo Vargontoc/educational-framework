@@ -15,7 +15,7 @@ class ChatterboxClient:
     async def synthesize(self, request: SynthesizeRequest) -> bytes:
         voice = (
             self._settings.chatterbox_npc_voice
-            if request.voice_profile == "npc"
+            if request.context == "npc"
             else self._settings.chatterbox_storyteller_voice
         )
         payload = {

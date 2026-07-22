@@ -71,7 +71,7 @@
             }
           },
           "422": {
-            "description": "Unprocessable Entity — unsupported tone, invalid voice_profile, or provider validation error",
+            "description": "Unprocessable Entity — unsupported tone, invalid context, tone-context mismatch, or provider validation error",
             "content": {
               "application/json": {
                 "schema": {
@@ -130,11 +130,18 @@
             "default": "es",
             "description": "Language locale (e.g., es, en)"
           },
+          "context": {
+            "type": "string",
+            "title": "Context",
+            "default": "npc",
+            "enum": ["npc", "narration"],
+            "description": "Usage context: npc (character dialogue) or narration (storytelling)"
+          },
           "tone": {
             "type": "string",
             "title": "Tone",
             "default": "calm",
-            "enum": ["calm", "joyful", "enthusiastic", "playful", "serious"],
+            "enum": ["calm", "joyful", "enthusiastic", "playful", "serious", "tender", "mysterious"],
             "description": "Semantic tone for prosody adjustment"
           },
           "emotion": {
@@ -162,13 +169,6 @@
             ],
             "title": "Intensity",
             "description": "Tone intensity (optional, not currently used)"
-          },
-          "voice_profile": {
-            "type": "string",
-            "title": "Voice Profile",
-            "default": "npc",
-            "enum": ["npc", "storyteller"],
-            "description": "Voice character: npc (child-friendly) or storyteller (narration)"
           }
         },
         "type": "object",
@@ -210,6 +210,7 @@
           "EMPTY_TEXT",
           "MISSING_TEXT",
           "VALIDATION_ERROR",
+          "TONE_CONTEXT_MISMATCH",
           "PROVIDER_UNAVAILABLE",
           "PROVIDER_ERROR",
           "PROVIDER_VALIDATION_ERROR",
@@ -224,7 +225,7 @@
               "code": {
                 "$ref": "#/components/schemas/ErrorCode",
                 "title": "Code",
-                "description": "Error code: UNSUPPORTED_TONE, UNSUPPORTED_VOICE_PROFILE, EMPTY_TEXT, MISSING_TEXT, VALIDATION_ERROR, PROVIDER_UNAVAILABLE, PROVIDER_ERROR, PROVIDER_VALIDATION_ERROR, SYNTHESIS_TIMEOUT, CONVERSION_ERROR"
+                "description": "Error code: UNSUPPORTED_TONE, UNSUPPORTED_VOICE_PROFILE, EMPTY_TEXT, MISSING_TEXT, VALIDATION_ERROR, TONE_CONTEXT_MISMATCH, PROVIDER_UNAVAILABLE, PROVIDER_ERROR, PROVIDER_VALIDATION_ERROR, SYNTHESIS_TIMEOUT, CONVERSION_ERROR"
               },
               "message": {
                 "type": "string",

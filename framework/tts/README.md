@@ -10,14 +10,14 @@ Aplicación monofamiliar: niños de 3-4 años, concurrencia aproximada de 5-6 us
 - **FEAT-001**: `docs/product/features/tts/FEAT-001-Chatterbox-unico-proveedor-TTS.md` — Especificación funcional.
 - **Contrato OpenAPI**: `docs/contracts/api/openapi_tts.json` — Contrato público del servicio.
 
-## Perfiles de voz
+## Contextos de uso
 
-| Perfil | Descripción | Variable de entorno |
-|--------|-------------|---------------------|
-| `npc` | Voz para personaje NPC (child-friendly) | `CHATTERBOX_NPC_VOICE` |
-| `storyteller` | Voz para narración de cuentos | `CHATTERBOX_STORYTELLER_VOICE` |
+| Contexto | Descripción | Variable de entorno |
+|----------|-------------|---------------------|
+| `npc` | Diálogos de personaje NPC (child-friendly) | `CHATTERBOX_NPC_VOICE` |
+| `narration` | Narración de cuentos | `CHATTERBOX_STORYTELLER_VOICE` |
 
-El mapeo de perfiles a voces de Chatterbox se configura mediante variables de entorno.
+El mapeo de contextos a voces de Chatterbox se configura mediante variables de entorno.
 
 ## Tonos soportados
 
@@ -30,12 +30,24 @@ Los tonos semánticos del contrato se traducen a parámetros de prosodia de Chat
 | `enthusiastic` | 0.70 | 0.50 | 0.90 |
 | `playful` | 0.60 | 0.40 | 0.90 |
 | `serious` | 0.20 | 0.55 | 0.65 |
+| `tender` | 0.35 | 0.30 | 0.75 |
+| `mysterious` | 0.45 | 0.40 | 0.80 |
 
 La **intensidad** es opcional (0.0-1.0). Cuando se proporciona, modula el valor de `exaggeration` del tono: `exaggeration_final = exaggeration_base × intensity`.
 
+## Validación de contexto
+
+Cada contexto solo admite ciertos tonos. No todos los tonos son válidos en todos los contextos:
+
+- **Tonos compartidos** (válidos en ambos contextos): `calm`, `joyful`, `enthusiastic`
+- **Tonos exclusivos NPC**: `playful`, `serious`
+- **Tonos exclusivos narración**: `tender`, `mysterious`
+
+Si se solicita un tono no permitido para el contexto indicado, el servicio devuelve un error `TONE_CONTEXT_MISMATCH` (HTTP 422, `retryable: false`). No se realiza inferencia automática ni fallback de tono.
+
 ## Formato de salida
 
-- **Entrada**: texto + parámetros de voz (`voice_profile`) y tono (`tone`), conforme al contrato `openapi_tts.json`.
+- **Entrada**: texto + contexto de uso (`context`) y tono (`tone`), conforme al contrato `openapi_tts.json`.
 - **Proceso**: Chatterbox genera audio WAV → FFmpeg convierte a MP3 en memoria.
 - **Salida exitosa**: `audio/mpeg` (MP3) binario, HTTP 200.
 - **Salida de error**: formato `TTSError` en JSON:
@@ -69,6 +81,7 @@ La **intensidad** es opcional (0.0-1.0). Cuando se proporciona, modula el valor 
 | `EMPTY_TEXT` | Texto vacío. |
 | `MISSING_TEXT` | Campo `text` ausente en la petición. |
 | `VALIDATION_ERROR` | Error genérico de validación de entrada. |
+| `TONE_CONTEXT_MISMATCH` | Tono no permitido para el contexto indicado. |
 
 ### Proveedor
 
@@ -97,8 +110,8 @@ La **intensidad** es opcional (0.0-1.0). Cuando se proporciona, modula el valor 
 | `CHATTERBOX_BASE_URL` | URL base del servicio Chatterbox | `http://127.0.0.1:4123` | `http://chatterbox:4123` |
 | `CHATTERBOX_SYNTHESIS_PATH` | Ruta de síntesis de Chatterbox | `/tts` | `/synthesize` |
 | `CHATTERBOX_TIMEOUT_SECONDS` | Timeout de síntesis en segundos | `20.0` | `30` |
-| `CHATTERBOX_NPC_VOICE` | Voz de Chatterbox para perfil `npc` | `npc-voice` | `voice-npc-es` |
-| `CHATTERBOX_STORYTELLER_VOICE` | Voz de Chatterbox para perfil `storyteller` | `narrative-voice` | `voice-storyteller-es` |
+| `CHATTERBOX_NPC_VOICE` | Voz de Chatterbox para contexto `npc` | `npc-voice` | `voice-npc-es` |
+| `CHATTERBOX_STORYTELLER_VOICE` | Voz de Chatterbox para contexto `narration` | `narrative-voice` | `voice-storyteller-es` |
 | `FFMPEG_BINARY` | Binario de FFmpeg para conversión WAV→MP3 | `ffmpeg` | `/usr/bin/ffmpeg` |
 | `TTS_MP3_BITRATE` | Bitrate de codificación MP3 | `128k` | `192k` |
 

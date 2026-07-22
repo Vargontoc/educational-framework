@@ -32,7 +32,7 @@ async def test_sends_storyteller_voice_and_tone_parameters(monkeypatch) -> None:
 
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
     wav = await ChatterboxClient(settings()).synthesize(
-        SynthesizeRequest(text="Un cuento", voice_profile="storyteller", tone="calm")
+        SynthesizeRequest(text="Un cuento", context="narration", tone="calm")
     )
 
     assert wav == b"wav"
@@ -71,7 +71,7 @@ async def test_sends_npc_voice(monkeypatch) -> None:
 
     monkeypatch.setattr(httpx.AsyncClient, "post", post)
     await ChatterboxClient(settings()).synthesize(
-        SynthesizeRequest(text="Hola", voice_profile="npc", tone="calm")
+        SynthesizeRequest(text="Hola", context="npc", tone="calm")
     )
     assert observed["payload"]["voice"] == "npc-voice"
 
@@ -85,9 +85,11 @@ async def test_sends_npc_voice(monkeypatch) -> None:
         ("enthusiastic", 0.70, 0.50, 0.90),
         ("playful", 0.60, 0.40, 0.90),
         ("serious", 0.20, 0.55, 0.65),
+        ("tender", 0.35, 0.30, 0.75),
+        ("mysterious", 0.45, 0.40, 0.80),
     ],
 )
-async def test_all_five_tones_send_correct_parameters(
+async def test_all_seven_tones_send_correct_parameters(
     monkeypatch, tone, exaggeration, cfg_weight, temperature
 ) -> None:
     observed: dict[str, object] = {}
