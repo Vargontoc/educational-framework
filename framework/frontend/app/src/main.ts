@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
-import './style.css'
+import './styles/main.css'
 
 /**
  * Configuración principal de la aplicación según ADR-010

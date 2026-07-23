@@ -20,6 +20,24 @@ export default {
     notFound: {
       title: 'Página no encontrada',
       description: 'La página que buscas no existe'
+    },
+    catalog: {
+      title: 'Catálogo de Componentes',
+      subtitle: 'Sistema de diseño y componentes',
+      designTokens: 'Tokens de diseño',
+      colors: 'Colores',
+      typography: 'Tipografía',
+      spacing: 'Espaciado',
+      borders: 'Bordes y sombras',
+      components: 'Componentes',
+      buttons: 'Botones',
+      inputs: 'Entradas',
+      cards: 'Tarjetas',
+      modals: 'Modales',
+      theme: 'Tema',
+      currentTheme: 'Tema actual',
+      lightMode: 'Modo claro',
+      darkMode: 'Modo oscuro'
     }
   },
   common: {

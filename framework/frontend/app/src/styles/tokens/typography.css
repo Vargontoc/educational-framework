@@ -1,0 +1,41 @@
+/**
+ * Tokens de tipografía
+ * 
+ * Tipografía base: Nunito (Google Fonts)
+ * Cargada mediante preload y font-display: swap
+ * 
+ * Modificabilidad: Un diseñador puede cambiar la fuente base modificando
+ * --nubi-font-family-base y reemplazando los archivos en public/fonts/
+ */
+
+:root {
+  /* Familia tipográfica base */
+  --nubi-font-family-base: 'Nunito', sans-serif;
+  
+  /* Escala tipográfica (mobile-first) */
+  --nubi-font-size-xs: 0.75rem;    /* 12px */
+  --nubi-font-size-sm: 0.875rem;   /* 14px */
+  --nubi-font-size-base: 1rem;     /* 16px */
+  --nubi-font-size-lg: 1.125rem;   /* 18px */
+  --nubi-font-size-xl: 1.25rem;    /* 20px */
+  --nubi-font-size-2xl: 1.5rem;    /* 24px */
+  --nubi-font-size-3xl: 1.875rem;  /* 30px */
+  --nubi-font-size-4xl: 2.25rem;   /* 36px */
+  
+  /* Pesos de fuente */
+  --nubi-font-weight-light: 300;
+  --nubi-font-weight-regular: 400;
+  --nubi-font-weight-medium: 500;
+  --nubi-font-weight-semibold: 600;
+  --nubi-font-weight-bold: 700;
+  
+  /* Interlineado */
+  --nubi-line-height-tight: 1.25;
+  --nubi-line-height-normal: 1.5;
+  --nubi-line-height-relaxed: 1.75;
+  
+  /* Espaciado entre letras */
+  --nubi-letter-spacing-tight: -0.025em;
+  --nubi-letter-spacing-normal: 0;
+  --nubi-letter-spacing-wide: 0.025em;
+}

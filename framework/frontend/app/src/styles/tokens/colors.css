@@ -1,0 +1,34 @@
+/**
+ * Tokens de color - Capa 2: Colores de marca Nubi
+ * 
+ * Estos colores son específicos de la marca Nubi y se mapean a tokens semánticos
+ * según el tema activo (claro/oscuro).
+ * 
+ * Modificabilidad: Un diseñador puede cambiar estos valores sin afectar
+ * los tokens semánticos ni TailwindCSS.
+ */
+
+:root {
+  /* Colores de marca primarios */
+  --nubi-color-primary: #4DBA87;
+  --nubi-color-primary-light: #6FCF97;
+  --nubi-color-primary-dark: #2D8B5F;
+  
+  --nubi-color-secondary: #F5A623;
+  --nubi-color-secondary-light: #FFC857;
+  --nubi-color-secondary-dark: #D48B0F;
+  
+  --nubi-color-accent: #9B59B6;
+  --nubi-color-accent-light: #BB77D4;
+  --nubi-color-accent-dark: #7D3C98;
+  
+  /* Colores de estado (mapeados a Tailwind) */
+  --nubi-color-success: #10B981;
+  --nubi-color-warning: #F59E0B;
+  --nubi-color-error: #EF4444;
+  --nubi-color-info: #3B82F6;
+  
+  /* Neutros base */
+  --nubi-color-white: #FFFFFF;
+  --nubi-color-black: #000000;
+}

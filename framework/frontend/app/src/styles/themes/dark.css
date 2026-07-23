@@ -1,0 +1,45 @@
+/**
+ * Tema oscuro - Tokens semánticos
+ * 
+ * Mapea los tokens de marca y neutros a tokens semánticos
+ * para el tema oscuro
+ */
+
+[data-theme="dark"] {
+  /* Fondos */
+  --nubi-bg-surface: #111827;
+  --nubi-bg-surface-secondary: #1F2937;
+  --nubi-bg-surface-tertiary: #374151;
+  --nubi-bg-surface-inverse: #FFFFFF;
+  
+  /* Textos */
+  --nubi-text-primary: #F9FAFB;
+  --nubi-text-secondary: #D1D5DB;
+  --nubi-text-tertiary: #9CA3AF;
+  --nubi-text-inverse: #111827;
+  --nubi-text-link: var(--nubi-color-primary-light);
+  --nubi-text-link-hover: var(--nubi-color-primary);
+  
+  /* Bordes */
+  --nubi-border-default: #374151;
+  --nubi-border-strong: #4B5563;
+  --nubi-border-focus: var(--nubi-color-primary-light);
+  
+  /* Estados */
+  --nubi-bg-success: #064E3B;
+  --nubi-text-success: #D1FAE5;
+  --nubi-bg-warning: #78350F;
+  --nubi-text-warning: #FEF3C7;
+  --nubi-bg-error: #7F1D1D;
+  --nubi-text-error: #FEE2E2;
+  --nubi-bg-info: #1E3A8A;
+  --nubi-text-info: #DBEAFE;
+  
+  /* Sombras (más sutiles en tema oscuro) */
+  --nubi-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --nubi-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --nubi-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  
+  /* Overlay */
+  --nubi-overlay-bg: rgba(0, 0, 0, 0.7);
+}

@@ -45,6 +45,15 @@ const routes: RouteRecordRaw[] = [
   }
 ]
 
+// Ruta del catálogo de componentes solo en desarrollo
+if (import.meta.env.DEV) {
+  routes.unshift({
+    path: '/dev/components',
+    name: 'ComponentCatalog',
+    component: () => import('../views/CatalogView.vue')
+  })
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes

@@ -1,0 +1,28 @@
+/**
+ * Tokens de bordes y sombras
+ * 
+ * Bordes redondeados y sombras para profundidad visual
+ * 
+ * Modificabilidad: Un diseñador puede ajustar estos valores para
+ * cambiar el estilo visual de los componentes
+ */
+
+:root {
+  /* Bordes redondeados */
+  --nubi-radius-sm: 0.25rem;    /* 4px */
+  --nubi-radius-md: 0.375rem;   /* 6px */
+  --nubi-radius-lg: 0.5rem;     /* 8px */
+  --nubi-radius-xl: 0.75rem;    /* 12px */
+  --nubi-radius-2xl: 1rem;      /* 16px */
+  --nubi-radius-full: 9999px;
+  
+  /* Bordes */
+  --nubi-border-width: 1px;
+  --nubi-border-width-thick: 2px;
+  
+  /* Sombras */
+  --nubi-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --nubi-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --nubi-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --nubi-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
