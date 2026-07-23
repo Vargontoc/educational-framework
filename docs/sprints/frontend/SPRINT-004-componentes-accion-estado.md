@@ -4,7 +4,7 @@
 Implementar componentes de acción (botón primario, secundario, icono, destructivo) y componentes de estado (loading/spinner, skeleton, empty state, error state) como base funcional mínima para el panel parental.
 
 ## Status
-status: approved
+status: closed
 started_at: 2026-07-23
 closed_at: 2026-07-23
 blocked_by:

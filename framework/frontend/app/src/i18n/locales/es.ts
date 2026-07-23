@@ -14,7 +14,9 @@ export default {
     search: 'Buscar',
     noResults: 'No se encontraron resultados',
     required: 'Este campo es obligatorio',
-    optional: 'Opcional'
+    optional: 'Opcional',
+    on: 'Activado',
+    off: 'Desactivado'
   },
   components: {
     button: {
@@ -31,6 +33,45 @@ export default {
       defaultTitle: 'Error',
       defaultMessage: 'Ha ocurrido un error inesperado',
       defaultRetry: 'Reintentar'
+    },
+    textInput: {
+      placeholder: 'Escribe aquí...',
+      required: 'Este campo es obligatorio',
+      minLength: 'Mínimo {min} caracteres',
+      maxLength: 'Máximo {max} caracteres',
+      invalidFormat: 'Formato no válido',
+      charactersCount: '{count} / {max} caracteres'
+    },
+    numberInput: {
+      placeholder: '0',
+      increment: 'Incrementar',
+      decrement: 'Decrementar',
+      min: 'El valor mínimo es {min}',
+      max: 'El valor máximo es {max}',
+      step: 'El valor debe ser múltiplo de {step}'
+    },
+    pinInput: {
+      label: 'PIN de seguridad',
+      placeholder: '·',
+      complete: 'PIN completado',
+      digit: 'Dígito {position} de {total}',
+      clear: 'Borrar PIN'
+    },
+    checkbox: {
+      checked: 'Seleccionado',
+      unchecked: 'No seleccionado',
+      indeterminate: 'Parcialmente seleccionado'
+    },
+    toggle: {
+      label: 'Alternar'
+    },
+    select: {
+      placeholder: 'Selecciona una opción',
+      noOptions: 'No hay opciones disponibles',
+      selected: 'Seleccionado: {value}'
+    },
+    radioGroup: {
+      selected: 'Seleccionado: {value}'
     }
   },
   views: {
@@ -66,8 +107,16 @@ export default {
       components: 'Componentes',
       actionComponents: 'Componentes de acción',
       feedbackComponents: 'Componentes de feedback',
+      inputComponents: 'Componentes de entrada',
       buttons: 'Botones',
       iconButtons: 'Botones de icono',
+      textInputs: 'Entradas de texto',
+      numberInputs: 'Entradas numéricas',
+      pinInputs: 'Entradas PIN',
+      checkboxes: 'Casillas de verificación',
+      toggles: 'Interruptores',
+      selects: 'Selectores',
+      radioGroups: 'Grupos de radio',
       inputs: 'Entradas',
       cards: 'Tarjetas',
       modals: 'Modales',

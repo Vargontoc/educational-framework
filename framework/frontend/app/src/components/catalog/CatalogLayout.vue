@@ -32,6 +32,18 @@
           </ul>
         </div>
         <div class="nav-section">
+          <h2 class="nav-title">{{ $t('views.catalog.inputComponents') }}</h2>
+          <ul class="nav-list">
+            <li><router-link to="/dev/components/text-input" class="nav-link">{{ $t('views.catalog.textInputs') }}</router-link></li>
+            <li><router-link to="/dev/components/number-input" class="nav-link">{{ $t('views.catalog.numberInputs') }}</router-link></li>
+            <li><router-link to="/dev/components/pin-input" class="nav-link">{{ $t('views.catalog.pinInputs') }}</router-link></li>
+            <li><router-link to="/dev/components/checkbox" class="nav-link">{{ $t('views.catalog.checkboxes') }}</router-link></li>
+            <li><router-link to="/dev/components/toggle" class="nav-link">{{ $t('views.catalog.toggles') }}</router-link></li>
+            <li><router-link to="/dev/components/select" class="nav-link">{{ $t('views.catalog.selects') }}</router-link></li>
+            <li><router-link to="/dev/components/radio-group" class="nav-link">{{ $t('views.catalog.radioGroups') }}</router-link></li>
+          </ul>
+        </div>
+        <div class="nav-section">
           <h2 class="nav-title">{{ $t('views.catalog.theme') }}</h2>
           <ul class="nav-list">
             <li>

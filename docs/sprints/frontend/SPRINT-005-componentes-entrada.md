@@ -4,24 +4,24 @@
 Implementar todos los componentes de entrada (input texto, numérico, PIN, checkbox, toggle, selector, radio buttons) para permitir la interacción del adulto con el panel parental.
 
 ## Status
-status: pending
-started_at:
-closed_at:
-blocked_by: SPRINT-004
-waiting_for: Paleta de colores confirmada, librería de iconos confirmada
+status: implemented
+started_at: 2026-07-23
+closed_at: 2026-07-23
+blocked_by:
+waiting_for:
 
 ## Tasks
-- [ ] Implementar `NubiTextInput`: label visible, placeholder, validación en tiempo real, estados error/hint
-- [ ] Implementar `NubiNumberInput`: teclado numérico en móvil, botones incremento/decremento, validación de rango
-- [ ] Implementar `NubiPinInput`: exactamente 4 dígitos numéricos, estilo teclado móvil, dígitos ocultos, feedback visual de completado
-- [ ] Implementar `NubiCheckbox`: opción binaria con label claro, estados checked/unchecked/indeterminate
-- [ ] Implementar `NubiToggle`: alternativa on/off visual para configuraciones frecuentes, animación suave
-- [ ] Implementar `NubiSelect`: selección única entre múltiples opciones, dropdown accesible, opción por defecto
-- [ ] Implementar `NubiRadioGroup`: selección única entre opciones mutuamente excluyentes, label por opción
-- [ ] Registrar todos los componentes en el catálogo de desarrollo con variantes, estados y tamaños
-- [ ] Validar todos los textos con i18n (`$t()`) — sin literales en templates
-- [ ] Validar accesibilidad táctil (mínimo 48x48dp) en todos los elementos interactivos
-- [ ] Validar navegación por teclado (Tab, Enter, Space, flechas) en todos los componentes
+- [x] Implementar `NubiTextInput`: label visible, placeholder, validación en tiempo real, estados error/hint
+- [x] Implementar `NubiNumberInput`: teclado numérico en móvil, botones incremento/decremento, validación de rango
+- [x] Implementar `NubiPinInput`: exactamente 4 dígitos numéricos, estilo teclado móvil, dígitos ocultos, feedback visual de completado
+- [x] Implementar `NubiCheckbox`: opción binaria con label claro, estados checked/unchecked/indeterminate
+- [x] Implementar `NubiToggle`: alternativa on/off visual para configuraciones frecuentes, animación suave
+- [x] Implementar `NubiSelect`: selección única entre múltiples opciones, dropdown accesible, opción por defecto
+- [x] Implementar `NubiRadioGroup`: selección única entre opciones mutuamente excluyentes, label por opción
+- [x] Registrar todos los componentes en el catálogo de desarrollo con variantes, estados y tamaños
+- [x] Validar todos los textos con i18n (`$t()`) — sin literales en templates
+- [x] Validar accesibilidad táctil (mínimo 48x48dp) en todos los elementos interactivos
+- [x] Validar navegación por teclado (Tab, Enter, Space, flechas) en todos los componentes
 
 ## Acceptance Criteria
 - El input de texto muestra label visible, placeholder, y validación en tiempo real con mensajes de error
@@ -68,11 +68,32 @@ waiting_for: Paleta de colores confirmada, librería de iconos confirmada
 ## Review
 
 completed_tasks:
+  - NubiTextInput: implementado con label, placeholder, validación en tiempo real (blur/change), estados error/hint, iconos prefix/suffix, contador de caracteres, soporte v-model, tipos text/email/password/tel/url
+  - NubiNumberInput: implementado con teclado numérico (inputmode="numeric"), botones incremento/decremento, validación de rango min/max, step configurable, navegación por teclado (flechas arriba/abajo), aria-valuenow/min/max
+  - NubiPinInput: implementado con 4 dígitos numéricos (configurable hasta 6), inputmode="numeric", modo masked con dígitos ocultos, feedback visual al completar, auto-avance entre campos, navegación backspace/flechas
+  - NubiCheckbox: implementado con label claro, estados checked/unchecked/indeterminate (aria-checked="mixed"), soporte v-model, objetivo táctil 48px
+  - NubiToggle: implementado con role="switch", animación suave 200ms, soporte v-model, estado visible opcional (on/off), objetivo táctil 48px
+  - NubiSelect: implementado con role="combobox"/"listbox", dropdown con Teleport al body, focus trapping, navegación completa por teclado (Enter, Space, flechas, Escape, Home, End), aria-activedescendant, posicionamiento dinámico
+  - NubiRadioGroup: implementado con role="radiogroup", opciones verticales/horizontales, navegación por teclado (flechas), soporte opciones disabled individuales, objetivo táctil 48px
+  - Catálogo: 7 vistas de catálogo registradas con rutas /dev/components/{text-input, number-input, pin-input, checkbox, toggle, select, radio-group}
+  - Catálogo: 7 archivos .story.vue para Histoire con variantes y documentación
+  - i18n: traducciones completas para todos los componentes en es.ts (components.textInput, components.numberInput, components.pinInput, components.checkbox, components.toggle, components.select, components.radioGroup)
+  - Catálogo: navegación actualizada en CatalogLayout.vue con sección "Componentes de entrada"
+  - Build exitoso sin errores (202ms)
 
 incomplete_tasks:
 
 contract_changes:
 
 learnings:
+  - useId() de Vue 3 es ideal para generar IDs únicos de accesibilidad (aria-describedby, aria-labelledby) sin conflictos
+  - Teleport al body es necesario para dropdowns que pueden ser cortados por overflow de contenedores padres
+  - El posicionamiento fixed con getBoundingClientRect() funciona mejor que absolute para dropdowns en contenedores con scroll
+  - inputmode="numeric" es más fiable que type="number" para inputs de un solo dígito en móvil Android
+  - La validación con touched ref evita mostrar errores antes de que el usuario interactúe con el campo
+  - Las opciones de NubiSelect y NubiRadioGroup aceptan tanto strings/numbers simples como objetos {value, label} para flexibilidad
+  - El patrón de normalización de opciones (normalizeOption) permite una API más flexible sin duplicar lógica
 
 next_sprint_suggestions:
+  - SPRINT-006: Componentes de layout (NubiCard, NubiModal, NubiFormField wrapper)
+  - SPRINT-007: Vistas del panel parental usando los componentes de entrada

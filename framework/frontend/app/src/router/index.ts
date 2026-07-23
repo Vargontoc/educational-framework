@@ -102,6 +102,41 @@ if (import.meta.env.DEV) {
       path: '/dev/components/error-state',
       name: 'CatalogErrorState',
       component: () => import('../views/catalog/ErrorStateView.vue')
+    },
+    {
+      path: '/dev/components/text-input',
+      name: 'CatalogTextInput',
+      component: () => import('../views/catalog/TextInputView.vue')
+    },
+    {
+      path: '/dev/components/number-input',
+      name: 'CatalogNumberInput',
+      component: () => import('../views/catalog/NumberInputView.vue')
+    },
+    {
+      path: '/dev/components/pin-input',
+      name: 'CatalogPinInput',
+      component: () => import('../views/catalog/PinInputView.vue')
+    },
+    {
+      path: '/dev/components/checkbox',
+      name: 'CatalogCheckbox',
+      component: () => import('../views/catalog/CheckboxView.vue')
+    },
+    {
+      path: '/dev/components/toggle',
+      name: 'CatalogToggle',
+      component: () => import('../views/catalog/ToggleView.vue')
+    },
+    {
+      path: '/dev/components/select',
+      name: 'CatalogSelect',
+      component: () => import('../views/catalog/SelectView.vue')
+    },
+    {
+      path: '/dev/components/radio-group',
+      name: 'CatalogRadioGroup',
+      component: () => import('../views/catalog/RadioGroupView.vue')
     }
   ]
   routes.unshift(...catalogRoutes)
