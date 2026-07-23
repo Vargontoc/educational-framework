@@ -22,7 +22,7 @@
  * <NubiIcon name="reading" /> // icono custom
  */
 
-import { computed, defineAsyncComponent } from 'vue'
+import { computed } from 'vue'
 import * as lucideIcons from '@lucide/vue'
 
 interface Props {

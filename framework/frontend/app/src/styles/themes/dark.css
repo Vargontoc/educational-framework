@@ -25,6 +25,12 @@
   --nubi-border-strong: #4B5563;
   --nubi-border-focus: var(--nubi-color-primary-light);
   
+  /* Focus */
+  --nubi-color-focus: rgba(111, 207, 151, 0.5);
+  
+  /* Transparentes */
+  --nubi-color-white-transparent: rgba(255, 255, 255, 0.1);
+  
   /* Estados */
   --nubi-bg-success: #064E3B;
   --nubi-text-success: #D1FAE5;

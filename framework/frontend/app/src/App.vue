@@ -21,6 +21,10 @@
 
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import OrientationManager from './components/OrientationManager.vue'
+import { useTheme } from './composables/useTheme'
+
+// Inicializar el sistema de temas
+useTheme()
 
 const orientationManager = ref<InstanceType<typeof OrientationManager> | null>(null)
 

@@ -2,34 +2,41 @@
   <div class="catalog-layout">
     <aside class="catalog-sidebar">
       <div class="catalog-header">
-        <h1 class="catalog-title">Nubi Component Catalog</h1>
-        <p class="catalog-subtitle">Design System & Components</p>
+        <h1 class="catalog-title">{{ $t('views.catalog.title') }}</h1>
+        <p class="catalog-subtitle">{{ $t('views.catalog.subtitle') }}</p>
       </div>
       <nav class="catalog-nav">
         <div class="nav-section">
-          <h2 class="nav-title">Foundation</h2>
+          <h2 class="nav-title">{{ $t('views.catalog.designTokens') }}</h2>
           <ul class="nav-list">
-            <li><a href="#colors" class="nav-link">Colors</a></li>
-            <li><a href="#typography" class="nav-link">Typography</a></li>
-            <li><a href="#spacing" class="nav-link">Spacing</a></li>
-            <li><a href="#borders" class="nav-link">Borders & Shadows</a></li>
+            <li><router-link to="/dev/components/tokens/colors" class="nav-link">{{ $t('views.catalog.colors') }}</router-link></li>
+            <li><router-link to="/dev/components/tokens/typography" class="nav-link">{{ $t('views.catalog.typography') }}</router-link></li>
+            <li><router-link to="/dev/components/tokens/spacing" class="nav-link">{{ $t('views.catalog.spacing') }}</router-link></li>
+            <li><router-link to="/dev/components/tokens/borders" class="nav-link">{{ $t('views.catalog.borders') }}</router-link></li>
           </ul>
         </div>
         <div class="nav-section">
-          <h2 class="nav-title">Components</h2>
+          <h2 class="nav-title">{{ $t('views.catalog.actionComponents') }}</h2>
           <ul class="nav-list">
-            <li><a href="#buttons" class="nav-link">Buttons</a></li>
-            <li><a href="#inputs" class="nav-link">Inputs</a></li>
-            <li><a href="#cards" class="nav-link">Cards</a></li>
-            <li><a href="#modals" class="nav-link">Modals</a></li>
+            <li><router-link to="/dev/components/button" class="nav-link">{{ $t('views.catalog.buttons') }}</router-link></li>
+            <li><router-link to="/dev/components/icon-button" class="nav-link">{{ $t('views.catalog.iconButtons') }}</router-link></li>
           </ul>
         </div>
         <div class="nav-section">
-          <h2 class="nav-title">Theme</h2>
+          <h2 class="nav-title">{{ $t('views.catalog.feedbackComponents') }}</h2>
+          <ul class="nav-list">
+            <li><router-link to="/dev/components/spinner" class="nav-link">{{ $t('views.catalog.spinners') }}</router-link></li>
+            <li><router-link to="/dev/components/skeleton" class="nav-link">{{ $t('views.catalog.skeletons') }}</router-link></li>
+            <li><router-link to="/dev/components/empty-state" class="nav-link">{{ $t('views.catalog.emptyStates') }}</router-link></li>
+            <li><router-link to="/dev/components/error-state" class="nav-link">{{ $t('views.catalog.errorStates') }}</router-link></li>
+          </ul>
+        </div>
+        <div class="nav-section">
+          <h2 class="nav-title">{{ $t('views.catalog.theme') }}</h2>
           <ul class="nav-list">
             <li>
               <button @click="toggleTheme" class="nav-link theme-toggle">
-                {{ getCurrentTheme() === 'light' ? '☀️ Light Mode' : '🌙 Dark Mode' }}
+                {{ getCurrentTheme() === 'light' ? $t('views.catalog.lightMode') : $t('views.catalog.darkMode') }}
               </button>
             </li>
           </ul>

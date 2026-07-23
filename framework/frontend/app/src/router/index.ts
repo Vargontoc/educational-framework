@@ -45,13 +45,66 @@ const routes: RouteRecordRaw[] = [
   }
 ]
 
-// Ruta del catálogo de componentes solo en desarrollo
+// Rutas del catálogo de componentes solo en desarrollo
 if (import.meta.env.DEV) {
-  routes.unshift({
-    path: '/dev/components',
-    name: 'ComponentCatalog',
-    component: () => import('../views/CatalogView.vue')
-  })
+  const catalogRoutes: RouteRecordRaw[] = [
+    {
+      path: '/dev/components',
+      name: 'ComponentCatalog',
+      component: () => import('../views/CatalogView.vue')
+    },
+    {
+      path: '/dev/components/tokens/colors',
+      name: 'CatalogColors',
+      component: () => import('../views/catalog/ColorsView.vue')
+    },
+    {
+      path: '/dev/components/tokens/typography',
+      name: 'CatalogTypography',
+      component: () => import('../views/catalog/TypographyView.vue')
+    },
+    {
+      path: '/dev/components/tokens/spacing',
+      name: 'CatalogSpacing',
+      component: () => import('../views/catalog/SpacingView.vue')
+    },
+    {
+      path: '/dev/components/tokens/borders',
+      name: 'CatalogBorders',
+      component: () => import('../views/catalog/BordersView.vue')
+    },
+    {
+      path: '/dev/components/button',
+      name: 'CatalogButton',
+      component: () => import('../views/catalog/ButtonView.vue')
+    },
+    {
+      path: '/dev/components/icon-button',
+      name: 'CatalogIconButton',
+      component: () => import('../views/catalog/IconButtonView.vue')
+    },
+    {
+      path: '/dev/components/spinner',
+      name: 'CatalogSpinner',
+      component: () => import('../views/catalog/SpinnerView.vue')
+    },
+    {
+      path: '/dev/components/skeleton',
+      name: 'CatalogSkeleton',
+      component: () => import('../views/catalog/SkeletonView.vue')
+    },
+    {
+      path: '/dev/components/empty-state',
+      name: 'CatalogEmptyState',
+      component: () => import('../views/catalog/EmptyStateView.vue')
+    },
+    {
+      path: '/dev/components/error-state',
+      name: 'CatalogErrorState',
+      component: () => import('../views/catalog/ErrorStateView.vue')
+    }
+  ]
+  routes.unshift(...catalogRoutes)
 }
 
 const router = createRouter({
