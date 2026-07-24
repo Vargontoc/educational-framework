@@ -137,6 +137,106 @@ if (import.meta.env.DEV) {
       path: '/dev/components/radio-group',
       name: 'CatalogRadioGroup',
       component: () => import('../views/catalog/RadioGroupView.vue')
+    },
+    {
+      path: '/dev/components/sidebar',
+      name: 'CatalogSidebar',
+      component: () => import('../views/catalog/SidebarView.vue')
+    },
+    {
+      path: '/dev/components/tabs',
+      name: 'CatalogTabs',
+      component: () => import('../views/catalog/TabsView.vue')
+    },
+    {
+      path: '/dev/components/breadcrumb',
+      name: 'CatalogBreadcrumb',
+      component: () => import('../views/catalog/BreadcrumbView.vue')
+    },
+    {
+      path: '/dev/components/back-button',
+      name: 'CatalogBackButton',
+      component: () => import('../views/catalog/BackButtonView.vue')
+    },
+    {
+      path: '/dev/components/confirm-modal',
+      name: 'CatalogConfirmModal',
+      component: () => import('../views/catalog/ConfirmModalView.vue')
+    },
+    {
+      path: '/dev/components/info-modal',
+      name: 'CatalogInfoModal',
+      component: () => import('../views/catalog/InfoModalView.vue')
+    },
+    {
+      path: '/dev/components/toast',
+      name: 'CatalogToast',
+      component: () => import('../views/catalog/ToastView.vue')
+    },
+    {
+      path: '/dev/components/alert',
+      name: 'CatalogAlert',
+      component: () => import('../views/catalog/AlertView.vue')
+    },
+    {
+      path: '/dev/components/tooltip',
+      name: 'CatalogTooltip',
+      component: () => import('../views/catalog/TooltipView.vue')
+    },
+    {
+      path: '/dev/components/card',
+      name: 'CatalogCard',
+      component: () => import('../views/catalog/CardView.vue')
+    },
+    {
+      path: '/dev/components/avatar',
+      name: 'CatalogAvatar',
+      component: () => import('../views/catalog/AvatarView.vue')
+    },
+    {
+      path: '/dev/components/badge',
+      name: 'CatalogBadge',
+      component: () => import('../views/catalog/BadgeView.vue')
+    },
+    {
+      path: '/dev/components/list',
+      name: 'CatalogList',
+      component: () => import('../views/catalog/ListView.vue')
+    },
+    {
+      path: '/dev/components/grid',
+      name: 'CatalogGrid',
+      component: () => import('../views/catalog/GridView.vue')
+    },
+    {
+      path: '/dev/components/progress-bar',
+      name: 'CatalogProgressBar',
+      component: () => import('../views/catalog/ProgressBarView.vue')
+    },
+    {
+      path: '/dev/components/stepper',
+      name: 'CatalogStepper',
+      component: () => import('../views/catalog/StepperView.vue')
+    },
+    {
+      path: '/dev/components/counter',
+      name: 'CatalogCounter',
+      component: () => import('../views/catalog/CounterView.vue')
+    },
+    {
+      path: '/dev/components/auth-screen',
+      name: 'CatalogAuthScreen',
+      component: () => import('../views/catalog/AuthScreenView.vue')
+    },
+    {
+      path: '/dev/components/session-indicator',
+      name: 'CatalogSessionIndicator',
+      component: () => import('../views/catalog/SessionIndicatorView.vue')
+    },
+    {
+      path: '/dev/components/inactivity-overlay',
+      name: 'CatalogInactivityOverlay',
+      component: () => import('../views/catalog/InactivityOverlayView.vue')
     }
   ]
   routes.unshift(...catalogRoutes)

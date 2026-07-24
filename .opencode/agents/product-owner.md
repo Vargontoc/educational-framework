@@ -1,6 +1,6 @@
 ---
 description: Propietario de la aplicación encargado de detectar necesidades y funcionalidade
-model: alibaba/qwen3.7-plus
+model: openai/gpt-5.6-terra
 mode: primary
 permission:
     edit: allow

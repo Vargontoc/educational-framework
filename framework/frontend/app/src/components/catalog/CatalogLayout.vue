@@ -29,6 +29,11 @@
             <li><router-link to="/dev/components/skeleton" class="nav-link">{{ $t('views.catalog.skeletons') }}</router-link></li>
             <li><router-link to="/dev/components/empty-state" class="nav-link">{{ $t('views.catalog.emptyStates') }}</router-link></li>
             <li><router-link to="/dev/components/error-state" class="nav-link">{{ $t('views.catalog.errorStates') }}</router-link></li>
+            <li><router-link to="/dev/components/confirm-modal" class="nav-link">{{ $t('views.catalog.confirmModals') }}</router-link></li>
+            <li><router-link to="/dev/components/info-modal" class="nav-link">{{ $t('views.catalog.infoModals') }}</router-link></li>
+            <li><router-link to="/dev/components/toast" class="nav-link">{{ $t('views.catalog.toasts') }}</router-link></li>
+            <li><router-link to="/dev/components/alert" class="nav-link">{{ $t('views.catalog.alerts') }}</router-link></li>
+            <li><router-link to="/dev/components/tooltip" class="nav-link">{{ $t('views.catalog.tooltips') }}</router-link></li>
           </ul>
         </div>
         <div class="nav-section">
@@ -41,6 +46,41 @@
             <li><router-link to="/dev/components/toggle" class="nav-link">{{ $t('views.catalog.toggles') }}</router-link></li>
             <li><router-link to="/dev/components/select" class="nav-link">{{ $t('views.catalog.selects') }}</router-link></li>
             <li><router-link to="/dev/components/radio-group" class="nav-link">{{ $t('views.catalog.radioGroups') }}</router-link></li>
+          </ul>
+        </div>
+        <div class="nav-section">
+          <h2 class="nav-title">{{ $t('views.catalog.navigationComponents') }}</h2>
+          <ul class="nav-list">
+            <li><router-link to="/dev/components/sidebar" class="nav-link">{{ $t('views.catalog.sidebars') }}</router-link></li>
+            <li><router-link to="/dev/components/tabs" class="nav-link">{{ $t('views.catalog.tabsComponent') }}</router-link></li>
+            <li><router-link to="/dev/components/breadcrumb" class="nav-link">{{ $t('views.catalog.breadcrumbs') }}</router-link></li>
+            <li><router-link to="/dev/components/back-button" class="nav-link">{{ $t('views.catalog.backButtons') }}</router-link></li>
+          </ul>
+        </div>
+        <div class="nav-section">
+          <h2 class="nav-title">{{ $t('views.catalog.contentComponents') }}</h2>
+          <ul class="nav-list">
+            <li><router-link to="/dev/components/card" class="nav-link">{{ $t('views.catalog.cards') }}</router-link></li>
+            <li><router-link to="/dev/components/avatar" class="nav-link">{{ $t('views.catalog.avatars') }}</router-link></li>
+            <li><router-link to="/dev/components/badge" class="nav-link">{{ $t('views.catalog.badges') }}</router-link></li>
+            <li><router-link to="/dev/components/list" class="nav-link">{{ $t('views.catalog.lists') }}</router-link></li>
+            <li><router-link to="/dev/components/grid" class="nav-link">{{ $t('views.catalog.grids') }}</router-link></li>
+          </ul>
+        </div>
+        <div class="nav-section">
+          <h2 class="nav-title">{{ $t('views.catalog.progressComponents') }}</h2>
+          <ul class="nav-list">
+            <li><router-link to="/dev/components/progress-bar" class="nav-link">{{ $t('views.catalog.progressBars') }}</router-link></li>
+            <li><router-link to="/dev/components/stepper" class="nav-link">{{ $t('views.catalog.steppers') }}</router-link></li>
+            <li><router-link to="/dev/components/counter" class="nav-link">{{ $t('views.catalog.counters') }}</router-link></li>
+          </ul>
+        </div>
+        <div class="nav-section">
+          <h2 class="nav-title">{{ $t('views.catalog.sessionComponents') }}</h2>
+          <ul class="nav-list">
+            <li><router-link to="/dev/components/auth-screen" class="nav-link">{{ $t('views.catalog.authScreens') }}</router-link></li>
+            <li><router-link to="/dev/components/session-indicator" class="nav-link">{{ $t('views.catalog.sessionIndicators') }}</router-link></li>
+            <li><router-link to="/dev/components/inactivity-overlay" class="nav-link">{{ $t('views.catalog.inactivityOverlays') }}</router-link></li>
           </ul>
         </div>
         <div class="nav-section">

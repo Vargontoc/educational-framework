@@ -72,6 +72,103 @@ export default {
     },
     radioGroup: {
       selected: 'Seleccionado: {value}'
+    },
+    sidebar: {
+      toggle: 'Alternar menú',
+      collapse: 'Colapsar menú',
+      expand: 'Expandir menú',
+      panel: 'Panel',
+      experiences: 'Experiencias',
+      settings: 'Configuración',
+      children: 'Niños',
+      chatbot: 'Chatbot',
+      documentation: 'Documentación',
+      readingFamily: 'Lectura en familia',
+      relaxationFamily: 'Relajación en familia'
+    },
+    tabs: {
+      selected: 'Pestaña seleccionada: {tab}'
+    },
+    breadcrumb: {
+      label: 'Navegación',
+      current: 'Página actual'
+    },
+    backButton: {
+      label: 'Volver atrás'
+    },
+    confirmModal: {
+      title: 'Confirmar acción',
+      confirm: 'Confirmar',
+      cancel: 'Cancelar'
+    },
+    infoModal: {
+      close: 'Cerrar'
+    },
+    toast: {
+      dismiss: 'Cerrar notificación'
+    },
+    alert: {
+      dismiss: 'Cerrar alerta',
+      info: 'Información',
+      warning: 'Advertencia',
+      error: 'Error',
+      success: 'Éxito'
+    },
+    tooltip: {
+      label: 'Más información'
+    },
+    card: {
+      actions: 'Acciones'
+    },
+    avatar: {
+      fallback: 'Usuario'
+    },
+    badge: {
+      info: 'Información',
+      success: 'Éxito',
+      warning: 'Advertencia',
+      error: 'Error'
+    },
+    list: {
+      empty: 'No hay elementos'
+    },
+    grid: {
+      empty: 'No hay elementos'
+    },
+    progressBar: {
+      label: 'Progreso: {value}%',
+      complete: 'Completado'
+    },
+    stepper: {
+      step: 'Paso {current} de {total}',
+      next: 'Siguiente',
+      previous: 'Anterior',
+      complete: 'Completar'
+    },
+    counter: {
+      label: 'Cantidad: {value}'
+    },
+    authScreen: {
+      title: 'Acceso al Panel',
+      subtitle: 'Introduce tu PIN de seguridad',
+      error: 'PIN incorrecto. Inténtalo de nuevo.',
+      forgot: '¿Olvidaste tu PIN?',
+      validating: 'Validando...'
+    },
+    sessionIndicator: {
+      label: 'Sesión activa',
+      timeLeft: 'Tiempo restante: {time}',
+      warning: 'Tu sesión expirará pronto',
+      expired: 'Sesión expirada'
+    },
+    inactivityOverlay: {
+      title: '¿Sigues ahí?',
+      message: 'Tu sesión expirará en {time} por inactividad',
+      extend: 'Continuar sesión',
+      logout: 'Cerrar sesión'
+    },
+    inactivityDetector: {
+      warning: 'Se detectó inactividad'
     }
   },
   views: {
@@ -108,6 +205,10 @@ export default {
       actionComponents: 'Componentes de acción',
       feedbackComponents: 'Componentes de feedback',
       inputComponents: 'Componentes de entrada',
+      navigationComponents: 'Componentes de navegación',
+      contentComponents: 'Componentes de contenido',
+      progressComponents: 'Componentes de progreso',
+      sessionComponents: 'Componentes de sesión',
       buttons: 'Botones',
       iconButtons: 'Botones de icono',
       textInputs: 'Entradas de texto',
@@ -117,8 +218,27 @@ export default {
       toggles: 'Interruptores',
       selects: 'Selectores',
       radioGroups: 'Grupos de radio',
-      inputs: 'Entradas',
+      sidebars: 'Barras laterales',
+      tabsComponent: 'Pestañas',
+      breadcrumbs: 'Migas de pan',
+      backButtons: 'Botones atrás',
+      confirmModals: 'Modales de confirmación',
+      infoModals: 'Modales informativos',
+      toasts: 'Notificaciones toast',
+      alerts: 'Alertas',
+      tooltips: 'Tooltips',
       cards: 'Tarjetas',
+      avatars: 'Avatares',
+      badges: 'Badges',
+      lists: 'Listas',
+      grids: 'Cuadrículas',
+      progressBars: 'Barras de progreso',
+      steppers: 'Steppers',
+      counters: 'Contadores',
+      authScreens: 'Pantallas de autenticación',
+      sessionIndicators: 'Indicadores de sesión',
+      inactivityOverlays: 'Overlays de inactividad',
+      inputs: 'Entradas',
       modals: 'Modales',
       spinners: 'Spinners',
       skeletons: 'Skeletons',
