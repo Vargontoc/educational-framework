@@ -1,0 +1,24 @@
+summary: Update locale
+operationId: updateLocale
+tags:
+  - content-locale-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/update-content-locale-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-content-locale-response.yaml"

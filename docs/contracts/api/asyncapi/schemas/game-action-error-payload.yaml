@@ -1,0 +1,20 @@
+description: Error payload for GAME_ERROR events.
+type: object
+required:
+  - code
+properties:
+  code:
+    type: string
+    enum:
+      - GAME_NOT_FOUND
+      - INVALID_ACTION
+      - GAME_NOT_IN_PROGRESS
+      - INVALID_STATE_TRANSITION
+      - NO_ACTIVE_GAME
+      - ENGINE_ERROR
+      - PARSING_ERROR
+    description: Error code describing what went wrong.
+  gameId:
+    type: integer
+    format: int64
+    description: The game ID that caused the error. Present when applicable.

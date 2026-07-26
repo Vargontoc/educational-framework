@@ -1,0 +1,23 @@
+type: object
+additionalProperties: false
+
+properties:
+  name:
+    type: string
+  description:
+    type: string
+  categoryId:
+    type: integer
+    format: int64
+  status:
+    type: string
+  minAge:
+    type: integer
+    format: int32
+  maxAge:
+    type: integer
+    format: int32
+  compatibleVariants:
+    type: array
+    items:
+      type: string

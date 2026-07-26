@@ -39,6 +39,19 @@ paths:
     patch:
       $ref: "./paths/family/update-children.yaml"
 
+  /family/adults:
+    get:
+      $ref: "./paths/family/get-adults.yaml"
+    post:
+      $ref: "./paths/family/create-adult.yaml"
+  /family/adults/{id}:
+    get:
+      $ref: "./paths/family/get-adult.yaml"
+    delete:
+      $ref: "./paths/family/delete-adult.yaml"
+    patch:
+      $ref: "./paths/family/update-adult.yaml"
+
   /sessions/children:
     get:
       $ref: "./paths/session/get-session-children.yaml"
@@ -50,7 +63,7 @@ paths:
   /sessions/children/{id}/expel:
     delete:
       $ref: "./paths/session/expel-session-children.yaml"
-  /sessions/children/{id}/heatbeat:
+  /sessions/children/{id}/heartbeat:
     post:
       $ref: "./paths/session/heartbeat-session-children.yaml"
 
@@ -171,7 +184,7 @@ paths:
     put:
       $ref: "./paths/content/update-avatar-event.yaml"
 
-  /dev/content/activity:
+  /dev/content/activities:
     get:
       $ref: "./paths/content/get-activities.yaml"
     post:
@@ -180,7 +193,7 @@ paths:
     get:
       $ref: "./paths/content/get-activity.yaml"
     put:
-      $ref: "./paths/content/update-activity.yaml" 
+      $ref: "./paths/content/update-activity.yaml"
 
   /dev/content/activity-resources:
     get:
@@ -188,11 +201,16 @@ paths:
     post:
       $ref: "./paths/content/create-activity-resource.yaml"
   /dev/content/activity-resources/{id}:
-    get:
-      $ref: "./paths/content/get-activity-resource.yaml"
     put:
       $ref: "./paths/content/update-activity-resource.yaml"
-  
+
+  /content/stories:
+    get:
+      $ref: "./paths/content/list-active-stories.yaml"
+  /content/stories/{id}:
+    get:
+      $ref: "./paths/content/get-story-detail.yaml"
+
   /tracking/children/{childProfileId}/topics:
     get:
       $ref: "./paths/tracking/topics.yaml"  

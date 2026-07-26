@@ -1,0 +1,11 @@
+type: object
+additionalProperties: false
+
+properties:
+  name:
+    type: string
+  birthday:
+    type: string
+    format: date
+  avatar:
+    type: string

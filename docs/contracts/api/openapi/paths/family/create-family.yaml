@@ -1,0 +1,17 @@
+summary: Create family
+operationId: createFamily
+tags:
+  - family-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/family/create-family-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-family-response.yaml"

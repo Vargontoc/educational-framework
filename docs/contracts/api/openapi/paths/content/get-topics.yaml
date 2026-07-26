@@ -1,0 +1,18 @@
+summary: List topics
+operationId: listTopics
+tags:
+  - topic-controller
+parameters:
+  - name: categoryId
+    in: query
+    required: false
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-topic-response.yaml"

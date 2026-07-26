@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+
+properties:
+  entityType:
+    type: string
+  entityId:
+    type: integer
+    format: int64
+  localeCode:
+    type: string
+  name:
+    type: string
+  description:
+    type: string

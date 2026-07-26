@@ -1,0 +1,24 @@
+summary: Get child achievements
+operationId: getChildAchievements
+tags:
+  - tracking-dashboard-controller
+parameters:
+  - name: childProfileId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+  - name: activityId
+    in: query
+    required: false
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/tracking/api-list-child-achievement.yaml"

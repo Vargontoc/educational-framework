@@ -1,0 +1,24 @@
+summary: Create step
+operationId: createStep
+tags:
+  - learning-path-step-controller
+parameters:
+  - name: learningPathId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-learning-path-step-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-learning-path-step-response.yaml"

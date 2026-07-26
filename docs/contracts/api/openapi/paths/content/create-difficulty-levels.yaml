@@ -1,0 +1,17 @@
+summary: Create difficulty level
+operationId: createDifficultyLevel
+tags:
+  - difficulty-level-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-difficulty-level-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-difficulty-level-response.yaml"

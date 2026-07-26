@@ -1,0 +1,14 @@
+type: object
+additionalProperties: false
+
+properties:
+  eventType:
+    type: string
+  tone:
+    type: string
+  locale:
+    type: string
+  messageText:
+    type: string
+  status:
+    type: string

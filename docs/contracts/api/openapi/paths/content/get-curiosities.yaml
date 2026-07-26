@@ -1,0 +1,29 @@
+summary: List curiosities
+operationId: listCuriosities
+tags:
+  - curiosity-controller
+parameters:
+  - name: topicId
+    in: query
+    required: false
+    schema:
+      type: integer
+      format: int64
+  - name: age
+    in: query
+    required: false
+    schema:
+      type: integer
+      format: int32
+  - name: locale
+    in: query
+    required: false
+    schema:
+      type: string
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-curiosity-response.yaml"

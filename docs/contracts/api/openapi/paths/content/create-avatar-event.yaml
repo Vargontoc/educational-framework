@@ -1,0 +1,17 @@
+summary: Create avatar event
+operationId: createAvatarEvent
+tags:
+  - avatar-event-catalog-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-avatar-event-catalog-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-avatar-event-catalog-response.yaml"

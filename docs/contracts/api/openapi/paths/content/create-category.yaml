@@ -1,0 +1,17 @@
+summary: Create category
+operationId: createCategory
+tags:
+  - category-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-category-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-category-response.yaml"

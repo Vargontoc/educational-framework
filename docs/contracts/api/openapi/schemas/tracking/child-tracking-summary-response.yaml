@@ -1,0 +1,39 @@
+type: object
+additionalProperties: false
+
+properties:
+  childProfileId:
+    type: integer
+    format: int64
+  totalActivities:
+    type: integer
+    format: int32
+  totalTopics:
+    type: integer
+    format: int32
+  totalAttempts:
+    type: integer
+    format: int32
+  totalCorrect:
+    type: integer
+    format: int32
+  totalIncorrect:
+    type: integer
+    format: int32
+  totalTimeouts:
+    type: integer
+    format: int32
+  overallSuccessRate:
+    type: number
+  totalAchievements:
+    type: integer
+    format: int32
+  totalLearningPathsStarted:
+    type: integer
+    format: int32
+  totalLearningStepsCompleted:
+    type: integer
+    format: int32
+  lastActivityAt:
+    type: string
+    format: date-time

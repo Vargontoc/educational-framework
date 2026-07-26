@@ -1,0 +1,32 @@
+description: Payload containing game state. Returned by GAME_STARTED, GAME_READY, GAME_ABANDONED.
+type: object
+properties:
+  gameId:
+    type: integer
+    format: int64
+  status:
+    type: string
+    enum:
+      - WAITING
+      - STARTING
+      - IN_PROGRESS
+      - COMPLETED
+      - ABANDONED
+  activityId:
+    type: integer
+    format: int64
+  difficultyLevelId:
+    type: integer
+    format: int64
+  currentScore:
+    type: number
+  currentStreak:
+    type: integer
+  attempts:
+    type: integer
+  startedAt:
+    type: string
+    format: date-time
+  completedAt:
+    type: string
+    format: date-time

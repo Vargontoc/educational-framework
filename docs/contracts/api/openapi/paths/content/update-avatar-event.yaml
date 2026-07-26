@@ -1,0 +1,24 @@
+summary: Update avatar event
+operationId: updateAvatarEvent
+tags:
+  - avatar-event-catalog-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/update-avatar-event-catalog-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-avatar-event-catalog-response.yaml"

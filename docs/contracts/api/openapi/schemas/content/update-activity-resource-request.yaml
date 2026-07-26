@@ -1,0 +1,13 @@
+type: object
+additionalProperties: false
+
+properties:
+  topicId:
+    type: integer
+    format: int64
+  resourceType:
+    type: string
+  path:
+    type: string
+  metadata:
+    type: string

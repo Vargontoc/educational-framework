@@ -1,0 +1,55 @@
+name: GameActionResponse
+description: Result of a processed game action. Sent after a GameActionMessage is processed by the orchestrator.
+payload:
+  type: object
+  required:
+    - event
+    - sessionId
+    - payload
+  properties:
+    event:
+      type: string
+      const: GAME_ACTION_RESULT
+    sessionId:
+      type: integer
+      format: int64
+    payload:
+      type: object
+      properties:
+        resultType:
+          type: string
+          enum:
+            - CORRECT
+            - INCORRECT
+            - TIMEOUT
+          description: Normalized result of the action.
+        updatedState:
+          $ref: "../schemas/websocket/game-state-payload.yaml"
+          description: Current game state after the action was applied.
+        difficultyChanged:
+          type: boolean
+          description: True when difficulty level was adjusted by adaptive difficulty service.
+        newDifficultyLevelId:
+          type: integer
+          format: int64
+          description: New difficulty level ID. Present when difficultyChanged is true.
+        gameCompleted:
+          type: boolean
+          description: True when this action completed the game.
+        unlockedAchievements:
+          type: array
+          items:
+            type: object
+            properties:
+              achievementCode:
+                type: string
+              activityId:
+                type: integer
+                format: int64
+              topicId:
+                type: integer
+                format: int64
+          description: Achievements unlocked by this action. Contains achievementCode, activityId, and topicId.
+        attemptContext:
+          type: string
+          description: "Contextual info about the attempt, e.g. 'streak:3'."

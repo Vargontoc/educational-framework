@@ -1,0 +1,17 @@
+summary: Create locale
+operationId: createLocale
+tags:
+  - content-locale-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-content-locale-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-content-locale-response.yaml"

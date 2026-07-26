@@ -1,0 +1,18 @@
+summary: Get avatar event
+operationId: getAvatarEvent
+tags:
+  - avatar-event-catalog-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-avatar-event-catalog-response.yaml"

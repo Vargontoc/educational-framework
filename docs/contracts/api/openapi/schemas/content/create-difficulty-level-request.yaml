@@ -1,0 +1,13 @@
+type: object
+additionalProperties: false
+
+properties:
+  activityId:
+    type: integer
+    format: int64
+  difficultyCode:
+    type: string
+  engineParams:
+    type: string
+  adaptiveThresholdConfig:
+    type: string

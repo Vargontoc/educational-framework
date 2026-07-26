@@ -1,0 +1,17 @@
+summary: Create story
+operationId: createStory
+tags:
+  - story-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-story-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-story-response.yaml"

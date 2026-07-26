@@ -1,0 +1,18 @@
+summary: Get child
+operationId: getChild
+tags:
+  - child-profile-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-child-profile-response.yaml"

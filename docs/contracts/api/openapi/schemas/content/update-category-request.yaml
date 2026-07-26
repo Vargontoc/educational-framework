@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+
+properties:
+  name:
+    type: string
+  description:
+    type: string
+  status:
+    type: string
+  displayOrder:
+    type: integer
+    format: int32
+  iconUrl:
+    type: string

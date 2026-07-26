@@ -1,0 +1,24 @@
+summary: Update difficulty level
+operationId: updateDifficultyLevel
+tags:
+  - difficulty-level-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/update-difficulty-level-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-difficulty-level-response.yaml"

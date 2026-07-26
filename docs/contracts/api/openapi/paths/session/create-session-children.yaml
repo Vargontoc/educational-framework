@@ -1,0 +1,17 @@
+summary: Open session
+operationId: openSession
+tags:
+  - child-session-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/session/open-child-session-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/session/api-child-session-response.yaml"

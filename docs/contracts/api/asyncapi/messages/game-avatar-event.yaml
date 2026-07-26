@@ -1,0 +1,33 @@
+name: GameAvatarEvent
+description: Avatar audio event sent to game client. JSON metadata frame, optionally followed by a binary audio frame correlated by audioId.
+payload:
+  type: object
+  required:
+    - event
+    - sessionId
+    - eventType
+    - audioAvailable
+    - text
+  properties:
+    event:
+      type: string
+      const: GAME_AVATAR_EVENT
+    sessionId:
+      type: integer
+      format: int64
+    eventType:
+      type: string
+      enum:
+        - SESSION_CONNECTED
+        - SESSION_DISCONNECTED
+      description: Lifecycle subtype. SESSION_CONNECTED: welcome after auth. SESSION_DISCONNECTED: farewell before backend-initiated close.
+    audioAvailable:
+      type: boolean
+      description: True when audio binary frame will follow.
+    audioId:
+      type: string
+      format: uuid
+      description: Correlation ID for the following binary audio frame. Present only when audioAvailable is true.
+    text:
+      type: string
+      description: Fallback text. Always present regardless of audio availability.

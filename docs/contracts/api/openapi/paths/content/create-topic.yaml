@@ -1,0 +1,17 @@
+summary: Create topic
+operationId: createTopic
+tags:
+  - topic-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-topic-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-topic-response.yaml"

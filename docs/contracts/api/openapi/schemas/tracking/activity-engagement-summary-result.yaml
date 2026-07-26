@@ -1,0 +1,11 @@
+type: object
+additionalProperties: false
+
+properties:
+  childProfileId:
+    type: integer
+    format: int64
+  items:
+    type: array
+    items:
+      $ref: "./activity-engagement-summary.yaml"

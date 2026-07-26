@@ -1,0 +1,19 @@
+description: Payload for WORLD_ACTIVITY_STARTED events.
+type: object
+required:
+  - gameId
+  - activityId
+  - transition
+properties:
+  gameId:
+    type: integer
+    format: int64
+    description: The created game ID.
+  activityId:
+    type: integer
+    format: int64
+    description: The activity that was started.
+  transition:
+    type: string
+    const: START_GAME
+    description: Transition type indicating the game should start.

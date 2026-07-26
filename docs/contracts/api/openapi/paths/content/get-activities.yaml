@@ -1,0 +1,18 @@
+summary: List activities
+operationId: listActivities
+tags:
+  - activity-controller
+parameters:
+  - name: topicId
+    in: query
+    required: false
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-activity-response.yaml"

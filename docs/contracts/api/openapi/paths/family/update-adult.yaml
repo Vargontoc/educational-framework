@@ -1,0 +1,24 @@
+summary: Update adult
+operationId: updateAdult
+tags:
+  - adult-profile-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/family/update-adult-profile-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-adult-profile-response.yaml"

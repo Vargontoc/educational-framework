@@ -1,0 +1,17 @@
+summary: Create child
+operationId: createChild
+tags:
+  - child-profile-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/family/create-child-profile-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-child-profile-response.yaml"

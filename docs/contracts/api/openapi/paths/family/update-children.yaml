@@ -1,0 +1,24 @@
+summary: Update child
+operationId: updateChild
+tags:
+  - child-profile-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/family/update-child-profile-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-child-profile-response.yaml"

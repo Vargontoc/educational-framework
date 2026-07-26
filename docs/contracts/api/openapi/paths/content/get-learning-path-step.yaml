@@ -1,0 +1,24 @@
+summary: Get step
+operationId: getStep
+tags:
+  - learning-path-step-controller
+parameters:
+  - name: learningPathId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+  - name: stepId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-learning-path-step-response.yaml"

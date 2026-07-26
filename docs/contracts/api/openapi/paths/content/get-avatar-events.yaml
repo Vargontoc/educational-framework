@@ -1,0 +1,27 @@
+summary: List avatar events
+operationId: listAvatarEvents
+tags:
+  - avatar-event-catalog-controller
+parameters:
+  - name: eventType
+    in: query
+    required: false
+    schema:
+      type: string
+  - name: tone
+    in: query
+    required: false
+    schema:
+      type: string
+  - name: locale
+    in: query
+    required: false
+    schema:
+      type: string
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-avatar-event-catalog-response.yaml"

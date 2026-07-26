@@ -1,0 +1,16 @@
+type: object
+additionalProperties: false
+
+properties:
+  activityId:
+    type: integer
+    format: int64
+  topicId:
+    type: integer
+    format: int64
+  resourceType:
+    type: string
+  path:
+    type: string
+  metadata:
+    type: string

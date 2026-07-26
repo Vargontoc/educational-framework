@@ -1,0 +1,10 @@
+type: object
+additionalProperties: false
+
+properties:
+  childProfileId:
+    type: integer
+    format: int64
+  heartbeatIntervalSeconds:
+    type: integer
+    format: int32

@@ -1,0 +1,17 @@
+summary: Create resource
+operationId: createResource
+tags:
+  - activity-resource-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-activity-resource-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-activity-resource-response.yaml"

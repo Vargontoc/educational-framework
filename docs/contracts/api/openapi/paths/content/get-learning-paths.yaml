@@ -1,0 +1,17 @@
+summary: List learning paths
+operationId: listLearningPaths
+tags:
+  - learning-path-controller
+parameters:
+  - name: status
+    in: query
+    required: false
+    schema:
+      type: string
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-learning-path-response.yaml"

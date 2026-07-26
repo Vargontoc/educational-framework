@@ -1,0 +1,17 @@
+summary: Create curiosity
+operationId: createCuriosity
+tags:
+  - curiosity-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-curiosity-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-curiosity-response.yaml"

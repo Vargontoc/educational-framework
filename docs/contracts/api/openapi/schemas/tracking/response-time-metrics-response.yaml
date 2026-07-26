@@ -1,0 +1,20 @@
+type: object
+additionalProperties: false
+
+properties:
+  childProfileId:
+    type: integer
+    format: int64
+  overallAverageResponseTimeMs:
+    type: integer
+    format: int32
+  overallMinResponseTimeMs:
+    type: integer
+    format: int32
+  overallMaxResponseTimeMs:
+    type: integer
+    format: int32
+  byActivity:
+    type: array
+    items:
+      $ref: "./activity-response-time.yaml"

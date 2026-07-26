@@ -1,0 +1,12 @@
+type: object
+additionalProperties: false
+
+properties:
+  difficultyLevelId:
+    type: integer
+    format: int64
+  direction:
+    type: string
+  changedAt:
+    type: string
+    format: date-time

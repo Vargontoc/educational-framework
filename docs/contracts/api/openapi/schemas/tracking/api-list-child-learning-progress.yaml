@@ -1,0 +1,10 @@
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    required:
+      - data
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "./child-learning-progress.yaml"

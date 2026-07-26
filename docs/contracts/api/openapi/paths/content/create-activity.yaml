@@ -1,0 +1,17 @@
+summary: Create activity
+operationId: createActivity
+tags:
+  - activity-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-activity-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-activity-response.yaml"

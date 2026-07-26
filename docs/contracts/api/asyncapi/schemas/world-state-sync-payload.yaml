@@ -1,0 +1,16 @@
+description: Payload for WORLD_STATE_SYNC events. Contains world runtime status and current destination if any.
+type: object
+required:
+  - status
+properties:
+  status:
+    type: string
+    enum:
+      - ACTIVE
+      - INACTIVE_CLOSED
+      - NO_WORLD_STATE
+    description: "Current world state status. ACTIVE: world is open. INACTIVE_CLOSED: world was closed due to inactivity. NO_WORLD_STATE: no world state exists for this session."
+  destination:
+    $ref: "./world-destination-payload.yaml"
+    description: Current world destination. Null when status is CLOSED or NO_STATE.
+    nullable: true

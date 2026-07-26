@@ -1,0 +1,18 @@
+summary: List difficulty levels
+operationId: listDifficultyLevels
+tags:
+  - difficulty-level-controller
+parameters:
+  - name: activityId
+    in: query
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-difficulty-level-response.yaml"

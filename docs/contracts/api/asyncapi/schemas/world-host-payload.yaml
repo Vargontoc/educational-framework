@@ -1,0 +1,21 @@
+description: Host information for a world destination.
+type: object
+required:
+  - id
+  - code
+  - displayName
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Host identifier.
+  code:
+    type: string
+    description: Host code identifier.
+  displayName:
+    type: string
+    description: Human-readable host name.
+  visualAssetKey:
+    type: string
+    description: Visual asset key for the host. Null if no asset is configured.
+    nullable: true

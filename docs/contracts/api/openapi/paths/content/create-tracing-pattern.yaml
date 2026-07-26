@@ -1,0 +1,17 @@
+summary: Create tracing pattern
+operationId: createTracingPattern
+tags:
+  - tracing-pattern-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-tracing-pattern-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-tracing-pattern-response.yaml"

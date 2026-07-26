@@ -1,0 +1,18 @@
+summary: List tracing patterns
+operationId: listTracingPatterns
+tags:
+  - tracing-pattern-controller
+parameters:
+  - name: topicId
+    in: query
+    required: false
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-tracing-pattern-response.yaml"

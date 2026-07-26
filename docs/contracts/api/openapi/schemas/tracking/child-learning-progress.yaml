@@ -1,0 +1,22 @@
+type: object
+additionalProperties: false
+
+properties:
+  id:
+    type: integer
+    format: int64
+  childProfileId:
+    type: integer
+    format: int64
+  learningPathId:
+    type: integer
+    format: int64
+  currentLearningPathStepId:
+    type: integer
+    format: int64
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time

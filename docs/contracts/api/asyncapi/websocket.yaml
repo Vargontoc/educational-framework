@@ -1,0 +1,73 @@
+asyncapi: 2.6.0
+info:
+  title: Educational Framework WebSocket Contract
+  description: Baseline real-time contract for FEAT-002 session events.
+  version: 1.6.0
+
+channels:
+  /ws/parent:
+    $ref: "./channels/parent.yaml"
+  /topic/family/{familyId}/sessions:
+    $ref: "./channels/family-sessions.yaml"
+  /ws/game:
+    $ref: "./channels/game.yaml"
+
+components:
+  events:
+    GAME_STATE_UPDATE:
+      direction: server_to_client
+      description: State restore payload sent to game clients after reconnect.
+    SESSION_EXPIRED:
+      direction: server_to_client
+      description: Child session expired because inactivity grace window was exceeded.
+    SESSION_INVALIDATED:
+      direction: server_to_client
+      description: Family session was revoked externally, usually after a PIN change.
+    CHILD_EXPELLED:
+      direction: server_to_client
+      description: Parent or admin explicitly expelled the child from the active session.
+    PARENT_BLOCK:
+      direction: server_to_client
+      description: Child is blocked by parental control and cannot reconnect until unblocked.
+    HEARTBEAT_ACK:
+      direction: server_to_client
+      description: Acknowledgement emitted by server after receiving heartbeat.
+    AUTH_ACK:
+      direction: server_to_client
+      description: WebSocket session successfully bound to an active child session after auth message.
+    GAME_AVATAR_EVENT:
+      direction: server_to_client
+      description: Avatar audio event. Sent as JSON text frame, optionally followed by binary audio frame (see BinaryAudioFrame).
+    SESSION_CONNECTED:
+      direction: server_to_client
+      description: "Lifecycle subtype: welcome avatar sent after successful game WebSocket authentication. Text: 'Hola, vamos a jugar!'"
+    SESSION_DISCONNECTED:
+      direction: server_to_client
+      description: "Lifecycle subtype: farewell avatar sent before backend-initiated session close. Text: 'Vaya, parece que es hora de despedirnos. Hasta la proxima.'"
+    GAME_ACTION_RESULT:
+      direction: server_to_client
+      description: Result of a game action processed by the orchestrator. Contains resultType, difficulty info, achievements, and completion status.
+    GAME_COMPLETED:
+      direction: server_to_client
+      description: Game session has completed successfully. Sent after the final GAME_ACTION_RESULT when gameCompleted is true.
+    GAME_ERROR:
+      direction: server_to_client
+      description: "Game action failed with an error. Contains error code: GAME_NOT_FOUND, INVALID_ACTION, GAME_NOT_IN_PROGRESS, INVALID_STATE_TRANSITION, NO_ACTIVE_GAME, ENGINE_ERROR, PARSING_ERROR."
+    GAME_STARTED:
+      direction: server_to_client
+      description: Game created and waiting to be ready. Payload contains gameId, status (WAITING), activityId, difficultyLevelId.
+    GAME_READY:
+      direction: server_to_client
+      description: Game transitioned to IN_PROGRESS and ready for actions. Payload contains gameId, status (IN_PROGRESS).
+    GAME_ABANDONED:
+      direction: server_to_client
+      description: Game was abandoned. Can be triggered by client (game_abandon message) or by system events (SESSION_EXPIRED, CHILD_EXPELLED, PARENT_BLOCK). Payload contains gameId, status (ABANDONED).
+    WORLD_STATE_SYNC:
+      direction: server_to_client
+      description: World map state synchronization. Sent after world heartbeat, inactivity close, or game completion when world is still active.
+    WORLD_DESTINATION_READY:
+      direction: server_to_client
+      description: Child has arrived at a world destination with discovery elements. Contains host, narrative situation, biome, and discovery elements.
+    WORLD_ACTIVITY_STARTED:
+      direction: server_to_client
+      description: Child started an activity from the world map. Contains gameId, activityId, and transition type.

@@ -1,0 +1,26 @@
+description: World destination payload for WORLD_DESTINATION_READY events.
+type: object
+required:
+  - destinationId
+  - host
+  - narrativeSituation
+  - biome
+  - discoveryElements
+properties:
+  destinationId:
+    type: string
+    description: Unique identifier for the destination.
+  host:
+    $ref: "./world-host-payload.yaml"
+    description: Host information for the destination.
+  narrativeSituation:
+    $ref: "./world-narrative-situation-payload.yaml"
+    description: Narrative situation context for the destination.
+  biome:
+    type: string
+    description: Biome identifier for the destination.
+  discoveryElements:
+    type: array
+    items:
+      $ref: "./world-discovery-element-payload.yaml"
+    description: Available discovery elements at this destination. Empty array if no proposals are active.

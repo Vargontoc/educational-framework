@@ -1,0 +1,17 @@
+summary: Update family
+operationId: updateFamily
+tags:
+  - family-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/family/update-family-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-family-response.yaml"

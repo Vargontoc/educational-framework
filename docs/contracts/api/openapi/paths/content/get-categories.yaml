@@ -1,0 +1,11 @@
+summary: List categories
+operationId: listCategories
+tags:
+  - category-controller
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-category-response.yaml"

@@ -4,10 +4,15 @@ additionalProperties: false
 properties:
   token:
     type: string
+    description: Token de la sesión
   sessionId:
-    type: int64
+    type: integer
+    format: int64
+    description: Identificador único de la sesión
   familyId:
     type: int64
+    description: Identificador único de la familia
   createAt:
     type: string
     format: date-time
+    description: Fecha de entrada al panel parental

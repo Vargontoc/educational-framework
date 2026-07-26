@@ -1,0 +1,12 @@
+type: object
+additionalProperties: false
+
+properties:
+  name:
+    type: string
+  pin:
+    type: string
+  ttsEnabled:
+    type: boolean
+  agentEnabled:
+    type: boolean

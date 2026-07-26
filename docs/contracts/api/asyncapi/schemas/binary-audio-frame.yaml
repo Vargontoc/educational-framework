@@ -1,0 +1,6 @@
+description: >-
+  Binary frame containing MP3 audio data. Follows a GameAvatarEvent JSON frame
+  when audioAvailable=true. Format: [4 bytes: audioId length as big-endian
+  int32][N bytes: audioId UTF-8][remaining bytes: MP3 audio data]. The audioId
+  field in the preceding JSON frame is used to correlate the binary frame.
+contentType: application/octet-stream

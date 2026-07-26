@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+
+properties:
+  pageOrder:
+    type: integer
+    format: int32
+  text:
+    type: string
+  imageResourceRef:
+    type: string
+  audioResourceRef:
+    type: string
+  status:
+    type: string

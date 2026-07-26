@@ -1,0 +1,18 @@
+summary: Get activity
+operationId: getActivity
+tags:
+  - activity-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-activity-response.yaml"

@@ -1,0 +1,18 @@
+summary: Get activity performance
+operationId: getActivityPerformance
+tags:
+  - tracking-dashboard-controller
+parameters:
+  - name: childProfileId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/tracking/api-list-object.yaml"

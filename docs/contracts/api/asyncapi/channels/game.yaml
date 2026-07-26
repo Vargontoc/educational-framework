@@ -1,0 +1,16 @@
+protocol: ws
+description: >-
+  Native game WebSocket endpoint. No Authorization header is required during
+  handshake. Authentication is performed via an initial auth message after
+  connection. Handshake sequence: connect → send auth → receive AUTH_ACK →
+  send heartbeat/game_action. Connections that do not send a valid auth
+  message within 15 seconds are closed.
+publish:
+  message:
+    $ref: "../messages/game-client-message.yaml"
+subscribe:
+  message:
+    oneOf:
+      - $ref: "../messages/session-event.yaml"
+      - $ref: "../messages/game-action-response.yaml"
+      - $ref: "../messages/game-avatar-event.yaml"

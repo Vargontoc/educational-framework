@@ -1,0 +1,11 @@
+summary: List active stories
+operationId: listActiveStories
+tags:
+  - productive-story-controller
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-story-response.yaml"

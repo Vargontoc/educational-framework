@@ -1,0 +1,106 @@
+name: GameClientMessage
+description: Messages sent from the game client to the server.
+payload:
+  type: object
+  required:
+    - type
+  discriminator: type
+  oneOf:
+    - title: AuthMessage
+      description: First message sent after connecting. Binds the WebSocket session to an active child session.
+      properties:
+        type:
+          type: string
+          const: auth
+        childSessionId:
+          type: integer
+          format: int64
+      required:
+        - type
+        - childSessionId
+    - title: HeartbeatMessage
+      description: Sent periodically to keep the child session alive. Only valid after successful auth.
+      properties:
+        type:
+          type: string
+          const: heartbeat
+      required:
+        - type
+    - title: GameStartMessage
+      description: Starts a new game for the authenticated child. If an active game exists, it is implicitly abandoned.
+      properties:
+        type:
+          type: string
+          const: game_start
+        activityId:
+          type: integer
+          format: int64
+          description: The activity to start.
+      required:
+        - type
+        - activityId
+    - title: GameReadyMessage
+      description: Transitions the active game from WAITING to IN_PROGRESS. Only valid after game_start.
+      properties:
+        type:
+          type: string
+          const: game_ready
+      required:
+        - type
+    - title: GameAbandonMessage
+      description: Abandons the active game. Game is removed from registry.
+      properties:
+        type:
+          type: string
+          const: game_abandon
+      required:
+        - type
+    - title: GameActionMessage
+      description: Game action processed by the engine. Only valid when game is IN_PROGRESS.
+      properties:
+        type:
+          type: string
+          const: game_action
+        action:
+          type: string
+          description: "Action payload, e.g. 'CORRECT:answer' or 'INCORRECT:answer'"
+        topicId:
+          type: integer
+          format: int64
+          description: Optional topic context for the action.
+        responseTimeMs:
+          type: integer
+          format: int32
+          description: Client-measured response time in milliseconds.
+      required:
+        - type
+        - action
+    - title: WorldHeartbeatMessage
+      description: Sent periodically to keep the world state alive while child explores the map. Only valid after successful auth.
+      properties:
+        type:
+          type: string
+          const: world_heartbeat
+        timestamp:
+          type: string
+          format: date-time
+          description: Optional client timestamp.
+      required:
+        - type
+    - title: WorldDiscoveryInteractedMessage
+      description: Child interacted with a discovery element in the world map.
+      properties:
+        type:
+          type: string
+          const: world_discovery_interacted
+        proposalRuntimeId:
+          type: string
+          description: Runtime identifier of the proposal.
+        discoveryElementId:
+          type: integer
+          format: int64
+          description: Identifier of the discovery element.
+      required:
+        - type
+        - proposalRuntimeId
+        - discoveryElementId

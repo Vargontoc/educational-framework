@@ -1,0 +1,10 @@
+type: object
+additionalProperties: false
+
+properties:
+  difficultyCode:
+    type: string
+  engineParams:
+    type: string
+  adaptiveThresholdConfig:
+    type: string

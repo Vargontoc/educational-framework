@@ -1,0 +1,13 @@
+summary: Logout
+operationId: logout
+tags:
+  - auth-controller
+parameters:
+  - name: Authorization
+    in: header
+    required: false
+    schema:
+      type: string
+responses:
+  "200":
+    description: OK

@@ -1,12 +1,12 @@
 summary: Obtiene la familia existente
-operantionId: getFamily
+operationId: getFamily
 tags:
   - Family
 
-response:
+responses:
   "200":
     description: Familia obtenida
     content:
       application/json:
         schema:
-          $ref: "../../schemas/family-response.yaml"
+          $ref: "../../schemas/family/family-response.yaml"

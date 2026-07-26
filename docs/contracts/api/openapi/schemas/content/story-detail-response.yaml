@@ -1,0 +1,33 @@
+type: object
+additionalProperties: false
+
+properties:
+  id:
+    type: integer
+    format: int64
+  title:
+    type: string
+  description:
+    type: string
+  minAge:
+    type: integer
+    format: int32
+  maxAge:
+    type: integer
+    format: int32
+  estimatedDurationMinutes:
+    type: integer
+    format: int32
+  topicIds:
+    type: array
+    items:
+      type: integer
+      format: int64
+  backgroundMusicResourceRef:
+    type: string
+  status:
+    type: string
+  pages:
+    type: array
+    items:
+      $ref: "./story-page-response.yaml"

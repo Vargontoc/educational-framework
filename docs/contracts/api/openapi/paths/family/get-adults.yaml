@@ -1,0 +1,11 @@
+summary: Get all adults
+operationId: getAllAdults
+tags:
+  - adult-profile-controller
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-list-adult-profile-response.yaml"

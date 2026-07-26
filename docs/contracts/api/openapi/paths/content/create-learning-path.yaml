@@ -1,0 +1,17 @@
+summary: Create learning path
+operationId: createLearningPath
+tags:
+  - learning-path-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/content/create-learning-path-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-learning-path-response.yaml"

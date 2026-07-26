@@ -1,0 +1,18 @@
+summary: Get topic
+operationId: getTopic
+tags:
+  - topic-controller
+parameters:
+  - name: id
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-topic-response.yaml"

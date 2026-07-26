@@ -1,0 +1,23 @@
+summary: List locales
+operationId: listLocales
+tags:
+  - content-locale-controller
+parameters:
+  - name: entityType
+    in: query
+    required: true
+    schema:
+      type: string
+  - name: entityId
+    in: query
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-list-content-locale-response.yaml"

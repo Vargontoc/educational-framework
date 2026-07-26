@@ -1,0 +1,28 @@
+type: object
+additionalProperties: false
+
+properties:
+  topicId:
+    type: integer
+    format: int64
+  name:
+    type: string
+  description:
+    type: string
+  patternType:
+    type: string
+  points:
+    type: array
+    items:
+      type: array
+      items:
+        type: number
+        format: double
+  minAge:
+    type: integer
+    format: int32
+  maxAge:
+    type: integer
+    format: int32
+  status:
+    type: string

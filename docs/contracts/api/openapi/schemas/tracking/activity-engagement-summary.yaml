@@ -1,0 +1,18 @@
+type: object
+additionalProperties: false
+
+properties:
+  gameEngineType:
+    type: string
+  startedCount:
+    type: integer
+    format: int64
+  ignoredCount:
+    type: integer
+    format: int64
+  completedCount:
+    type: integer
+    format: int64
+  abandonedCount:
+    type: integer
+    format: int64

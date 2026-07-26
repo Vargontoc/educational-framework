@@ -1,0 +1,37 @@
+description: Discovery element in a world destination.
+type: object
+required:
+  - proposalRuntimeId
+  - discoveryElementId
+  - code
+  - displayName
+  - elementType
+  - hasActivity
+properties:
+  proposalRuntimeId:
+    type: string
+    description: Runtime identifier for the proposal.
+  discoveryElementId:
+    type: integer
+    format: int64
+    description: Discovery element identifier.
+  code:
+    type: string
+    description: Discovery element code.
+  displayName:
+    type: string
+    description: Human-readable discovery element name.
+  elementType:
+    type: string
+    description: Type of discovery element.
+  visualAssetKey:
+    type: string
+    description: Visual asset key for the element. Null if no asset is configured.
+    nullable: true
+  interactionCueType:
+    type: string
+    description: Type of interaction cue. Null if no cue is configured.
+    nullable: true
+  hasActivity:
+    type: boolean
+    description: True when this discovery element has an associated activity.

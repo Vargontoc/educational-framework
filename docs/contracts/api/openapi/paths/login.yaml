@@ -1,19 +1,19 @@
 summary: Endpoint para entrar en el panel parental
-operantionId: login
+operationId: login
 tags:
-  - Auth 
+  - Auth
 
 requestBody:
   required: true
   content:
     application/json:
       schema:
-        $ref: "../../schemas/auth/login-request.yaml"
+        $ref: "../schemas/auth/login-request.yaml"
 
-response:
+responses:
   "200":
     description: Usuario logeado con exito
     content:
       application/json:
         schema:
-          $ref: "../../schemas/auth/api-login-response.yaml"
+          $ref: "../schemas/auth/api-login-response.yaml"

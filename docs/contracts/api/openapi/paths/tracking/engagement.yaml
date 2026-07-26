@@ -1,0 +1,18 @@
+summary: Get activity engagement summary
+operationId: getActivityEngagementSummary
+tags:
+  - tracking-dashboard-controller
+parameters:
+  - name: childProfileId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/tracking/api-activity-engagement-summary-result.yaml"

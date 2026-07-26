@@ -1,0 +1,27 @@
+type: object
+additionalProperties: false
+
+properties:
+  id:
+    type: integer
+    format: int64
+  childProfileId:
+    type: integer
+    format: int64
+  familyId:
+    type: integer
+    format: int64
+  status:
+    type: string
+  startedAt:
+    type: string
+    format: date-time
+  endedAt:
+    type: string
+    format: date-time
+  durationSeconds:
+    type: integer
+    format: int32
+  lastActivityAt:
+    type: string
+    format: date-time

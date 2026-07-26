@@ -1,0 +1,24 @@
+summary: Get page
+operationId: getPage
+tags:
+  - story-controller
+parameters:
+  - name: storyId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+  - name: pageId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/content/api-story-page-response.yaml"

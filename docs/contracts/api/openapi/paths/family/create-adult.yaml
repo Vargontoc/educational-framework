@@ -1,0 +1,17 @@
+summary: Create adult
+operationId: createAdult
+tags:
+  - adult-profile-controller
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../../schemas/family/create-adult-profile-request.yaml"
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-adult-profile-response.yaml"

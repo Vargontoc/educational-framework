@@ -1,0 +1,21 @@
+description: Narrative situation context for a world destination.
+type: object
+required:
+  - id
+  - code
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Situation identifier.
+  code:
+    type: string
+    description: Situation code identifier.
+  displayText:
+    type: string
+    description: Human-readable narrative text. Null if no display text is configured.
+    nullable: true
+  tone:
+    type: string
+    description: Narrative tone. Null if no tone is configured.
+    nullable: true

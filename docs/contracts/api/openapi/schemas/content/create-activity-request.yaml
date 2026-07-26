@@ -1,0 +1,23 @@
+type: object
+additionalProperties: false
+
+properties:
+  name:
+    type: string
+  description:
+    type: string
+  gameEngineType:
+    type: string
+  status:
+    type: string
+  minAge:
+    type: integer
+    format: int32
+  maxAge:
+    type: integer
+    format: int32
+  topicIds:
+    type: array
+    items:
+      type: integer
+      format: int64

@@ -1,0 +1,8 @@
+protocol: stomp
+description: Family-scoped topic for server-to-client parental session events.
+parameters:
+  familyId:
+    description: Authenticated family identifier from the opaque token.
+subscribe:
+  message:
+    $ref: "../messages/session-event.yaml"

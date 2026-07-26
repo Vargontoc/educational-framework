@@ -1,0 +1,18 @@
+summary: Get response time metrics
+operationId: getResponseTimeMetrics
+tags:
+  - tracking-dashboard-controller
+parameters:
+  - name: childProfileId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/tracking/api-response-time-metrics-response.yaml"

@@ -1,0 +1,35 @@
+name: SessionEvent
+payload:
+  type: object
+  required:
+    - event
+  properties:
+    event:
+      type: string
+      enum:
+        - GAME_STATE_UPDATE
+        - SESSION_EXPIRED
+        - SESSION_INVALIDATED
+        - CHILD_EXPELLED
+        - PARENT_BLOCK
+        - HEARTBEAT_ACK
+        - AUTH_ACK
+        - CHILD_TTS_ACTIVATED
+        - CHILD_TTS_DEACTIVATED
+        - CHILD_AGENT_ACTIVATED
+        - CHILD_AGENT_DEACTIVATED
+        - GAME_AVATAR_EVENT
+        - GAME_ACTION_RESULT
+        - GAME_COMPLETED
+        - GAME_ERROR
+        - GAME_STARTED
+        - GAME_READY
+        - GAME_ABANDONED
+        - WORLD_STATE_SYNC
+        - WORLD_DESTINATION_READY
+        - WORLD_ACTIVITY_STARTED
+    sessionId:
+      type: integer
+      format: int64
+    payload:
+      type: object

@@ -1,0 +1,16 @@
+type: object
+additionalProperties: false
+
+properties:
+  activityId:
+    type: integer
+    format: int64
+  averageResponseTimeMs:
+    type: integer
+    format: int32
+  minResponseTimeMs:
+    type: integer
+    format: int32
+  maxResponseTimeMs:
+    type: integer
+    format: int32

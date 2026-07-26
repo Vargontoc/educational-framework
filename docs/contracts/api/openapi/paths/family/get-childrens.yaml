@@ -1,0 +1,11 @@
+summary: Get all children
+operationId: getAllChildren
+tags:
+  - child-profile-controller
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/family/api-list-child-profile-response.yaml"

@@ -1,0 +1,18 @@
+summary: Get active sessions
+operationId: getActiveSessions
+tags:
+  - child-session-controller
+parameters:
+  - name: familyId
+    in: query
+    required: true
+    schema:
+      type: integer
+      format: int64
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/session/api-list-child-session-response.yaml"

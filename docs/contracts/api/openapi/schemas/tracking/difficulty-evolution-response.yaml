@@ -1,0 +1,20 @@
+type: object
+additionalProperties: false
+
+properties:
+  childProfileId:
+    type: integer
+    format: int64
+  activityId:
+    type: integer
+    format: int64
+  currentDifficultyLevelId:
+    type: integer
+    format: int64
+  attemptsSinceLastChange:
+    type: integer
+    format: int32
+  history:
+    type: array
+    items:
+      $ref: "./difficulty-change-record.yaml"
