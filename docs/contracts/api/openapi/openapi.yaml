@@ -1,0 +1,219 @@
+openapi: 3.1.0
+info: 
+  title: Educational Framework API 
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+
+paths:
+
+  /auth/login:
+    post:
+      $ref: "./paths/login.yaml"
+  /auth/logout:
+    post:
+      $ref: "./paths/logout.yaml"
+
+  /family:
+    get:
+      $ref: "./paths/family/get-family.yaml"
+    post:
+      $ref: "./paths/family/create-family.yaml"
+    patch:
+      $ref: "./paths/family/patch-family.yaml"
+  
+  /family/children/activation/{id}:
+    put:
+      $ref: "./paths/family/activate-children.yaml"
+  /family/children:
+    get:
+      $ref: "./paths/family/get-childrens.yaml"
+    post:
+      $ref: "./paths/family/create-children.yaml"
+  /family/children/{id}:
+    get:
+      $ref: "./paths/family/get-children.yaml"
+    delete:
+      $ref: "./paths/family/delete-children.yaml"
+    patch:
+      $ref: "./paths/family/update-children.yaml"
+
+  /sessions/children:
+    get:
+      $ref: "./paths/session/get-session-children.yaml"
+    post:
+      $ref: "./paths/session/create-session-children.yaml"
+  /sessions/children/{id}:
+    delete:
+      $ref: "./paths/session/delete-session-children.yaml"
+  /sessions/children/{id}/expel:
+    delete:
+      $ref: "./paths/session/expel-session-children.yaml"
+  /sessions/children/{id}/heatbeat:
+    post:
+      $ref: "./paths/session/heartbeat-session-children.yaml"
+
+
+  /dev/content/tracing-patterns:
+    get:
+      $ref: "./paths/content/get-tracing-patterns.yaml"
+    post:
+      $ref: "./paths/content/create-tracing-pattern.yaml"
+  /dev/content/tracing-patterns/{id}:
+    get:
+      $ref: "./paths/content/get-tracing-pattern.yaml"
+    put:
+      $ref: "./paths/content/update-tracing-pattern.yaml"
+
+  /dev/content/topics:
+    get:
+      $ref: "./paths/content/get-topics.yaml"
+    post:
+      $ref: "./paths/content/create-topic.yaml"
+  /dev/content/topics/{id}:
+    get:
+      $ref: "./paths/content/get-topic.yaml"
+    put:
+      $ref: "./paths/content/update-topic.yaml"
+  
+  /dev/content/stories:
+    get:
+      $ref: "./paths/content/get-stories.yaml"
+    post:
+      $ref: "./paths/content/create-stories.yaml"
+  /dev/content/stories/{id}:
+    get:
+      $ref: "./paths/content/get-story.yaml"
+    put:
+      $ref: "./paths/content/update-story.yaml"
+  /dev/content/stories/{storyId}/pages:
+    get:
+      $ref: "./paths/content/get-pages.yaml"
+    post:
+      $ref: "./paths/content/create-pages.yaml"
+  /dev/content/stories/{storyId}/pages/{pageId}:
+    get:
+      $ref: "./paths/content/get-page.yaml"
+    put:
+      $ref: "./paths/content/update-page.yaml"
+  
+  /dev/content/locales:
+    get:
+      $ref: "./paths/content/get-locales.yaml"
+    post:
+      $ref: "./paths/content/create-locales.yaml"
+  /dev/content/locales/{id}:
+    put:
+      $ref: "./paths/content/update-locale.yaml"
+  
+  /dev/content/learning-paths:
+    get:
+      $ref: "./paths/content/get-learning-paths.yaml"
+    post:
+      $ref: "./paths/content/create-learning-path.yaml" 
+  /dev/content/learning-paths/{id}:
+    get:
+      $ref: "./paths/content/get-learning-path.yaml"
+    put:
+      $ref: "./paths/content/update-learning-path.yaml"
+  
+  /dev/content/learning-paths/{learningPathId}/steps:
+    get:
+      $ref: "./paths/content/get-learning-paths-steps.yaml"
+    post:
+      $ref: "./paths/content/create-learning-path-step.yaml" 
+  /dev/content/learning-paths/{learningPathId}/steps/{stepId}:
+    get:
+      $ref: "./paths/content/get-learning-path-step.yaml"
+    put:
+      $ref: "./paths/content/update-learning-path-step.yaml"
+      
+  /dev/content/difficulty-levels:
+    get:
+      $ref: "./paths/content/get-difficulty-levels.yaml"
+    post:
+      $ref: "./paths/content/create-difficulty-levels.yaml"
+  /dev/content/difficulty-levels/{id}:
+    put:
+      $ref: "./paths/content/update-difficulty-level.yaml"
+  
+  /dev/content/curiosities:
+    get:
+      $ref: "./paths/content/get-curiosities.yaml"
+    post:
+      $ref: "./paths/content/create-curiosity.yaml"
+  /dev/content/curiosities/{id}:
+    get:
+      $ref: "./paths/content/get-cutiosity.yaml"
+    put:
+      $ref: "./paths/content/update-curiosity.yaml"
+  
+  /dev/content/categories:
+    get:
+      $ref: "./paths/content/get-categories.yaml"
+    post:
+      $ref: "./paths/content/create-category.yaml"
+  /dev/content/categories/{id}:
+    get:
+      $ref: "./paths/content/get-category.yaml"
+    put:
+      $ref: "./paths/content/update-category.yaml"
+
+  /dev/content/avatar-events:
+    get:
+      $ref: "./paths/content/get-avatar-events.yaml"
+    post:
+      $ref: "./paths/content/create-avatar-event.yaml"
+  /dev/content/avatar-events/{id}:
+    get:
+      $ref: "./paths/content/get-avatar-event.yaml"
+    put:
+      $ref: "./paths/content/update-avatar-event.yaml"
+
+  /dev/content/activity:
+    get:
+      $ref: "./paths/content/get-activities.yaml"
+    post:
+      $ref: "./paths/content/create-activity.yaml"
+  /dev/content/activities/{id}:
+    get:
+      $ref: "./paths/content/get-activity.yaml"
+    put:
+      $ref: "./paths/content/update-activity.yaml" 
+
+  /dev/content/activity-resources:
+    get:
+      $ref: "./paths/content/get-activity-resources.yaml"
+    post:
+      $ref: "./paths/content/create-activity-resource.yaml"
+  /dev/content/activity-resources/{id}:
+    get:
+      $ref: "./paths/content/get-activity-resource.yaml"
+    put:
+      $ref: "./paths/content/update-activity-resource.yaml"
+  
+  /tracking/children/{childProfileId}/topics:
+    get:
+      $ref: "./paths/tracking/topics.yaml"  
+  /tracking/children/{childProfileId}/summary:
+    get:
+      $ref: "./paths/tracking/summary.yaml"  
+  /tracking/children/{childProfileId}/response-time:
+    get:
+      $ref: "./paths/tracking/response-time.yaml"  
+  /tracking/children/{childProfileId}/learning-progress:
+    get:
+      $ref: "./paths/tracking/learning-progress.yaml"  
+  /tracking/children/{childProfileId}/engagement:
+    get:
+      $ref: "./paths/tracking/engagement.yaml"  
+  /tracking/children/{childProfileId}/difficulty:
+    get:
+      $ref: "./paths/tracking/difficulty.yaml"  
+  /tracking/children/{childProfileId}/activities:
+    get:
+      $ref: "./paths/tracking/activities.yaml"  
+  /tracking/children/{childProfileId}/achievements:
+    get:
+      $ref: "./paths/tracking/achievements.yaml"

@@ -1,0 +1,13 @@
+type: object
+additionalProperties: false
+
+properties:
+  token:
+    type: string
+  sessionId:
+    type: int64
+  familyId:
+    type: int64
+  createAt:
+    type: string
+    format: date-time

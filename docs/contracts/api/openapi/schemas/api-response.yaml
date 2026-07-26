@@ -1,0 +1,21 @@
+type: object
+description: Estructura común de todas las respuestas de la API
+additionalProperties: false
+
+properties:
+  success:
+    type: boolean
+    description: Indica si la operación finalizó correctamente
+    example: true
+  message:
+    type:
+      - string
+      - "null"
+    description: Mensaje informativo asociado a la operación
+    example: Operación realizada correctamente
+  errors:
+    description: Lista de mensajes de errores
+    type: array
+    items:
+      type: string
+  

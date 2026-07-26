@@ -1,6 +1,23 @@
 <template>
   <div class="catalog-layout">
-    <aside class="catalog-sidebar">
+    <button 
+      v-if="isMobile"
+      class="catalog-menu-toggle"
+      @click="toggleSidebar"
+      :aria-label="sidebarOpen ? 'Cerrar menú' : 'Abrir menú'"
+    >
+      <NubiIcon :name="sidebarOpen ? 'x' : 'menu'" :size="24" />
+    </button>
+    
+    <aside 
+      :class="[
+        'catalog-sidebar',
+        { 
+          'catalog-sidebar--open': sidebarOpen,
+          'catalog-sidebar--mobile': isMobile
+        }
+      ]"
+    >
       <div class="catalog-header">
         <h1 class="catalog-title">{{ $t('views.catalog.title') }}</h1>
         <p class="catalog-subtitle">{{ $t('views.catalog.subtitle') }}</p>
@@ -95,6 +112,13 @@
         </div>
       </nav>
     </aside>
+    
+    <div 
+      v-if="isMobile && sidebarOpen" 
+      class="catalog-overlay"
+      @click="closeSidebar"
+    />
+    
     <main class="catalog-content">
       <slot />
     </main>
@@ -106,29 +130,156 @@
  * Layout base del catálogo de componentes
  * 
  * Proporciona navegación por categorías y alternancia de tema
+ * Responsive: sidebar colapsable en móviles/tabletas
  */
 
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useTheme } from '../../composables/useTheme'
+import NubiIcon from '../base/NubiIcon.vue'
 
 const { toggleTheme, getCurrentTheme } = useTheme()
+
+const sidebarOpen = ref(false)
+const isMobile = ref(false)
+
+function toggleSidebar() {
+  sidebarOpen.value = !sidebarOpen.value
+}
+
+function closeSidebar() {
+  sidebarOpen.value = false
+}
+
+function checkMobile() {
+  isMobile.value = window.innerWidth < 1024
+  if (!isMobile.value) {
+    sidebarOpen.value = false
+  }
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 </script>
 
 <style scoped>
 .catalog-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background-color: var(--nubi-bg-surface);
   color: var(--nubi-text-primary);
 }
 
+/* Sidebar */
 .catalog-sidebar {
   width: 280px;
   background-color: var(--nubi-bg-surface-secondary);
   border-right: 1px solid var(--nubi-border-default);
   padding: var(--nubi-spacing-lg);
   overflow-y: auto;
+  overflow-x: hidden;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  
+  /* Scroll suave y optimizado */
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--nubi-border-strong) transparent;
+  
+  /* Webkit scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--nubi-border-strong);
+    border-radius: var(--nubi-radius-full);
+    
+    &:hover {
+      background-color: var(--nubi-text-tertiary);
+    }
+  }
 }
 
+/* Sidebar móvil */
+.catalog-sidebar--mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform var(--nubi-duration-normal) var(--nubi-ease-in-out);
+  box-shadow: none;
+}
+
+.catalog-sidebar--mobile.catalog-sidebar--open {
+  transform: translateX(0);
+  box-shadow: var(--nubi-shadow-lg);
+}
+
+/* Botón toggle menú móvil */
+.catalog-menu-toggle {
+  position: fixed;
+  top: var(--nubi-spacing-md);
+  left: var(--nubi-spacing-md);
+  z-index: 999;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background-color: var(--nubi-color-primary);
+  color: var(--nubi-color-white);
+  border-radius: var(--nubi-radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--nubi-shadow-md);
+  transition: background-color var(--nubi-duration-fast) var(--nubi-ease-in-out);
+  
+  &:hover {
+    background-color: var(--nubi-color-primary-dark);
+  }
+  
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--nubi-color-focus);
+  }
+}
+
+/* Overlay móvil */
+.catalog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--nubi-overlay-bg);
+  z-index: 998;
+  animation: fade-in var(--nubi-duration-fast) var(--nubi-ease-in-out);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Header */
 .catalog-header {
   margin-bottom: var(--nubi-spacing-xl);
 }
@@ -145,6 +296,7 @@ const { toggleTheme, getCurrentTheme } = useTheme()
   color: var(--nubi-text-secondary);
 }
 
+/* Navegación */
 .catalog-nav {
   display: flex;
   flex-direction: column;
@@ -195,9 +347,54 @@ const { toggleTheme, getCurrentTheme } = useTheme()
   text-align: left;
 }
 
+/* Contenido principal */
 .catalog-content {
   flex: 1;
   padding: var(--nubi-spacing-2xl);
   overflow-y: auto;
+  overflow-x: hidden;
+  height: 100vh;
+  
+  /* Scroll suave */
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--nubi-border-strong) transparent;
+  
+  /* Webkit scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--nubi-border-strong);
+    border-radius: var(--nubi-radius-full);
+    
+    &:hover {
+      background-color: var(--nubi-text-tertiary);
+    }
+  }
+}
+
+/* Responsive: Tablet */
+@media (max-width: 1023px) {
+  .catalog-sidebar {
+    width: 260px;
+  }
+  
+  .catalog-content {
+    padding: var(--nubi-spacing-xl);
+  }
+}
+
+/* Responsive: Móvil */
+@media (max-width: 767px) {
+  .catalog-content {
+    padding: var(--nubi-spacing-lg);
+    padding-top: calc(48px + var(--nubi-spacing-xl)); /* Espacio para el botón toggle */
+  }
 }
 </style>

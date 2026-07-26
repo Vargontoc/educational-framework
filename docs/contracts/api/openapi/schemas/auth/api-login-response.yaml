@@ -1,0 +1,9 @@
+allOf:
+  - $ref: "../api-response.yaml"
+
+  - type: object
+    required:
+      - data:
+    properties:
+      data:
+        $ref: "./login-response.yaml"
