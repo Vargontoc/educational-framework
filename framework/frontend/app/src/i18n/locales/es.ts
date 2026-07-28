@@ -213,7 +213,40 @@ export default {
         errorTitle: 'Error al cargar perfiles',
         noProfiles: 'No hay perfiles registrados',
         registerChild: 'Registrar niño',
-        selectProfile: 'Seleccionar perfil de {name}'
+        selectProfile: 'Seleccionar perfil de {name}',
+        pinVerification: {
+          title: 'Verificación parental',
+          description: 'Introduce tu PIN de seguridad para continuar',
+          verify: 'Verificar',
+          verifying: 'Verificando...',
+          errorInvalid: 'PIN incorrecto. Inténtalo de nuevo.',
+          errorConnection: 'Sin conexión. Revisa tu red.',
+          errorServer: 'Error al verificar. Inténtalo de nuevo.'
+        },
+        registration: {
+          title: 'Registrar niño',
+          step1Label: 'Nombre',
+          step2Label: 'Fecha y avatar',
+          nameLabel: 'Nombre del niño',
+          namePlaceholder: 'Ej. Laura',
+          birthdayLabel: 'Fecha de nacimiento',
+          avatarLabel: 'Selecciona un avatar',
+          confirm: 'Confirmar alta',
+          submitting: 'Guardando...',
+          nameRequired: 'Introduce un nombre',
+          birthdayRequired: 'Selecciona la fecha de nacimiento',
+          birthdayFuture: 'La fecha no puede ser futura',
+          errorValidation: 'Los datos no son válidos. Revisa e inténtalo de nuevo.',
+          errorConflict: 'Ya existe un perfil con ese nombre.',
+          errorServer: 'Error al guardar. Inténtalo de nuevo.',
+          errorConnection: 'Sin conexión. Revisa tu red.',
+          avatar1: 'Zorro',
+          avatar2: 'Gato',
+          avatar3: 'Perro',
+          avatar4: 'León',
+          avatar5: 'Panda',
+          avatar6: 'Koala'
+        }
       }
     },
     panel: {
