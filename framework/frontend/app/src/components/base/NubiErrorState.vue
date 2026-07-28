@@ -36,11 +36,10 @@
  * - Accesibilidad completa
  */
 
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import NubiIcon from './NubiIcon.vue'
 import NubiButton from './NubiButton.vue'
-
-const { t } = useI18n()
 
 interface Props {
   /** Título del error */
@@ -55,16 +54,22 @@ interface Props {
   retryLabel?: string
 }
 
-withDefaults(defineProps<Props>(), {
-  title: () => t('components.errorState.defaultTitle'),
-  message: () => t('components.errorState.defaultMessage'),
+const props = withDefaults(defineProps<Props>(), {
+  title: '',
+  message: '',
   showRetry: true,
-  retryLabel: () => t('components.errorState.defaultRetry')
+  retryLabel: ''
 })
 
 defineEmits<{
   retry: []
 }>()
+
+const { t } = useI18n()
+
+const title = computed(() => props.title || t('components.errorState.defaultTitle'))
+const message = computed(() => props.message || t('components.errorState.defaultMessage'))
+const retryLabel = computed(() => props.retryLabel || t('components.errorState.defaultRetry'))
 </script>
 
 <style scoped>

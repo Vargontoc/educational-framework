@@ -85,7 +85,7 @@ Ofrecer una entrada simple, amable y predecible a My Friend Nubi en tabletas y m
 - La experiencia debe ser viable en móvil y tableta y priorizar la interacción táctil.
 - La acción principal y los dos accesos superiores deben ser identificables, alcanzables y distinguibles entre sí.
 - El stepper debe comunicar de forma comprensible el paso actual y que existen dos pasos, sin requerir lectura por parte de un niño.
-- Los campos del flujo de registro están destinados a la configuración inicial adulta; no deben solicitar datos de menores.
+- Los campos del flujo de registro familiar están destinados a la configuración inicial adulta; no deben solicitar datos de menores.
 - El botón de interrogación y el de configuración deben disponer de una denominación comprensible para personas que no interpreten el icono; el icono no será su única forma de comunicación.
 - La pantalla no debe mostrar publicidad, avisos persuasivos, progreso infantil, comparativas ni clasificaciones.
 - La Home no debe requerir que el niño lea para iniciar su experiencia; el avatar y la ubicación consistente de la acción principal actúan como apoyo visual.
@@ -166,7 +166,7 @@ Ofrecer una entrada simple, amable y predecible a My Friend Nubi en tabletas y m
 
 ### Exclusiones
 
-- Selección, alta y edición de niños.
+- Contenido, campos, validaciones y confirmaciones de los modales de registro, selección y alta de niños.
 - Definición del panel parental, de su PIN o de sus secciones internas.
 - Contenido detallado de la documentación.
 - Personalización del avatar, mensajes de Nubi, audio, progreso y minijuegos.

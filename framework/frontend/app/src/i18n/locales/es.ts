@@ -205,7 +205,16 @@ export default {
       familyRegistrationTitle: 'Registro de familia',
       familyRegistrationPlaceholder: 'El formulario de registro de familia se implementará en una próxima versión.',
       childSelectionTitle: 'Seleccionar niño',
-      childSelectionPlaceholder: 'La selección de niños se implementará en una próxima versión.'
+      childSelectionPlaceholder: 'La selección de niños se implementará en una próxima versión.',
+      childSelection: {
+        familyTitle: 'Familia {name}',
+        familyTitleDefault: 'Seleccionar niño',
+        loading: 'Cargando perfiles...',
+        errorTitle: 'Error al cargar perfiles',
+        noProfiles: 'No hay perfiles registrados',
+        registerChild: 'Registrar niño',
+        selectProfile: 'Seleccionar perfil de {name}'
+      }
     },
     panel: {
       title: 'Panel de Control',
