@@ -1,52 +1,25 @@
 <template>
-  <OrientationManager ref="orientationManager">
-    <div 
-      class="app-container" 
-      :style="orientationStyle"
-    >
-      <router-view />
-    </div>
-  </OrientationManager>
+  <div class="app-wrapper">
+    <router-view />
+  </div>
 </template>
 
 <script setup lang="ts">
 /**
  * Componente raíz de la aplicación
  * 
- * Según ADR-010 y SPRINT-002:
- * - Renderizado horizontal permanente
- * - Escalado proporcional en orientación vertical
+ * Según ADR-019 y SPRINT-010:
+ * - Rediseño portrait real con estilos específicos por orientación
+ * - No se usan rotaciones CSS ni escalados complejos
+ * - El contenido se reacomoda naturalmente según la orientación
  * - Preservación de estado ante giro, segundo plano y retorno
  */
 
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import OrientationManager from './components/OrientationManager.vue'
+import { onMounted, onUnmounted } from 'vue'
 import { useTheme } from './composables/useTheme'
 
 // Inicializar el sistema de temas
 useTheme()
-
-const orientationManager = ref<InstanceType<typeof OrientationManager> | null>(null)
-
-/**
- * Estilo computado para aplicar escalado en orientación vertical
- */
-const orientationStyle = computed(() => {
-  if (!orientationManager.value) return {}
-  
-  const { isPortrait, scale } = orientationManager.value
-  
-  if (isPortrait && scale < 1) {
-    return {
-      transform: `scale(${scale})`,
-      transformOrigin: 'center center',
-      width: `${100 / scale}%`,
-      height: `${100 / scale}%`
-    }
-  }
-  
-  return {}
-})
 
 /**
  * Handler de visibilidad (segundo plano / retorno)
@@ -74,9 +47,12 @@ onUnmounted(() => {
 
 <style>
 /* Estilos globales se definen en style.css */
-.app-container {
-  width: 100%;
-  height: 100%;
-  transition: transform 0.3s ease;
+
+/* Wrapper principal con dimensiones del viewport */
+.app-wrapper {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--nubi-bg-surface, #ffffff);
 }
 </style>

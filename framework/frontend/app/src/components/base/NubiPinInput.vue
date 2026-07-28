@@ -22,7 +22,7 @@
           :disabled="disabled"
           :aria-label="t('components.pinInput.digit', { position: index + 1, total: pinLength })"
           :aria-invalid="hasError"
-          class="nubi-pin-input__digit"
+          :class="['nubi-pin-input__digit', { 'nubi-pin-input__digit--masked': masked && digits[index] }]"
           @input="(e) => handleDigitInput(e, index)"
           @keydown="(e) => handleKeydown(e, index)"
           @focus="handleFocus(index)"
@@ -297,6 +297,12 @@ defineExpose({ focus, clear })
   border-color: var(--nubi-color-success);
 }
 
+.nubi-pin-input__digit--masked {
+  color: transparent !important;
+  caret-color: transparent !important;
+  -webkit-text-fill-color: transparent;
+}
+
 .nubi-pin-input__mask {
   position: absolute;
   font-size: var(--nubi-font-size-3xl);
@@ -348,5 +354,21 @@ defineExpose({ focus, clear })
 .nubi-pin-input__clear-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--nubi-color-focus);
+}
+
+@media (max-height: 500px) {
+  .nubi-pin-input {
+    gap: var(--nubi-spacing-xs);
+  }
+
+  .nubi-pin-input__label {
+    font-size: var(--nubi-font-size-xs);
+  }
+
+  .nubi-pin-input__digit {
+    width: 40px;
+    height: 44px;
+    font-size: var(--nubi-font-size-xl);
+  }
 }
 </style>

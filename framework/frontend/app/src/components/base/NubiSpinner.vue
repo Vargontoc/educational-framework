@@ -6,7 +6,7 @@
       { 'nubi-spinner--overlay': overlay }
     ]"
     role="status"
-    :aria-label="label"
+    :aria-label="computedLabel"
   >
     <svg class="nubi-spinner__svg" viewBox="0 0 50 50">
       <circle
@@ -18,7 +18,7 @@
         stroke-width="4"
       />
     </svg>
-    <span v-if="showLabel" class="nubi-spinner__label">{{ label }}</span>
+    <span v-if="showLabel" class="nubi-spinner__label">{{ computedLabel }}</span>
   </div>
 </template>
 
@@ -34,6 +34,7 @@
  * - Label opcional visible
  */
 
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -49,12 +50,17 @@ interface Props {
   showLabel?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   overlay: false,
-  label: () => t('common.loading'),
+  label: '',
   showLabel: false
 })
+
+/**
+ * Label computado: usa el prop si se proporciona, si no el de i18n
+ */
+const computedLabel = computed(() => props.label || t('common.loading'))
 </script>
 
 <style scoped>

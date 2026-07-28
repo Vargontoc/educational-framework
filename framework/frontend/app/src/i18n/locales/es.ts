@@ -174,7 +174,38 @@ export default {
   views: {
     home: {
       title: 'My Friend Nubi',
-      description: 'Bienvenido a My Friend Nubi, tu compañero de aprendizaje'
+      description: 'Bienvenido a My Friend Nubi, tu compañero de aprendizaje',
+      registerFamily: 'Registrar familia',
+      welcomeFamily: 'Bienvenida familia {name}',
+      documentation: 'Documentación',
+      settings: 'Configuración',
+      nubiAvatar: 'Nubi, tu compañero de aprendizaje',
+      errorLoading: 'No se pudo cargar el estado de la familia. Inténtalo de nuevo.',
+      familyRegistration: {
+        title: 'Registro de familia',
+        stepperLabel: 'Progreso del registro',
+        step1Label: 'Nombre',
+        step2Label: 'PIN',
+        step1Description: 'Elige un nombre para tu familia. Es el nombre que verás en la pantalla de inicio.',
+        step2Description: 'Crea un PIN de 4 dígitos para acceder a la configuración. Recuerda guardarlo en un lugar seguro.',
+        familyNameLabel: 'Nombre de familia',
+        familyNamePlaceholder: 'Ej. Familia García',
+        createPinLabel: 'Crea tu PIN',
+        confirmPinLabel: 'Confirma tu PIN',
+        nameRequired: 'Introduce un nombre para tu familia',
+        pinIncomplete: 'El PIN debe tener 4 dígitos',
+        pinMismatch: 'Los PIN no coinciden',
+        createFamily: 'Crear familia',
+        errorValidation: 'Los datos no son válidos. Revisa e inténtalo de nuevo.',
+        errorConflict: 'Ya existe una familia registrada.',
+        errorServer: 'No se pudo completar el registro. Inténtalo más tarde.',
+        errorConnection: 'No hay conexión con el servidor. Revisa tu conexión e inténtalo de nuevo.',
+        errorGeneric: 'Ha ocurrido un error inesperado.'
+      },
+      familyRegistrationTitle: 'Registro de familia',
+      familyRegistrationPlaceholder: 'El formulario de registro de familia se implementará en una próxima versión.',
+      childSelectionTitle: 'Seleccionar niño',
+      childSelectionPlaceholder: 'La selección de niños se implementará en una próxima versión.'
     },
     panel: {
       title: 'Panel de Control',

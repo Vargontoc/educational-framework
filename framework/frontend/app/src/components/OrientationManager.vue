@@ -21,6 +21,13 @@
 
 import { ref, onMounted, onUnmounted } from 'vue'
 
+/**
+ * Dimensiones base del diseño (canvas de diseño)
+ * Aspect ratio 16:9 estándar para tablet landscape
+ */
+const DESIGN_WIDTH = 1280
+const DESIGN_HEIGHT = 720
+
 const isPortrait = ref(false)
 const scale = ref(1)
 
@@ -34,18 +41,25 @@ function detectOrientation(): void {
 
 /**
  * Calcular factor de escala para mantener composición horizontal
- * Cuando está en vertical, escalar para que quepa en el viewport
+ * Cuando está en vertical, rotar 90° y escalar para llenar el viewport
+ * El diseño base es 1280x720 (landscape), al rotar se intercambia: 720x1280
  */
 function calculateScale(): void {
   if (isPortrait.value) {
-    // En vertical, escalar para que el ancho del viewport sea el "alto" del diseño horizontal
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
     
-    // El diseño horizontal espera un aspect ratio landscape (ej: 16:9 o similar)
-    // Calculamos el scale para que quepa en el viewport vertical
-    const targetWidth = viewportHeight * (16 / 9) // Asumimos aspect ratio 16:9
-    scale.value = viewportWidth / targetWidth
+    // Al rotar 90°, las dimensiones del diseño se intercambian:
+    // - El ancho del diseño (1280) se convierte en alto visual
+    // - El alto del diseño (720) se convierte en ancho visual
+    // Calcular scale para que el contenido rotado llene completamente el viewport
+    const scaleX = viewportWidth / DESIGN_HEIGHT // 720 -> ancho
+    const scaleY = viewportHeight / DESIGN_WIDTH // 1280 -> alto
+    
+    // Usar max para llenar completamente el viewport (puede haber recorte mínimo)
+    // O usar min para mantener aspect ratio completo (puede haber espacios)
+    // Para adaptación al viewport real, usamos max
+    scale.value = Math.max(scaleX, scaleY)
   } else {
     scale.value = 1
   }
@@ -80,10 +94,12 @@ onUnmounted(() => {
   }
 })
 
-// Exponer scale para que el componente padre pueda aplicarlo
+// Exponer scale y constantes de diseño para que el componente padre pueda aplicarlos
 defineExpose({
   isPortrait,
-  scale
+  scale,
+  DESIGN_WIDTH,
+  DESIGN_HEIGHT
 })
 </script>
 
@@ -91,21 +107,14 @@ defineExpose({
 .orientation-manager {
   width: 100%;
   height: 100%;
-  overflow: hidden;
 }
 
 /* 
- * Cuando está en orientación vertical, aplicar escalado
- * El contenido se escala para mantener la composición horizontal
+ * Cuando está en orientación vertical, centrar el contenido escalado
  */
 .orientation-manager.is-portrait {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.orientation-manager.is-portrait > :deep(*) {
-  transform-origin: center center;
-  /* El scale se aplica inline desde el componente padre si es necesario */
 }
 </style>

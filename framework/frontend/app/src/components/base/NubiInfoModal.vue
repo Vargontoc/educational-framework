@@ -280,4 +280,18 @@ onBeforeUnmount(() => {
 .nubi-modal-leave-to .nubi-info-modal {
   transform: scale(0.95);
 }
+
+@media (max-height: 500px) {
+  .nubi-info-modal__header {
+    padding: var(--nubi-spacing-sm) var(--nubi-spacing-lg);
+  }
+
+  .nubi-info-modal__body {
+    padding: var(--nubi-spacing-sm) var(--nubi-spacing-lg);
+  }
+
+  .nubi-info-modal__title {
+    font-size: var(--nubi-font-size-lg);
+  }
+}
 </style>
