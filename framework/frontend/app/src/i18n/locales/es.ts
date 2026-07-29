@@ -171,6 +171,43 @@ export default {
       warning: 'Se detectó inactividad'
     }
   },
+  sidebar: {
+    groups: {
+      panel: 'Panel',
+      experiences: 'Experiencias'
+    },
+    sections: {
+      configuracion: 'Configuración',
+      ninos: 'Niños',
+      chatbot: 'Chatbot',
+      documentacion: 'Documentación',
+      lecturaFamiliar: 'Lectura familiar',
+      relajacionFamiliar: 'Relajación familiar'
+    },
+    logout: 'Salir',
+    ariaLabels: {
+      openMenu: 'Abrir menú de navegación',
+      closeMenu: 'Cerrar menú de navegación',
+      mainNavigation: 'Navegación principal del panel parental'
+    }
+  },
+  inactivity: {
+    message: 'Tu sesión ha finalizado por inactividad',
+    redirecting: 'Redirigiendo en {seconds} segundos...',
+    clickToContinue: 'Haz clic para continuar'
+  },
+  modals: {
+    parentalAuth: {
+      title: 'Acceso parental',
+      description: 'Introduce tu PIN de seguridad para acceder al panel parental',
+      enter: 'Entrar',
+      errorInvalid: 'PIN incorrecto. Inténtalo de nuevo.',
+      errorConnection: 'Sin conexión. Revisa tu red.',
+      errorServer: 'Error al iniciar sesión. Inténtalo de nuevo.',
+      cooldown: 'Demasiados intentos. Espera {seconds} segundos.',
+      attemptsRemaining: 'Intentos restantes: {count}'
+    }
+  },
   views: {
     home: {
       title: 'My Friend Nubi',
@@ -253,6 +290,22 @@ export default {
       title: 'Panel de Control',
       description: 'Panel de control parental'
     },
+    panelCover: {
+      title: 'Panel parental',
+      description: 'PLACEHOLDER: Descripción breve del panel parental, sujeta a validación de contenido.',
+      groups: {
+        panel: 'Panel',
+        experiences: 'Experiencias'
+      },
+      sections: {
+        settings: 'Configuración',
+        children: 'Niños',
+        chatbot: 'Chatbot',
+        documentation: 'Documentación',
+        readingFamily: 'Lectura familiar',
+        relaxationFamily: 'Relajación familiar'
+      }
+    },
     game: {
       title: 'Juego',
       description: 'Vista de juego para',
@@ -261,6 +314,10 @@ export default {
     docs: {
       title: 'Documentación',
       description: 'Documentación y tutoriales de la aplicación'
+    },
+    placeholder: {
+      title: 'Sección en desarrollo',
+      description: 'Esta sección estará disponible en una próxima versión.'
     },
     notFound: {
       title: 'Página no encontrada',

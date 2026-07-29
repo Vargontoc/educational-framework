@@ -2,25 +2,22 @@ import { ref, watch } from 'vue'
 
 /**
  * Composable para gestión de temas (claro/oscuro)
- * 
- * Según ADR-018 y SPRINT-003:
- * - El modo oscuro es exclusivo del panel parental
+ *
+ * Según ADR-017, ADR-018 y SPRINT-003/SPRINT-017:
+ * - El modo oscuro es EXCLUSIVO del panel parental
+ * - La experiencia infantil SIEMPRE usa tema claro
  * - La preferencia persiste en localStorage
- * - La experiencia infantil siempre usa tema claro
- * - El tema se aplica mediante atributo data-theme en el root element
+ * - El tema NO se aplica a document.documentElement: cada contenedor
+ *   lo aplica a su propio root (ParentPanelLayout) mediante :data-theme
  */
 
 type Theme = 'light' | 'dark'
 
 const STORAGE_KEY = 'nubi-theme-preference'
 
-// Estado global reactivo
 const currentTheme = ref<Theme>('light')
 let isInitialized = false
 
-/**
- * Obtiene el tema guardado en localStorage
- */
 function getStoredTheme(): Theme | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -33,9 +30,6 @@ function getStoredTheme(): Theme | null {
   return null
 }
 
-/**
- * Guarda el tema en localStorage
- */
 function storeTheme(theme: Theme): void {
   try {
     localStorage.setItem(STORAGE_KEY, theme)
@@ -44,30 +38,17 @@ function storeTheme(theme: Theme): void {
   }
 }
 
-/**
- * Aplica el tema al documento
- */
-function applyTheme(theme: Theme): void {
-  document.documentElement.setAttribute('data-theme', theme)
-  currentTheme.value = theme
-}
-
-/**
- * Inicializa el tema desde localStorage o usa 'light' por defecto
- */
 function initTheme(): void {
   if (isInitialized) return
-  
+
   const storedTheme = getStoredTheme()
   const initialTheme = storedTheme || 'light'
-  applyTheme(initialTheme)
-  
-  // Observar cambios en el tema
+  currentTheme.value = initialTheme
+
   watch(currentTheme, (newTheme) => {
-    applyTheme(newTheme)
     storeTheme(newTheme)
   })
-  
+
   isInitialized = true
 }
 

@@ -34,12 +34,10 @@ html, body {
   font-family: var(--nubi-font-family-base);
   font-size: var(--nubi-font-size-base);
   line-height: var(--nubi-line-height-normal);
-  color: var(--nubi-text-primary);
-  background-color: var(--nubi-bg-surface);
+  color: #111827;
+  background-color: #FFFFFF;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color var(--nubi-duration-normal) var(--nubi-ease-in-out),
-              color var(--nubi-duration-normal) var(--nubi-ease-in-out);
 }
 
 #app {

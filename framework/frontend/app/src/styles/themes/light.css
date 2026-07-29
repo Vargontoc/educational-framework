@@ -1,12 +1,16 @@
 /**
  * Tema claro - Tokens semánticos
- * 
+ *
  * Mapea los tokens de marca y neutros a tokens semánticos
- * para el tema claro
+ * para el tema claro.
+ *
+ * Según ADR-017 / SPRINT-017 el modo claro es el tema por defecto
+ * de toda la aplicación (experiencia infantil incluida), por lo que
+ * los tokens se publican en :root. El panel parental puede redefinirlos
+ * cuando esté en modo oscuro desde `.parent-panel-layout[data-theme="dark"]`.
  */
 
-:root,
-[data-theme="light"] {
+:root {
   /* Fondos */
   --nubi-bg-surface: #FFFFFF;
   --nubi-bg-surface-secondary: #F9FAFB;
@@ -49,4 +53,6 @@
   
   /* Overlay */
   --nubi-overlay-bg: rgba(0, 0, 0, 0.5);
+  --nubi-overlay-text: #FFFFFF;
+  --nubi-overlay-text-secondary: rgba(255, 255, 255, 0.8);
 }

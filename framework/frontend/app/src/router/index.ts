@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { useParentalAuthStore } from '../stores/parentalAuth'
 import { useSessionStore } from '../stores/session'
 
 /**
@@ -6,7 +7,7 @@ import { useSessionStore } from '../stores/session'
  * 
  * Rutas definidas:
  * - / : Home (pública)
- * - /panel : PanelControl (protegida por PIN)
+ * - /panel : PanelCover (protegida por autenticación parental)
  * - /game/:childId : GameView (requiere sesión activa)
  * - /docs : Documentation (pública)
  * 
@@ -23,9 +24,45 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/panel',
-    name: 'PanelControl',
-    component: () => import('../views/PanelControlView.vue'),
-    meta: { requiresAuth: true }
+    component: () => import('../layouts/ParentPanelLayout.vue'),
+    meta: { requiresParentalAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'PanelCover',
+        component: () => import('../views/PanelCoverView.vue')
+      },
+      {
+        path: 'configuracion',
+        name: 'PanelConfiguracion',
+        component: () => import('../views/ConfiguracionView.vue')
+      },
+      {
+        path: 'ninos',
+        name: 'PanelNinos',
+        component: () => import('../views/NinosView.vue')
+      },
+      {
+        path: 'chatbot',
+        name: 'PanelChatbot',
+        component: () => import('../views/ChatbotView.vue')
+      },
+      {
+        path: 'documentacion',
+        name: 'PanelDocumentacion',
+        component: () => import('../views/DocumentationView.vue')
+      },
+      {
+        path: 'lectura-familiar',
+        name: 'PanelLecturaFamiliar',
+        component: () => import('../views/LecturaFamiliarView.vue')
+      },
+      {
+        path: 'relajacion-familiar',
+        name: 'PanelRelajacionFamiliar',
+        component: () => import('../views/RelajacionFamiliarView.vue')
+      }
+    ]
   },
   {
     path: '/game/:childId',
@@ -251,18 +288,17 @@ const router = createRouter({
  * Guard global de navegación
  * 
  * Protege rutas según meta:
- * - requiresAuth: requiere isAuthenticated en sessionStore (para /panel)
+ * - requiresParentalAuth: requiere isAuthenticated en parentalAuthStore (para /panel)
  * - requiresChildSession: requiere selectedChildId en sessionStore (para /game/:childId)
  * 
  * Si no se cumple la condición, redirige a Home con router.replace()
  */
 router.beforeEach((to, _from, next) => {
   const sessionStore = useSessionStore()
+  const parentalAuthStore = useParentalAuthStore()
 
-  // Verificar si la ruta requiere autenticación (PIN validado)
-  if (to.meta.requiresAuth) {
-    if (!sessionStore.isAuthenticated) {
-      // No hay sesión autenticada, redirigir a Home
+  if (to.meta.requiresParentalAuth) {
+    if (!parentalAuthStore.isAuthenticated) {
       return next({ name: 'Home', replace: true })
     }
   }

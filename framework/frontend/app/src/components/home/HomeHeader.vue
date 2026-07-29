@@ -18,7 +18,7 @@
         <button
           class="home-header__button"
           :aria-label="t('views.home.settings')"
-          @click="goToPanel"
+          @click="handleSettingsClick"
         >
           <NubiIcon name="settings" :size="24" />
           <span class="home-header__label">{{ t('views.home.settings') }}</span>
@@ -53,6 +53,10 @@ interface Props {
 
 defineProps<Props>()
 
+const emit = defineEmits<{
+  openParentalAuth: []
+}>()
+
 const { t } = useI18n()
 const router = useRouter()
 
@@ -64,10 +68,10 @@ function goToDocs() {
 }
 
 /**
- * Navega al panel de control parental
+ * Emite evento para abrir el modal de autenticacion parental
  */
-function goToPanel() {
-  router.replace({ name: 'PanelControl' })
+function handleSettingsClick() {
+  emit('openParentalAuth')
 }
 </script>
 

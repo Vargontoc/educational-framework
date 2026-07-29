@@ -7,18 +7,19 @@
 <script setup lang="ts">
 /**
  * Componente raíz de la aplicación
- * 
- * Según ADR-019 y SPRINT-010:
+ *
+ * Según ADR-017 / ADR-019 y SPRINT-010 / SPRINT-017:
  * - Rediseño portrait real con estilos específicos por orientación
  * - No se usan rotaciones CSS ni escalados complejos
  * - El contenido se reacomoda naturalmente según la orientación
  * - Preservación de estado ante giro, segundo plano y retorno
+ * - El modo oscuro es exclusivo del panel parental: la experiencia
+ *   infantil SIEMPRE se renderiza en modo claro.
  */
 
 import { onMounted, onUnmounted } from 'vue'
 import { useTheme } from './composables/useTheme'
 
-// Inicializar el sistema de temas
 useTheme()
 
 /**
@@ -53,6 +54,6 @@ onUnmounted(() => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: var(--nubi-bg-surface, #ffffff);
+  background: #FFFFFF;
 }
 </style>

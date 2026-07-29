@@ -81,16 +81,24 @@ async function request<T>(
 /**
  * Cliente API con métodos HTTP
  */
+function buildHeaders(headers?: Record<string, string>): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    ...headers,
+  }
+}
+
 export const apiClient = {
   get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : ''
     return request<T>(`${endpoint}${queryString}`, { method: 'GET' })
   },
 
-  post<T>(endpoint: string, data?: unknown): Promise<T> {
+  post<T>(endpoint: string, data?: unknown, headers?: Record<string, string>): Promise<T> {
     return request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
+      headers: buildHeaders(headers),
     })
   },
 
@@ -101,8 +109,11 @@ export const apiClient = {
     })
   },
 
-  delete<T>(endpoint: string): Promise<T> {
-    return request<T>(endpoint, { method: 'DELETE' })
+  delete<T>(endpoint: string, headers?: Record<string, string>): Promise<T> {
+    return request<T>(endpoint, {
+      method: 'DELETE',
+      headers: buildHeaders(headers),
+    })
   },
 }
 

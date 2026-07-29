@@ -1,11 +1,16 @@
 /**
  * Tema oscuro - Tokens semánticos
- * 
+ *
  * Mapea los tokens de marca y neutros a tokens semánticos
- * para el tema oscuro
+ * para el tema oscuro.
+ *
+ * Según ADR-017 / SPRINT-017 el modo oscuro es EXCLUSIVO del panel
+ * parental, por lo que los tokens solo se publican bajo el selector
+ * `.parent-panel-layout[data-theme="dark"]`. Nunca afectan a :root
+ * ni a la experiencia infantil.
  */
 
-[data-theme="dark"] {
+.parent-panel-layout[data-theme="dark"] {
   /* Fondos */
   --nubi-bg-surface: #111827;
   --nubi-bg-surface-secondary: #1F2937;
@@ -48,4 +53,6 @@
   
   /* Overlay */
   --nubi-overlay-bg: rgba(0, 0, 0, 0.7);
+  --nubi-overlay-text: #FFFFFF;
+  --nubi-overlay-text-secondary: rgba(255, 255, 255, 0.8);
 }

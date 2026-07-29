@@ -4,7 +4,7 @@
     <div class="home-view__background" aria-hidden="true"></div>
 
     <!-- Cabecera con accesos superiores -->
-    <HomeHeader :has-family="hasFamily" />
+    <HomeHeader :has-family="hasFamily" @open-parental-auth="showParentalAuthModal = true" />
 
     <!-- Estado de carga -->
     <div v-if="loading" class="home-view__loading" role="status" :aria-label="t('common.loading')">
@@ -49,6 +49,12 @@
       v-model="showChildSelectionModal"
       @close="showChildSelectionModal = false"
     />
+
+    <!-- Modal de autenticacion parental -->
+    <ParentalAuthModal
+      v-model="showParentalAuthModal"
+      @close="showParentalAuthModal = false"
+    />
   </div>
 </template>
 
@@ -77,6 +83,7 @@ import HomeHeader from '../components/home/HomeHeader.vue'
 import HomeAction from '../components/home/HomeAction.vue'
 import FamilyRegistrationModal from '../components/home/FamilyRegistrationModal.vue'
 import ChildSelectionModal from '../components/home/ChildSelectionModal.vue'
+import ParentalAuthModal from '../components/home/ParentalAuthModal.vue'
 import NubiSpinner from '../components/base/NubiSpinner.vue'
 import NubiButton from '../components/base/NubiButton.vue'
 import NubiIcon from '../components/base/NubiIcon.vue'
@@ -87,6 +94,7 @@ const { loading, error, hasFamily, truncatedName, fetchFamilyStatus } = useFamil
 // Estado de modales
 const showFamilyRegistrationModal = ref(false)
 const showChildSelectionModal = ref(false)
+const showParentalAuthModal = ref(false)
 
 /**
  * Carga el estado de la familia al montar la vista
