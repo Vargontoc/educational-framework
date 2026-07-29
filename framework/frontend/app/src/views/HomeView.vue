@@ -25,7 +25,7 @@
     <main v-else class="home-view__content">
       <div class="home-view__avatar-container">
         <img
-          src="../assets/images/avatar-bot.png"
+          src="../assets/images/avatar-bot.webp"
           :alt="t('views.home.nubiAvatar')"
           class="home-view__avatar"
         />
