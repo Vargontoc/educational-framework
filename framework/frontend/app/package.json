@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "histoire:dev": "histoire dev",
-    "histoire:build": "histoire build"
+    "histoire:build": "histoire build",
+    "build:analyze": "vite build --mode production && npx vite-bundle-visualizer"
   },
   "devDependencies": {
     "@histoire/plugin-vue": "^1.0.0-beta.1",
@@ -17,8 +18,10 @@
     "histoire": "^1.0.0-beta.1",
     "postcss": "^8.5.22",
     "tailwindcss": "^4.3.3",
+    "terser": "^5.49.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
+    "vite-plugin-compression": "^0.5.1",
     "vue-tsc": "^3.3.7"
   },
   "dependencies": {

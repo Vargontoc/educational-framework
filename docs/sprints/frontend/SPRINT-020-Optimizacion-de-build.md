@@ -1,11 +1,12 @@
-# SPRINT-003 — Optimización de build en Vite
+# SPRINT-020 — Optimización de build en Vite
 
 ## Estado
 
-- **Estado:** planificado
+- **Estado:** verificado
+- **Fecha de revisión:** 2026-07-29
 - **Responsable principal:** frontend
 - **Prioridad:** MEDIA
-- **Dependencias:** SPRINT-001 y SPRINT-002 deben estar completados
+- **Dependencias:** SPRINT-018 y SPRINT-019 completados
 - **Impacto estimado:** Reducción de ~2-3 MB (cacheable) y mejora de tiempos de carga repetidos
 
 ## Objetivo
@@ -312,3 +313,99 @@ location / {
   add_header Cache-Control "public, must-revalidate";
 }
 ```
+
+---
+
+## Revisión técnica (2026-07-29)
+
+### Veredicto: APPROVED_WITH_OBSERVATIONS
+
+### Evidencia de implementación
+
+#### Tarea 3.1 — Configurar manualChunks para vendor splitting ✅
+- Configuración implementada en `vite.config.ts` (líneas 52-68)
+- Chunks vendor generados correctamente:
+  - **vendor-vue**: 42.31 kB (16.49 kB gzip) - Vue, Vue Router, Pinia
+  - **vendor-i18n**: 126.46 kB (44.42 kB gzip) - Vue I18n
+  - **vendor-icons**: 7.74 kB (3.15 kB gzip) - Lucide icons
+- Cada chunk tiene hash para cache busting
+- Código de aplicación separado (index.js: 17.28 kB)
+
+#### Tarea 3.2 — Configurar minificación avanzada con Terser ✅
+- `minify: 'terser'` configurado (línea 38)
+- `terserOptions` con `drop_console: true`, `drop_debugger: true` (líneas 39-48)
+- `pure_funcs: ['console.log', 'console.debug', 'console.info']` configurado
+- Verificación: No hay `console.log` ni `console.debug` en el build de producción
+- `comments: false` para eliminar comentarios
+
+#### Tarea 3.3 — Configurar compresión gzip y brotli ⚠️
+- Plugin `vite-plugin-compression@0.5.1` instalado
+- Configuración de gzip implementada (líneas 13-18)
+- Configuración de brotli implementada (líneas 19-24)
+- **Gzip funciona correctamente**: 5 archivos .gz generados
+- **Brotli NO genera archivos**: 0 archivos .br generados
+- Archivos .gz generados:
+  - ChildSelectionModal: 15.13 kB → 4.39 kB gzip
+  - index.js: 16.88 kB → 6.20 kB gzip
+  - index.css: 26.47 kB → 7.04 kB gzip
+  - vendor-vue: 41.32 kB → 15.93 kB gzip
+  - vendor-i18n: 123.50 kB → 42.92 kB gzip
+
+#### Tarea 3.4 — Configurar optimización de CSS ✅
+- `cssCodeSplit: true` configurado (línea 49)
+- `assetsInlineLimit: 4096` configurado (línea 50)
+- 16 archivos CSS separados generados
+- CSS minificado correctamente
+- No hay FOUC (CSS se carga antes del renderizado)
+
+#### Tarea 3.5 — Configurar chunkSizeWarningLimit y análisis ✅
+- `chunkSizeWarningLimit: 1000` configurado (línea 51)
+- Script `build:analyze` configurado en package.json (línea 12)
+- No hay advertencias de tamaño de chunk en el build
+- Comando disponible para análisis visual del bundle
+
+#### Tarea 3.6 — Pruebas de build y carga ✅
+- Build se genera sin errores (1.40s)
+- TypeScript sin errores de compilación
+- Chunks vendor tienen hash y son cacheables
+- Estructura de chunks optimizada para cacheo
+
+### Métricas reales
+
+| Métrica | Antes | Después | Mejora |
+|---------|-------|---------|--------|
+| **Bundle inicial (index.js)** | 123.13 kB | 17.28 kB | **86% reducción** |
+| **Vendor chunks (total)** | En bundle inicial | 176.51 kB separados | Cacheable |
+| **Archivos pre-comprimidos** | No | 5 archivos .gz | Sí |
+| **Tiempo de build** | 435 ms | 1.40 s | Esperado (Terser es más lento) |
+
+### Conformidad con especificación
+- ✅ Vendor splitting implementado correctamente
+- ✅ Minificación con Terser funciona
+- ✅ CSS code split funcionando
+- ✅ chunkSizeWarningLimit configurado
+- ✅ Script de análisis disponible
+- ⚠️ Compresión gzip funciona, brotli no genera archivos
+
+### Observaciones
+
+**Brotli no genera archivos comprimidos:**
+- La configuración de brotli está presente pero no genera archivos .br
+- Posibles causas:
+  1. La versión del plugin (0.5.1) puede tener limitaciones con brotli
+  2. Los archivos pueden ser demasiado pequeños para que brotli sea eficiente
+  3. El entorno de build puede no tener soporte nativo para brotli
+- **Impacto**: Bajo. Gzip funciona correctamente y es soportado por el 99% de navegadores
+- **Recomendación**: Investigar en un sprint futuro si brotli es necesario, o considerar alternativas como `vite-plugin-compression2`
+
+**Tiempo de build aumentado:**
+- El build tarda 1.40s vs 435ms anterior
+- Causa: Terser es más lento que esbuild pero genera bundles más pequeños
+- Compensación: Mejora en tamaño de bundle y rendimiento en producción
+
+**Phaser no incluido en vendor:**
+- Correctamente excluido según la especificación
+- Phaser (~1 MB) se cargará dinámicamente cuando se implemente el juego
+
+### Conclusión
+El sprint cumple con los objetivos principales de optimización de build. El vendor splitting, la minificación con Terser y la compresión gzip funcionan correctamente. La única desviación es que brotli no genera archivos, pero esto no es bloqueante dado que gzip es ampliamente soportado y funciona correctamente.

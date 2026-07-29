@@ -1,8 +1,9 @@
-# SPRINT-001 — Optimización de iconos (NubiIcon)
+# SPRINT-018 — Optimización de iconos (NubiIcon)
 
 ## Estado
 
-- **Estado:** planificado
+- **Estado:** verificado
+- **Fecha de revisión:** 2026-07-29
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
 - **Dependencias:** Ninguna
@@ -174,3 +175,48 @@ const iconComponent = computed(() => {
 ## Plan de rollback
 
 Si se detectan problemas, revertir el commit del sprint. El cambio es completamente reversible.
+
+---
+
+## Revisión técnica (2026-07-29)
+
+### Veredicto: APPROVED
+
+### Evidencia de implementación
+
+#### Tarea 1.1 — Identificar iconos realmente usados ✅
+- Se identificaron **35 iconos de Lucide** usados en el codebase.
+- Se identificaron **3 iconos custom** (`reading.svg`, `relaxation.svg`, `child-avatars.svg`).
+- Se rastrearon **57 usos** de `<NubiIcon>` en archivos `.vue` del proyecto.
+
+#### Tarea 1.2 — Importación selectiva de Lucide ✅
+- Reemplazado `import * as lucideIcons from '@lucide/vue'` por imports explícitos de los 35 iconos.
+- `lucideIconMap` contiene exactamente los 35 iconos usados.
+- Fallback a `HelpCircle` conservado con `console.warn`.
+- Todos los nombres de icono usados estática y dinámicamente están cubiertos.
+
+#### Tarea 1.3 — Carga bajo demanda de iconos custom ✅
+- `eager: false` aplicado en `import.meta.glob` (línea 129).
+- `defineAsyncComponent` usado para resolución lazy (línea 140).
+- Orden de búsqueda correcto: custom → Lucide → fallback.
+
+#### Tarea 1.4 — Pruebas de regresión ✅
+- Build de producción completado sin errores (413ms).
+- TypeScript sin errores de compilación.
+
+### Métricas reales
+
+| Métrica | Antes (estimado) | Después (medido) |
+|---------|------------------|------------------|
+| Tamaño bundle NubiIcon | ~500KB-1MB | **8.77 kB** (3.66 kB gzip) |
+| Iconos custom | Todos eager | **3 chunks lazy** (reading: 0.45 kB, relaxation: 0.57 kB, child-avatars: 3.05 kB) |
+| Iconos Lucide en bundle | ~1000+ | **35 selectivos** |
+
+### Conformidad con ADR-018
+- Sección 3.3 respetada: Lucide + wrapper `NubiIcon` + iconos custom.
+- Búsqueda custom → Lucide → fallback mantenida.
+- Componente fácilmente modificable por un diseñador.
+
+### Observaciones
+- El proyecto no tiene tests automatizados configurados (`npm run test` no existe). La validación se realizó mediante build de producción y análisis estático del codebase.
+- Warnings de `lightningcss` sobre `@theme` y `@tailwind` son preexistentes y no relacionados con este sprint.

@@ -12,9 +12,10 @@
 /**
  * Componente wrapper para iconos
  * 
- * Según ADR-018:
- * - Usa @lucide/vue como librería base
+ * Según ADR-018 y SPRINT-018:
+ * - Usa @lucide/vue con importación selectiva (solo los 35 iconos usados)
  * - Permite iconos custom almacenados en src/assets/icons/custom/
+ * - Iconos custom cargados bajo demanda (lazy) con defineAsyncComponent
  * - Busca primero en custom, luego en Lucide como fallback
  * 
  * Uso:
@@ -22,8 +23,44 @@
  * <NubiIcon name="reading" /> // icono custom
  */
 
-import { computed } from 'vue'
-import * as lucideIcons from '@lucide/vue'
+import { computed, defineAsyncComponent, type Component } from 'vue'
+import {
+  Menu,
+  X,
+  LogOut,
+  Lock,
+  AlertCircle,
+  HelpCircle,
+  Settings,
+  ArrowLeft,
+  Construction,
+  Plus,
+  Edit,
+  ChevronRight,
+  ChevronLeft,
+  Loader,
+  Check,
+  Minus,
+  CheckCircle,
+  Users,
+  Clock,
+  ChevronDown,
+  Sun,
+  Moon,
+  AlertTriangle,
+  Info,
+  XCircle,
+  MessageCircle,
+  FileText,
+  BookOpen,
+  Wind,
+  Book,
+  User,
+  Shield,
+  Bell,
+  Search,
+  Home,
+} from '@lucide/vue'
 
 interface Props {
   /** Nombre del icono (de Lucide o custom) */
@@ -43,48 +80,73 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 /**
- * Importa dinámicamente todos los iconos custom como componentes Vue
- * Los archivos SVG en src/assets/icons/custom/ se cargan como componentes
+ * Mapa explícito de iconos Lucide usados en la aplicación
+ * Solo se importan los 35 iconos identificados en el rastreo del codebase
+ */
+const lucideIconMap: Record<string, Component> = {
+  'menu': Menu,
+  'x': X,
+  'log-out': LogOut,
+  'lock': Lock,
+  'alert-circle': AlertCircle,
+  'help-circle': HelpCircle,
+  'settings': Settings,
+  'arrow-left': ArrowLeft,
+  'construction': Construction,
+  'plus': Plus,
+  'edit': Edit,
+  'chevron-right': ChevronRight,
+  'chevron-left': ChevronLeft,
+  'loader': Loader,
+  'check': Check,
+  'minus': Minus,
+  'check-circle': CheckCircle,
+  'users': Users,
+  'clock': Clock,
+  'chevron-down': ChevronDown,
+  'sun': Sun,
+  'moon': Moon,
+  'alert-triangle': AlertTriangle,
+  'info': Info,
+  'x-circle': XCircle,
+  'message-circle': MessageCircle,
+  'file-text': FileText,
+  'book-open': BookOpen,
+  'wind': Wind,
+  'book': Book,
+  'user': User,
+  'shield': Shield,
+  'bell': Bell,
+  'search': Search,
+  'home': Home,
+}
+
+/**
+ * Importa dinámicamente iconos custom como componentes Vue bajo demanda
+ * Los archivos SVG en src/assets/icons/custom/ se cargan como componentes lazy
  */
 const customIconsModules = import.meta.glob('../../assets/icons/custom/*.svg', { 
-  eager: true,
+  eager: false,
   query: '?component'
 })
 
 /**
- * Mapa de iconos custom: nombre del archivo -> componente Vue
- */
-const customIcons: Record<string, any> = {}
-Object.entries(customIconsModules).forEach(([path, module]) => {
-  const iconName = path.split('/').pop()?.replace('.svg', '') || ''
-  customIcons[iconName] = module
-})
-
-/**
  * Busca el componente de icono
- * Primero en iconos custom, luego en Lucide
+ * Primero en iconos custom (lazy), luego en Lucide
  */
 const iconComponent = computed(() => {
-  // 1. Buscar primero en iconos custom
-  if (customIcons[props.name]) {
-    return customIcons[props.name]
+  const customPath = `../../assets/icons/custom/${props.name}.svg`
+  if (customIconsModules[customPath]) {
+    return defineAsyncComponent(customIconsModules[customPath] as () => Promise<any>)
   }
   
-  // 2. Convertir nombre a PascalCase para buscar en Lucide
-  const pascalName = props.name
-    .split('-')
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('')
-  
-  // 3. Buscar en Lucide
-  const lucideIcon = (lucideIcons as any)[pascalName]
+  const lucideIcon = lucideIconMap[props.name]
   if (lucideIcon) {
     return lucideIcon
   }
   
-  // 4. Fallback: icono de pregunta si no se encuentra
   console.warn(`Icon "${props.name}" not found in custom icons or Lucide`)
-  return lucideIcons.HelpCircle
+  return HelpCircle
 })
 </script>
 

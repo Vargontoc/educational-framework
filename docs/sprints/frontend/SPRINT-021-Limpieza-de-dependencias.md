@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** planificado
+- **Estado:** implementado
 - **Responsable principal:** frontend
 - **Prioridad:** BAJA
 - **Dependencias:** SPRINT-003 debe estar completado

@@ -76,17 +76,32 @@
  * - i18n completo
  */
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFamilyStatus } from '../composables/useFamilyStatus'
 import HomeHeader from '../components/home/HomeHeader.vue'
 import HomeAction from '../components/home/HomeAction.vue'
-import FamilyRegistrationModal from '../components/home/FamilyRegistrationModal.vue'
-import ChildSelectionModal from '../components/home/ChildSelectionModal.vue'
-import ParentalAuthModal from '../components/home/ParentalAuthModal.vue'
 import NubiSpinner from '../components/base/NubiSpinner.vue'
 import NubiButton from '../components/base/NubiButton.vue'
 import NubiIcon from '../components/base/NubiIcon.vue'
+
+const FamilyRegistrationModal = defineAsyncComponent({
+  loader: () => import('../components/home/FamilyRegistrationModal.vue'),
+  loadingComponent: NubiSpinner,
+  delay: 200
+})
+
+const ChildSelectionModal = defineAsyncComponent({
+  loader: () => import('../components/home/ChildSelectionModal.vue'),
+  loadingComponent: NubiSpinner,
+  delay: 200
+})
+
+const ParentalAuthModal = defineAsyncComponent({
+  loader: () => import('../components/home/ParentalAuthModal.vue'),
+  loadingComponent: NubiSpinner,
+  delay: 200
+})
 
 const { t } = useI18n()
 const { loading, error, hasFamily, truncatedName, fetchFamilyStatus } = useFamilyStatus()
