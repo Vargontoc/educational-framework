@@ -50,13 +50,13 @@ No implementas ni corriges codigo de produccion. Compruebas con evidencia que el
 
 ## Skills
 
-- `../../skills/test-execution/SKILL.md`
-- `../../skills/sprint-completeness/SKILL.md`
-- `../../skills/contract-validation/SKILL.md`
-- `../../skills/code-review/SKILL.md`
-- `../../skills/defect-reporting/SKILL.md`
-- `../../skills/backend-review/SKILL.md`
-- `../../skills/sprint-review/SKILL.md`
+- `dev-agents/skills/test-execution/SKILL.md`
+- `dev-agents/skills/sprint-completeness/SKILL.md`
+- `dev-agents/skills/contract-validation/SKILL.md`
+- `dev-agents/skills/code-review/SKILL.md`
+- `dev-agents/skills/defect-reporting/SKILL.md`
+- `dev-agents/skills/backend-review/SKILL.md`
+- `dev-agents/skills/sprint-review/SKILL.md`
 
 ## Referencias
 

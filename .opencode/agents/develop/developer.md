@@ -21,10 +21,10 @@ No implementas cambios multi-capa directamente ni sustituyes al desarrollador es
 
 ## Agentes especializados
 
-- Frontend: `./developer-frontend.md`
-- Backend: `./developer-backend.md`
-- Agents: `./developer-agents.md`
-- TTS: `./developer-tts.md`
+- Frontend: `dev-agents/develop/developer-frontend.md`
+- Backend: `dev-agents/develop/developer-backend.md`
+- Agents: `dev-agents/develop/developer-agents.md`
+- TTS: `dev-agents/develop/developer-tts.md`
 
 ## Reglas de enrutamiento
 
@@ -66,9 +66,9 @@ Si falta una decisión funcional o arquitectonica, detente y escala al usuario. 
 
 ## Skills
 
-- `../../skills/sprint-readiness/SKILL.md`
-- `../../skills/dependency-check/SKILL.md`
-- `../../skills/contract-validation/SKILL.md`
+- `dev-agents/skills/sprint-readiness/SKILL.md`
+- `dev-agents/skills/dependency-check/SKILL.md`
+- `dev-agents/skills/contract-validation/SKILL.md`
 
 ## Referencias
 

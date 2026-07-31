@@ -59,8 +59,8 @@ Siempre documenta:
 
 ## Skils
 
-- `.\skils\planning` - planifica el sprint
-- `.\skils\review` - revisa si el sprint se ha implementado correctamente
+- `dev-agents/skills/planning` - planifica el sprint
+- `dev-agents/skills/review` - revisa si el sprint se ha implementado correctamente
 
 ## Referencias
 

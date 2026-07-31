@@ -112,10 +112,10 @@ La aplicación se usa por una sola familia, se diseña primero para tabletas y m
 
 Estas skills se proponen como herramientas de descubrimiento y documentación de producto. Deben limitarse a recopilar contexto, estructurar decisiones y formular preguntas; no deben generar código, configuraciones, planes de implementación ni ejecutar herramientas técnicas.
 
-- `./skill/descubrimiento-de-necesidades-infantiles`: entrevista para concretar problema, valor familiar, usuarios, escenarios, exclusiones y señales de éxito no evaluativas.
-- `./skill/seguridad-y-privacidad-infantil`: lista de comprobación para detectar datos de menores, consentimiento parental, control de acceso, contenido sensible y riesgos bloqueantes.
-- `./skill/accesibilidad-3-4-anos`: revisión de requisitos de interacción, lenguaje, autonomía acompañada, objetivos táctiles, apoyos visuales y alternativas sensoriales.
-- `./skill/especificacion-funcional`: plantilla guiada para crear o actualizar documentos `FEAT`, con requisitos verificables y sin prescribir implementación.
-- `./skill/decision-de-producto`: plantilla guiada para registrar alternativas, decisión confirmada, límites, consecuencias para la familia y preguntas que deben validar los ámbitos técnicos.
-- `./skill/priorizacion-familiar`: marco de priorización por valor familiar, seguridad infantil, reversibilidad, alcance monofamiliar y esfuerzo percibido.
-- `./skill/revision-de-consistencia-producto`: contraste entre README, decisiones y especificaciones para detectar contradicciones, requisitos implícitos o decisiones aún no confirmadas.
+- `dev-agents/skills/descubrimiento-de-necesidades-infantiles`: entrevista para concretar problema, valor familiar, usuarios, escenarios, exclusiones y señales de éxito no evaluativas.
+- `dev-agents/skills/seguridad-y-privacidad-infantil`: lista de comprobación para detectar datos de menores, consentimiento parental, control de acceso, contenido sensible y riesgos bloqueantes.
+- `dev-agents/skills/accesibilidad-3-4-anos`: revisión de requisitos de interacción, lenguaje, autonomía acompañada, objetivos táctiles, apoyos visuales y alternativas sensoriales.
+- `dev-agents/skills/especificacion-funcional`: plantilla guiada para crear o actualizar documentos `FEAT`, con requisitos verificables y sin prescribir implementación.
+- `dev-agents/skills/decision-de-producto`: plantilla guiada para registrar alternativas, decisión confirmada, límites, consecuencias para la familia y preguntas que deben validar los ámbitos técnicos.
+- `dev-agents/skills/priorizacion-familiar`: marco de priorización por valor familiar, seguridad infantil, reversibilidad, alcance monofamiliar y esfuerzo percibido.
+- `dev-agents/skills/revision-de-consistencia-producto`: contraste entre README, decisiones y especificaciones para detectar contradicciones, requisitos implícitos o decisiones aún no confirmadas.

@@ -48,12 +48,12 @@ Implementas exclusivamente el sprint backend aprobado usando Spring Boot y las c
 
 ## Skills
 
-- `../../skills/sprint-readiness/SKILL.md`
-- `../../skills/sprint-implementation/SKILL.md`
-- `../../skills/sprint-task-tracking/SKILL.md`
-- `../../skills/contract-validation/SKILL.md`
-- `../../skills/developer-self-test/SKILL.md`
-- `../../skills/backend-implementation/SKILL.md`
+- `dev-agents/skills/sprint-readiness/SKILL.md`
+- `dev-agents/skills/sprint-implementation/SKILL.md`
+- `dev-agents/skills/sprint-task-tracking/SKILL.md`
+- `dev-agents/skills/contract-validation/SKILL.md`
+- `dev-agents/skills/developer-self-test/SKILL.md`
+- `dev-agents/skills/backend-implementation/SKILL.md`
 
 ## Referencias
 

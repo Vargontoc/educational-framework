@@ -70,7 +70,19 @@ en formato .yaml
 
 ### Routers
 
-- Analisis: `agents/analysis/analyser.md`
-- Desarrollo: `agents/develop/developer.md`
-- Revison: `agents/review/reviewer.md`
+- Analisis:
+    - Analisis-Frontend: `dev-agents/analysis/analyser-frontend.md`
+    - Analisis-Backend: `dev-agents/analysis/analyser-backend.md`
+    - Analisis-Tts: `dev-agents/analysis/analyser-tts.md`
+    - Analisis-Agents: `dev-agents/analysis/analyser-agents.md`
+- Desarrollo:
+    - Developer-Frontend: `dev-agents/develop/developer-frontend.md`
+    - Developer-Backend: `dev-agents/develop/developer-backend.md`
+    - Developer-Tts: `dev-agents/develop/developer-tts.md`
+    - Developer-Agents: `dev-agents/develop/developer-agents.md`
+- Revison:
+    - Review-Frontend: `dev-agents/review/reviewer-frontend.md`
+    - Review-Backend: `dev-agents/review/reviewer-backend.md`
+    - Review-Tts: `dev-agents/review/reviewer-tts.md`
+    - Review-Agents: `dev-agents/review/reviewer-agents.md`
 

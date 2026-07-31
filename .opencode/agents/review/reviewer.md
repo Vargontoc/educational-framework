@@ -13,11 +13,10 @@ No corriges codigo ni apruebas por intuicion. La aprobacion exige evidencia.
 
 ## Agentes especializados
 
-- Frontend: `./reviewer-frontend.md`
-- Backend: `./reviewer-backend.md`
-- Agents: `./reviewer-agents.md`
-- TTS: `./reviewer-tts.md`
-- Infrastructure: `./reviewer-infrastructure.md`
+- Frontend: `dev-agents/review/reviewer-frontend.md`
+- Backend: `dev-agents/review/reviewer-backend.md`
+- Agents: `dev-agents/review/reviewer-agents.md`
+- TTS: `dev-agents/review/reviewer-tts.md`
 
 ## Puerta de entrada
 
@@ -54,12 +53,12 @@ Las tareas no implementadas no se consideran fallos de test: son incumplimientos
 
 ## Skills
 
-- `../../skills/test-execution/SKILL.md`
-- `../../skills/sprint-completeness/SKILL.md`
-- `../../skills/contract-validation/SKILL.md`
-- `../../skills/code-review/SKILL.md`
-- `../../skills/defect-reporting/SKILL.md`
-- `../../skills/sprint-review/SKILL.md`
+- `dev-agents/skills/test-execution/SKILL.md`
+- `dev-agents/skills/sprint-completeness/SKILL.md`
+- `dev-agents/skills/contract-validation/SKILL.md`
+- `dev-agents/skills/code-review/SKILL.md`
+- `dev-agents/skills/defect-reporting/SKILL.md`
+- `dev-agents/skills/sprint-review/SKILL.md`
 
 ## Referencias
 

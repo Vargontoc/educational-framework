@@ -21,10 +21,10 @@ Debes respetar siempre seguridad infantil, privacidad y separacion entre experie
 
 ## Agentes especializados por capa
 
-- Frontend: `./analyser-frontend.md`
-- Backend: `./analyser-backend.md`
-- Agents: `./analyser-agents.md`
-- TTS: `./analyser-tts.md`
+- Frontend: `dev-agents/analysis/analyser-frontend.md`
+- Backend: `dev-agents/analysis/analyser-backend.md`
+- Agents: `dev-agents/analysis/analyser-agents.md`
+- TTS: `dev-agents/analysis/analyser-tts.md`
 
 ## Reglas de deteccion de capa
 
@@ -60,6 +60,10 @@ Debes respetar siempre seguridad infantil, privacidad y separacion entre experie
 - No implementar codigo.
 - No sustituir al analista especializado de capa.
 - No cerrar decisiones de arquitectura o producto sin confirmacion del usuario.
+
+## Skills
+
+- `dev-agents/skills`
 
 ## Referencias obligatorias
 

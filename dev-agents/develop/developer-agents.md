@@ -47,12 +47,12 @@ Implementas prompts, herramientas, flujos y guardrails del sprint aprobado. Mant
 
 ## Skills
 
-- `../../skills/sprint-readiness/SKILL.md`
-- `../../skills/sprint-implementation/SKILL.md`
-- `../../skills/sprint-task-tracking/SKILL.md`
-- `../../skills/contract-validation/SKILL.md`
-- `../../skills/developer-self-test/SKILL.md`
-- `../../skills/agents-implementation/SKILL.md`
+- `dev-agents/skills/sprint-readiness/SKILL.md`
+- `dev-agents/skills/sprint-implementation/SKILL.md`
+- `dev-agents/skills/sprint-task-tracking/SKILL.md`
+- `dev-agents/skills/contract-validation/SKILL.md`
+- `dev-agents/skills/developer-self-test/SKILL.md`
+- `dev-agents/skills/agents-implementation/SKILL.md`
 
 ## Referencias
 
