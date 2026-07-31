@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -118,7 +118,7 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
             "npcEnabled", true,
             "npcVoiceVolume", 90
         ));
-        mockMvc.perform(patch("/api/v1/family/children/{id}", id)
+        mockMvc.perform(put("/api/v1/family/children/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(patchBody))
             .andExpect(status().isOk())
@@ -145,7 +145,7 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
             "birthday", LocalDate.now().minusYears(7),
             "colorVisionMode", "TRITANOPIA"
         ));
-        mockMvc.perform(patch("/api/v1/family/children/{id}", id)
+        mockMvc.perform(put("/api/v1/family/children/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(patchBody))
             .andExpect(status().isOk())

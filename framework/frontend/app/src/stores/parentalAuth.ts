@@ -6,7 +6,7 @@ const COOLDOWN_MS = 15000
 const MAX_ATTEMPTS = 3
 
 export const useParentalAuthStore = defineStore('parentalAuth', () => {
-  const token = ref<string | null>(sessionStorage.getItem(TOKEN_KEY))
+  const token = ref<string | null>(null)
   const familyId = ref<number | null>(null)
   const sessionId = ref<number | null>(null)
   const loginAttempts = ref(0)
@@ -21,7 +21,6 @@ export const useParentalAuthStore = defineStore('parentalAuth', () => {
     token.value = data.token
     sessionId.value = data.sessionId
     familyId.value = data.familyId
-    sessionStorage.setItem(TOKEN_KEY, data.token)
   }
 
   function clearAuth() {

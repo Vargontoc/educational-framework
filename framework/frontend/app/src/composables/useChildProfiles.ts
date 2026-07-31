@@ -1,9 +1,9 @@
 import { ref } from 'vue'
-import { getChildren, type ChildProfile } from '../services/familyService'
+import { getChildren, type ChildProfileExtended } from '../services/familyService'
 import type { ApiError } from '../services/api'
 
 export function useChildProfiles() {
-  const profiles = ref<ChildProfile[]>([])
+  const profiles = ref<ChildProfileExtended[]>([])
   const loading = ref(false)
   const error = ref(false)
   const errorMessage = ref('')

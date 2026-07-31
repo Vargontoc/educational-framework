@@ -2,8 +2,9 @@
 
 ## Estado
 
-- **Estado:** bloqueado
+- **Estado:** closed
 - **Fecha de creación:** 2026-07-31
+- **Fecha de verificación:** 2026-07-31
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
 - **Dependencias:** Backend (renombrado de contratos y modelo)
@@ -38,7 +39,7 @@ El análisis técnico de FEAT-006 establece que backend debe completar los sigui
 
 ## Tareas
 
-### Tarea 26.1: Ampliar interfaz `ChildProfileExtended`
+### Tarea 26.1: Ampliar interfaz `ChildProfileExtended` — verified
 
 **Descripción:** Sustituir la interfaz `ChildProfile` actual en `familyService.ts` con los nuevos campos renombrados y el nuevo campo `npcVoiceVolume`.
 
@@ -86,7 +87,7 @@ export interface ChildProfileExtended {
 
 ---
 
-### Tarea 26.2: Actualizar `CreateChildRequest`
+### Tarea 26.2: Actualizar `CreateChildRequest` — verified
 
 **Descripción:** Renombrar campos y añadir `npcVoiceVolume` en la interfaz de creación de perfil infantil.
 
@@ -123,7 +124,7 @@ export interface CreateChildRequest {
 
 ---
 
-### Tarea 26.3: Crear interfaz `UpdateChildProfileRequest`
+### Tarea 26.3: Crear interfaz `UpdateChildProfileRequest` — verified
 
 **Descripción:** Crear nueva interfaz para la actualización parcial de perfil infantil. Todos los campos son opcionales para envío parcial.
 
@@ -148,7 +149,7 @@ export interface UpdateChildProfileRequest {
 
 ---
 
-### Tarea 26.4: Crear interfaz `ChildSession`
+### Tarea 26.4: Crear interfaz `ChildSession` — verified
 
 **Descripción:** Crear interfaz para mapear `child-session-response.yaml`.
 
@@ -174,7 +175,7 @@ export interface ChildSession {
 
 ---
 
-### Tarea 26.5: Crear `sessionService.ts`
+### Tarea 26.5: Crear `sessionService.ts` — verified
 
 **Descripción:** Crear nuevo servicio para gestionar sesiones activas de perfiles infantiles.
 
@@ -211,7 +212,7 @@ export async function expelSession(sessionId: number): Promise<boolean> {
 
 ---
 
-### Tarea 26.6: Añadir funciones a `familyService.ts`
+### Tarea 26.6: Añadir funciones a `familyService.ts` — verified
 
 **Descripción:** Añadir las 4 funciones nuevas para gestión de perfiles infantiles.
 
@@ -265,7 +266,7 @@ export async function toggleChildActivation(id: number): Promise<boolean> {
 
 ---
 
-### Tarea 26.7: Actualizar `createChild` en `familyService.ts`
+### Tarea 26.7: Actualizar `createChild` en `familyService.ts` — verified
 
 **Descripción:** Actualizar la función `createChild` para usar los nuevos nombres de campos.
 
@@ -290,7 +291,7 @@ export async function createChild(request: CreateChildRequest): Promise<ChildPro
 
 ---
 
-### Tarea 26.8: Crear tipos de color vision
+### Tarea 26.8: Crear tipos de color vision — verified
 
 **Descripción:** Crear enum/constante con los 9 valores de `colorVisionMode`.
 
@@ -393,3 +394,34 @@ Este sprint es prerrequisito para:
 - SPRINT-027 (Cuadrícula de perfiles, sesiones y acciones)
 - SPRINT-028 (Edición de perfil y accesibilidad visual)
 - SPRINT-029 (Extracción de stepper y refactorización de registro)
+
+---
+
+## Verificación
+
+- **Fecha:** 2026-07-31
+- **Fecha de verificación final:** 2026-07-31
+- **Veredicto:** APPROVED
+- **Reviewer:** frontend
+- **Evidencia:** `vue-tsc --noEmit` — 0 errores en archivos del sprint. Los 24 errores preexistentes son ajenos al SPRINT-026.
+
+### Estado de tareas
+
+| Tarea | Estado | Observaciones |
+|-------|--------|---------------|
+| 26.1 | ✅ VERIFIED | Interfaz correcta + alias `ChildProfile = ChildProfileExtended` añadido |
+| 26.2 | ✅ VERIFIED | Coincide con `create-child-profile-request.yaml` |
+| 26.3 | ✅ VERIFIED | Coincide con `update-child-profile-request.yaml` |
+| 26.4 | ✅ VERIFIED | Coincide con `child-session-response.yaml` |
+| 26.5 | ✅ VERIFIED | `getActiveSessions` y `expelSession` correctos |
+| 26.6 | ✅ VERIFIED | 4 funciones implementadas con manejo de errores |
+| 26.7 | ✅ VERIFIED | Función correcta + caller en `ChildSelectionModal.vue` actualizado |
+| 26.8 | ✅ VERIFIED | Enum con 9 valores y etiquetas en español |
+
+### Defectos encontrados y resueltos
+
+| ID | Severidad | Archivo | Estado | Resolución |
+|----|-----------|---------|--------|------------|
+| D-026-1 | CRITICAL | `ChildProfileCard.vue:23` | ✅ RESOLVED | Alias `ChildProfile` añadido en `familyService.ts:20-21` |
+| D-026-2 | CRITICAL | `ChildSelectionModal.vue:180` | ✅ RESOLVED | Alias `ChildProfile` añadido en `familyService.ts:20-21` |
+| D-026-3 | CRITICAL | `ChildSelectionModal.vue:390` | ✅ RESOLVED | Llamada a `createChild` actualizada con `npcVoiceEnabled`, `npcEnabled`, `npcVoiceVolume: 100` |

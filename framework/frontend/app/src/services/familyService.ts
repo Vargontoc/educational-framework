@@ -2,18 +2,29 @@ import { apiClient, type ApiError } from './api'
 import type { ApiFamilyResponse, FamilyData } from '../composables/useFamilyStatus'
 import type { FamilyUpdatePayload } from '../types/family-config'
 
-export interface ChildProfile {
+export interface ChildProfileExtended {
   id: number
+  familyId: number
   name: string
-  avatar: string
+  active: boolean
   birthday: string
+  avatar: string
+  npcVoiceEnabled: boolean
+  npcEnabled: boolean
+  npcVoiceVolume: number
+  colorVisionMode: string
+  createdAt: string
+  updatedAt: string
 }
+
+/** @deprecated Usar ChildProfileExtended. Se eliminará en SPRINT-027. */
+export type ChildProfile = ChildProfileExtended
 
 export interface ApiListChildProfileResponse {
   success: boolean
   message: string | null
   errors: string[]
-  data: ChildProfile[]
+  data: ChildProfileExtended[]
 }
 
 export interface CreateFamilyRequest {
@@ -31,9 +42,20 @@ export interface CreateChildRequest {
   name: string
   birthday: string
   avatar: string
-  ttsEnabled: boolean
-  agentEnabled: boolean
+  npcVoiceEnabled: boolean
+  npcEnabled: boolean
+  npcVoiceVolume: number
   colorVisionMode: string | null
+}
+
+export interface UpdateChildProfileRequest {
+  name?: string
+  birthday?: string
+  avatar?: string
+  npcVoiceEnabled?: boolean
+  npcVoiceVolume?: number
+  npcEnabled?: boolean
+  colorVisionMode?: string
 }
 
 export interface VerifyPinResult {
@@ -43,7 +65,7 @@ export interface VerifyPinResult {
 
 export interface CreateChildResult {
   success: boolean
-  data?: ChildProfile
+  data?: ChildProfileExtended
   errorKey?: 'validation' | 'conflict' | 'server' | 'connection'
   errorMessage?: string
 }
@@ -64,7 +86,7 @@ interface ApiChildProfileResponse {
   success: boolean
   message: string | null
   errors: string[]
-  data: ChildProfile
+  data: ChildProfileExtended
 }
 
 export async function getFamily(): Promise<FamilyData | null> {
@@ -83,7 +105,7 @@ export async function getFamily(): Promise<FamilyData | null> {
   }
 }
 
-export async function getChildren(): Promise<ChildProfile[]> {
+export async function getChildren(): Promise<ChildProfileExtended[]> {
   const response = await apiClient.get<ApiListChildProfileResponse>('/api/v1/family/children')
   if (response.success && response.data) {
     return response.data
@@ -144,8 +166,9 @@ export async function createChild(request: CreateChildRequest): Promise<CreateCh
       name: request.name,
       birthday: request.birthday,
       avatar: request.avatar,
-      ttsEnabled: request.ttsEnabled,
-      agentEnabled: request.agentEnabled,
+      npcVoiceEnabled: request.npcVoiceEnabled,
+      npcEnabled: request.npcEnabled,
+      npcVoiceVolume: request.npcVoiceVolume,
       colorVisionMode: request.colorVisionMode
     })
     if (response.success && response.data) {
@@ -166,6 +189,44 @@ export async function createChild(request: CreateChildRequest): Promise<CreateCh
       return { success: false, errorKey: 'conflict' }
     }
     return { success: false, errorKey: 'server' }
+  }
+}
+
+export async function getChild(id: number): Promise<ChildProfileExtended> {
+  const response = await apiClient.get<ApiChildProfileResponse>(
+    `/api/v1/family/children/${id}`
+  )
+  return response.data
+}
+
+export async function updateChild(
+  id: number,
+  request: UpdateChildProfileRequest
+): Promise<ChildProfileExtended> {
+  const response = await apiClient.put<ApiChildProfileResponse>(
+    `/api/v1/family/children/${id}`,
+    request
+  )
+  return response.data
+}
+
+export async function deleteChild(id: number): Promise<boolean> {
+  try {
+    await apiClient.delete(`/api/v1/family/children/${id}`)
+    return true
+  } catch (error) {
+    console.error('Error al eliminar perfil:', error)
+    return false
+  }
+}
+
+export async function toggleChildActivation(id: number): Promise<boolean> {
+  try {
+    await apiClient.put(`/api/v1/family/children/activation/${id}`)
+    return true
+  } catch (error) {
+    console.error('Error al cambiar estado de activación:', error)
+    return false
   }
 }
 

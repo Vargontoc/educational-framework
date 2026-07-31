@@ -63,7 +63,7 @@ public class ChildProfileController {
         return ResponseEntity.ok(ApiResponse.ok(toResponse(childProfileUseCase.getChild(id))));
     }
 
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ChildProfileResponse>> updateChild(
         @PathVariable Long id,
         @RequestBody UpdateChildProfileRequest request

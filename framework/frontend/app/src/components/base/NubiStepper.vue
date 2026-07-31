@@ -65,7 +65,7 @@
  * - Slot para contenido del paso
  */
 
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import NubiButton from './NubiButton.vue'
 import NubiIcon from './NubiIcon.vue'
@@ -91,6 +91,10 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const currentStep = ref(props.modelValue)
+
+watch(() => props.modelValue, (val) => {
+  currentStep.value = val
+})
 
 function next() {
   if (currentStep.value < props.steps.length - 1) {

@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** verified
+- **Estado:** closed
 - **Fecha de creación:** 2026-07-31
 - **Fecha de implementación:** 2026-07-31
 - **Fecha de verificación:** 2026-07-31

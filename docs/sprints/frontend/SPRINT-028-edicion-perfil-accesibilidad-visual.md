@@ -2,8 +2,9 @@
 
 ## Estado
 
-- **Estado:** bloqueado
+- **Estado:** closed
 - **Fecha de creación:** 2026-07-31
+- **Fecha de verificación:** 2026-07-31
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
 - **Dependencias:** SPRINT-026 (Infraestructura de contratos), Backend (endpoints operativos)
@@ -40,7 +41,7 @@ Tras el SPRINT-026, el frontend dispone de:
 
 ## Tareas
 
-### Tarea 28.1: Crear composable `useChildProfileEdit`
+### Tarea 28.1: Crear composable `useChildProfileEdit` — `verified`
 
 **Descripción:** Crear composable para gestionar el estado de edición de perfil.
 
@@ -91,7 +92,7 @@ interface ChildProfileDraft {
 
 ---
 
-### Tarea 28.2: Añadir rutas de edición y dashboard
+### Tarea 28.2: Añadir rutas de edición y dashboard — `verified`
 
 **Descripción:** Añadir las rutas de edición y dashboard al router.
 
@@ -120,7 +121,7 @@ interface ChildProfileDraft {
 
 ---
 
-### Tarea 28.3: Implementar `ChildProfileEditView.vue`
+### Tarea 28.3: Implementar `ChildProfileEditView.vue` — `verified`
 
 **Descripción:** Implementar la vista de edición de perfil con breadcrumb, datos básicos, ajustes de audio/NPC, accesibilidad visual y acciones.
 
@@ -335,7 +336,7 @@ function handleDashboard() {
 
 ---
 
-### Tarea 28.4: Sección de accesibilidad visual
+### Tarea 28.4: Sección de accesibilidad visual — `verified`
 
 **Descripción:** Implementar la sección de accesibilidad visual con toggle, select de 8 perfiles + NONE, ejemplos visuales y aviso no médico.
 
@@ -381,7 +382,7 @@ function handleDashboard() {
 
 ---
 
-### Tarea 28.5: Implementar `ChildDashboardView.vue`
+### Tarea 28.5: Implementar `ChildDashboardView.vue` — `verified`
 
 **Descripción:** Implementar la vista placeholder de dashboard individual.
 
@@ -422,7 +423,7 @@ const breadcrumbItems = computed(() => [
 
 ---
 
-### Tarea 28.6: i18n completo
+### Tarea 28.6: i18n completo — `verified`
 
 **Descripción:** Implementar todas las traducciones en español para la vista de edición.
 
@@ -482,7 +483,7 @@ const breadcrumbItems = computed(() => [
 
 ---
 
-### Tarea 28.7: Accesibilidad
+### Tarea 28.7: Accesibilidad — `verified`
 
 **Descripción:** Verificar que la vista cumple con los requisitos de accesibilidad.
 
@@ -587,3 +588,39 @@ Este sprint está **BLOQUEADO** hasta que backend complete los cambios de contra
 | Nombres de perfiles visuales interpretados como diagnóstico | Aviso visible de no-diagnóstico. Ejemplos simples sin evaluación. |
 | Ajustes individuales deshabilitados por configuración global: UX confusa | Etiqueta clara junto al control: «Deshabilitado a nivel familiar». |
 | Edición con config global cambiada durante edición | Al guardar, re-validar contra config global actual. |
+
+---
+
+## Verificación
+
+- **Fecha:** 2026-07-31
+- **Fecha de verificación final:** 2026-07-31
+- **Veredicto:** APPROVED_WITH_OBSERVATIONS
+- **Reviewer:** frontend
+- **Evidencia:** `vue-tsc --noEmit` — 0 errores en archivos del sprint. 25 errores preexistentes ajenos al SPRINT-028.
+
+### Estado de tareas
+
+| Tarea | Estado | Observaciones |
+|-------|--------|---------------|
+| 28.1 | ✅ VERIFIED | Composable completo con carga, guardado parcial, eliminación |
+| 28.2 | ✅ VERIFIED | Rutas `PanelNinoEdit` y `PanelNinoDashboard` con `requiresParentalAuth` |
+| 28.3 | ✅ VERIFIED | Vista completa con breadcrumb, 3 secciones, acciones, modal |
+| 28.4 | ✅ VERIFIED | Toggle, select 9 opciones, ejemplos SVG, aviso no médico |
+| 28.5 | ✅ VERIFIED | Placeholder con breadcrumb correcto (nombre via `history.state`) |
+| 28.6 | ✅ VERIFIED | Claves i18n completas en español |
+| 28.7 | ✅ VERIFIED | Labels, objetivos táctiles, estados distinguibles, formas diferenciadas |
+
+### Defectos encontrados y resueltos
+
+| ID | Severidad | Archivo | Estado | Resolución |
+|----|-----------|---------|--------|------------|
+| DEF-001 | MEDIA | `ChildDashboardView.vue:22` | ✅ RESOLVED | Nombre pasado via `history.state` desde `ChildProfileEditView` |
+
+### Observaciones menores (no bloqueantes)
+
+| ID | Severidad | Descripción |
+|----|-----------|-------------|
+| OBS-001 | BAJA | `role="note"` no es un rol ARIA estándar. Considerar `role="status"` o `<aside>`. |
+| OBS-002 | BAJA | Modal de eliminación cierra al clic en overlay. Considerar `close-on-overlay="false"` para acción destructiva. |
+| OBS-003 | BAJA | `history.state` se pierde ante recarga directa (F5). Considerar fallback a API (`getChild`) para robustecer si se prevé navegación directa a la URL. |

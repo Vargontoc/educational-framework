@@ -359,6 +359,79 @@ export default {
         }
       }
     },
+    ninos: {
+      title: 'Niños',
+      registerButton: 'Registrar niño',
+      registerPlaceholder: 'Próximamente disponible',
+      registerSuccess: '{name} registrado correctamente',
+      noProfiles: 'No hay perfiles registrados',
+      stepper: {
+        step1: {
+          title: 'Nombre del niño',
+          nameLabel: 'Nombre',
+          namePlaceholder: 'Introduce el nombre'
+        },
+        step2: {
+          title: 'Fecha de nacimiento y avatar',
+          birthdayLabel: 'Fecha de nacimiento',
+          avatarLabel: 'Selecciona un avatar'
+        },
+        createButton: 'Crear perfil',
+        createError: 'No se pudo crear el perfil'
+      },
+      expelModal: {
+        title: 'Expulsar de la sesión',
+        message: '¿Terminar la sesión de {name}? El niño volverá a la pantalla de selección.'
+      },
+      expelSuccess: 'Sesión terminada correctamente',
+      expelError: 'No se pudo terminar la sesión',
+      blockSuccess: 'Estado de bloqueo actualizado',
+      blockError: 'No se pudo actualizar el estado',
+      card: {
+        expel: 'Expulsar',
+        block: 'Bloquear',
+        unblock: 'Desbloquear',
+        blocked: 'Bloqueado',
+        sessionDuration: 'Tiempo de sesión'
+      },
+      edit: {
+        title: 'Editar perfil',
+        saveButton: 'Guardar cambios',
+        deleteButton: 'Eliminar',
+        dashboardButton: 'Dashboard',
+        disabledByFamily: 'Deshabilitado a nivel familiar',
+        saveSuccess: 'Cambios guardados correctamente',
+        saveError: 'No se pudieron guardar los cambios',
+        deleteSuccess: 'Perfil eliminado correctamente',
+        deleteError: 'No se pudo eliminar el perfil',
+        deleteModal: {
+          title: 'Eliminar perfil',
+          message: '¿Eliminar a {name}? Se eliminarán todos sus datos.'
+        },
+        sections: {
+          basicData: {
+            title: 'Datos básicos',
+            nameLabel: 'Nombre',
+            birthdayLabel: 'Fecha de nacimiento',
+            avatarLabel: 'Avatar'
+          },
+          audio: {
+            title: 'Audio del NPC',
+            voiceLabel: 'Voz del NPC',
+            npcLabel: 'NPC'
+          },
+          visualAccessibility: {
+            title: 'Accesibilidad visual',
+            toggleLabel: 'Activar ajuste visual',
+            selectLabel: 'Perfil de visualización',
+            warning: 'Esta configuración es orientativa. No es una sección médica ni diagnóstica. Ante dudas, consulta a un especialista.'
+          }
+        }
+      },
+      dashboard: {
+        placeholder: 'Próximamente disponible'
+      }
+    },
     errors: {
       networkError: 'No se pudo guardar. Revisa tu conexión.',
       validationError: 'Error de validación. Revisa los datos.',

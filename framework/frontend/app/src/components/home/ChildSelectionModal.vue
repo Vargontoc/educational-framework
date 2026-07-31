@@ -62,56 +62,16 @@
         </div>
 
         <div v-else-if="currentView === 'registration'" key="registration" class="child-selection-modal__registration-view">
-          <NubiStepper
-            :key="registrationStep"
-            :steps="registrationStepLabels"
-            :model-value="registrationStep"
-            class="child-selection-modal__stepper"
-          >
-            <template #default>
-              <div v-if="registrationStep === 0" class="child-selection-modal__step-content">
-                <NubiTextInput
-                  ref="nameInputRef"
-                  v-model="childName"
-                  :label="t('views.home.childSelection.registration.nameLabel')"
-                  :placeholder="t('views.home.childSelection.registration.namePlaceholder')"
-                  :required="true"
-                  :error="nameError"
-                />
-              </div>
-              <div v-else-if="registrationStep === 1" class="child-selection-modal__step-content">
-                <div class="child-selection-modal__field">
-                  <label class="child-selection-modal__field-label" for="child-birthday">
-                    {{ t('views.home.childSelection.registration.birthdayLabel') }}
-                    <span class="child-selection-modal__field-required" aria-hidden="true">*</span>
-                  </label>
-                  <input
-                    id="child-birthday"
-                    ref="dateInputRef"
-                    v-model="childBirthday"
-                    type="date"
-                    class="child-selection-modal__date-input"
-                    :max="todayDate"
-                    :aria-invalid="!!birthdayError"
-                    :aria-label="t('views.home.childSelection.registration.birthdayLabel')"
-                  />
-                  <span v-if="birthdayError" class="child-selection-modal__field-error" role="alert">
-                    {{ birthdayError }}
-                  </span>
-                </div>
-                <AvatarSelector v-model="childAvatar" />
-              </div>
-            </template>
-          </NubiStepper>
-          <div v-if="submitError" class="child-selection-modal__error-message" role="alert" aria-live="assertive">
-            {{ submitError }}
-          </div>
-          <NubiSpinner v-if="submitting" size="sm" :label="t('views.home.childSelection.registration.submitting')" show-label />
+          <ChildRegistrationStepper
+            :family-id="familyId"
+            @child-created="handleChildCreated"
+            @cancel="handleCancelRegistration"
+          />
         </div>
       </Transition>
     </div>
 
-    <template #footer>
+    <template v-if="currentView !== 'registration'" #footer>
       <div v-if="currentView === 'selection'" class="child-selection-modal__footer">
         <NubiButton variant="secondary" @click="handleRegisterChild">
           {{ t('views.home.childSelection.registerChild') }}
@@ -131,34 +91,6 @@
           {{ t('views.home.childSelection.pinVerification.verify') }}
         </NubiButton>
       </div>
-
-      <div v-else-if="currentView === 'registration'" class="child-selection-modal__footer child-selection-modal__footer--actions">
-        <NubiButton variant="secondary" @click="handleCancelRegistration">
-          {{ t('common.cancel') }}
-        </NubiButton>
-        <div class="child-selection-modal__footer-right">
-          <NubiButton v-if="registrationStep === 1" variant="secondary" @click="handleBackStep">
-            {{ t('common.back') }}
-          </NubiButton>
-          <NubiButton
-            v-if="registrationStep === 0"
-            variant="primary"
-            :disabled="!childName.trim()"
-            @click="handleNextStep"
-          >
-            {{ t('common.next') }}
-          </NubiButton>
-          <NubiButton
-            v-if="registrationStep === 1"
-            variant="primary"
-            :disabled="!canConfirm"
-            :loading="submitting"
-            @click="handleConfirmRegistration"
-          >
-            {{ t('views.home.childSelection.registration.confirm') }}
-          </NubiButton>
-        </div>
-      </div>
     </template>
   </NubiInfoModal>
 </template>
@@ -173,13 +105,13 @@ import NubiButton from '../base/NubiButton.vue'
 import NubiSpinner from '../base/NubiSpinner.vue'
 import NubiErrorState from '../base/NubiErrorState.vue'
 import NubiPinInput from '../base/NubiPinInput.vue'
-import NubiTextInput from '../base/NubiTextInput.vue'
-import NubiStepper from '../base/NubiStepper.vue'
 import ChildProfileCard from './ChildProfileCard.vue'
-import AvatarSelector from './AvatarSelector.vue'
-import { getFamily, verifyPin, createChild, type ChildProfile } from '../../services/familyService'
+import ChildRegistrationStepper from '../ninos/ChildRegistrationStepper.vue'
+import { getFamily, verifyPin, type ChildProfile, type ChildProfileExtended } from '../../services/familyService'
 import { useChildProfiles } from '../../composables/useChildProfiles'
 import { useSessionStore } from '../../stores/session'
+import { useParentalAuthStore } from '../../stores/parentalAuth'
+import { useToast } from '../../composables/useToast'
 import type { ApiError } from '../../services/api'
 
 type ModalView = 'selection' | 'pin-verification' | 'registration'
@@ -198,6 +130,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const router = useRouter()
 const sessionStore = useSessionStore()
+const parentalAuthStore = useParentalAuthStore()
+const toast = useToast()
 const { profiles, loading: profilesLoading, error: profilesError, errorMessage: profilesErrorMessage, fetchProfiles } = useChildProfiles()
 
 const familyName = ref('')
@@ -205,26 +139,14 @@ const familyLoading = ref(false)
 const familyError = ref('')
 const selectedProfileId = ref<number | null>(null)
 
+const familyId = computed(() => parentalAuthStore.familyId ?? 0)
+
 const currentView = ref<ModalView>('selection')
 
 const pin = ref('')
 const pinError = ref('')
 const pinVerifying = ref(false)
 const pinInputRef = ref<InstanceType<typeof NubiPinInput> | null>(null)
-
-const registrationStep = ref(0)
-const childName = ref('')
-const childBirthday = ref('')
-const childAvatar = ref('avatar-1')
-const submitting = ref(false)
-const submitError = ref('')
-const nameInputRef = ref<InstanceType<typeof NubiTextInput> | null>(null)
-const dateInputRef = ref<HTMLInputElement | null>(null)
-
-const registrationStepLabels = computed(() => [
-  t('views.home.childSelection.registration.step1Label'),
-  t('views.home.childSelection.registration.step2Label')
-])
 
 const modalTitle = computed(() => {
   if (currentView.value === 'pin-verification') {
@@ -239,45 +161,10 @@ const modalTitle = computed(() => {
   return t('views.home.childSelection.familyTitleDefault')
 })
 
-const todayDate = computed(() => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-})
-
-const birthdayError = computed(() => {
-  if (!childBirthday.value) return ''
-  const selected = new Date(childBirthday.value + 'T00:00:00')
-  const today = new Date()
-  today.setHours(23, 59, 59, 999)
-  if (selected > today) {
-    return t('views.home.childSelection.registration.birthdayFuture')
-  }
-  return ''
-})
-
-const nameError = computed(() => {
-  return ''
-})
-
-const canConfirm = computed(() => {
-  return childName.value.trim() !== '' &&
-         childBirthday.value !== '' &&
-         !birthdayError.value
-})
-
 function resetFormState(): void {
   pin.value = ''
   pinError.value = ''
   pinVerifying.value = false
-  registrationStep.value = 0
-  childName.value = ''
-  childBirthday.value = ''
-  childAvatar.value = 'avatar-1'
-  submitting.value = false
-  submitError.value = ''
 }
 
 function resetToSelection(): void {
@@ -362,78 +249,22 @@ function handleCancelPin(): void {
   resetToSelection()
 }
 
-function handleNextStep(): void {
-  if (childName.value.trim()) {
-    registrationStep.value = 1
-  }
-}
-
-function handleBackStep(): void {
-  registrationStep.value = 0
-}
-
 function handleCancelRegistration(): void {
   resetToSelection()
 }
 
-async function handleConfirmRegistration(): Promise<void> {
-  if (!canConfirm.value) return
-
-  submitting.value = true
-  submitError.value = ''
-
-  try {
-    const result = await createChild({
-      name: childName.value.trim(),
-      birthday: childBirthday.value,
-      avatar: childAvatar.value,
-      ttsEnabled: true,
-      agentEnabled: true,
-      colorVisionMode: null
-    })
-
-    if (result.success) {
-      await fetchProfiles()
-      resetToSelection()
-    } else {
-      if (result.errorKey === 'validation') {
-        submitError.value = result.errorMessage || t('views.home.childSelection.registration.errorValidation')
-      } else if (result.errorKey === 'conflict') {
-        submitError.value = t('views.home.childSelection.registration.errorConflict')
-      } else if (result.errorKey === 'connection') {
-        submitError.value = t('views.home.childSelection.registration.errorConnection')
-      } else {
-        submitError.value = t('views.home.childSelection.registration.errorServer')
-      }
-    }
-  } catch {
-    submitError.value = t('views.home.childSelection.registration.errorServer')
-  } finally {
-    submitting.value = false
-  }
+function handleChildCreated(profile: ChildProfileExtended): void {
+  toast.success(t('views.ninos.registerSuccess', { name: profile.name }))
+  resetToSelection()
+  fetchProfiles()
 }
 
 watch(currentView, async () => {
   await nextTick()
   if (currentView.value === 'pin-verification') {
     pinInputRef.value?.focus()
-  } else if (currentView.value === 'registration') {
-    focusCurrentStep()
   }
 })
-
-watch(registrationStep, async () => {
-  await nextTick()
-  focusCurrentStep()
-})
-
-function focusCurrentStep(): void {
-  if (registrationStep.value === 0) {
-    nameInputRef.value?.focus()
-  } else if (registrationStep.value === 1) {
-    dateInputRef.value?.focus()
-  }
-}
 
 onMounted(() => {
   loadData()
@@ -485,70 +316,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--nubi-spacing-md);
-}
-
-.child-selection-modal__stepper {
-  width: 100%;
-}
-
-:deep(.nubi-stepper__footer) {
-  display: none;
-}
-
-.child-selection-modal__step-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--nubi-spacing-lg);
-  padding: var(--nubi-spacing-md) 0;
-}
-
-.child-selection-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--nubi-spacing-xs);
-}
-
-.child-selection-modal__field-label {
-  font-size: var(--nubi-font-size-sm);
-  font-weight: var(--nubi-font-weight-medium);
-  color: var(--nubi-text-primary);
-}
-
-.child-selection-modal__field-required {
-  color: var(--nubi-color-error);
-  margin-left: var(--nubi-spacing-xs);
-}
-
-.child-selection-modal__date-input {
-  width: 100%;
-  min-height: 48px;
-  padding: var(--nubi-spacing-sm) var(--nubi-spacing-md);
-  border: var(--nubi-border-width-thick) solid var(--nubi-border-default);
-  border-radius: var(--nubi-radius-md);
-  background-color: var(--nubi-bg-surface);
-  font-size: var(--nubi-font-size-base);
-  font-family: var(--nubi-font-family-base);
-  color: var(--nubi-text-primary);
-  outline: none;
-  transition: border-color var(--nubi-duration-fast) var(--nubi-ease-in-out),
-              box-shadow var(--nubi-duration-fast) var(--nubi-ease-in-out);
-}
-
-.child-selection-modal__date-input:focus {
-  border-color: var(--nubi-border-focus);
-  box-shadow: 0 0 0 3px var(--nubi-color-focus);
-}
-
-.child-selection-modal__date-input[aria-invalid="true"] {
-  border-color: var(--nubi-color-error);
-}
-
-.child-selection-modal__field-error {
-  font-size: var(--nubi-font-size-xs);
-  color: var(--nubi-text-error);
-  display: flex;
-  align-items: center;
-  gap: var(--nubi-spacing-xs);
 }
 
 .child-selection-modal__error-message {
