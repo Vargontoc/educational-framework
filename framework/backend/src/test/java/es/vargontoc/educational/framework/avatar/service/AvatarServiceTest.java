@@ -208,8 +208,8 @@ class AvatarServiceTest {
     private ChildProfile createChildProfile(Long id, boolean ttsEnabled, boolean agentEnabled) {
         ChildProfile profile = new ChildProfile();
         profile.setId(id);
-        profile.setTtsEnabled(ttsEnabled);
-        profile.setAgentEnabled(agentEnabled);
+        profile.setNpcVoiceEnabled(ttsEnabled);
+        profile.setNpcEnabled(agentEnabled);
         return profile;
     }
 

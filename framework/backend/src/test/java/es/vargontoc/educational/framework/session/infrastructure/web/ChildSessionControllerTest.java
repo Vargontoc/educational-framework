@@ -58,6 +58,7 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
             "avatar-1",
             true,
             true,
+            100,
             null
         ).getId();
         token = loginAndReturnToken();

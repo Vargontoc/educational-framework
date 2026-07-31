@@ -46,32 +46,35 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
             "name", "Kid One",
             "birthday", LocalDate.now().minusYears(8),
             "avatar", "avatar-1",
-            "ttsEnabled", true,
-            "agentEnabled", true,
+            "npcVoiceEnabled", true,
+            "npcEnabled", true,
+            "npcVoiceVolume", 80,
             "colorVisionMode", "NONE"
         ));
 
         mockMvc.perform(post("/api/v1/family/children").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.data.name", is("Kid One")))
-            .andExpect(jsonPath("$.data.colorVisionMode", is("NONE")));
+            .andExpect(jsonPath("$.data.colorVisionMode", is("NONE")))
+            .andExpect(jsonPath("$.data.npcVoiceVolume", is(80)));
     }
 
     @Test
-    void createChild_appliesTtsCeiling() throws Exception {
+    void createChild_appliesNpcVoiceCeiling() throws Exception {
         familyUseCase.updateFamily(new es.vargontoc.educational.framework.family.infrastructure.dto.UpdateFamilyRequest("Family One", null, false, true, null, null, null, null, null, null, null));
         var body = objectMapper.writeValueAsString(Map.of(
             "name", "Kid One",
             "birthday", LocalDate.now().minusYears(8),
             "avatar", "avatar-1",
-            "ttsEnabled", true,
-            "agentEnabled", true,
+            "npcVoiceEnabled", true,
+            "npcEnabled", true,
+            "npcVoiceVolume", 80,
             "colorVisionMode", "NONE"
         ));
 
         mockMvc.perform(post("/api/v1/family/children").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.data.ttsEnabled", is(false)));
+            .andExpect(jsonPath("$.data.npcVoiceEnabled", is(false)));
     }
 
     @Test
@@ -80,8 +83,9 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
             "name", "Kid Color Vision",
             "birthday", LocalDate.now().minusYears(6),
             "avatar", "avatar-cv",
-            "ttsEnabled", true,
-            "agentEnabled", true,
+            "npcVoiceEnabled", true,
+            "npcEnabled", true,
+            "npcVoiceVolume", 100,
             "colorVisionMode", "DEUTERANOMALY"
         ));
 
@@ -110,8 +114,9 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
             "name", "Kid Updated",
             "birthday", LocalDate.now().minusYears(9),
             "avatar", "avatar-2",
-            "ttsEnabled", true,
-            "agentEnabled", true
+            "npcVoiceEnabled", true,
+            "npcEnabled", true,
+            "npcVoiceVolume", 90
         ));
         mockMvc.perform(patch("/api/v1/family/children/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -152,8 +157,9 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
             "name", "Kid CV",
             "birthday", LocalDate.now().minusYears(7),
             "avatar", "avatar-cv",
-            "ttsEnabled", true,
-            "agentEnabled", true,
+            "npcVoiceEnabled", true,
+            "npcEnabled", true,
+            "npcVoiceVolume", 100,
             "colorVisionMode", colorVisionMode
         ));
 
@@ -172,8 +178,9 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
             "name", "Kid One",
             "birthday", LocalDate.now().minusYears(8),
             "avatar", "avatar-1",
-            "ttsEnabled", true,
-            "agentEnabled", true,
+            "npcVoiceEnabled", true,
+            "npcEnabled", true,
+            "npcVoiceVolume", 100,
             "colorVisionMode", "NONE"
         ));
 

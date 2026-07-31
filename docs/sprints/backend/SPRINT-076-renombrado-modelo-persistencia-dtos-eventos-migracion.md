@@ -2,8 +2,9 @@
 
 ## Estado
 
-- **Estado:** pendiente
+- **Estado:** verified
 - **Fecha de creación:** 2026-07-31
+- **Fecha de verificación:** 2026-07-31
 - **Responsable principal:** backend
 - **Prioridad:** CRITICA
 - **Dependencias:** FEAT-006, ADR-022
@@ -36,7 +37,7 @@ Esta asimetría genera:
 
 ## Tareas
 
-### Tarea 76.1: Crear migración Liquibase 026
+### Tarea 76.1: Crear migración Liquibase 026 — VERIFIED
 
 **Descripción:** Crear la migración de base de datos para renombrar columnas y añadir la nueva columna de volumen.
 
@@ -88,7 +89,7 @@ Añadir la migración en `db/changelog/db.changelog-master.xml`.
 
 ---
 
-### Tarea 76.2: Actualizar `ColorVisionMode.java`
+### Tarea 76.2: Actualizar `ColorVisionMode.java` — VERIFIED
 
 **Descripción:** Añadir tres nuevos valores al enum de modos de visión de color.
 
@@ -127,7 +128,7 @@ public enum ColorVisionMode {
 
 ---
 
-### Tarea 76.3: Actualizar `ChildProfile.java`
+### Tarea 76.3: Actualizar `ChildProfile.java` — VERIFIED
 
 **Descripción:** Renombrar campos del modelo de dominio y añadir `npcVoiceVolume`.
 
@@ -152,7 +153,7 @@ public enum ColorVisionMode {
 
 ---
 
-### Tarea 76.4: Actualizar `ChildProfileJpaEntity.java`
+### Tarea 76.4: Actualizar `ChildProfileJpaEntity.java` — VERIFIED
 
 **Descripción:** Renombrar columnas JPA y añadir la nueva columna de volumen.
 
@@ -171,7 +172,7 @@ public enum ColorVisionMode {
 
 ---
 
-### Tarea 76.5: Actualizar `ChildProfilePersistenceAdapter.java`
+### Tarea 76.5: Actualizar `ChildProfilePersistenceAdapter.java` — VERIFIED
 
 **Descripción:** Actualizar los métodos `toDomain()` y `toJpa()` para mapear los nuevos campos.
 
@@ -188,7 +189,7 @@ public enum ColorVisionMode {
 
 ---
 
-### Tarea 76.6: Actualizar DTOs
+### Tarea 76.6: Actualizar DTOs — VERIFIED
 
 **Descripción:** Renombrar campos y añadir `npcVoiceVolume` en los tres DTOs de perfil infantil.
 
@@ -247,7 +248,7 @@ public record UpdateChildProfileRequest(
 
 ---
 
-### Tarea 76.7: Actualizar `ChildProfileUseCase.java`
+### Tarea 76.7: Actualizar `ChildProfileUseCase.java` — VERIFIED
 
 **Descripción:** Actualizar las firmas de los puertos de entrada.
 
@@ -283,7 +284,7 @@ ChildProfile updateChild(
 
 ---
 
-### Tarea 76.8: Actualizar `ChildProfileService.java`
+### Tarea 76.8: Actualizar `ChildProfileService.java` — VERIFIED
 
 **Descripción:** Actualizar la lógica de negocio con los nuevos parámetros y la regla de ceiling de volumen.
 
@@ -312,7 +313,7 @@ childVolume = familyEnabled ? Math.min(requestedVolume, familyVolume) : 0
 
 ---
 
-### Tarea 76.9: Actualizar `ChildProfileValidator.java`
+### Tarea 76.9: Actualizar `ChildProfileValidator.java` — VERIFIED
 
 **Descripción:** Añadir validación de rango para `npcVoiceVolume`.
 
@@ -332,7 +333,7 @@ if (input.npcVoiceVolume() != null) {
 
 ---
 
-### Tarea 76.10: Actualizar `ChildProfileController.java`
+### Tarea 76.10: Actualizar `ChildProfileController.java` — VERIFIED
 
 **Descripción:** Actualizar el mapeo de DTOs a modelo y el método `toResponse()`.
 
@@ -357,7 +358,7 @@ if (input.npcVoiceVolume() != null) {
 
 ---
 
-### Tarea 76.11: Actualizar `SessionEventType.java`
+### Tarea 76.11: Actualizar `SessionEventType.java` — VERIFIED
 
 **Descripción:** Renombrar eventos para coherencia con la nueva nomenclatura y añadir evento de cambio de volumen.
 
@@ -382,7 +383,7 @@ if (input.npcVoiceVolume() != null) {
 
 ---
 
-### Tarea 76.12: Actualizar eventos en `ChildProfileService.java`
+### Tarea 76.12: Actualizar eventos en `ChildProfileService.java` — VERIFIED
 
 **Descripción:** Usar los nuevos nombres de `SessionEventType` en `updateChild()` y emitir el evento de cambio de volumen.
 
@@ -401,7 +402,7 @@ if (input.npcVoiceVolume() != null) {
 
 ---
 
-### Tarea 76.13: Actualizar tests unitarios
+### Tarea 76.13: Actualizar tests unitarios — VERIFIED
 
 **Descripción:** Actualizar `ChildProfileServiceTest` con las nuevas firmas, aserciones y tests de ceiling de volumen.
 
@@ -421,7 +422,7 @@ if (input.npcVoiceVolume() != null) {
 
 ---
 
-### Tarea 76.14: Actualizar tests de integración
+### Tarea 76.14: Actualizar tests de integración — VERIFIED
 
 **Descripción:** Actualizar `ChildProfileControllerTest` con los nuevos nombres de campos en JSON.
 
@@ -509,3 +510,11 @@ if (input.npcVoiceVolume() != null) {
 | Renombrado de `SessionEventType` rompe game clients conectados | Se coordina con frontend el cambio de nombres. Ambos se actualizan en el mismo release. |
 | Migración 026 falla en producción con datos existentes | `renameColumn` es atómico. Default 100 para `npc_voice_volume` es coherente. Rollback manual documentado. |
 | Tests existentes fallan tras renombrado | Actualización de tests incluida en el sprint. No se mergea sin tests verdes. |
+
+## Verificación
+
+- **Fecha:** 2026-07-31
+- **Veredicto:** APPROVED
+- **Reviewer:** backend
+- **Evidencia:** `mvn test` — Tests run: 829, Failures: 0, Errors: 0, Skipped: 104 (BUILD SUCCESS)
+- **Notas:** Los 104 tests skipped requieren Docker/Testcontainers (no disponible en entorno de revisión). No son defectos del código.

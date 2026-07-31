@@ -55,12 +55,12 @@ public class AvatarService implements AvatarUseCase {
         ChildSession session = findActiveSession(request.childSessionId());
         ChildProfile childProfile = findChildProfile(session.getChildProfileId());
 
-        if (!childProfile.isAgentEnabled()) {
+        if (!childProfile.isNpcEnabled()) {
             return createSuppressedResult(request.eventType());
         }
 
         String text = resolveCatalogText(request.eventType(), request.locale());
-        boolean ttsEnabled = childProfile.isTtsEnabled();
+        boolean ttsEnabled = childProfile.isNpcVoiceEnabled();
         byte[] audioData = null;
         boolean audioAvailable = false;
 

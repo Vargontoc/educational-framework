@@ -1,4 +1,7 @@
 summary: Get active sessions
+description: >
+  Devuelve las sesiones activas de la familia identificada por familyId.
+  Cada sesión incluye startedAt para cálculo de duración en tiempo real.
 operationId: getActiveSessions
 tags:
   - child-session-controller

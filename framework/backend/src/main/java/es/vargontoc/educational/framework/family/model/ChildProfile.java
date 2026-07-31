@@ -11,8 +11,9 @@ public class ChildProfile {
     private boolean active;
     private LocalDate birthday;
     private String avatar;
-    private boolean ttsEnabled;
-    private boolean agentEnabled;
+    private boolean npcVoiceEnabled;
+    private boolean npcEnabled;
+    private int npcVoiceVolume = 100;
     private ColorVisionMode colorVisionMode;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -65,20 +66,28 @@ public class ChildProfile {
         this.avatar = avatar;
     }
 
-    public boolean isTtsEnabled() {
-        return ttsEnabled;
+    public boolean isNpcVoiceEnabled() {
+        return npcVoiceEnabled;
     }
 
-    public void setTtsEnabled(boolean ttsEnabled) {
-        this.ttsEnabled = ttsEnabled;
+    public void setNpcVoiceEnabled(boolean npcVoiceEnabled) {
+        this.npcVoiceEnabled = npcVoiceEnabled;
     }
 
-    public boolean isAgentEnabled() {
-        return agentEnabled;
+    public boolean isNpcEnabled() {
+        return npcEnabled;
     }
 
-    public void setAgentEnabled(boolean agentEnabled) {
-        this.agentEnabled = agentEnabled;
+    public void setNpcEnabled(boolean npcEnabled) {
+        this.npcEnabled = npcEnabled;
+    }
+
+    public int getNpcVoiceVolume() {
+        return npcVoiceVolume;
+    }
+
+    public void setNpcVoiceVolume(int npcVoiceVolume) {
+        this.npcVoiceVolume = npcVoiceVolume;
     }
 
     public ColorVisionMode getColorVisionMode() {

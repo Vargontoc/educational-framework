@@ -8,8 +8,9 @@ public record UpdateChildProfileRequest(
     String name,
     LocalDate birthday,
     String avatar,
-    Boolean ttsEnabled,
-    Boolean agentEnabled,
+    Boolean npcVoiceEnabled,
+    Boolean npcEnabled,
+    Integer npcVoiceVolume,
     ColorVisionMode colorVisionMode
 ) {
 }

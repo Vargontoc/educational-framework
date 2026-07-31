@@ -1,4 +1,8 @@
-summary: Change state child
+summary: Toggle child active state
+description: >
+  Intercambia el estado activo/inactivo del perfil infantil.
+  No requiere body en la petición.
+  Si el perfil pasa a inactivo y tiene una sesión activa, la sesión se termina.
 operationId: changeStateChild
 tags:
   - child-profile-controller
@@ -10,5 +14,7 @@ parameters:
       type: integer
       format: int64
 responses:
-  "200":
-    description: OK
+  "204":
+    description: No Content. Estado del perfil alternado correctamente.
+  "404":
+    description: Not Found. Perfil infantil no encontrado.

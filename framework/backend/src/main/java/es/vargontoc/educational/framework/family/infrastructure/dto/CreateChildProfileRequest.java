@@ -8,8 +8,9 @@ public record CreateChildProfileRequest(
     String name,
     LocalDate birthday,
     String avatar,
-    boolean ttsEnabled,
-    boolean agentEnabled,
+    boolean npcVoiceEnabled,
+    boolean npcEnabled,
+    int npcVoiceVolume,
     ColorVisionMode colorVisionMode
 ) {
 }

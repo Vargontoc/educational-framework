@@ -17,18 +17,25 @@ properties:
     format: date
   avatar:
     type: string
-  ttsEnabled:
+  npcVoiceEnabled:
     type: boolean
-  agentEnabled:
+  npcEnabled:
     type: boolean
+  npcVoiceVolume:
+    type: integer
+    minimum: 0
+    maximum: 100
   colorVisionMode:
     type: string
     enum:
       - NONE
       - PROTANOPIA
+      - PROTANOMALY
       - DEUTERANOMALY
       - DEUTERANOPIA
       - TRITANOPIA
+      - TRITANOMALY
+      - ACHROMATOMALY
       - ACHROMATOPSIA
   createdAt:
     type: string

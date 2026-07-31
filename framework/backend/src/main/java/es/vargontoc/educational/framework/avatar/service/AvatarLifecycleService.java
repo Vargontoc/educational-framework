@@ -51,7 +51,7 @@ public class AvatarLifecycleService {
         }
 
         ChildProfile profile = profileOpt.get();
-        if (!profile.isAgentEnabled()) {
+        if (!profile.isNpcEnabled()) {
             log.debug("Welcome: agent disabled for session {}", childSessionId);
             return AvatarLifecycleResult.suppressed(childSessionId);
         }
@@ -74,7 +74,7 @@ public class AvatarLifecycleService {
         }
 
         ChildProfile profile = profileOpt.get();
-        if (!profile.isAgentEnabled()) {
+        if (!profile.isNpcEnabled()) {
             log.debug("Farewell: agent disabled for session {}", childSessionId);
             return AvatarLifecycleResult.suppressed(childSessionId);
         }
@@ -83,7 +83,7 @@ public class AvatarLifecycleService {
     }
 
     private AvatarLifecycleResult buildAvatarEvent(Long childSessionId, String text, boolean isWelcome, ChildProfile profile) {
-        boolean ttsEnabled = profile.isTtsEnabled();
+        boolean ttsEnabled = profile.isNpcVoiceEnabled();
 
         if (!ttsEnabled) {
             GameAvatarEvent event = isWelcome

@@ -12,8 +12,9 @@ public record ChildProfileResponse(
     boolean active,
     LocalDate birthday,
     String avatar,
-    boolean ttsEnabled,
-    boolean agentEnabled,
+    boolean npcVoiceEnabled,
+    boolean npcEnabled,
+    int npcVoiceVolume,
     ColorVisionMode colorVisionMode,
     LocalDateTime createdAt,
     LocalDateTime updatedAt

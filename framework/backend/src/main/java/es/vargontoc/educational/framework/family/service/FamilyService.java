@@ -155,12 +155,12 @@ public class FamilyService implements FamilyUseCase {
                 continue;
             }
             boolean changed = false;
-            if (disableNpcVoice && child.isTtsEnabled()) {
-                child.setTtsEnabled(false);
+            if (disableNpcVoice && child.isNpcVoiceEnabled()) {
+                child.setNpcVoiceEnabled(false);
                 changed = true;
             }
-            if (disableNpc && child.isAgentEnabled()) {
-                child.setAgentEnabled(false);
+            if (disableNpc && child.isNpcEnabled()) {
+                child.setNpcEnabled(false);
                 changed = true;
             }
             if (changed) {
@@ -177,11 +177,11 @@ public class FamilyService implements FamilyUseCase {
                 for (ChildSession childSession : childSessions) {
 
                     if(disableNpcVoice) {
-                        sessionEventPublisher.notifyChild(childSession.getId(), SessionEvent.of(SessionEventType.CHILD_TTS_DEACTIVATED, childSession.getId()));
+                        sessionEventPublisher.notifyChild(childSession.getId(), SessionEvent.of(SessionEventType.CHILD_NPC_VOICE_DEACTIVATED, childSession.getId()));
                     }
 
                     if(disableNpc) {
-                        sessionEventPublisher.notifyChild(childSession.getId(), SessionEvent.of(SessionEventType.CHILD_AGENT_DEACTIVATED, childSession.getId()));
+                        sessionEventPublisher.notifyChild(childSession.getId(), SessionEvent.of(SessionEventType.CHILD_NPC_DEACTIVATED, childSession.getId()));
                     }
                 }
             }

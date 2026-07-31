@@ -89,17 +89,17 @@ class FamilyServiceTest {
         var child = new ChildProfile();
         child.setId(10L);
         child.setFamilyId(1L);
-        child.setTtsEnabled(true);
-        child.setAgentEnabled(true);
+        child.setNpcVoiceEnabled(true);
+        child.setNpcEnabled(true);
 
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.findAll()).thenReturn(List.of(child));
         when(familyRepository.save(any(Family.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var request = new UpdateFamilyRequest("Updated", null, false, true, null, null, null, null, null, null, null);
+        var request = new UpdateFamilyRequest("Updated", null, null, null, null, null, null, false, null, null, null);
         familyService.updateFamily(request);
 
-        assertFalse(child.isTtsEnabled());
+        assertFalse(child.isNpcVoiceEnabled());
         verify(childProfileRepository).save(child);
     }
 
@@ -111,8 +111,8 @@ class FamilyServiceTest {
         var child = new ChildProfile();
         child.setId(10L);
         child.setFamilyId(1L);
-        child.setTtsEnabled(false);
-        child.setAgentEnabled(false);
+        child.setNpcVoiceEnabled(false);
+        child.setNpcEnabled(false);
 
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(familyRepository.save(any(Family.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -120,8 +120,8 @@ class FamilyServiceTest {
         var request = new UpdateFamilyRequest("Updated", null, true, true, null, null, null, null, null, null, null);
         familyService.updateFamily(request);
 
-        assertFalse(child.isTtsEnabled());
-        assertFalse(child.isAgentEnabled());
+        assertFalse(child.isNpcVoiceEnabled());
+        assertFalse(child.isNpcEnabled());
         verify(childProfileRepository, never()).save(child);
     }
 

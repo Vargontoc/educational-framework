@@ -29,4 +29,16 @@ public abstract class AbstractValidator<T> implements IValidator<T> {
             throw new ValidationException(fieldName + " must be a positive number");
         }
     }
+
+    protected void requireMin(int value, int min, String fieldName) {
+        if (value < min) {
+            throw new ValidationException(fieldName + " must be at least " + min);
+        }
+    }
+
+    protected void requireMax(int value, int max, String fieldName) {
+        if (value > max) {
+            throw new ValidationException(fieldName + " must be at most " + max);
+        }
+    }
 }

@@ -86,6 +86,7 @@ class TrackingDashboardControllerTest {
                 null,
                 true,
                 true,
+                100,
                 null
         );
         childProfileId = child.getId();
@@ -102,6 +103,7 @@ class TrackingDashboardControllerTest {
                 null,
                 true,
                 true,
+                100,
                 null
         );
         otherFamilyChildId = otherChild.getId();

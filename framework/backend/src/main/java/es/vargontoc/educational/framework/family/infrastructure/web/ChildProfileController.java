@@ -42,8 +42,9 @@ public class ChildProfileController {
             request.name(),
             request.birthday(),
             request.avatar(),
-            request.ttsEnabled(),
-            request.agentEnabled(),
+            request.npcVoiceEnabled(),
+            request.npcEnabled(),
+            request.npcVoiceVolume(),
             request.colorVisionMode()
         );
         return ResponseEntity.status(201).body(ApiResponse.created(toResponse(child)));
@@ -73,8 +74,9 @@ public class ChildProfileController {
             request.name(),
             request.birthday(),
             request.avatar(),
-            request.ttsEnabled() != null ? request.ttsEnabled() : existing.isTtsEnabled(),
-            request.agentEnabled() != null ? request.agentEnabled() : existing.isAgentEnabled(),
+            request.npcVoiceEnabled() != null ? request.npcVoiceEnabled() : existing.isNpcVoiceEnabled(),
+            request.npcEnabled() != null ? request.npcEnabled() : existing.isNpcEnabled(),
+            request.npcVoiceVolume() != null ? request.npcVoiceVolume() : existing.getNpcVoiceVolume(),
             request.colorVisionMode()
         );
         return ResponseEntity.ok(ApiResponse.ok(toResponse(updated)));
@@ -101,8 +103,9 @@ public class ChildProfileController {
             source.isActive(),
             source.getBirthday(),
             source.getAvatar(),
-            source.isTtsEnabled(),
-            source.isAgentEnabled(),
+            source.isNpcVoiceEnabled(),
+            source.isNpcEnabled(),
+            source.getNpcVoiceVolume(),
             source.getColorVisionMode(),
             source.getCreatedAt(),
             source.getUpdatedAt()

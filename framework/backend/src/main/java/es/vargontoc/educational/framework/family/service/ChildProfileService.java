@@ -51,8 +51,9 @@ public class ChildProfileService implements ChildProfileUseCase {
         String name,
         LocalDate birthday,
         String avatar,
-        boolean ttsEnabled,
-        boolean agentEnabled,
+        boolean npcVoiceEnabled,
+        boolean npcEnabled,
+        int npcVoiceVolume,
         ColorVisionMode colorVisionMode
     ) {
         Family family = getFamilyOrThrow();
@@ -64,8 +65,11 @@ public class ChildProfileService implements ChildProfileUseCase {
         child.setBirthday(birthday);
         child.setAvatar(resolveAvatar(avatar));
         child.setActive(true);
-        child.setTtsEnabled(applyFamilyCeiling(ttsEnabled, family.isNpcVoiceEnabled()));
-        child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isNpcEnabled()));
+        int clampedVolume = Math.max(0, Math.min(100, npcVoiceVolume));
+        boolean resolvedNpcVoice = applyFamilyCeiling(npcVoiceEnabled, family.isNpcVoiceEnabled());
+        child.setNpcVoiceEnabled(resolvedNpcVoice);
+        child.setNpcEnabled(applyFamilyCeiling(npcEnabled, family.isNpcEnabled()));
+        child.setNpcVoiceVolume(resolvedNpcVoice ? Math.min(clampedVolume, family.getNpcVoiceVolume()) : 0);
         child.setColorVisionMode(colorVisionMode != null ? colorVisionMode : ColorVisionMode.NONE);
         child.setCreatedAt(LocalDateTime.now());
 
@@ -91,8 +95,9 @@ public class ChildProfileService implements ChildProfileUseCase {
         String name,
         LocalDate birthday,
         String avatar,
-        boolean ttsEnabled,
-        boolean agentEnabled,
+        boolean npcVoiceEnabled,
+        boolean npcEnabled,
+        int npcVoiceVolume,
         ColorVisionMode colorVisionMode
     ) {
         var child = childProfileRepository.findById(id)
@@ -101,14 +106,18 @@ public class ChildProfileService implements ChildProfileUseCase {
 
         childProfileValidator.validate(new ChildProfileValidator.ChildProfileValidationInput(name, birthday, avatar));
 
-        boolean stateTts = child.isTtsEnabled();
-        boolean stateAgent = child.isAgentEnabled();
+        boolean stateNpcVoice = child.isNpcVoiceEnabled();
+        boolean stateAgent = child.isNpcEnabled();
+        int stateVolume = child.getNpcVoiceVolume();
 
         child.setName(name);
         child.setBirthday(birthday);
         child.setAvatar(resolveAvatar(avatar));
-        child.setTtsEnabled(applyFamilyCeiling(ttsEnabled, family.isNpcVoiceEnabled()));
-        child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isNpcEnabled()));
+        int clampedVolume = Math.max(0, Math.min(100, npcVoiceVolume));
+        boolean resolvedNpcVoice = applyFamilyCeiling(npcVoiceEnabled, family.isNpcVoiceEnabled());
+        child.setNpcVoiceEnabled(resolvedNpcVoice);
+        child.setNpcEnabled(applyFamilyCeiling(npcEnabled, family.isNpcEnabled()));
+        child.setNpcVoiceVolume(resolvedNpcVoice ? Math.min(clampedVolume, family.getNpcVoiceVolume()) : 0);
         if (colorVisionMode != null) {
             child.setColorVisionMode(colorVisionMode);
         }
@@ -116,26 +125,34 @@ public class ChildProfileService implements ChildProfileUseCase {
 
         try {
             var stored = childProfileRepository.save(child);
-            boolean ttsChanges = stateTts != stored.isTtsEnabled();
-            boolean agentChanges = stateAgent != stored.isAgentEnabled();
+            boolean npcVoiceChanges = stateNpcVoice != stored.isNpcVoiceEnabled();
+            boolean agentChanges = stateAgent != stored.isNpcEnabled();
+            boolean volumeChanges = stateVolume != stored.getNpcVoiceVolume();
             
-            if(ttsChanges || agentChanges)  
+            if(npcVoiceChanges || agentChanges || volumeChanges)  
             {
                 var session = childSessionRepository.findActiveByChildProfileId(stored.getId());
                 if(session.isPresent()) 
                 {
                     var s = session.get();
-                    if(ttsChanges) 
+                    if(npcVoiceChanges) 
                     {
                         sessionEventPublisher.notifyChild(s.getId(), 
-                            SessionEvent.of(stored.isTtsEnabled() ? SessionEventType.CHILD_TTS_ACTIVATED : SessionEventType.CHILD_TTS_DEACTIVATED,
+                            SessionEvent.of(stored.isNpcVoiceEnabled() ? SessionEventType.CHILD_NPC_VOICE_ACTIVATED : SessionEventType.CHILD_NPC_VOICE_DEACTIVATED,
                              s.getId()));
                     }
 
                     if(agentChanges) 
                     {
                         sessionEventPublisher.notifyChild(s.getId(), 
-                            SessionEvent.of(stored.isAgentEnabled() ? SessionEventType.CHILD_AGENT_ACTIVATED : SessionEventType.CHILD_AGENT_DEACTIVATED,
+                            SessionEvent.of(stored.isNpcEnabled() ? SessionEventType.CHILD_NPC_ACTIVATED : SessionEventType.CHILD_NPC_DEACTIVATED,
+                             s.getId()));
+                    }
+
+                    if(volumeChanges) 
+                    {
+                        sessionEventPublisher.notifyChild(s.getId(), 
+                            SessionEvent.of(SessionEventType.CHILD_NPC_VOICE_VOLUME_CHANGED,
                              s.getId()));
                     }
                 }

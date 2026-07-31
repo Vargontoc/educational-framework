@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="026__rename_child_profile_fields_and_add_volume" author="vargontoc">
+        <renameColumn tableName="child_profile"
+            oldColumnName="tts_enabled"
+            newColumnName="npc_voice_enabled"
+            columnDataType="BOOLEAN"/>
+
+        <renameColumn tableName="child_profile"
+            oldColumnName="agent_enabled"
+            newColumnName="npc_enabled"
+            columnDataType="BOOLEAN"/>
+
+        <addColumn tableName="child_profile">
+            <column name="npc_voice_volume" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

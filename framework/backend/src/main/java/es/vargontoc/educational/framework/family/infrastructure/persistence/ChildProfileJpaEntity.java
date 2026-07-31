@@ -29,11 +29,14 @@ public class ChildProfileJpaEntity extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String avatar;
 
-    @Column(name = "tts_enabled", nullable = false)
-    private boolean ttsEnabled;
+    @Column(name = "npc_voice_enabled", nullable = false)
+    private boolean npcVoiceEnabled;
 
-    @Column(name = "agent_enabled", nullable = false)
-    private boolean agentEnabled;
+    @Column(name = "npc_enabled", nullable = false)
+    private boolean npcEnabled;
+
+    @Column(name = "npc_voice_volume", nullable = false)
+    private int npcVoiceVolume = 100;
 
     @Column(name = "color_vision_mode", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
@@ -79,20 +82,28 @@ public class ChildProfileJpaEntity extends BaseEntity {
         this.avatar = avatar;
     }
 
-    public boolean isTtsEnabled() {
-        return ttsEnabled;
+    public boolean isNpcVoiceEnabled() {
+        return npcVoiceEnabled;
     }
 
-    public void setTtsEnabled(boolean ttsEnabled) {
-        this.ttsEnabled = ttsEnabled;
+    public void setNpcVoiceEnabled(boolean npcVoiceEnabled) {
+        this.npcVoiceEnabled = npcVoiceEnabled;
     }
 
-    public boolean isAgentEnabled() {
-        return agentEnabled;
+    public boolean isNpcEnabled() {
+        return npcEnabled;
     }
 
-    public void setAgentEnabled(boolean agentEnabled) {
-        this.agentEnabled = agentEnabled;
+    public void setNpcEnabled(boolean npcEnabled) {
+        this.npcEnabled = npcEnabled;
+    }
+
+    public int getNpcVoiceVolume() {
+        return npcVoiceVolume;
+    }
+
+    public void setNpcVoiceVolume(int npcVoiceVolume) {
+        this.npcVoiceVolume = npcVoiceVolume;
     }
 
     public ColorVisionMode getColorVisionMode() {

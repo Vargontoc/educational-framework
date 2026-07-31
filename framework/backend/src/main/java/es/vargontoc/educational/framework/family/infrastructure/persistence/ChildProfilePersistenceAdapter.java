@@ -51,8 +51,9 @@ public class ChildProfilePersistenceAdapter implements ChildProfileRepository {
         target.setActive(source.isActive());
         target.setBirthday(source.getBirthday());
         target.setAvatar(source.getAvatar());
-        target.setTtsEnabled(source.isTtsEnabled());
-        target.setAgentEnabled(source.isAgentEnabled());
+        target.setNpcVoiceEnabled(source.isNpcVoiceEnabled());
+        target.setNpcEnabled(source.isNpcEnabled());
+        target.setNpcVoiceVolume(source.getNpcVoiceVolume());
         target.setColorVisionMode(source.getColorVisionMode() != null ? source.getColorVisionMode() : ColorVisionMode.NONE);
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
@@ -67,8 +68,9 @@ public class ChildProfilePersistenceAdapter implements ChildProfileRepository {
         target.setActive(source.isActive());
         target.setBirthday(source.getBirthday());
         target.setAvatar(source.getAvatar());
-        target.setTtsEnabled(source.isTtsEnabled());
-        target.setAgentEnabled(source.isAgentEnabled());
+        target.setNpcVoiceEnabled(source.isNpcVoiceEnabled());
+        target.setNpcEnabled(source.isNpcEnabled());
+        target.setNpcVoiceVolume(source.getNpcVoiceVolume());
         target.setColorVisionMode(source.getColorVisionMode() != null ? source.getColorVisionMode() : ColorVisionMode.NONE);
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
