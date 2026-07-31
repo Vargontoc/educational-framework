@@ -42,13 +42,7 @@ public class FamilyController {
 
     @PatchMapping
     public ResponseEntity<ApiResponse<FamilyResponse>> updateFamily(@RequestBody UpdateFamilyRequest request) {
-        var existing = familyUseCase.getFamily();
-        var family = familyUseCase.updateFamily(
-            request.name(),
-            request.pin(),
-            request.ttsEnabled() != null ? request.ttsEnabled() : existing.isTtsEnabled(),
-            request.agentEnabled() != null ? request.agentEnabled() : existing.isAgentEnabled()
-        );
+        var family = familyUseCase.updateFamily(request);
         return ResponseEntity.ok(ApiResponse.ok(toResponse(family)));
     }
 
@@ -56,8 +50,13 @@ public class FamilyController {
         return new FamilyResponse(
             family.getId(),
             family.getName(),
-            family.isTtsEnabled(),
-            family.isAgentEnabled(),
+            family.isAudioGeneralEnabled(),
+            family.getAudioGeneralVolume(),
+            family.isNpcEnabled(),
+            family.isNpcVoiceEnabled(),
+            family.getNpcVoiceVolume(),
+            family.isNarrativeVoiceEnabled(),
+            family.getNarrativeVoiceVolume(),
             family.getCreatedAt(),
             family.getUpdatedAt()
         );

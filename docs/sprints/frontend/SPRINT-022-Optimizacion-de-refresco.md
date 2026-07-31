@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** verificado
+- **Estado:** closed
 - **Fecha de revisión:** 2026-07-29
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA

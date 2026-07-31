@@ -29,4 +29,24 @@ class FamilyValidatorTest {
     void pinWithLetters_throwsValidationException() {
         assertThrows(ValidationException.class, () -> validator.validateForCreate("My Family", "12a4"));
     }
+
+    @Test
+    void updateWithNullName_doesNotThrow() {
+        assertDoesNotThrow(() -> validator.validateForUpdate(null, null));
+    }
+
+    @Test
+    void updateWithValidName_doesNotThrow() {
+        assertDoesNotThrow(() -> validator.validateForUpdate("Updated Name", null));
+    }
+
+    @Test
+    void updateWithInvalidPin_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForUpdate(null, "123"));
+    }
+
+    @Test
+    void updateWithValidPin_doesNotThrow() {
+        assertDoesNotThrow(() -> validator.validateForUpdate(null, "5678"));
+    }
 }

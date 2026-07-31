@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="025__add_global_config_fields_to_family_and_remove_legacy_fields" author="vargontoc">
+        <dropColumn tableName="family">
+            <column name="tts_enabled" />
+        </dropColumn>
+        <dropColumn tableName="family">
+            <column name="agent_enabled" />
+        </dropColumn>
+        <addColumn tableName="family">
+            <column name="audio_general_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="audio_general_volume" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="npc_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="npc_voice_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="npc_voice_volume" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+            <column name="narrative_voice_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="narrative_voice_volume" type="INT" defaultValueNumeric="100">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

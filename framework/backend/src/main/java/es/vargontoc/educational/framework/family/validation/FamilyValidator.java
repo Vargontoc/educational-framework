@@ -9,17 +9,21 @@ public class FamilyValidator extends AbstractValidator<FamilyValidator.FamilyVal
 
     @Override
     public void validate(FamilyValidationInput target) {
-        requireNonBlank(target.name(), "name");
-        requireMaxLength(target.name(), 100, "name");
+        if (target.nameRequired()) {
+            requireNonBlank(target.name(), "name");
+        }
+        if (target.name() != null) {
+            requireMaxLength(target.name(), 100, "name");
+        }
         validatePin(target.rawPin(), target.pinRequired());
     }
 
     public void validateForCreate(String name, String rawPin) {
-        validate(new FamilyValidationInput(name, rawPin, true));
+        validate(new FamilyValidationInput(name, rawPin, true, true));
     }
 
     public void validateForUpdate(String name, String rawPin) {
-        validate(new FamilyValidationInput(name, rawPin, false));
+        validate(new FamilyValidationInput(name, rawPin, false, false));
     }
 
     private void validatePin(String rawPin, boolean required) {
@@ -32,5 +36,5 @@ public class FamilyValidator extends AbstractValidator<FamilyValidator.FamilyVal
         }
     }
 
-    public record FamilyValidationInput(String name, String rawPin, boolean pinRequired) {}
+    public record FamilyValidationInput(String name, String rawPin, boolean pinRequired, boolean nameRequired) {}
 }

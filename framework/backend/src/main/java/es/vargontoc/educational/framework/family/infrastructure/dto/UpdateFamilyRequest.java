@@ -4,6 +4,13 @@ public record UpdateFamilyRequest(
     String name,
     String pin,
     Boolean ttsEnabled,
-    Boolean agentEnabled
+    Boolean agentEnabled,
+    Boolean audioGeneralEnabled,
+    Integer audioGeneralVolume,
+    Boolean npcEnabled,
+    Boolean npcVoiceEnabled,
+    Integer npcVoiceVolume,
+    Boolean narrativeVoiceEnabled,
+    Integer narrativeVoiceVolume
 ) {
 }

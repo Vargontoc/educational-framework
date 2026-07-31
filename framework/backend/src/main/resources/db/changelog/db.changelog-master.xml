@@ -29,5 +29,6 @@
     <include file="db/changelog/migrations/022__add_color_vision_mode_to_child_profile.xml"/>
     <include file="db/changelog/migrations/023__add_recognition_metadata_to_topic.xml"/>
     <include file="db/changelog/migrations/024__create_accessible_color_tables.xml"/>
+    <include file="db/changelog/migrations/025__add_global_config_fields_to_family.xml"/>
 
 </databaseChangeLog>

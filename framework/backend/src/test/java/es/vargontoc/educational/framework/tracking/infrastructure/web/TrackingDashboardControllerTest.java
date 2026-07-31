@@ -93,8 +93,6 @@ class TrackingDashboardControllerTest {
         var otherFamily = new FamilyJpaEntity();
         otherFamily.setName("Other Family");
         otherFamily.setPinHash("unused-hash");
-        otherFamily.setTtsEnabled(true);
-        otherFamily.setAgentEnabled(true);
         var savedOtherFamily = familyJpaRepository.save(otherFamily);
 
         var otherChild = childProfileUseCase.createChild(

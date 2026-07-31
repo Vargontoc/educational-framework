@@ -109,6 +109,13 @@ export const apiClient = {
     })
   },
 
+  patch<T>(endpoint: string, data?: unknown): Promise<T> {
+    return request<T>(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    })
+  },
+
   delete<T>(endpoint: string, headers?: Record<string, string>): Promise<T> {
     return request<T>(endpoint, {
       method: 'DELETE',

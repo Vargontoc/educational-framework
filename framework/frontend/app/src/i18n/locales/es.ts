@@ -323,6 +323,47 @@ export default {
       title: 'Página no encontrada',
       description: 'La página que buscas no existe'
     },
+    configuracion: {
+      title: 'Configuración',
+      saveButton: 'Guardar cambios',
+      saveSuccess: 'Configuración guardada correctamente',
+      saveError: 'No se pudo guardar la configuración',
+      pinChangedLogout: 'PIN actualizado. Sesión cerrada por seguridad.',
+      sections: {
+        audioGeneral: {
+          title: 'Audio general',
+          description: 'Controla todo el sonido de la aplicación.',
+          toggleLabel: 'Activar audio general'
+        },
+        npc: {
+          title: 'NPC',
+          description: 'Presencia de Nubi durante el juego.',
+          toggleLabel: 'Mostrar a Nubi'
+        },
+        npcVoice: {
+          title: 'Voz del NPC',
+          description: 'Voz de Nubi durante el juego. Si la apagas, Nubi sigue presente pero en silencio.',
+          toggleLabel: 'Activar voz de Nubi'
+        },
+        narrativeVoice: {
+          title: 'Voz narrativa',
+          description: 'Voz de la lectura familiar. Independiente del Nubi.',
+          toggleLabel: 'Activar voz narrativa'
+        },
+        pin: {
+          title: 'PIN familiar',
+          description: 'Cambia el PIN de acceso al panel parental.',
+          newPinLabel: 'Nuevo PIN',
+          confirmPinLabel: 'Confirmar nuevo PIN',
+          mismatchError: 'Los PINs no coinciden. Inténtalo de nuevo.'
+        }
+      }
+    },
+    errors: {
+      networkError: 'No se pudo guardar. Revisa tu conexión.',
+      validationError: 'Error de validación. Revisa los datos.',
+      genericError: 'Ha ocurrido un error. Inténtalo de nuevo.'
+    },
     catalog: {
       title: 'Catálogo de Componentes',
       subtitle: 'Sistema de diseño y componentes',

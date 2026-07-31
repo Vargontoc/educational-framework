@@ -7,10 +7,20 @@ properties:
     format: int64
   name:
     type: string
-  ttsEnabled:
+  audioGeneralEnabled:
     type: boolean
-  agentEnabled:
+  audioGeneralVolume:
+    type: integer
+  npcEnabled:
     type: boolean
+  npcVoiceEnabled:
+    type: boolean
+  npcVoiceVolume:
+    type: integer
+  narrativeVoiceEnabled:
+    type: boolean
+  narrativeVoiceVolume:
+    type: integer
   createdAt:
     type: string
     format: date-time

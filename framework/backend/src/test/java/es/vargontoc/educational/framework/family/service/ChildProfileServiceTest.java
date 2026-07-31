@@ -20,7 +20,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -50,8 +49,6 @@ class ChildProfileServiceTest {
     void createChild_appliesFlagCeilingWhenFamilyDisabled() {
         var family = new Family();
         family.setId(1L);
-        family.setTtsEnabled(false);
-        family.setAgentEnabled(false);
 
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -68,8 +65,6 @@ class ChildProfileServiceTest {
     void createChild_keepsEnabledFlagsWhenFamilyAllows() {
         var family = new Family();
         family.setId(1L);
-        family.setTtsEnabled(true);
-        family.setAgentEnabled(true);
 
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -99,8 +94,6 @@ class ChildProfileServiceTest {
     @Test
     void updateChild_reappliesCeilingAfterFamilyChange() {
         var family = new Family();
-        family.setTtsEnabled(false);
-        family.setAgentEnabled(true);
 
         var child = new ChildProfile();
         child.setId(2L);
@@ -132,8 +125,6 @@ class ChildProfileServiceTest {
     void createChild_defaultsColorVisionModeToNoneWhenNull() {
         var family = new Family();
         family.setId(1L);
-        family.setTtsEnabled(true);
-        family.setAgentEnabled(true);
 
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -147,8 +138,6 @@ class ChildProfileServiceTest {
     void createChild_storesNonDefaultColorVisionMode() {
         var family = new Family();
         family.setId(1L);
-        family.setTtsEnabled(true);
-        family.setAgentEnabled(true);
 
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -161,8 +150,6 @@ class ChildProfileServiceTest {
     @Test
     void updateChild_preservesColorVisionModeWhenNull() {
         var family = new Family();
-        family.setTtsEnabled(true);
-        family.setAgentEnabled(true);
 
         var child = new ChildProfile();
         child.setId(3L);
@@ -191,9 +178,6 @@ class ChildProfileServiceTest {
     @Test
     void updateChild_updatesColorVisionModeWhenProvided() {
         var family = new Family();
-        family.setTtsEnabled(true);
-        family.setAgentEnabled(true);
-
         var child = new ChildProfile();
         child.setId(4L);
         child.setFamilyId(1L);

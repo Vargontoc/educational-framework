@@ -59,7 +59,7 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
 
     @Test
     void createChild_appliesTtsCeiling() throws Exception {
-        familyUseCase.updateFamily("Family One", null, false, true);
+        familyUseCase.updateFamily(new es.vargontoc.educational.framework.family.infrastructure.dto.UpdateFamilyRequest("Family One", null, false, true, null, null, null, null, null, null, null));
         var body = objectMapper.writeValueAsString(Map.of(
             "name", "Kid One",
             "birthday", LocalDate.now().minusYears(8),

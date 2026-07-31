@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.family.service;
 
+import es.vargontoc.educational.framework.family.infrastructure.dto.UpdateFamilyRequest;
 import es.vargontoc.educational.framework.family.model.ChildProfile;
 import es.vargontoc.educational.framework.family.model.Family;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
@@ -62,8 +63,6 @@ public class FamilyService implements FamilyUseCase {
         var family = new Family();
         family.setName(name);
         family.setPinHash(passwordEncoder.encode(rawPin));
-        family.setTtsEnabled(ttsEnabled);
-        family.setAgentEnabled(agentEnabled);
         family.setCreatedAt(LocalDateTime.now());
 
         return familyRepository.save(family);
@@ -77,28 +76,62 @@ public class FamilyService implements FamilyUseCase {
     }
 
     @Override
-    public Family updateFamily(String name, String rawPin, boolean ttsEnabled, boolean agentEnabled) {
+    public Family updateFamily(UpdateFamilyRequest request) {
         var existing = familyRepository.findFamily()
             .orElseThrow(() -> new ResourceNotFoundException("Family not found"));
 
-        familyValidator.validateForUpdate(name, rawPin);
+        // Validate name and pin if provided
+        familyValidator.validateForUpdate(request.name(), request.pin());
 
-        existing.setName(name);
-        boolean pinChanged = rawPin != null && !rawPin.isBlank();
+        // Update name if provided
+        if (request.name() != null) {
+            existing.setName(request.name());
+        }
+
+        // Update pin if provided and non-blank
+        boolean pinChanged = request.pin() != null && !request.pin().isBlank();
         if (pinChanged) {
-            existing.setPinHash(passwordEncoder.encode(rawPin));
+            existing.setPinHash(passwordEncoder.encode(request.pin()));
             revokeFamilySessions(existing.getId());
         }
 
-        if (!ttsEnabled) {
-            disableChildFlags(existing.getId(), true, false);
+        // Update global config fields (only if provided)
+        if (request.audioGeneralEnabled() != null) {
+            existing.setAudioGeneralEnabled(request.audioGeneralEnabled());
         }
-        if (!agentEnabled) {
-            disableChildFlags(existing.getId(), false, true);
+        if (request.audioGeneralVolume() != null) {
+            existing.setAudioGeneralVolume(clampVolume(request.audioGeneralVolume()));
+        }
+        if (request.npcEnabled() != null) {
+            existing.setNpcEnabled(request.npcEnabled());
+        }
+        if (request.npcVoiceEnabled() != null) {
+            existing.setNpcVoiceEnabled(request.npcVoiceEnabled());
+        }
+        if (request.npcVoiceVolume() != null) {
+            existing.setNpcVoiceVolume(clampVolume(request.npcVoiceVolume()));
+        }
+        if (request.narrativeVoiceEnabled() != null) {
+            existing.setNarrativeVoiceEnabled(request.narrativeVoiceEnabled());
+        }
+        if (request.narrativeVoiceVolume() != null) {
+            existing.setNarrativeVoiceVolume(clampVolume(request.narrativeVoiceVolume()));
         }
 
-        existing.setTtsEnabled(ttsEnabled);
-        existing.setAgentEnabled(agentEnabled);
+        // NPC Voice deactive if NPC is deactive
+        if(!existing.isNpcEnabled())
+        {
+            existing.setNpcVoiceEnabled(false);
+            disableChildFlags(existing.getId(), true, true);
+        }else if(!existing.isNpcVoiceEnabled())
+        {
+            disableChildFlags(existing.getId(), true, false);
+        }
+
+        
+
+
+
         existing.setUpdatedAt(LocalDateTime.now());
 
         return familyRepository.save(existing);
@@ -110,17 +143,23 @@ public class FamilyService implements FamilyUseCase {
         return familyRepository.exists();
     }
 
-    private void disableChildFlags(Long familyId, boolean disableTts, boolean disableAgent) {
+    static int clampVolume(int value) {
+        if (value <= 0) return 0;
+        if (value >= 100) return 100;
+        return value;
+    }
+
+    private void disableChildFlags(Long familyId, boolean disableNpcVoice, boolean disableNpc) {
         for (ChildProfile child : childProfileRepository.findAll()) {
             if (familyId != null && !familyId.equals(child.getFamilyId())) {
                 continue;
             }
             boolean changed = false;
-            if (disableTts && child.isTtsEnabled()) {
+            if (disableNpcVoice && child.isTtsEnabled()) {
                 child.setTtsEnabled(false);
                 changed = true;
             }
-            if (disableAgent && child.isAgentEnabled()) {
+            if (disableNpc && child.isAgentEnabled()) {
                 child.setAgentEnabled(false);
                 changed = true;
             }
@@ -130,34 +169,23 @@ public class FamilyService implements FamilyUseCase {
             }
         }
 
-        if(disableTts || disableAgent) 
+        if(disableNpcVoice || disableNpc) 
         {
             var childSessions = childSessionRepository.findActiveByFamilyId(familyId);
             if(!childSessions.isEmpty())
             {
                 for (ChildSession childSession : childSessions) {
 
-                    if(disableTts) {
+                    if(disableNpcVoice) {
                         sessionEventPublisher.notifyChild(childSession.getId(), SessionEvent.of(SessionEventType.CHILD_TTS_DEACTIVATED, childSession.getId()));
                     }
 
-                    if(disableAgent) {
+                    if(disableNpc) {
                         sessionEventPublisher.notifyChild(childSession.getId(), SessionEvent.of(SessionEventType.CHILD_AGENT_DEACTIVATED, childSession.getId()));
                     }
                 }
-            }  
+            }
         }
-    }
-
-
-    private void sendTTSConfigChangesForChilds(SessionEventType event)
-    {
-        
-    }
-
-    private void sendAgentChangesFroChilds(SessionEventType event) 
-    {
-
     }
 
     private void revokeFamilySessions(Long familyId) {

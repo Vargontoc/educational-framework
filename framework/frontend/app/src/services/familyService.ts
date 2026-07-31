@@ -1,5 +1,6 @@
 import { apiClient, type ApiError } from './api'
 import type { ApiFamilyResponse, FamilyData } from '../composables/useFamilyStatus'
+import type { FamilyUpdatePayload } from '../types/family-config'
 
 export interface ChildProfile {
   id: number
@@ -165,5 +166,74 @@ export async function createChild(request: CreateChildRequest): Promise<CreateCh
       return { success: false, errorKey: 'conflict' }
     }
     return { success: false, errorKey: 'server' }
+  }
+}
+
+/**
+ * Actualiza la configuración global de familia mediante PATCH /api/v1/family
+ * 
+ * Permite envío parcial: solo se envían los campos modificados.
+ * El backend valida y aplica los cambios, devolviendo la familia actualizada.
+ * 
+ * @param config - Payload parcial con campos a actualizar (config global, name, pin)
+ * @returns Promise con los datos de familia actualizados
+ * @throws ApiError con status y message según el tipo de error:
+ *   - status 0: error de red/conexión
+ *   - status 400: error de validación (PIN inválido, volumen fuera de rango)
+ *   - status 401: no autenticado (el caller debe manejar logout)
+ *   - status 5xx: error del servidor
+ * 
+ * @example
+ * // Actualizar solo volumen de audio general
+ * await updateFamilyConfig({ audioGeneralVolume: 50 })
+ * 
+ * @example
+ * // Actualizar múltiples campos
+ * await updateFamilyConfig({
+ *   audioGeneralEnabled: false,
+ *   npcVoiceVolume: 75,
+ *   pin: '1234'
+ * })
+ */
+export async function updateFamilyConfig(
+  config: FamilyUpdatePayload
+): Promise<FamilyData> {
+  const response = await apiClient.patch<ApiFamilyResponse>('/api/v1/family', config)
+  return response.data
+}
+
+/**
+ * Verifica si un error es de tipo ApiError
+ */
+export function isApiError(error: unknown): error is ApiError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    'message' in error
+  )
+}
+
+/**
+ * Obtiene un mensaje de usuario amigable según el tipo de error
+ */
+export function getUserFriendlyErrorMessage(error: unknown): string {
+  if (!isApiError(error)) {
+    return 'Error desconocido'
+  }
+
+  switch (error.status) {
+    case 0:
+      return 'No se pudo guardar. Revisa tu conexión.'
+    case 400:
+      return 'Los datos no son válidos. Revisa e inténtalo de nuevo.'
+    case 401:
+      return 'Tu sesión ha expirado. Inicia sesión de nuevo.'
+    case 500:
+    case 502:
+    case 503:
+      return 'Error del servidor. Inténtalo más tarde.'
+    default:
+      return error.message || 'Error al guardar la configuración'
   }
 }

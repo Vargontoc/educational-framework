@@ -21,8 +21,13 @@ import { apiClient, type ApiError } from '../services/api'
 export interface FamilyData {
   id: number
   name: string
-  ttsEnabled: boolean
-  agentEnabled: boolean
+  audioGeneralEnabled?: boolean
+  audioGeneralVolume?: number
+  npcEnabled?: boolean
+  npcVoiceEnabled?: boolean
+  npcVoiceVolume?: number
+  narrativeVoiceEnabled?: boolean
+  narrativeVoiceVolume?: number
   createdAt: string
   updatedAt: string
 }

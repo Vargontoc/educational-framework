@@ -6,7 +6,8 @@ spring:
         "[format_sql]": true
   liquibase:
     drop-first: false
-
+  pattern:
+    console: "%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n"
 management:
   endpoint:
     health:
@@ -16,5 +17,3 @@ logging:
   level:
     "[es.vargontoc]": DEBUG
     "[org.springframework.ai]": DEBUG
-    "[org.hibernate.SQL]": DEBUG
-    "[org.hibernate.type.descriptor.sql]": TRACE

@@ -84,7 +84,7 @@ onUnmounted(() => {
 <style scoped>
 .parent-panel-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   width: 100%;
 }
 
@@ -93,6 +93,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .parent-panel-layout__header {
@@ -131,6 +133,7 @@ onUnmounted(() => {
 .parent-panel-layout__content {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 @media (max-width: 1023px) {

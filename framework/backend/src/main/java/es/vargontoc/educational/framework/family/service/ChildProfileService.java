@@ -64,8 +64,8 @@ public class ChildProfileService implements ChildProfileUseCase {
         child.setBirthday(birthday);
         child.setAvatar(resolveAvatar(avatar));
         child.setActive(true);
-        child.setTtsEnabled(applyFamilyCeiling(ttsEnabled, family.isTtsEnabled()));
-        child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isAgentEnabled()));
+        child.setTtsEnabled(applyFamilyCeiling(ttsEnabled, family.isNpcVoiceEnabled()));
+        child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isNpcEnabled()));
         child.setColorVisionMode(colorVisionMode != null ? colorVisionMode : ColorVisionMode.NONE);
         child.setCreatedAt(LocalDateTime.now());
 
@@ -107,8 +107,8 @@ public class ChildProfileService implements ChildProfileUseCase {
         child.setName(name);
         child.setBirthday(birthday);
         child.setAvatar(resolveAvatar(avatar));
-        child.setTtsEnabled(applyFamilyCeiling(ttsEnabled, family.isTtsEnabled()));
-        child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isAgentEnabled()));
+        child.setTtsEnabled(applyFamilyCeiling(ttsEnabled, family.isNpcVoiceEnabled()));
+        child.setAgentEnabled(applyFamilyCeiling(agentEnabled, family.isNpcEnabled()));
         if (colorVisionMode != null) {
             child.setColorVisionMode(colorVisionMode);
         }

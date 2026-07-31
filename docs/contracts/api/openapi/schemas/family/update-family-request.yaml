@@ -6,7 +6,24 @@ properties:
     type: string
   pin:
     type: string
-  ttsEnabled:
+    pattern: '^\d{4}$'
+  audioGeneralEnabled:
     type: boolean
-  agentEnabled:
+  audioGeneralVolume:
+    type: integer
+    minimum: 0
+    maximum: 100
+  npcEnabled:
     type: boolean
+  npcVoiceEnabled:
+    type: boolean
+  npcVoiceVolume:
+    type: integer
+    minimum: 0
+    maximum: 100
+  narrativeVoiceEnabled:
+    type: boolean
+  narrativeVoiceVolume:
+    type: integer
+    minimum: 0
+    maximum: 100
