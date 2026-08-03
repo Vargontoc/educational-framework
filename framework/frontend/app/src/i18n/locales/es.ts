@@ -423,8 +423,9 @@ export default {
           visualAccessibility: {
             title: 'Accesibilidad visual',
             toggleLabel: 'Activar ajuste visual',
-            selectLabel: 'Perfil de visualización',
-            warning: 'Esta configuración es orientativa. No es una sección médica ni diagnóstica. Ante dudas, consulta a un especialista.'
+            selectorLabel: 'Selecciona un perfil de visualización para comparar',
+            warning: 'Esta comparación es orientativa para adaptar el juego. No identifica la visión del niño ni sustituye la orientación de un especialista.',
+            cardAriaLabel: 'Perfil de visualización {mode}: {description}'
           }
         }
       },

@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.avatar.infrastructure.cache;
 
-import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsException;
+
 import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsToneMapper;
 import es.vargontoc.educational.framework.avatar.ports.out.TtsClient;
 import es.vargontoc.educational.framework.content.model.AvatarTone;

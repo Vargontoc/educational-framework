@@ -6,6 +6,8 @@ import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import java.time.LocalDate;
 import java.util.List;
 
+import es.vargontoc.educational.framework.family.infrastructure.dto.UpdateChildProfileRequest;
+
 public interface ChildProfileUseCase {
 
     ChildProfile createChild(
@@ -25,13 +27,7 @@ public interface ChildProfileUseCase {
 
     ChildProfile updateChild(
         Long id,
-        String name,
-        LocalDate birthday,
-        String avatar,
-        boolean npcVoiceEnabled,
-        boolean npcEnabled,
-        int npcVoiceVolume,
-        ColorVisionMode colorVisionMode
+        UpdateChildProfileRequest request
     );
 
     ChildProfile changeActiveState(Long id);

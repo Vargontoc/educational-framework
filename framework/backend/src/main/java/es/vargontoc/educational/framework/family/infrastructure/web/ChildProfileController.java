@@ -63,22 +63,12 @@ public class ChildProfileController {
         return ResponseEntity.ok(ApiResponse.ok(toResponse(childProfileUseCase.getChild(id))));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<ChildProfileResponse>> updateChild(
         @PathVariable Long id,
         @RequestBody UpdateChildProfileRequest request
     ) {
-        var existing = childProfileUseCase.getChild(id);
-        var updated = childProfileUseCase.updateChild(
-            id,
-            request.name(),
-            request.birthday(),
-            request.avatar(),
-            request.npcVoiceEnabled() != null ? request.npcVoiceEnabled() : existing.isNpcVoiceEnabled(),
-            request.npcEnabled() != null ? request.npcEnabled() : existing.isNpcEnabled(),
-            request.npcVoiceVolume() != null ? request.npcVoiceVolume() : existing.getNpcVoiceVolume(),
-            request.colorVisionMode()
-        );
+        var updated = childProfileUseCase.updateChild(id,request);
         return ResponseEntity.ok(ApiResponse.ok(toResponse(updated)));
     }
 

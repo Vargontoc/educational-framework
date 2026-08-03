@@ -203,7 +203,7 @@ export async function updateChild(
   id: number,
   request: UpdateChildProfileRequest
 ): Promise<ChildProfileExtended> {
-  const response = await apiClient.put<ApiChildProfileResponse>(
+  const response = await apiClient.patch<ApiChildProfileResponse>(
     `/api/v1/family/children/${id}`,
     request
   )

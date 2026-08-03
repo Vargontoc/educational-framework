@@ -4,9 +4,9 @@
 
 - **Estado:** aceptada
 - **Responsable principal:** frontend
-- **Decisión confirmada:** 2026-07-31
+- **Decisión confirmada:** 2026-07-31; actualización de accesibilidad cromática confirmada: 2026-08-02.
 - **Historia de usuario:** Como adulto autenticado, quiero consultar y gestionar los perfiles infantiles de mi familia, adaptar sus configuraciones individuales y controlar su acceso al juego para mantener una experiencia adecuada y bajo control parental.
-- **Depende de:** ADR-022; FEAT-003 — Selección y alta de perfiles infantiles; FEAT-004 — Estructura visual y navegación del panel parental; FEAT-005 — Configuración global de audio, NPC y PIN; acceso parental mediante PIN vigente.
+- **Depende de:** ADR-022; ADR-023 — Selector visual de accesibilidad cromática; FEAT-003 — Selección y alta de perfiles infantiles; FEAT-004 — Estructura visual y navegación del panel parental; FEAT-005 — Configuración global de audio, NPC y PIN; acceso parental mediante PIN vigente.
 
 ## 1. Objetivo y valor para la familia
 
@@ -31,15 +31,18 @@ El ajuste visual individual pretende facilitar la participación en minijuegos r
 1. Desde la tarjeta abre la edición y ve el breadcrumb **«Niños > [Nombre]»**.
 2. Modifica nombre, fecha de nacimiento, avatar y los ajustes individuales disponibles de audio/NPC.
 3. Consulta si algún ajuste individual está deshabilitado por una configuración global familiar y no puede modificarlo mientras permanezca deshabilitado.
-4. Revisa o activa el ajuste visual para minijuegos de color, si corresponde.
-5. Guarda los cambios, elimina el perfil previa confirmación o abre **Dashboard**.
+4. Revisa o activa el ajuste visual para minijuegos de color mediante tarjetas visuales, si corresponde.
+5. Explora una tarjeta por toque, puntero o foco y compara su muestra visual antes de seleccionar manualmente una preferencia.
+6. Guarda los cambios, elimina el perfil previa confirmación o abre **Dashboard**.
 
 ### Adulto que ajusta la visualización de colores
 
 1. En la edición del perfil encuentra la sección de accesibilidad visual.
 2. Ve que el ajuste está inactivo cuando el perfil no tiene una configuración visual y activo cuando sí posee un valor.
-3. Puede dejar el estado predeterminado sin ajuste o seleccionar manualmente un perfil de visualización de colores.
-4. Consulta ejemplos compuestos solo por elementos simples y un aviso de que la sección no realiza diagnósticos y que debe consultar a un especialista ante dudas.
+3. Puede dejar el estado predeterminado sin ajuste o seleccionar manualmente un perfil de visualización de colores mediante tarjetas.
+4. Cada tarjeta combina el nombre del modo con una explicación cotidiana de la confusión habitual de colores y una muestra de tres globos —rojo, verde y azul— con patrones o símbolos claros.
+5. Al explorar una tarjeta, ve una previsualización de ese modo aplicada a la muestra; en pantalla táctil, esta previsualización se activa mediante la selección, sin requerir pasar el cursor.
+6. Consulta un aviso de que la comparación no identifica la visión del niño, no recomienda un modo y que debe consultar a un especialista ante dudas.
 
 ### Adulto que consulta el dashboard individual
 
@@ -63,12 +66,14 @@ El ajuste visual individual pretende facilitar la participación en minijuegos r
 13. La edición debe incluir las acciones **«Guardar cambios»**, **«Eliminar»** y **«Dashboard»**.
 14. **«Eliminar»** debe requerir confirmación explícita del adulto y, tras confirmarse, debe eliminar el perfil y toda la información relacionada.
 15. **«Dashboard»** debe abrir por ahora un placeholder y mostrar el breadcrumb **«Niños > [Nombre] > Dashboard»**.
-16. La sección de accesibilidad visual debe permitir mantener el estado predeterminado sin ajuste o seleccionar manualmente: DEUTERENOPIA, DEUTERANOMALY, PROTANOPIA, PROTANOMALY, TRITANOPIA, TRITANOMALY, ACHROMATOMALY o ACHROMATOPSIA.
+16. La sección de accesibilidad visual debe sustituir el menú desplegable textual por tarjetas visuales y permitir mantener el estado predeterminado **«Sin ajuste»** o seleccionar manualmente: DEUTERENOPIA, DEUTERANOMALY, PROTANOPIA, PROTANOMALY, TRITANOPIA, TRITANOMALY, ACHROMATOMALY o ACHROMATOPSIA.
 17. El interruptor del ajuste visual debe presentarse inactivo cuando no haya una configuración visual individual y activo cuando el perfil tenga un valor de configuración visual. Al desactivarlo y guardar cambios, debe eliminarse la configuración visual individual y restablecerse el estado predeterminado sin ajuste.
-18. La sección de accesibilidad visual debe incluir ejemplos simples —por ejemplo, círculos o cuadrados— y un aviso visible de que no es una sección médica ni diagnóstica y de que, ante dudas, se consulte a un especialista.
-19. La sección no debe ofrecer pruebas, resultados, diagnósticos, recomendaciones clínicas ni inferencias sobre la visión del niño.
-20. Los controles y estados deben ser comprensibles para adultos, no depender exclusivamente del color y ser utilizables con objetivos táctiles amplios en móvil y tableta.
-21. La experiencia infantil no debe mostrar ni permitir acceder a estos controles parentales, a los datos de perfil ni a la información de sesión.
+18. Cada tarjeta debe mostrar el término del modo, la explicación cotidiana aprobada en ADR-023 y la misma muestra visual de tres globos: rojo, verde y azul. Cada globo debe incluir un patrón o símbolo claro además de su color.
+19. Al explorar una tarjeta mediante puntero, foco o selección, la muestra debe previsualizar el modo correspondiente. En móvil y tableta, la selección debe proporcionar esa previsualización sin depender de pasar el cursor.
+20. La sección debe incluir un aviso visible de que la comparación es orientativa para adaptar el juego, no identifica la visión del niño ni recomienda un modo, y que ante dudas se consulte a un especialista.
+21. La sección no debe ofrecer pruebas, resultados, diagnósticos, recomendaciones clínicas ni inferencias sobre la visión del niño.
+22. Los controles y estados deben ser comprensibles para adultos, no depender exclusivamente del color y ser utilizables con objetivos táctiles amplios en móvil y tableta.
+23. La experiencia infantil no debe mostrar ni permitir acceder a estos controles parentales, a los datos de perfil ni a la información de sesión.
 
 ## 4. Criterios de aceptación verificables
 
@@ -85,9 +90,11 @@ El ajuste visual individual pretende facilitar la participación en minijuegos r
 11. **«Eliminar»** solicita confirmación; al cancelarla el perfil se conserva y al confirmarla se eliminan el perfil y toda la información relacionada.
 12. Al pulsar **«Dashboard»**, se muestra el placeholder con breadcrumb **«Niños > [Nombre] > Dashboard»**.
 13. Sin configuración visual individual, el interruptor de accesibilidad visual se muestra inactivo; con una configuración visual individual, se muestra activo. Si el adulto lo desactiva y guarda, la configuración visual individual se elimina y el perfil vuelve al estado predeterminado sin ajuste.
-14. El adulto puede seleccionar el estado sin ajuste o cualquiera de los ocho perfiles visuales confirmados.
-15. Los ejemplos visuales contienen únicamente elementos simples y no incluyen resultados, evaluaciones ni indicaciones diagnósticas.
-16. El aviso de consulta a especialista comunica que la configuración es orientativa y no médica.
+14. La sección presenta «Sin ajuste» y los ocho perfiles visuales confirmados como tarjetas visuales, sin un menú desplegable textual.
+15. Cada tarjeta presenta el nombre del modo, una explicación cotidiana y una muestra compuesta por tres globos rojo, verde y azul, todos distinguibles mediante patrón o símbolo además del color.
+16. Al explorar una tarjeta mediante puntero, foco o selección, la muestra muestra la previsualización correspondiente. En una pantalla táctil, el adulto puede obtener esa previsualización mediante selección, sin hover.
+17. La muestra y los textos no contienen resultados, evaluaciones, indicaciones diagnósticas ni una recomendación de modo para el niño.
+18. El aviso de consulta a especialista comunica que la comparación es orientativa para adaptar el juego, no identifica la visión del niño y no sustituye la orientación profesional.
 
 ## 5. Ámbitos que deben validar los responsables y dependencias de producto conocidas
 
@@ -96,7 +103,8 @@ El ajuste visual individual pretende facilitar la participación en minijuegos r
 - Comprensión de cuadrícula, tarjetas seleccionables, breadcrumbs, confirmaciones y estados de bloqueo en móvil y tableta.
 - Diferenciación clara entre bloquear, expulsar y eliminar, sin depender solo del color.
 - Claridad del estado deshabilitado por configuración familiar y del ajuste visual activo/inactivo.
-- Comprensión adulta de los ejemplos y del aviso no médico.
+- Comprensión adulta de las tarjetas, las explicaciones cotidianas, la comparación visual y el aviso no médico.
+- Equivalencia funcional de la previsualización mediante toque, puntero y foco, sin depender solo del hover.
 
 ### Backend, datos y sesiones
 
@@ -106,7 +114,7 @@ El ajuste visual individual pretende facilitar la participación en minijuegos r
 
 ### Contenido y accesibilidad
 
-- Redacción no clínica de los perfiles visuales, ejemplos simples y aviso a especialista.
+- Redacción no clínica de los perfiles visuales, explicaciones cotidianas, muestra de globos y aviso a especialista.
 - Apoyos visuales adicionales al color en los minijuegos correspondientes, sin transformar el ajuste en una evaluación.
 
 ### Seguridad y privacidad infantil
@@ -133,6 +141,7 @@ El ajuste visual individual pretende facilitar la participación en minijuegos r
 
 - Los controles se dirigen al adulto y permanecen separados del juego infantil.
 - El ajuste visual es opcional, manual y no clínico; los minijuegos de color no deben apoyarse únicamente en color.
+- La muestra comparativa no identifica la visión del niño, no selecciona ni recomienda un modo y no sustituye la orientación de un especialista.
 - No se incluyen temporizadores, castigos, comparativas, clasificaciones ni mensajes sobre capacidad infantil.
 
 ### Límites de IA
@@ -154,7 +163,8 @@ El ajuste visual individual pretende facilitar la participación en minijuegos r
 ### Riesgos
 
 - Confundir bloquear con eliminar puede provocar expectativas equivocadas sobre los datos del niño; las etiquetas y confirmaciones deben explicar las consecuencias.
-- Los nombres de perfiles visuales pueden interpretarse como diagnóstico; deben estar acompañados de ejemplos no evaluativos y el aviso a especialista.
+- Los nombres de perfiles visuales pueden interpretarse como diagnóstico; deben estar acompañados de explicaciones cotidianas, una muestra no evaluativa y el aviso a especialista.
+- La comparación visual podría interpretarse como una prueba para escoger el modo correcto del niño; debe comunicar expresamente que sirve para adaptar el juego, no para identificar su visión.
 - Mostrar un tiempo de sesión sin contexto puede sugerir control o valoración de uso; debe limitarse a la sesión actual activa y no mostrarse como señal de capacidad ni rendimiento.
 
 ### Supuestos
@@ -162,7 +172,8 @@ El ajuste visual individual pretende facilitar la participación en minijuegos r
 - El acceso parental mediante PIN ya está implementado, según confirmación del solicitante.
 - El dashboard individual se limita actualmente a un placeholder.
 - «Ajuste visual activo» equivale a que el perfil posee una configuración visual individual; «inactivo» equivale a que no la posee.
+- La muestra de cada tarjeta usa tres globos rojo, verde y azul con patrones o símbolos no cromáticos; la selección manual del adulto sigue siendo la única forma de elegir un modo.
 
 ### Decisiones pendientes
 
-- Los responsables técnicos deben determinar cómo materializar los comportamientos acordados sin modificar el alcance ni las garantías de privacidad.
+- Los responsables técnicos deben determinar cómo materializar la previsualización solicitada sin modificar el alcance, sin convertirla en una evaluación y sin reducir las garantías de privacidad o accesibilidad.

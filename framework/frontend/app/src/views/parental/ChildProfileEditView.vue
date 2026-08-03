@@ -78,20 +78,11 @@
         />
 
         <div v-if="visualAccessibilityActive" class="child-profile-edit-view__visual-options">
-          <NubiSelect
+          <ColorVisionCardSelector
             :model-value="draft.colorVisionMode"
-            @update:model-value="draft.colorVisionMode = String($event)"
-            :options="colorVisionOptions"
-            :label="t('views.ninos.edit.sections.visualAccessibility.selectLabel')"
+            :modes="colorVisionModes"
+            @update:model-value="draft.colorVisionMode = $event"
           />
-
-          <div class="child-profile-edit-view__visual-examples">
-            <ColorVisionExamples :mode="draft.colorVisionMode" />
-          </div>
-
-          <aside v-if="visualAccessibilityActive" class="child-profile-edit-view__visual-warning">
-            {{ t('views.ninos.edit.sections.visualAccessibility.warning') }}
-          </aside>
         </div>
       </section>
 
@@ -137,18 +128,17 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useChildProfileEdit } from '../../composables/useChildProfileEdit'
 import { useToast } from '../../composables/useToast'
-import { ColorVisionMode, COLOR_VISION_LABELS } from '../../types/colorVision'
+import { ColorVisionMode, COLOR_VISION_LABELS, COLOR_VISION_DESCRIPTIONS } from '../../types/colorVision'
 
 import NubiBreadcrumb from '../../components/base/NubiBreadcrumb.vue'
 import NubiSpinner from '../../components/base/NubiSpinner.vue'
 import NubiTextInput from '../../components/base/NubiTextInput.vue'
 import NubiToggle from '../../components/base/NubiToggle.vue'
-import NubiSelect from '../../components/base/NubiSelect.vue'
 import NubiButton from '../../components/base/NubiButton.vue'
 import NubiConfirmModal from '../../components/base/NubiConfirmModal.vue'
 import AvatarSelector from '../../components/home/AvatarSelector.vue'
 import ToggleWithPercentage from '../../components/config/ToggleWithPercentage.vue'
-import ColorVisionExamples from '../../components/ninos/ColorVisionExamples.vue'
+import ColorVisionCardSelector from '../../components/ninos/ColorVisionCardSelector.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -184,10 +174,13 @@ const visualAccessibilityActive = computed({
   }
 })
 
-const colorVisionOptions = Object.entries(COLOR_VISION_LABELS).map(([value, label]) => ({
-  value,
-  label
-}))
+const colorVisionModes = computed(() =>
+  Object.values(ColorVisionMode).map((value) => ({
+    value,
+    label: COLOR_VISION_LABELS[value],
+    description: COLOR_VISION_DESCRIPTIONS[value]
+  }))
+)
 
 const showDeleteModal = ref(false)
 
@@ -301,26 +294,7 @@ function handleDashboard() {
 }
 
 .child-profile-edit-view__visual-options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--nubi-spacing-md);
   padding-left: var(--nubi-spacing-md);
-}
-
-.child-profile-edit-view__visual-examples {
-  display: flex;
-  justify-content: center;
-}
-
-.child-profile-edit-view__visual-warning {
-  font-size: var(--nubi-font-size-sm);
-  color: var(--nubi-text-secondary);
-  background-color: var(--nubi-bg-surface-secondary);
-  padding: var(--nubi-spacing-sm) var(--nubi-spacing-md);
-  border-radius: var(--nubi-radius-md);
-  border-left: 3px solid var(--nubi-color-primary);
-  margin: 0;
-  line-height: var(--nubi-line-height-relaxed);
 }
 
 .child-profile-edit-view__actions {

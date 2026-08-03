@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import es.vargontoc.educational.framework.family.infrastructure.dto.UpdateChildProfileRequest;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
@@ -92,68 +93,88 @@ public class ChildProfileService implements ChildProfileUseCase {
     @Override
     public ChildProfile updateChild(
         Long id,
-        String name,
-        LocalDate birthday,
-        String avatar,
-        boolean npcVoiceEnabled,
-        boolean npcEnabled,
-        int npcVoiceVolume,
-        ColorVisionMode colorVisionMode
+        UpdateChildProfileRequest request
     ) {
         var child = childProfileRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Child profile not found"));
+        
+        // Get family for global settings
         Family family = getFamilyOrThrow();
 
-        childProfileValidator.validate(new ChildProfileValidator.ChildProfileValidationInput(name, birthday, avatar));
+        // Validate request 
+        childProfileValidator.validateForUpdate(request);
 
-        boolean stateNpcVoice = child.isNpcVoiceEnabled();
-        boolean stateAgent = child.isNpcEnabled();
-        int stateVolume = child.getNpcVoiceVolume();
+        // Get global settings for npc - agent
+        boolean npcState = family.isNpcEnabled();
+        boolean npcVoiceState = family.isNpcVoiceEnabled();
 
-        child.setName(name);
-        child.setBirthday(birthday);
-        child.setAvatar(resolveAvatar(avatar));
-        int clampedVolume = Math.max(0, Math.min(100, npcVoiceVolume));
-        boolean resolvedNpcVoice = applyFamilyCeiling(npcVoiceEnabled, family.isNpcVoiceEnabled());
-        child.setNpcVoiceEnabled(resolvedNpcVoice);
-        child.setNpcEnabled(applyFamilyCeiling(npcEnabled, family.isNpcEnabled()));
-        child.setNpcVoiceVolume(resolvedNpcVoice ? Math.min(clampedVolume, family.getNpcVoiceVolume()) : 0);
-        if (colorVisionMode != null) {
-            child.setColorVisionMode(colorVisionMode);
+        if(request.name() != null)
+            child.setName(request.name());
+        if(request.birthday() != null)
+            child.setBirthday(request.birthday());
+        if(request.avatar() != null)
+            child.setAvatar(request.avatar());
+        if(request.colorVisionMode() != null)
+            child.setColorVisionMode(request.colorVisionMode());
+        if(request.npcVoiceVolume() != null)
+        {
+            child.setNpcVoiceVolume(Math.max(0, Math.min(100, request.npcVoiceVolume())));
+        }
+
+        // Get current NPC State for child
+        boolean currentNpc = child.isNpcEnabled();
+        boolean currentVoiceNpc = child.isNpcVoiceEnabled();
+        int currentVolumeNpc = child.getNpcVoiceVolume();
+
+        // Get forward NPC State for child
+        boolean forwardNpc = request.npcEnabled() != null ? request.npcEnabled() : currentNpc;
+        boolean forwardVoiceNpc = request.npcVoiceEnabled() != null ? request.npcVoiceEnabled() : currentVoiceNpc;
+        
+        // NPC disabled familiar level
+        if(!npcState)
+        {
+            child.setNpcEnabled(false);
+            child.setNpcVoiceEnabled(false);
+        // NPC enable familiar level but voice
+        }else
+        {
+            child.setNpcEnabled(forwardNpc);
+            if(!npcVoiceState) {
+                child.setNpcVoiceEnabled(false);
+            }else
+            {
+                child.setNpcVoiceEnabled(!forwardNpc ? false : forwardVoiceNpc);
+            }
         }
         child.setUpdatedAt(LocalDateTime.now());
 
         try {
             var stored = childProfileRepository.save(child);
-            boolean npcVoiceChanges = stateNpcVoice != stored.isNpcVoiceEnabled();
-            boolean agentChanges = stateAgent != stored.isNpcEnabled();
-            boolean volumeChanges = stateVolume != stored.getNpcVoiceVolume();
-            
-            if(npcVoiceChanges || agentChanges || volumeChanges)  
+            boolean npcVoiceChanges = currentNpc != forwardNpc;
+            boolean agentChanges = currentVoiceNpc != forwardVoiceNpc;
+            boolean volumeChanges = stored.getNpcVoiceVolume() != currentVolumeNpc;
+            if(npcVoiceChanges || agentChanges || volumeChanges)
             {
                 var session = childSessionRepository.findActiveByChildProfileId(stored.getId());
-                if(session.isPresent()) 
+                if(session.isPresent())
                 {
                     var s = session.get();
-                    if(npcVoiceChanges) 
+                    if(npcVoiceChanges)
                     {
-                        sessionEventPublisher.notifyChild(s.getId(), 
-                            SessionEvent.of(stored.isNpcVoiceEnabled() ? SessionEventType.CHILD_NPC_VOICE_ACTIVATED : SessionEventType.CHILD_NPC_VOICE_DEACTIVATED,
-                             s.getId()));
+                        sessionEventPublisher.notifyChild(s.getId(),
+                            SessionEvent.of(stored.isNpcVoiceEnabled() ? SessionEventType.CHILD_NPC_VOICE_ACTIVATED : SessionEventType.CHILD_NPC_VOICE_DEACTIVATED, s.getId()));
                     }
 
-                    if(agentChanges) 
+                    if(agentChanges)
                     {
                         sessionEventPublisher.notifyChild(s.getId(), 
-                            SessionEvent.of(stored.isNpcEnabled() ? SessionEventType.CHILD_NPC_ACTIVATED : SessionEventType.CHILD_NPC_DEACTIVATED,
-                             s.getId()));
+                            SessionEvent.of(stored.isNpcEnabled() ? SessionEventType.CHILD_NPC_ACTIVATED : SessionEventType.CHILD_NPC_DEACTIVATED, s.getId()));
                     }
 
-                    if(volumeChanges) 
+                    if(volumeChanges)
                     {
                         sessionEventPublisher.notifyChild(s.getId(), 
-                            SessionEvent.of(SessionEventType.CHILD_NPC_VOICE_VOLUME_CHANGED,
-                             s.getId()));
+                            SessionEvent.of(SessionEventType.CHILD_NPC_VOICE_VOLUME_CHANGED,s.getId()));
                     }
                 }
             }
