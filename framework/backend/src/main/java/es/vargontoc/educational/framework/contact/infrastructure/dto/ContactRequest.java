@@ -1,9 +1,12 @@
 package es.vargontoc.educational.framework.contact.infrastructure.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import es.vargontoc.educational.framework.contact.model.ContactMessageType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@JsonIgnoreProperties(ignoreUnknown = false)
 public record ContactRequest(
 
     ContactMessageType type,

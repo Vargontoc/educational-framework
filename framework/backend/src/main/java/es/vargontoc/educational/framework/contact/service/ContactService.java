@@ -1,18 +1,17 @@
 package es.vargontoc.educational.framework.contact.service;
 
-import java.time.LocalDateTime;
-
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.springframework.transaction.annotation.Transactional;
 
-import es.vargontoc.educational.framework.contact.infrastructure.dto.ContactRequest;
 import es.vargontoc.educational.framework.contact.model.ContactMessage;
+import es.vargontoc.educational.framework.contact.model.ContactMessageType;
+import es.vargontoc.educational.framework.contact.model.ContactSendException;
 import es.vargontoc.educational.framework.contact.ports.in.ContactUseCase;
 import es.vargontoc.educational.framework.contact.ports.out.ContactMessageRepository;
+import es.vargontoc.educational.framework.contact.ports.out.ContactTelegram;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
-import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
@@ -20,31 +19,31 @@ public class ContactService implements ContactUseCase {
 
     private static final int MAX_MESSAGE_LENGTH = 2000;
     private final ContactMessageRepository contactMessageRepository;
-    private final ContactBot bot;
+    private final ContactTelegram contactTelegram;
 
-    public ContactService(ContactMessageRepository contactMessageRepository, ContactBot bot) {
+    public ContactService(ContactMessageRepository contactMessageRepository, ContactTelegram contactTelegram) {
         this.contactMessageRepository = contactMessageRepository;
-        this.bot = bot;
+        this.contactTelegram = contactTelegram;
     }
 
     @Override
-    public ContactMessage submit(ContactRequest request, String clientIp) throws TelegramApiException {
-        // Sanitizar mensaje
-        String sanitized = sanitize(request.message());
+    public ContactMessage submit(String message, ContactMessageType type, String clientIp) {
+        String sanitized = sanitize(message);
 
-        // Validación
-        if(sanitized.isBlank() || sanitized.length() > MAX_MESSAGE_LENGTH){
+        if (sanitized.isBlank() || sanitized.length() > MAX_MESSAGE_LENGTH) {
             throw new ValidationException("Mensaje invalido o vacio");
         }
-    
-        // Crear modelo
-        ContactMessage result =  new ContactMessage(request.type(), sanitized, clientIp);
-        result.setCreatedAt(LocalDateTime.now());
-    
-        // Send to telegram
-        bot.sendToTelegram(result);
-        
-        // Save
+
+        ContactMessage result = new ContactMessage(type, sanitized, clientIp);
+
+        try {
+            contactTelegram.sendToTelegram(result);
+        } catch (ContactSendException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ContactSendException("Error enviando mensaje a Telegram", e);
+        }
+
         return contactMessageRepository.save(result);
     }
 

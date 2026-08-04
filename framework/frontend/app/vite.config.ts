@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 import compression from 'vite-plugin-compression'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -21,6 +22,18 @@ export default defineConfig(({ mode }) => {
         ext: '.br',
         threshold: 10240,
         deleteOriginalAssets: false
+      }),
+      VitePWA({
+        registerType: 'autoUpdate',
+        // El manifest ya existe en public/manifest.webmanifest y está enlazado en index.html
+        manifest: false,
+        includeManifestIcons: false,
+        devOptions: {
+          enabled: true
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,svg,png,ico}']
+        }
       })
     ],
     resolve: {

@@ -64,7 +64,7 @@ const router = useRouter()
  * Navega a la vista de documentacion
  */
 function goToDocs() {
-  router.replace({ name: 'Documentation' })
+  router.replace('/docs')
 }
 
 /**

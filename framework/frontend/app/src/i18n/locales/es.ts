@@ -313,7 +313,39 @@ export default {
     },
     docs: {
       title: 'Documentación',
-      description: 'Documentación y tutoriales de la aplicación'
+      description: 'Documentación y tutoriales de la aplicación',
+      sidebar: {
+        label: 'Navegación de documentación',
+        sections: {
+          quienSoy: 'Quién soy',
+          primerosPasos: 'Primeros pasos',
+          agentesAi: 'Agentes AI',
+          minijuegos: 'Minijuegos',
+          contacto: 'Contacto'
+        }
+      },
+      menuToggle: 'Abrir menú de navegación',
+      notFound: 'Sección no encontrada',
+      backToPanel: 'Volver al panel parental',
+      contact: {
+        title: 'Contacto',
+        typeLabel: 'Tipo de mensaje',
+        typeComment: 'Comentario',
+        typeSuggest: 'Sugerencia',
+        typeError: 'Error',
+        textareaLabel: 'Escribe tu comentario, sugerencia o error',
+        textareaPlaceholder: 'Tu mensaje...',
+        maxLengthError: 'El mensaje es demasiado largo (máximo 2000 caracteres)',
+        privacyNotice: 'No incluyas datos de menores, nombres, PIN ni otra información privada.',
+        purposeInfo: 'Tu mensaje será recibido por el equipo de My Friend Nubi para atender tu consulta. No se utiliza para publicidad, perfilado ni entrenamiento de IA.',
+        adultConfirmation: 'Soy persona adulta responsable y acepto la información sobre el uso de mi mensaje.',
+        sendButton: 'Enviar',
+        sending: 'Enviando...',
+        successMessage: 'Tu mensaje ha sido recibido. Gracias por contactar con nosotros.',
+        errorGeneric: 'No se ha podido enviar el mensaje. Inténtalo más tarde.',
+        errorValidation: 'El mensaje no es válido. Revisa el contenido e inténtalo de nuevo.',
+        errorRateLimit: 'Has realizado demasiados intentos. Inténtalo más tarde.'
+      }
     },
     placeholder: {
       title: 'Sección en desarrollo',

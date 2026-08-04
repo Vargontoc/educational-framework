@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** pending
+- **Estado:** verified
 - **Fecha de creación:** 2026-08-03
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
@@ -335,3 +335,64 @@ views: {
 
 - `query.from` solo contiene paths internos del panel parental, no datos personales.
 - La validación defensiva previene open redirect, protegiendo al usuario de manipulaciones externas.
+
+---
+
+## Revisión del sprint
+
+### Veredicto: APPROVED
+
+- **Fecha revisión:** 2026-08-04
+- **Reviewer:** senior tester-reviewer frontend
+
+### Verificación de tareas
+
+| Tarea | Estado | Observaciones |
+|-------|--------|---------------|
+| 32.1 — Lógica de detección de origen | ✅ Verificada | `rawFrom`, `isValidPanelPath`, `showBackButton` y `goBack()` implementados correctamente. |
+| 32.2 — Renderizado condicional del botón "Volver" | ✅ Verificada | `v-if`, icono + texto, `aria-label`, `@click`, posición antes del hamburger. |
+| 32.3 — Validación defensiva contra open redirect | ✅ Verificada | Todos los casos de la tabla verificados: URLs externas, path traversal, paths no panel, vacío → rechazados. |
+| 32.4 — Actualizar i18n | ✅ Verificada | Clave `views.docs.backToPanel` presente en `es.ts:329`. |
+| 32.5 — Verificación de escenarios de entrada | ✅ Verificada | Los 5 escenarios cubiertos por la lógica implementada. |
+
+### Criterios de aceptación del sprint
+
+| # | Criterio | Estado |
+|---|----------|--------|
+| 1 | Home/URL directa → "Volver" no se muestra (FEAT-007 CA #6) | ✅ Cumplido |
+| 2 | Desde sección X del panel → "Volver" se muestra (CA #7) | ✅ Cumplido |
+| 3 | Pulsar "Volver" → retorna a sección parental exacta (CA #7) | ✅ Cumplido |
+| 4 | `query.from` manipulado → no redirección externa | ✅ Cumplido |
+| 5 | Recarga con `query.from` → "Volver" sigue funcionando | ✅ Cumplido |
+| 6 | `vue-tsc --noEmit` sin errores en archivos modificados | ✅ Cumplido |
+
+### Conformidad FEAT-007
+
+- **CA #6:** "Al acceder desde Home o URL directa, «Volver» no se muestra" → ✅ Sin `query.from`, `showBackButton = false`.
+- **CA #7:** "Al acceder desde sección del panel parental, «Volver» se muestra y lleva a esa misma sección" → ✅ `ParentSidebar.vue:115-118` envía `query.from = route.path`; `goBack()` usa `router.replace(rawFrom.value)`.
+
+### Build y type checking
+
+- `npm run build` → ✅ SUCCESS en 1.68s
+- `vue-tsc --noEmit` → ✅ Sin errores en archivos modificados (24 errores preexistentes en archivos no modificados por este sprint)
+
+### Análisis de cobertura de rutas
+
+`VALID_PANEL_PATHS` cubre todas las rutas panel definidas en `router/index.ts`:
+
+| Ruta router | Cobertura |
+|---|---|
+| `/panel` (PanelCover) | `VALID_PANEL_PATHS` |
+| `/panel/configuracion` | `VALID_PANEL_PATHS` |
+| `/panel/ninos` | `VALID_PANEL_PATHS` |
+| `/panel/ninos/:id` | Regex `/^\/panel\/ninos\/\d+$/` |
+| `/panel/ninos/:id/dashboard` | Regex `/^\/panel\/ninos\/\d+\/dashboard$/` |
+| `/panel/chatbot` | `VALID_PANEL_PATHS` |
+| `/panel/lectura-familiar` | `VALID_PANEL_PATHS` |
+| `/panel/relajacion-familiar` | `VALID_PANEL_PATHS` |
+
+### Observaciones no bloqueantes
+
+1. **Lista `VALID_PANEL_PATHS` estática (Riesgo R3):** Aceptado como riesgo BAJA con mitigación documentada. Todas las rutas actuales están cubiertas. Requiere mantenimiento al añadir nuevas rutas parentales.
+2. **Sin tests unitarios automatizados:** El sprint fue diseñado con verificación manual. No es un defecto del sprint, pero se recomienda considerar tests unitarios para la lógica de validación en futuros sprints si se modifica.
+3. **Header visible solo en viewport ≤1023px:** Comportamiento heredado de SPRINT-031. En desktop, el sidebar completo provee la navegación; el botón "Volver" solo es relevante en la vista responsiva móvil/tablet.

@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { useParentalAuthStore } from '../stores/parentalAuth'
-import { useSessionStore } from '../stores/session'
 
 /**
  * Configuración de rutas según ADR-010
@@ -60,11 +58,6 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../views/ChatbotView.vue')
       },
       {
-        path: 'documentacion',
-        name: 'PanelDocumentacion',
-        component: () => import('../views/DocumentationView.vue')
-      },
-      {
         path: 'lectura-familiar',
         name: 'PanelLecturaFamiliar',
         component: () => import('../views/LecturaFamiliarView.vue')
@@ -84,8 +77,23 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/docs',
-    name: 'Documentation',
-    component: () => import('../views/DocumentationView.vue')
+    component: () => import('../layouts/DocumentationLayout.vue'),
+    children: [
+      {
+        path: '',
+        redirect: '/docs/quien-soy'
+      },
+      {
+        path: 'contacto',
+        name: 'DocumentationContact',
+        component: () => import('../views/documentation/ContactView.vue')
+      },
+      {
+        path: ':section',
+        name: 'DocumentationSection',
+        component: () => import('../views/documentation/DocSectionView.vue')
+      }
+    ]
   },
   {
     path: '/:pathMatch(.*)*',
@@ -305,7 +313,11 @@ const router = createRouter({
  * 
  * Si no se cumple la condición, redirige a Home con router.replace()
  */
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
+  // Importar stores dinámicamente para evitar problemas con Pinia
+  const { useSessionStore } = await import('../stores/session')
+  const { useParentalAuthStore } = await import('../stores/parentalAuth')
+  
   const sessionStore = useSessionStore()
   const parentalAuthStore = useParentalAuthStore()
 

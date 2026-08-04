@@ -10,7 +10,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY package*.json ./
+COPY package*.json .npmrc ./
 
 # Instalar dependencias
 RUN npm ci

@@ -56,7 +56,7 @@ const panelCards: CardItem[] = [
   { key: 'settings', icon: 'settings', labelKey: 'views.panelCover.sections.settings', to: '/panel/configuracion' },
   { key: 'children', icon: 'users', labelKey: 'views.panelCover.sections.children', to: '/panel/ninos' },
   { key: 'chatbot', icon: 'message-circle', labelKey: 'views.panelCover.sections.chatbot', to: '/panel/chatbot' },
-  { key: 'documentation', icon: 'file-text', labelKey: 'views.panelCover.sections.documentation', to: '/panel/documentacion' }
+  { key: 'documentation', icon: 'file-text', labelKey: 'views.panelCover.sections.documentation', to: '/docs' }
 ]
 
 const experienceCards: CardItem[] = [

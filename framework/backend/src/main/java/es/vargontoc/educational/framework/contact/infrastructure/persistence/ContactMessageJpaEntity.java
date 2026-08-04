@@ -16,10 +16,10 @@ public class ContactMessageJpaEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ContactMessageType type;
 
-    @Column(name = "message", nullable = false)
+    @Column(name = "message", nullable = false, length = 2000)
     private String message;
 
-    @Column(name = "clientIp", nullable = false)
+    @Column(name = "client_ip", nullable = false)
     private String clientIp;
 
 

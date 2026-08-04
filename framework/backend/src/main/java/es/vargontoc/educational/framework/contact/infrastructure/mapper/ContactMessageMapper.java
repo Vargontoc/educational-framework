@@ -15,6 +15,7 @@ public class ContactMessageMapper extends AbstractMapper<ContactMessage, Contact
         ContactMessage target = new ContactMessage();
         target.setId(source.getId());
         target.setType(source.getType());
+        target.setMessage(source.getMessage());
         target.setClientIp(source.getClientIp());
         target.setCreatedAt(source.getCreatedAt());
         return target;

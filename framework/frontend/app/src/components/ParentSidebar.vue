@@ -36,6 +36,17 @@
                 <span class="parent-sidebar__label">{{ t(item.labelKey) }}</span>
               </router-link>
             </li>
+            <li>
+              <router-link
+                :to="documentationRoute"
+                :class="['parent-sidebar__link', { 'parent-sidebar__link--active': isDocumentationActive }]"
+                :aria-current="isDocumentationActive ? 'page' : undefined"
+                @click="onNavigate"
+              >
+                <NubiIcon name="file-text" :size="20" />
+                <span class="parent-sidebar__label">{{ t('sidebar.sections.documentacion') }}</span>
+              </router-link>
+            </li>
           </ul>
         </div>
 
@@ -73,6 +84,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue'
 import { useUIStore } from '../stores/ui'
 import { useParentalSession } from '../composables/useParentalSession'
 import NubiIcon from './base/NubiIcon.vue'
@@ -92,14 +104,20 @@ interface NavItem {
 const panelItems: NavItem[] = [
   { to: '/panel/configuracion', icon: 'settings', labelKey: 'sidebar.sections.configuracion' },
   { to: '/panel/ninos', icon: 'users', labelKey: 'sidebar.sections.ninos' },
-  { to: '/panel/chatbot', icon: 'message-circle', labelKey: 'sidebar.sections.chatbot' },
-  { to: '/panel/documentacion', icon: 'file-text', labelKey: 'sidebar.sections.documentacion' }
+  { to: '/panel/chatbot', icon: 'message-circle', labelKey: 'sidebar.sections.chatbot' }
 ]
 
 const experienceItems: NavItem[] = [
   { to: '/panel/lectura-familiar', icon: 'book-open', labelKey: 'sidebar.sections.lecturaFamiliar' },
   { to: '/panel/relajacion-familiar', icon: 'wind', labelKey: 'sidebar.sections.relajacionFamiliar' }
 ]
+
+const documentationRoute = computed(() => ({
+  path: '/docs',
+  query: { from: route.path }
+}))
+
+const isDocumentationActive = computed(() => route.path.startsWith('/docs'))
 
 function isActive(path: string): boolean {
   return route.path === path

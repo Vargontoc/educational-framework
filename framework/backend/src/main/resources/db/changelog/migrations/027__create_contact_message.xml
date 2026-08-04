@@ -13,10 +13,10 @@
             <column name="type" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="message" type="VARCHAR(255)">
+            <column name="message" type="VARCHAR(2000)">
                 <constraints nullable="false"/>
             </column>
-            <column name="client_ip" type="VARCHAR(255)">
+            <column name="client_ip" type="VARCHAR(45)">
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="TIMESTAMPTZ">
