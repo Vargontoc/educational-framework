@@ -119,3 +119,4 @@ Estas skills se proponen como herramientas de descubrimiento y documentación de
 - `dev-agents/skills/decision-de-producto`: plantilla guiada para registrar alternativas, decisión confirmada, límites, consecuencias para la familia y preguntas que deben validar los ámbitos técnicos.
 - `dev-agents/skills/priorizacion-familiar`: marco de priorización por valor familiar, seguridad infantil, reversibilidad, alcance monofamiliar y esfuerzo percibido.
 - `dev-agents/skills/revision-de-consistencia-producto`: contraste entre README, decisiones y especificaciones para detectar contradicciones, requisitos implícitos o decisiones aún no confirmadas.
+- `dev-agents/skills/generation-questions-section`: genera preguntas al usuario.

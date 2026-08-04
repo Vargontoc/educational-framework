@@ -1,0 +1,31 @@
+summary: Endpoint público para envío de comentarios, sugerencias o errores
+operationId: sendContactMessage
+tags:
+  - Contact
+
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: "../schemas/contact/contact-request.yaml"
+
+responses:
+  "202":
+    description: Mensaje recibido y encolado para procesamiento asíncrono
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/contact/contact-response.yaml"
+  "400":
+    description: Mensaje vacío, demasiado largo o formato inválido
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/api-response.yaml"
+  "429":
+    description: Demasiadas solicitudes (rate limiting)
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/api-response.yaml"

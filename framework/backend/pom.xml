@@ -112,11 +112,31 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Sanitize  -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.23.1</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- Motor principal de JAVE2 -->
         <dependency>
             <groupId>ws.schild</groupId>
             <artifactId>jave-core</artifactId>
             <version>3.3.1</version>
+        </dependency>
+
+                <!-- Telegram bot for contact -->
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots-spring-boot-starter</artifactId>
+            <version>6.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots-abilities</artifactId>
+            <version>6.7.0</version>
         </dependency>
         
         <!-- Binarios nativos  -->
@@ -125,6 +145,7 @@
             <artifactId>jave-all-deps</artifactId>
             <version>3.3.1</version>
         </dependency>
+
 
         <!-- Test -->
         <dependency>

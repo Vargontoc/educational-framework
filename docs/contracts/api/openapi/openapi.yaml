@@ -15,6 +15,10 @@ paths:
     post:
       $ref: "./paths/logout.yaml"
 
+  /contact:
+    post:
+      $ref: "./paths/contact/post-contact.yaml"
+
   /family:
     get:
       $ref: "./paths/family/get-family.yaml"

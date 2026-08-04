@@ -16,7 +16,7 @@ class ChildProfileValidatorTest {
     void validInputs_passes() {
         var input = new ChildProfileValidator.ChildProfileValidationInput(
             "Kid",
-            LocalDate.now().minusYears(10),
+            LocalDate.now().minusYears(3),
             "avatar"
         );
         assertDoesNotThrow(() -> validator.validate(input));

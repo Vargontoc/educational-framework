@@ -31,5 +31,6 @@
     <include file="db/changelog/migrations/024__create_accessible_color_tables.xml"/>
     <include file="db/changelog/migrations/025__add_global_config_fields_to_family.xml"/>
     <include file="db/changelog/migrations/026__rename_child_profile_fields_and_add_volume.xml"/>
+    <include file="db/changelog/migrations/027__create_contact_message.xml"/>
 
 </databaseChangeLog>

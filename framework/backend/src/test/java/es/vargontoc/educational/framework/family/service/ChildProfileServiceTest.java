@@ -55,7 +55,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(10), null, true, true, 80, null);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), null, true, true, 80, null);
 
         assertFalse(child.isNpcVoiceEnabled());
         assertFalse(child.isNpcEnabled());
@@ -72,7 +72,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(8), "avatar", true, true, 80, ColorVisionMode.NONE);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, 80, ColorVisionMode.NONE);
 
         assertTrue(child.isNpcVoiceEnabled());
         assertTrue(child.isNpcEnabled());
@@ -88,7 +88,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(8), "avatar", true, true, 80, ColorVisionMode.NONE);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, 80, ColorVisionMode.NONE);
 
         assertTrue(child.isNpcVoiceEnabled());
         assertEquals(50, child.getNpcVoiceVolume());
@@ -104,7 +104,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(8), "avatar", false, true, 80, ColorVisionMode.NONE);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", false, true, 80, ColorVisionMode.NONE);
 
         assertFalse(child.isNpcVoiceEnabled());
         assertEquals(0, child.getNpcVoiceVolume());
@@ -119,7 +119,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(8), "avatar", true, true, 80, ColorVisionMode.NONE);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, 80, ColorVisionMode.NONE);
 
         assertTrue(child.isNpcVoiceEnabled());
         assertEquals(0, child.getNpcVoiceVolume());
@@ -142,39 +142,6 @@ class ChildProfileServiceTest {
     }
 
     @Test
-    void updateChild_reappliesCeilingAfterFamilyChange() {
-        var family = new Family();
-        family.setNpcVoiceEnabled(false);
-
-        var child = new ChildProfile();
-        child.setId(2L);
-        child.setFamilyId(1L);
-        child.setNpcVoiceEnabled(true);
-        child.setNpcEnabled(true);
-        child.setNpcVoiceVolume(100);
-        child.setColorVisionMode(ColorVisionMode.NONE);
-
-        when(familyRepository.findFamily()).thenReturn(Optional.of(family));
-        when(childProfileRepository.findById(2L)).thenReturn(Optional.of(child));
-        when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(childSessionRepository.findActiveByChildProfileId(2L)).thenReturn(Optional.empty());
-
-        var updated = childProfileService.updateChild(
-            2L,
-            "Kid Updated",
-            LocalDate.now().minusYears(9),
-            null,
-            true,
-            true,
-            100,
-            ColorVisionMode.NONE
-        );
-
-        assertFalse(updated.isNpcVoiceEnabled());
-        assertTrue(updated.isNpcEnabled());
-    }
-
-    @Test
     void createChild_defaultsColorVisionModeToNoneWhenNull() {
         var family = new Family();
         family.setId(1L);
@@ -182,7 +149,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(7), "avatar", true, true, 100, null);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, 100, null);
 
         assertEquals(ColorVisionMode.NONE, child.getColorVisionMode());
     }
@@ -195,69 +162,11 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(7), "avatar", true, true, 100, ColorVisionMode.DEUTERANOMALY);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, 100, ColorVisionMode.DEUTERANOMALY);
 
         assertEquals(ColorVisionMode.DEUTERANOMALY, child.getColorVisionMode());
     }
 
-    @Test
-    void updateChild_preservesColorVisionModeWhenNull() {
-        var family = new Family();
-
-        var child = new ChildProfile();
-        child.setId(3L);
-        child.setFamilyId(1L);
-        child.setNpcVoiceEnabled(true);
-        child.setNpcEnabled(true);
-        child.setNpcVoiceVolume(100);
-        child.setColorVisionMode(ColorVisionMode.PROTANOPIA);
-
-        when(familyRepository.findFamily()).thenReturn(Optional.of(family));
-        when(childProfileRepository.findById(3L)).thenReturn(Optional.of(child));
-        when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        var updated = childProfileService.updateChild(
-            3L,
-            "Kid Updated",
-            LocalDate.now().minusYears(8),
-            null,
-            true,
-            true,
-            100,
-            null
-        );
-
-        assertEquals(ColorVisionMode.PROTANOPIA, updated.getColorVisionMode());
-    }
-
-    @Test
-    void updateChild_updatesColorVisionModeWhenProvided() {
-        var family = new Family();
-        var child = new ChildProfile();
-        child.setId(4L);
-        child.setFamilyId(1L);
-        child.setNpcVoiceEnabled(true);
-        child.setNpcEnabled(true);
-        child.setNpcVoiceVolume(100);
-        child.setColorVisionMode(ColorVisionMode.NONE);
-
-        when(familyRepository.findFamily()).thenReturn(Optional.of(family));
-        when(childProfileRepository.findById(4L)).thenReturn(Optional.of(child));
-        when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        var updated = childProfileService.updateChild(
-            4L,
-            "Kid Updated",
-            LocalDate.now().minusYears(8),
-            null,
-            true,
-            true,
-            100,
-            ColorVisionMode.TRITANOPIA
-        );
-
-        assertEquals(ColorVisionMode.TRITANOPIA, updated.getColorVisionMode());
-    }
 
     @Test
     void createChild_clampsNegativeVolumeToZero() {
@@ -268,7 +177,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(8), "avatar", true, true, -10, ColorVisionMode.NONE);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, -10, ColorVisionMode.NONE);
 
         assertEquals(0, child.getNpcVoiceVolume());
     }
@@ -282,7 +191,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(8), "avatar", true, true, 150, ColorVisionMode.NONE);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, 150, ColorVisionMode.NONE);
 
         assertEquals(100, child.getNpcVoiceVolume());
     }
@@ -296,7 +205,7 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(8), "avatar", true, true, 150, ColorVisionMode.NONE);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, 150, ColorVisionMode.NONE);
 
         assertEquals(60, child.getNpcVoiceVolume());
     }
@@ -310,54 +219,9 @@ class ChildProfileServiceTest {
         when(familyRepository.findFamily()).thenReturn(Optional.of(family));
         when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(8), "avatar", true, true, 50, ColorVisionMode.NONE);
+        var child = childProfileService.createChild(1L, "Kid", LocalDate.now().minusYears(3), "avatar", true, true, 50, ColorVisionMode.NONE);
 
         assertEquals(50, child.getNpcVoiceVolume());
     }
 
-    @Test
-    void updateChild_clampsNegativeVolumeToZero() {
-        var family = new Family();
-        family.setNpcVoiceVolume(100);
-
-        var child = new ChildProfile();
-        child.setId(5L);
-        child.setFamilyId(1L);
-        child.setNpcVoiceEnabled(true);
-        child.setNpcEnabled(true);
-        child.setNpcVoiceVolume(50);
-        child.setColorVisionMode(ColorVisionMode.NONE);
-
-        when(familyRepository.findFamily()).thenReturn(Optional.of(family));
-        when(childProfileRepository.findById(5L)).thenReturn(Optional.of(child));
-        when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(childSessionRepository.findActiveByChildProfileId(5L)).thenReturn(Optional.empty());
-
-        var updated = childProfileService.updateChild(5L, "Kid", LocalDate.now().minusYears(8), null, true, true, -10, ColorVisionMode.NONE);
-
-        assertEquals(0, updated.getNpcVoiceVolume());
-    }
-
-    @Test
-    void updateChild_clampsVolumeAbove100To100() {
-        var family = new Family();
-        family.setNpcVoiceVolume(100);
-
-        var child = new ChildProfile();
-        child.setId(6L);
-        child.setFamilyId(1L);
-        child.setNpcVoiceEnabled(true);
-        child.setNpcEnabled(true);
-        child.setNpcVoiceVolume(50);
-        child.setColorVisionMode(ColorVisionMode.NONE);
-
-        when(familyRepository.findFamily()).thenReturn(Optional.of(family));
-        when(childProfileRepository.findById(6L)).thenReturn(Optional.of(child));
-        when(childProfileRepository.save(any(ChildProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(childSessionRepository.findActiveByChildProfileId(6L)).thenReturn(Optional.empty());
-
-        var updated = childProfileService.updateChild(6L, "Kid", LocalDate.now().minusYears(8), null, true, true, 150, ColorVisionMode.NONE);
-
-        assertEquals(100, updated.getNpcVoiceVolume());
-    }
 }

@@ -66,6 +66,10 @@ app:
     base-url: ${TTS_BASE_URL:http://localhost:8081}
     timeout-ms: ${TTS_TIMEOUT_MS:5000}
     enabled: ${TTS_ENABLED:true}
+  telegram:
+    bot:
+      name: ${TELEGRAM_BOT}
+      token: ${TELEGRAM_TOKEN}
   avatar:
     cache:
       enabled: ${AVATAR_CACHE_ENABLED:true}

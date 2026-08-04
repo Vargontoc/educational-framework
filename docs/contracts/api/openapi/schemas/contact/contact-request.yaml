@@ -1,0 +1,22 @@
+type: object
+required:
+  - message
+additionalProperties: false
+properties:
+  type:
+    type: string
+    enum:
+      - COMMENT
+      - SUGGEST
+      - ERROR
+    description: >
+      Tipo de mensaje COMMENT | SUGGEST | ERROR
+  message:
+    type: string
+    minLength: 1
+    maxLength: 2000
+    description: >
+      Texto libre del comentario, sugerencia o error.
+      No debe contener datos personales de menores, nombres, PIN
+      ni otra información privada. El remitente debe confirmar
+      que es persona adulta responsable antes del envío.

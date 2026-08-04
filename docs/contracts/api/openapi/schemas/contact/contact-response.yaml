@@ -1,0 +1,9 @@
+type: object
+properties:
+  sent:
+    type: boolean
+    description: Mensaje enviado a infraestructura externa.
+  timestamp:
+    type: string
+    format: date-time
+    description: Marca temporal de recepción y envio del mensaje.
