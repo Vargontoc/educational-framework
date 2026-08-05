@@ -1,8 +1,8 @@
 [CmdletBinding()]
 param(
     [string]$OllamaHost = $(if ($env:OLLAMA_HOST) { $env:OLLAMA_HOST } else { "http://127.0.0.1:11434" }),
-    [string]$BaseModel = "qwen3:14b",
-    [string]$ModelName = "agent-educational-parent"
+    [string]$BaseModel = "qwen2.5:7b-instruct-q5_K_M",
+    [string]$ModelName = "educational-chatbot"
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,7 +62,7 @@ try {
             top_p = 0.8
             top_k = 20
             repeat_penalty = 1.1
-            num_predict = 320
+            num_predict = 512
         }
         stream = $false
     } | ConvertTo-Json -Compress)
