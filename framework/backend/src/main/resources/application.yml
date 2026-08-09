@@ -16,6 +16,11 @@ spring:
   ai:
     model:
       chat: ollama
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 1024
     ollama:
       base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
       init:
@@ -42,6 +47,9 @@ logging:
     path: ${LOG_FILE_PATH:logs}
   level:
     "[es.vargontoc]": ${LOGGING_LEVEL_ES_VARGONTOC:INFO}
+    "[org.springframework.ai]": DEBUG
+  pattern:
+    console: "%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %msg%n"
 
 app:
   cors:

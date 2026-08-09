@@ -45,7 +45,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WorldGameStartUseCase worldGameStartUseCase;
     private final WorldStateRegistry worldStateRegistry;
     private final WorldOrchestrator worldOrchestrator;
-    
+    private final ThreadPoolTaskScheduler webSocketBrokerTaskScheduler;
+
     public WebSocketConfig(
             FamilySessionUseCase familySessionUseCase,
             ChildSessionUseCase childSessionUseCase,
@@ -56,8 +57,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             GameStateRegistry gameStateRegistry,
             WorldHeartbeatUseCase worldHeartbeatUseCase,
             WorldGameStartUseCase worldGameStartUseCase,
-            WorldStateRegistry worldStateRegistry, 
-            WorldOrchestrator worldOrchestrator) {
+            WorldStateRegistry worldStateRegistry,
+            WorldOrchestrator worldOrchestrator,
+            ThreadPoolTaskScheduler webSocketBrokerTaskScheduler) {
         this.familySessionUseCase = familySessionUseCase;
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
@@ -69,6 +71,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.worldGameStartUseCase = worldGameStartUseCase;
         this.worldStateRegistry = worldStateRegistry;
         this.worldOrchestrator = worldOrchestrator;
+        this.webSocketBrokerTaskScheduler = webSocketBrokerTaskScheduler;
     }
 
     // ── STOMP (parental channel) ──────────────────────────────────────
@@ -76,16 +79,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic")
-            .setTaskScheduler(taskScheduler());
+            .setTaskScheduler(webSocketBrokerTaskScheduler);
         registry.setApplicationDestinationPrefixes("/app");
-    }
-
-    @Bean
-    public ThreadPoolTaskScheduler taskScheduler() {
-        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(2);
-        scheduler.setThreadNamePrefix("ws-broker-");
-        return scheduler;
     }
 
     @Override

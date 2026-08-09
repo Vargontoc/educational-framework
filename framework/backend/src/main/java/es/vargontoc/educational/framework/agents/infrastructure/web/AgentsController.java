@@ -10,27 +10,31 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.vargontoc.educational.framework.agents.infrastructure.dto.AgentStatusResponseDto;
-import es.vargontoc.educational.framework.agents.service.AgentsService;
+import es.vargontoc.educational.framework.agents.ports.in.CheckStatusModelsUseCase;
+import es.vargontoc.educational.framework.agents.ports.in.SendMessageChatbotUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
 
 @RestController
 @RequestMapping("/api/v1/agents")
 public class AgentsController {
 
-    private final AgentsService service;
-    public AgentsController(AgentsService service) {
-        this.service = service;
+    private final SendMessageChatbotUseCase send;
+    private final CheckStatusModelsUseCase checker;
+    
+    public AgentsController(SendMessageChatbotUseCase sender, CheckStatusModelsUseCase checker) {
+        this.send = sender;
+        this.checker = checker;
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<String>> responseChatbot(@RequestParam("message") String message){
-        return ResponseEntity.ok(ApiResponse.ok(service.sendMessage(message)));
+        return ResponseEntity.ok(ApiResponse.ok(send.sendMessage(message)));
     }
     
     @GetMapping("/health")
     public ResponseEntity<ApiResponse<List<AgentStatusResponseDto>>> checkStatus(){
         List<AgentStatusResponseDto> result = new ArrayList<>();
-        service.checkAllAvailableModels().forEach(m -> result.add(new AgentStatusResponseDto(m.model(), m.status().name())));
+        checker.checkAllAvailableModels().forEach(m -> result.add(new AgentStatusResponseDto(m.model(), m.status().name())));
         return ResponseEntity.ok(ApiResponse.ok(result));
     }
 }

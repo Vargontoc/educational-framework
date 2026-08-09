@@ -5,20 +5,20 @@ import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepositor
 import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest()
 @ActiveProfiles("test")
 class EducationalFrameworkApplicationTests extends TestcontainersConfiguration {
 
-    @MockBean
+    @MockitoBean
     private FamilyRepository familyRepository;
 
-    @MockBean
+    @MockitoBean
     private ChildProfileRepository childProfileRepository;
 
-    @MockBean
+    @MockitoBean
     private AdultProfileRepository adultProfileRepository;
 
     @Test

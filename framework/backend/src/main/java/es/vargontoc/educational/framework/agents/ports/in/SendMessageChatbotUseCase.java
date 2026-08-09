@@ -1,4 +1,4 @@
-package es.vargontoc.educational.framework.agents.ports.out;
+package es.vargontoc.educational.framework.agents.ports.in;
 
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 

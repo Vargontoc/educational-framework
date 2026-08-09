@@ -26,7 +26,7 @@ class TtsClientAdapterTest {
 
         toneMapper = new TtsToneMapper();
         restClientBuilder = mock(RestClient.Builder.class);
-        when(restClientBuilder.baseUrl(any())).thenReturn(restClientBuilder);
+        when(restClientBuilder.baseUrl(any(String.class))).thenReturn(restClientBuilder);
         when(restClientBuilder.requestFactory(any())).thenReturn(restClientBuilder);
         when(restClientBuilder.build()).thenReturn(mock(RestClient.class));
     }
