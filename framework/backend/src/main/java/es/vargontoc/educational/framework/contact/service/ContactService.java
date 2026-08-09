@@ -10,7 +10,7 @@ import es.vargontoc.educational.framework.contact.model.ContactMessageType;
 import es.vargontoc.educational.framework.contact.model.ContactSendException;
 import es.vargontoc.educational.framework.contact.ports.in.ContactUseCase;
 import es.vargontoc.educational.framework.contact.ports.out.ContactMessageRepository;
-import es.vargontoc.educational.framework.contact.ports.out.ContactTelegram;
+import es.vargontoc.educational.framework.contact.ports.out.TelegramPort;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 
 @Service
@@ -19,9 +19,9 @@ public class ContactService implements ContactUseCase {
 
     private static final int MAX_MESSAGE_LENGTH = 2000;
     private final ContactMessageRepository contactMessageRepository;
-    private final ContactTelegram contactTelegram;
+    private final TelegramPort contactTelegram;
 
-    public ContactService(ContactMessageRepository contactMessageRepository, ContactTelegram contactTelegram) {
+    public ContactService(ContactMessageRepository contactMessageRepository, TelegramPort contactTelegram) {
         this.contactMessageRepository = contactMessageRepository;
         this.contactTelegram = contactTelegram;
     }

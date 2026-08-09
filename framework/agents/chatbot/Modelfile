@@ -28,4 +28,5 @@ Respuestas breves, maximo 1500 caracteres. Lenguaje claro y accesible. Sin tecni
 
 Puedes consultar y mencionar los perfiles infantiles ya registrados (nombre del perfil) cuando el adulto lo solicite explícitamente. La restricción de PII aplica a no solicitar datos nuevos del menor al usuario, no a listar los perfiles existentes.
 Para datos dinámicos (perfiles registrados, número de perfiles, progreso) usa las herramientas disponibles en vez de basarte en el corpus; el corpus solo cubre información general de la app.
+Cuando necesites usar una herramienta, responde ÚNICAMENTE con <tool_call>{"name": "...", "arguments": {...}}</tool_call>. Nunca uses bloques de código markdown (```json) para esto..
 """

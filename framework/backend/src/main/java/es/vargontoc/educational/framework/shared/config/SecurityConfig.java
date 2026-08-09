@@ -48,7 +48,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/sessions/children/**").permitAll()
                 .requestMatchers("/api/v1/contact").permitAll()
-                .requestMatchers("/api/v1/agents/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

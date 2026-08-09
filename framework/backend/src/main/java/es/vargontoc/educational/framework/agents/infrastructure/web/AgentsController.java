@@ -5,14 +5,16 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import es.vargontoc.educational.framework.agents.infrastructure.dto.AgentRequestDto;
 import es.vargontoc.educational.framework.agents.infrastructure.dto.AgentStatusResponseDto;
 import es.vargontoc.educational.framework.agents.ports.in.CheckStatusModelsUseCase;
 import es.vargontoc.educational.framework.agents.ports.in.SendMessageChatbotUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 @RestController
 @RequestMapping("/api/v1/agents")
@@ -26,9 +28,9 @@ public class AgentsController {
         this.checker = checker;
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<String>> responseChatbot(@RequestParam("message") String message){
-        return ResponseEntity.ok(ApiResponse.ok(send.sendMessage(message)));
+    @PostMapping
+    public ResponseEntity<ApiResponse<String>> responseChatbot(@RequestBody AgentRequestDto request){
+        return ResponseEntity.ok(ApiResponse.ok(send.sendMessage(request.message())));
     }
     
     @GetMapping("/health")
