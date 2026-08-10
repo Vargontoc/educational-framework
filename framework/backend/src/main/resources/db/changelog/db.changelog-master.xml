@@ -33,4 +33,6 @@
     <include file="db/changelog/migrations/026__rename_child_profile_fields_and_add_volume.xml"/>
     <include file="db/changelog/migrations/027__create_contact_message.xml"/>
     <include file="db/changelog/migrations/028__init_pgvector.xml"/>
+    <include file="db/changelog/migrations/029__create_chatbot_conversation.xml"/>
+    <include file="db/changelog/migrations/030__create_chatbot_message.xml"/>
 </databaseChangeLog>

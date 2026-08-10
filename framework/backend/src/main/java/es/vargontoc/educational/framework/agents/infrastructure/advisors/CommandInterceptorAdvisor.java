@@ -17,7 +17,7 @@ import es.vargontoc.educational.framework.agents.infrastructure.commands.Command
 import reactor.core.publisher.Flux;
 
 public class CommandInterceptorAdvisor implements CallAdvisor, StreamAdvisor {
-    private static final String COMMAND_CIRCUIT = "COMMAND_SHORT_CIRCUIT";
+    
     private final CommandRouter router;
 
     public CommandInterceptorAdvisor(CommandRouter router){

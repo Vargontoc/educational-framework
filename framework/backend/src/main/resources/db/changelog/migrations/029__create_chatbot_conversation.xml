@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="029__create_chatbot_conversation" author="vargontoc">
+        <createTable tableName="chatbot_conversation">
+            <column name="id" type="BIGSERIAL">
+                <constraints nullable="false" primaryKey="true"  />
+            </column>
+            <column name="conversation_id" type="UUID">
+                <constraints nullable="false"  unique="true" />
+            </column>
+            <column name="family_id" type="BIGINT">
+                <constraints nullable="false" />
+            </column>
+            <column name="last_message_at" type="TIMESTAMPTZ">
+                <constraints nullable="false" />
+            </column>
+            <column name="created_at"  type="TIMESTAMPTZ">
+                <constraints nullable="false" />
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"></column>
+        </createTable>
+        
+        <createIndex tableName="chatbot_conversation" indexName="idx_chatbot_conversation_family_id">
+            <column name="family_id"></column>
+        </createIndex>
+        
+        <createIndex tableName="chatbot_conversation" indexName="idx_chatbot_conversation_last_message">
+            <column name="family_id"></column>
+            <column name="last_message_at"></column>
+        </createIndex>
+
+        <addForeignKeyConstraint baseTableName="chatbot_conversation" baseColumnNames="family_id" constraintName="fk_chatbot_conversation_family" referencedTableName="family" referencedColumnNames="id" onDelete="CASCADE" />
+    </changeSet>
+</databaseChangeLog>
