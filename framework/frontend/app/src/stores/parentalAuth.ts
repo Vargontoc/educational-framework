@@ -64,6 +64,10 @@ export const useParentalAuthStore = defineStore('parentalAuth', () => {
     stopCooldownTimer()
   }
 
+  function getBearer() {
+    return { Authorization: `Bearer ${token}` }
+  }
+
   return {
     token,
     familyId,
@@ -76,6 +80,7 @@ export const useParentalAuthStore = defineStore('parentalAuth', () => {
     clearAuth,
     incrementAttempts,
     resetAttempts,
-    cleanup
+    cleanup,
+    getBearer
   }
 })

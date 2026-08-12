@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@lucide/vue": "^1.26.0",
+    "@stomp/stompjs": "^7.0.0",
     "@vue/devtools-api": "^8.1.5",
     "dompurify": "^3.4.13",
     "marked": "^18.0.9",

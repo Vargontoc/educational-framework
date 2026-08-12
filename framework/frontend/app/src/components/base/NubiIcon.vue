@@ -59,12 +59,15 @@ import {
   Shield,
   Bell,
   Search,
+  SendHorizonal,
   Home,
   Smile,
   Play,
   Bot,
   Gamepad2,
   Mail,
+  Trash2,
+  Pencil
 } from '@lucide/vue'
 
 interface Props {
@@ -129,6 +132,9 @@ const lucideIconMap: Record<string, Component> = {
   'robot': Bot,
   'gamepad-2': Gamepad2,
   'mail': Mail,
+  'send-horizontal': SendHorizonal,
+  'trash-2': Trash2,
+  'pencil': Pencil
 }
 
 /**

@@ -11,6 +11,8 @@ channels:
     $ref: "./channels/family-sessions.yaml"
   /ws/game:
     $ref: "./channels/game.yaml"
+  /topic/family/{familyId}/chatbot:
+    $ref: "./channels/chatbot.yaml"
 
 components:
   events:
@@ -71,3 +73,18 @@ components:
     WORLD_ACTIVITY_STARTED:
       direction: server_to_client
       description: Child started an activity from the world map. Contains gameId, activityId, and transition type.
+    CHATBOT_TOKEN:
+      direction: server_to_client
+      description: Token de respuesta del chatbot en streaming.
+    CHATBOT_TOOL_CALL_START:
+      direction: server_to_client
+      description: El agente ha invocado una herramienta. Contiene nombre de la herramienta y parámetros.
+    CHATBOT_TOOL_CALL_RESULT:
+      direction: server_to_client
+      description: Resultado de la tool call. Contiene nombre, estado, resumen y duración.
+    CHATBOT_COMPLETE:
+      direction: server_to_client
+      description: Respuesta del chatbot completada. Contiene respuesta completa acumulada.
+    CHATBOT_ERROR:
+      direction: server_to_client
+      description: Error en streaming del chatbot. Contiene mensaje de error y número de intento.

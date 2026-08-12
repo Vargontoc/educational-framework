@@ -32,6 +32,8 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useUIStore } from '../stores/ui'
+import { useWSStore } from '../stores/ws'
+import { useParentalAuthStore } from '../stores/parentalAuth'
 import { useParentalSession } from '../composables/useParentalSession'
 import { useInactivityTimer } from '../composables/useInactivityTimer'
 import { useChatbotPendingResponse } from '../composables/useChatbotPendingResponse'
@@ -43,6 +45,8 @@ import ThemeToggle from '../components/ThemeToggle.vue'
 
 const { t } = useI18n()
 const uiStore = useUIStore()
+const wsStore = useWSStore()
+const authStore = useParentalAuthStore()
 const { logout } = useParentalSession()
 const { isWaitingForChatbot } = useChatbotPendingResponse()
 const { theme } = useTheme()
@@ -74,10 +78,14 @@ watch(isWaitingForChatbot, (waiting) => {
 
 onMounted(() => {
   start()
+  if (authStore.token) {
+    wsStore.connectParentChannel(authStore.token)
+  }
 })
 
 onUnmounted(() => {
   stop()
+  wsStore.disconnectParentChannel()
 })
 </script>
 

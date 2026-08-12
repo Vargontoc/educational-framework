@@ -6,8 +6,9 @@ import java.util.UUID;
 
 public record ConversationResponse(
     UUID conversationId,
-    LocalDateTime startedAt, 
-    LocalDateTime lastMessageAt, 
+    String title,
+    LocalDateTime startedAt,
+    LocalDateTime lastMessageAt,
     List<MessageResponse> message) {
-    
+
 }

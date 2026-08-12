@@ -53,7 +53,7 @@ public class ChatbotConversationPersistenceAdapter implements ChatbotConversatio
     public List<ChatbotConversation> findByFamilyIdOrderByLastMessageAtDesc(Long familyId, int limit) {
         return conversationRepository.findByFamilyIdOrderByLastMessageAtDesc(familyId)
             .stream()
-            .limit(limit)
+            .limit(limit <= 0 ? 999: limit)
             .map(conversationMapper::toDomain)
             .collect(Collectors.toList());
     }

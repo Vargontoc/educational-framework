@@ -36,6 +36,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             if (token != null) {
                 var session = familySessionUseCase.getByToken(token);
                 setAuthentication(session);
+                request.setAttribute("familyId", session.getFamilyId());
             }
         } catch (SessionException exception) {
             SecurityContextHolder.clearContext();

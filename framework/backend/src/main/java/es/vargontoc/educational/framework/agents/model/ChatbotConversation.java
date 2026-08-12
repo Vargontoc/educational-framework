@@ -13,6 +13,7 @@ public class ChatbotConversation {
     private Long id;
     private UUID conversationId;
     private Long familyId;
+    private String title;
     private LocalDateTime startedAt;
     private LocalDateTime lastMessageAt;
     private List<ChatbotMessage> messages;
@@ -86,7 +87,12 @@ public class ChatbotConversation {
         this.messages = messages;
     }
 
-    
+    public String getTitle() {
+        return title;
+    }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
 }

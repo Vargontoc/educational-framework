@@ -1,0 +1,2 @@
+payload:
+  $ref: "../schemas/chatbot-send-payload.yaml

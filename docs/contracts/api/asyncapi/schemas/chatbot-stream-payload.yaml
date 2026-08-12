@@ -1,0 +1,22 @@
+type: object
+required:
+  - event
+  - conversationId
+properties:
+  event:
+    type: string
+    enum: [TOKEN, TOOL_CALL_START, TOOL_CALL_RESULT, COMPLETE, ERROR]
+    description: Tipo de evento de streaming
+  conversationId:
+    type: string
+    format: uuid
+    description: Identificador de la conversación para correlacionar eventos
+  content:
+    type: string
+    description: Token de respuesta (TOKEN), respuesta completa (COMPLETE), o mensaje de error (ERROR)
+  attempt:
+    type: integer
+    description: Número de intento (solo presente en ERROR)
+  toolCall:
+    $ref: "./tool-call-info-payload.yaml"
+    description: Información de tool call (solo presente en TOOL_CALL_START y TOOL_CALL_RESULT)

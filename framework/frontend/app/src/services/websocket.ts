@@ -140,9 +140,9 @@ export class WebSocketClient {
     this.setStatus('reconnecting')
     this.reconnectAttempts++
 
-    // Backoff exponencial con jitter
-    const delay = Math.min(
-      this.options.reconnectBaseDelay * Math.pow(2, this.reconnectAttempts - 1) + Math.random() * 1000,
+    const delay = computeBackoffDelay(
+      this.reconnectAttempts,
+      this.options.reconnectBaseDelay,
       this.options.reconnectMaxDelay
     )
 
@@ -180,11 +180,15 @@ export function createGameWebSocket(options: Omit<WebSocketClientOptions, 'endpo
   })
 }
 
-export function createParentWebSocket(options: Omit<WebSocketClientOptions, 'endpoint'>): WebSocketClient {
-  return new WebSocketClient({
-    ...options,
-    endpoint: '/ws/parent',
-  })
+/**
+ * Backoff exponencial con jitter, compartido entre WebSocketClient (GameChannel)
+ * y StompParentClient (ParentChannel) para no duplicar la fórmula.
+ */
+export function computeBackoffDelay(attempt: number, baseDelay: number, maxDelay: number): number {
+  return Math.min(
+    baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000,
+    maxDelay
+  )
 }
 
 export default WebSocketClient

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import es.vargontoc.educational.framework.agents.infrastructure.dto.CommandResponse;
+import es.vargontoc.educational.framework.agents.infrastructure.dto.UpdateConversationTitleDto;
 import es.vargontoc.educational.framework.agents.model.ChatbotConversation;
 import es.vargontoc.educational.framework.agents.model.ChatbotMessage;
 
@@ -43,4 +45,10 @@ public interface ChatbotHistoryUseCase {
      * @return
      */
     ChatbotMessage addMessage(Long conversationId, String role, String content);
+
+    ChatbotConversation updateConversation(UpdateConversationTitleDto request, Long familyId);
+
+    void deleteConversation(UUID conversation, Long familyId);
+
+    List<CommandResponse> getCommands();
 }

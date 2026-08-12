@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
+import es.vargontoc.educational.framework.session.infrastructure.websocket.stomp.StompConnectAuthInterceptor;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.stomp.StompSubscribeInterceptor;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
-import es.vargontoc.educational.framework.session.ports.in.FamilySessionUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
@@ -34,9 +34,9 @@ import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final FamilySessionUseCase familySessionUseCase;
     private final ChildSessionUseCase childSessionUseCase;
     private final ObjectMapper objectMapper;
+    private final StompConnectAuthInterceptor stompConnectAuthInterceptor;
     private final StompSubscribeInterceptor stompSubscribeInterceptor;
     private final AvatarLifecycleService avatarLifecycleService;
     private final GameOrchestrator gameOrchestrator;
@@ -48,9 +48,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ThreadPoolTaskScheduler webSocketBrokerTaskScheduler;
 
     public WebSocketConfig(
-            FamilySessionUseCase familySessionUseCase,
             ChildSessionUseCase childSessionUseCase,
             ObjectMapper objectMapper,
+            StompConnectAuthInterceptor stompConnectAuthInterceptor,
             StompSubscribeInterceptor stompSubscribeInterceptor,
             AvatarLifecycleService avatarLifecycleService,
             GameOrchestrator gameOrchestrator,
@@ -60,9 +60,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             WorldStateRegistry worldStateRegistry,
             WorldOrchestrator worldOrchestrator,
             ThreadPoolTaskScheduler webSocketBrokerTaskScheduler) {
-        this.familySessionUseCase = familySessionUseCase;
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
+        this.stompConnectAuthInterceptor = stompConnectAuthInterceptor;
         this.stompSubscribeInterceptor = stompSubscribeInterceptor;
         this.avatarLifecycleService = avatarLifecycleService;
         this.gameOrchestrator = gameOrchestrator;
@@ -86,14 +86,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/parent")
-            .addInterceptors(new WebSocketAuthInterceptor(familySessionUseCase))
             .setAllowedOriginPatterns("*")
             .withSockJS();
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(stompSubscribeInterceptor);
+        registration.interceptors(stompConnectAuthInterceptor, stompSubscribeInterceptor);
     }
 
     // ── Native WebSocket (game channel) ───────────────────────────────

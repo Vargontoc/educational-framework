@@ -19,6 +19,9 @@ public class ChatbotConversationJpaEntity extends BaseEntity {
     private Long familyId;
     @Column(name = "last_message_at", nullable = false)
     private LocalDateTime lastMessageAt;
+    @Column(name = "title")
+    private String title;
+
     public UUID getConversationId() {
         return conversationId;
     }
@@ -37,6 +40,13 @@ public class ChatbotConversationJpaEntity extends BaseEntity {
     public void setLastMessageAt(LocalDateTime lastMessageAt) {
         this.lastMessageAt = lastMessageAt;
     }
+    public String getTitle() {
+        return title;
+    }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
+    
     
 }

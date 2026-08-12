@@ -1,0 +1,2 @@
+payload:
+  $ref: "../schemas/chatbot-stream-payload.yaml"

@@ -5,22 +5,28 @@
       <span v-if="required" class="nubi-textarea__required" aria-hidden="true">*</span>
     </label>
 
-    <textarea
-      :id="inputId"
-      ref="textareaRef"
-      :value="modelValue"
-      :placeholder="placeholder"
-      :maxlength="maxLength"
-      :disabled="disabled"
-      :rows="rows"
-      :required="required"
-      :aria-invalid="hasError"
-      :aria-describedby="descriptionId"
-      class="nubi-textarea__input"
-      @input="handleInput"
-      @blur="handleBlur"
-      @focus="handleFocus"
-    />
+    <div class="nubi-textarea__wrapper">
+      <textarea
+        :id="inputId"
+        ref="textareaRef"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :maxlength="maxLength"
+        :disabled="disabled"
+        :rows="rows"
+        :required="required"
+        :aria-invalid="hasError"
+        :aria-describedby="descriptionId"
+        class="nubi-textarea__input"
+        @input="handleInput"
+        @blur="handleBlur"
+        @focus="handleFocus"
+      />
+
+      <span v-if="$slots.suffix" class="nubi-textarea__suffix">
+        <slot name="suffix" />
+      </span>
+    </div>
 
     <div v-if="maxLength" class="nubi-textarea__counter">
       {{ currentLength }} / {{ maxLength }}
@@ -109,10 +115,40 @@ defineExpose({ focus, textareaRef })
   margin-left: var(--nubi-spacing-xs);
 }
 
-.nubi-textarea__input {
+.nubi-textarea__wrapper {
+  display: flex;
+  align-items: center;
   border: var(--nubi-border-width-thick) solid var(--nubi-border-default);
   border-radius: var(--nubi-radius-md);
   background-color: var(--nubi-bg-surface);
+  transition: border-color var(--nubi-duration-fast) var(--nubi-ease-in-out),
+              box-shadow var(--nubi-duration-fast) var(--nubi-ease-in-out);
+}
+
+.nubi-textarea__wrapper:focus-within {
+  border-color: var(--nubi-border-focus);
+  box-shadow: 0 0 0 3px var(--nubi-color-focus);
+}
+
+.nubi-textarea--error .nubi-textarea__wrapper {
+  border-color: var(--nubi-color-error);
+}
+
+.nubi-textarea--error .nubi-textarea__wrapper:focus-within {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+.nubi-textarea--disabled .nubi-textarea__wrapper {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--nubi-bg-surface-secondary);
+}
+
+.nubi-textarea__input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
   padding: var(--nubi-spacing-sm) var(--nubi-spacing-md);
   font-size: var(--nubi-font-size-base);
   font-family: var(--nubi-font-family-base);
@@ -120,35 +156,22 @@ defineExpose({ focus, textareaRef })
   resize: vertical;
   min-height: 48px;
   outline: none;
-  transition: border-color var(--nubi-duration-fast) var(--nubi-ease-in-out),
-              box-shadow var(--nubi-duration-fast) var(--nubi-ease-in-out);
 }
 
 .nubi-textarea__input::placeholder {
   color: var(--nubi-text-tertiary);
 }
 
-.nubi-textarea__input:focus {
-  border-color: var(--nubi-border-focus);
-  box-shadow: 0 0 0 3px var(--nubi-color-focus);
-}
-
-.nubi-textarea--error .nubi-textarea__input {
-  border-color: var(--nubi-color-error);
-}
-
-.nubi-textarea--error .nubi-textarea__input:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
-}
-
-.nubi-textarea--disabled .nubi-textarea__input {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: var(--nubi-bg-surface-secondary);
-}
-
 .nubi-textarea__input:disabled {
   cursor: not-allowed;
+}
+
+.nubi-textarea__suffix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: var(--nubi-spacing-sm);
+  flex-shrink: 0;
 }
 
 .nubi-textarea__counter {

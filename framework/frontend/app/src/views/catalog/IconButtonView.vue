@@ -23,6 +23,7 @@
           <NubiIconButton icon="settings" label="Configuración" />
           <NubiIconButton icon="bell" label="Notificaciones" />
           <NubiIconButton icon="search" label="Buscar" />
+          <NubiIconButton icon="send-horizontal" label="Buscar" />
         </div>
       </div>
 

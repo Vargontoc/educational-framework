@@ -1,0 +1,8 @@
+protocol: stomp
+description: Chatbot streaming channel for parental panel. Subscriptions require Authorization: Bearer <token> during handshake.
+subscribe:
+  message:
+    $ref: "../messages/chatbot-stream-event.yaml"
+publish:
+  message:
+    $ref: "../messages/chatbot-send-message.yaml"

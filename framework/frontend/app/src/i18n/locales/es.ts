@@ -306,6 +306,45 @@ export default {
         relaxationFamily: 'Relajación familiar'
       }
     },
+    chatbot: {
+      title: 'Chatbot',
+      roleUser: 'Tú',
+      roleAssistant: 'Nubi',
+      emptyTitle: 'Aún no hay conversaciones',
+      emptyDescription: 'Escribe un mensaje para empezar a hablar con Nubi.',
+      inputLabel: 'Mensaje para Nubi',
+      inputPlaceholder: 'Escribe tu mensaje... usa @ para mencionar a un perfil o usa / para ver los comandos disponibles',
+      send: 'Enviar',
+      streaming: 'Nubi está escribiendo...',
+      errorGeneric: 'Ha ocurrido un error. Puedes intentarlo de nuevo.',
+      errorTimeout: 'No se ha recibido respuesta. Inténtalo de nuevo.',
+      errorConnectionLost: 'Conexión perdida antes de completar la respuesta.',
+      mentionSuggestionsLabel: 'Sugerencias de perfiles',
+      commandSuggestionsLabel: 'Sugerencias de comandos',
+      messagesLabel: 'Conversación con Nubi',
+      toolCall: {
+        getAllChilds: 'Consultando los perfiles registrados...',
+        getChild: 'Consultando un perfil...',
+        fallback: 'Consultando información...'
+      },
+      conversations: {
+        title: 'Conversaciones',
+        current: 'Conversación actual',
+        emptyTitle: 'Aún no hay conversaciones guardadas',
+        emptyDescription: 'Cuando hables con Nubi, tus conversaciones aparecerán aquí.',
+        editTitleLabel: 'Título de la conversación',
+        edit: 'Editar título',
+        save: 'Guardar título',
+        cancel: 'Cancelar edición',
+        delete: 'Eliminar conversación',
+        deleteConfirmTitle: '¿Eliminar esta conversación?',
+        deleteConfirmMessage: 'Esta acción no se puede deshacer. Se eliminará toda la conversación.',
+        saveSuccess: 'Título actualizado.',
+        saveError: 'No se pudo actualizar el título. Inténtalo de nuevo.',
+        deleteSuccess: 'Conversación eliminada.',
+        deleteError: 'No se pudo eliminar la conversación. Inténtalo de nuevo.'
+      }
+    },
     game: {
       title: 'Juego',
       description: 'Vista de juego para',

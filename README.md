@@ -78,9 +78,6 @@ Tiene distintas vistas:
 
 ## Installation
 
-### TTS Service
-
-Requiere `CHATTERBOX_BASE_URL` apuntando a una URL de Chatterbox alcanzable desde la red donde corre el contenedor TTS. En host local, el valor por defecto `http://127.0.0.1:4123` es válido si Chatterbox corre en el mismo host. En Docker, infraestructura debe proporcionar la URL accesible desde la red del contenedor. No define redes Docker externas ni fallback automático de proveedor. Ver `framework/tts/README.md` para detalle completo.
 
 ### Agents
 

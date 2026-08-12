@@ -1,6 +1,5 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket.stomp;
 
-import es.vargontoc.educational.framework.session.infrastructure.websocket.WebSocketAuthInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
@@ -18,7 +17,7 @@ import java.util.regex.Pattern;
 public class StompSubscribeInterceptor implements ChannelInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StompSubscribeInterceptor.class);
-    private static final Pattern FAMILY_TOPIC_PATTERN = Pattern.compile("^/topic/family/(\\d+)/sessions$");
+    private static final Pattern FAMILY_TOPIC_PATTERN = Pattern.compile("^/topic/family/(\\d+)/(sessions|chatbot)$");
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -57,7 +56,7 @@ public class StompSubscribeInterceptor implements ChannelInterceptor {
 
     private Long getAuthenticatedFamilyId(StompHeaderAccessor accessor) {
         Object attr = accessor.getSessionAttributes() != null
-            ? accessor.getSessionAttributes().get(WebSocketAuthInterceptor.ATTR_FAMILY_ID)
+            ? accessor.getSessionAttributes().get(StompConnectAuthInterceptor.ATTR_FAMILY_ID)
             : null;
         return attr instanceof Long id ? id : null;
     }

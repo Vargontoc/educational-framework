@@ -27,6 +27,7 @@ public class ChatbotMessageMapper extends AbstractMapper<ChatbotMessage, Chatbot
         ChatbotMessageJpaEntity target = new ChatbotMessageJpaEntity();
         target.setId(source.getId());
         target.setConversationId(source.getConversationId());
+        target.setContent(source.getContent());
         target.setRole(source.getRole());
         target.setCreatedAt(source.getCreatedAt());
 

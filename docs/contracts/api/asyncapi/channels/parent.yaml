@@ -1,5 +1,5 @@
 protocol: stomp
-description: Parental control STOMP over WebSocket endpoint. Connections require Authorization: Bearer <token> during handshake.
+description: "Parental control STOMP over WebSocket endpoint. Connections require an Authorization: Bearer <token> native header on the STOMP CONNECT frame (not the HTTP handshake, which native WebSocket clients cannot set custom headers for)."
 subscribe:
   message:
     $ref: "../messages/session-event.yaml"

@@ -1,0 +1,22 @@
+type: object
+properties:
+  toolName:
+    type: string
+    description: Nombre de la herramienta invocada (ej. "getChild", "getAllChilds")
+  parameters:
+    type: string
+    description: Parámetros de la tool call en formato JSON (solo en TOOL_CALL_START)
+  status:
+    type: string
+    enum: [STARTED, SUCCESS, ERROR]
+    description: Estado de la tool call
+  summary:
+    type: string
+    description: Resumen del resultado (solo en TOOL_CALL_RESULT, sin datos sensibles)
+  durationMs:
+    type: integer
+    description: Duración de la tool call en milisegundos (solo en TOOL_CALL_RESULT)
+  timestamp:
+    type: string
+    format: date-time
+    description: Timestamp de cuando ocurrió el evento

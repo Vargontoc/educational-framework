@@ -89,9 +89,9 @@ function buildHeaders(headers?: Record<string, string>): Record<string, string> 
 }
 
 export const apiClient = {
-  get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+  get<T>(endpoint: string, params?: Record<string, string>, headers?: Record<string, string>): Promise<T> {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : ''
-    return request<T>(`${endpoint}${queryString}`, { method: 'GET' })
+    return request<T>(`${endpoint}${queryString}`, { method: 'GET', headers: buildHeaders(headers) })
   },
 
   post<T>(endpoint: string, data?: unknown, headers?: Record<string, string>): Promise<T> {
@@ -109,10 +109,11 @@ export const apiClient = {
     })
   },
 
-  patch<T>(endpoint: string, data?: unknown): Promise<T> {
+  patch<T>(endpoint: string, data?: unknown, headers?: Record<string, string>): Promise<T> {
     return request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,
+      headers: buildHeaders(headers),
     })
   },
 

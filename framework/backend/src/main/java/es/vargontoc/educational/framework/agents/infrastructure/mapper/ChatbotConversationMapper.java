@@ -13,7 +13,8 @@ public class ChatbotConversationMapper extends AbstractMapper<ChatbotConversatio
     public ChatbotConversation toDomain(ChatbotConversationJpaEntity source) {
         
         ChatbotConversation target = new ChatbotConversation();
-        target.setId(source.getId()); 
+        target.setId(source.getId());
+        target.setTitle(source.getTitle());
         target.setConversationId(source.getConversationId());
         target.setFamilyId(source.getFamilyId());
         target.setStartedAt(source.getCreatedAt());
@@ -27,6 +28,8 @@ public class ChatbotConversationMapper extends AbstractMapper<ChatbotConversatio
         ChatbotConversationJpaEntity target = new ChatbotConversationJpaEntity();
         target.setConversationId(source.getConversationId());
         target.setId(source.getId());
+        target.setTitle(source.getTitle());
+        target.setFamilyId(source.getFamilyId());
         target.setCreatedAt(source.getStartedAt());
         target.setLastMessageAt(source.getLastMessageAt());
         
