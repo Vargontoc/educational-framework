@@ -24,7 +24,7 @@ These columns were added in migration 014 and wired through the full stack (mode
 
 - Removed `permitAll()` for `/api/v1/dev/content/**` from SecurityConfig. Dev endpoints now require FamilySession authentication when the `dev` profile is active.
 - Outside the `dev` profile, requests to `/api/v1/dev/content/**` return 401 (no controller registered).
-- Productive story endpoints (`/api/v1/content/stories`) require FamilySession authentication (Bearer token from PIN login).
+- ~~Productive story endpoints (`/api/v1/content/stories`) require FamilySession authentication (Bearer token from PIN login).~~ **Deprecated by ADR-024**: `Story`/`StoryPage` are removed from this module's scope; these endpoints, tables, and entities must be removed by backend.
 
 ### Deferred Read-Only APIs
 
@@ -37,11 +37,13 @@ The following read-only APIs specified in FEAT-003 are NOT yet implemented:
 - `GET /api/v1/content/topics/{id}/curiosities`
 - `GET /api/v1/content/learning-paths`
 
-These are deferred to a future sprint as they are not required by current frontend flows. The productive story endpoints are the only read-only APIs implemented.
+These are deferred to a future sprint as they are not required by current frontend flows.
 
 ## Description
 
-The content module centralizes the static and administrative catalog required by the application: activities, topics, resources, avatar event fallback messages, curiosities, learning paths, tracing patterns, and stories.
+The content module centralizes the static and administrative catalog required by the application: activities, topics, resources, avatar event fallback messages, curiosities, learning paths, and tracing patterns.
+
+Reading-family stories are out of scope (ADR-024): they are resources produced by an external tool, outside this application's layers, and received by backend via upload rather than administered as catalog entities here.
 
 This feature focuses on the administrative catalog side of the module. It must provide CRUD and read-only access to reference content used later by game, avatar, reading, agent, and tracking modules.
 
@@ -77,7 +79,9 @@ Out of scope:
 ## Ownership Boundaries
 
 Content owns:
-- Categories, topics, activities, difficulty configuration, resources, avatar fallback messages, curiosities, learning paths, tracing patterns, stories, and story pages.
+- Categories, topics, activities, difficulty configuration, resources, avatar fallback messages, curiosities, learning paths, and tracing patterns.
+
+> **Amendment (ADR-024, 2026-08-26):** `Story` and `StoryPage` are removed from this module's scope. Reading-family stories are no longer administered as internal catalog entities; they are resources produced by an external tool (outside this application's layers) and received by backend via upload. See ADR-024 and FEAT-008. Any existing `Story`/`StoryPage` tables, entities, seed data, and endpoints described below are deprecated and must be removed by backend.
 
 Tracking will own in a future feature:
 - `CuriosityViewed`.
@@ -179,22 +183,6 @@ Agent owns:
     - [ ] Recommended age range.
     - [ ] Status: ACTIVE, INACTIVE, DRAFT.
 
-- [ ] Story: story catalog entry for the future reading module.
-    - [ ] Title and description.
-    - [ ] Recommended age range.
-    - [ ] Estimated duration.
-    - [ ] Optional related topics.
-    - [ ] Optional background music resource.
-    - [ ] Status: ACTIVE, INACTIVE, DRAFT.
-
-- [ ] StoryPage: page inside a story.
-    - [ ] Story reference.
-    - [ ] Page order.
-    - [ ] Text.
-    - [ ] Image resource reference.
-    - [ ] Optional prerecorded audio resource.
-    - [ ] Status: ACTIVE, INACTIVE, DRAFT.
-
 ## Enums
 
 - [ ] ContentStatus: ACTIVE, INACTIVE, DRAFT.
@@ -216,7 +204,6 @@ Seeds must be idempotent and safe to run multiple times.
 6. AvatarEventCatalog.
 7. LearningPaths and LearningPathSteps.
 8. TracingPatterns.
-9. Stories and StoryPages.
 
 ## API Plan
 
@@ -236,9 +223,6 @@ Development administrative APIs:
 - [ ] POST /api/v1/dev/content/learning-paths
 - [ ] PUT /api/v1/dev/content/learning-paths/{id}
 - [ ] GET /api/v1/dev/content/learning-paths
-- [ ] POST /api/v1/dev/content/stories
-- [ ] PUT /api/v1/dev/content/stories/{id}
-- [ ] GET /api/v1/dev/content/stories
 
 Development API rules:
 - [ ] Development administrative controllers must be registered only with Spring profile `dev`.
@@ -253,13 +237,10 @@ Read-only APIs:
 - [ ] GET /api/v1/content/activities/{id}/difficulty-levels
 - [ ] GET /api/v1/content/topics/{id}/curiosities
 - [ ] GET /api/v1/content/learning-paths
-- [ ] GET /api/v1/content/stories
-- [ ] GET /api/v1/content/stories/{id}
 
 Production runtime consumption:
 - [ ] In production, game engines and WebSocket flows consume content through backend services, not development administrative APIs.
 - [ ] Public read-only APIs should exist only when required by a runtime/frontend flow.
-- [ ] Productive story endpoints require parental PIN/session authorization.
 
 Contract rules:
 - [ ] All REST endpoints must return `ApiResponse<T>` where applicable.
@@ -323,7 +304,7 @@ Rules:
 - Add unit tests for each use case and integration tests for REST controllers.
 - Register development administrative controllers only under Spring profile `dev`.
 - Verify `/api/v1/dev/content/**` is unavailable outside profile `dev`.
-- Protect productive story read endpoints with parental PIN/session authorization.
+- Remove any existing `Story`/`StoryPage` tables, entities, seed data, and endpoints (ADR-024).
 
 ### Frontend
 
@@ -343,7 +324,7 @@ Rules:
 - [ ] Development administrative endpoints are available only with Spring profile `dev`.
 - [ ] Development administrative endpoints are unavailable outside Spring profile `dev`.
 - [ ] Read-only content endpoints return active catalog data.
-- [ ] Productive story endpoints require parental PIN/session authorization.
+- [ ] `Story`/`StoryPage` tables, entities, seed data, and endpoints are removed (ADR-024).
 - [ ] Seed loading order is documented and implemented idempotently.
 - [ ] Tracking-specific state is not implemented in content.
 - [ ] OpenAPI contract is updated.

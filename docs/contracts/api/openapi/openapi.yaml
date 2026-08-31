@@ -98,26 +98,7 @@ paths:
     put:
       $ref: "./paths/content/update-topic.yaml"
   
-  /dev/content/stories:
-    get:
-      $ref: "./paths/content/get-stories.yaml"
-    post:
-      $ref: "./paths/content/create-stories.yaml"
-  /dev/content/stories/{id}:
-    get:
-      $ref: "./paths/content/get-story.yaml"
-    put:
-      $ref: "./paths/content/update-story.yaml"
-  /dev/content/stories/{storyId}/pages:
-    get:
-      $ref: "./paths/content/get-pages.yaml"
-    post:
-      $ref: "./paths/content/create-pages.yaml"
-  /dev/content/stories/{storyId}/pages/{pageId}:
-    get:
-      $ref: "./paths/content/get-page.yaml"
-    put:
-      $ref: "./paths/content/update-page.yaml"
+
   
   /dev/content/locales:
     get:
@@ -212,12 +193,6 @@ paths:
     put:
       $ref: "./paths/content/update-activity-resource.yaml"
 
-  /content/stories:
-    get:
-      $ref: "./paths/content/list-active-stories.yaml"
-  /content/stories/{id}:
-    get:
-      $ref: "./paths/content/get-story-detail.yaml"
 
   /tracking/children/{childProfileId}/topics:
     get:

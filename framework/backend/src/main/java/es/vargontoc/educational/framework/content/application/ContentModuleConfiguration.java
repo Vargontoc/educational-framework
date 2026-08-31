@@ -1,11 +1,17 @@
 package es.vargontoc.educational.framework.content.application;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import es.vargontoc.educational.framework.content.infrastructure.ActivityInformationPortImpl;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.ActivityJpaRepository;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
-import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedService;
+import es.vargontoc.educational.framework.content.ports.in.ActivityUseCase;
+import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
+import es.vargontoc.educational.framework.content.ports.in.WorldCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
 import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
@@ -17,8 +23,6 @@ import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
-import es.vargontoc.educational.framework.content.ports.out.StoryPageRepository;
-import es.vargontoc.educational.framework.content.ports.out.StoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
@@ -31,20 +35,14 @@ import es.vargontoc.educational.framework.content.service.CategoryService;
 import es.vargontoc.educational.framework.content.service.ContentLocaleService;
 import es.vargontoc.educational.framework.content.service.CuriosityService;
 import es.vargontoc.educational.framework.content.service.DifficultyLevelService;
+import es.vargontoc.educational.framework.content.service.GameCatalogService;
 import es.vargontoc.educational.framework.content.service.LearningPathService;
 import es.vargontoc.educational.framework.content.service.LearningPathStepService;
-import es.vargontoc.educational.framework.content.service.StoryPageService;
-import es.vargontoc.educational.framework.content.service.StoryService;
 import es.vargontoc.educational.framework.content.service.TopicService;
-import es.vargontoc.educational.framework.content.ports.in.ActivityUseCase;
-import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
-import es.vargontoc.educational.framework.content.ports.in.WorldCatalogUseCase;
-import es.vargontoc.educational.framework.content.service.GameCatalogService;
 import es.vargontoc.educational.framework.content.service.TracingPatternService;
 import es.vargontoc.educational.framework.content.service.WorldCatalogService;
+import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 @Configuration
 class ContentModuleConfiguration {
@@ -104,15 +102,6 @@ class ContentModuleConfiguration {
         return new TracingPatternService(tracingPatternRepository, topicRepository);
     }
 
-    @Bean
-    StoryService storyService(StoryRepository storyRepository) {
-        return new StoryService(storyRepository);
-    }
-
-    @Bean
-    StoryPageService storyPageService(StoryPageRepository storyPageRepository, StoryRepository storyRepository) {
-        return new StoryPageService(storyPageRepository, storyRepository);
-    }
 
     @Bean
     GameCatalogService gameCatalogService(
@@ -145,8 +134,6 @@ class ContentModuleConfiguration {
             LearningPathRepository learningPathRepository,
             LearningPathStepRepository learningPathStepRepository,
             TracingPatternRepository tracingPatternRepository,
-            StoryRepository storyRepository,
-            StoryPageRepository storyPageRepository,
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
@@ -155,7 +142,7 @@ class ContentModuleConfiguration {
             ObjectMapper objectMapper) {
         return new SeedService(seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
-            learningPathStepRepository, tracingPatternRepository, storyRepository, storyPageRepository,
+            learningPathStepRepository, tracingPatternRepository,
             worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository,
             accessibleColorRepository, accessibleColorPaletteRepository, objectMapper);
     }

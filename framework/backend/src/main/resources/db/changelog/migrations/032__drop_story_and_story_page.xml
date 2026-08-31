@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="032__drop_story_and_story_page_tables" author="vargontoc">
+        <dropAllForeignKeyConstraints baseTableName="story_page" />
+        <dropAllForeignKeyConstraints baseTableName="story" />
+        <dropTable tableName="story_page" />
+        <dropTable tableName="story" />
+    </changeSet>
+</databaseChangeLog>

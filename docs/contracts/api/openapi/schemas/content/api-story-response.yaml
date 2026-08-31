@@ -1,8 +1,0 @@
-allOf:
-  - $ref: "../api-response.yaml"
-  - type: object
-    required:
-      - data
-    properties:
-      data:
-        $ref: "./story-response.yaml"

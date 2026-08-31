@@ -16,8 +16,6 @@ import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.LearningPath;
 import es.vargontoc.educational.framework.content.model.LearningPathStep;
-import es.vargontoc.educational.framework.content.model.Story;
-import es.vargontoc.educational.framework.content.model.StoryPage;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.model.TracingPattern;
 import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
@@ -33,8 +31,6 @@ import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
-import es.vargontoc.educational.framework.content.ports.out.StoryPageRepository;
-import es.vargontoc.educational.framework.content.ports.out.StoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
@@ -67,8 +63,6 @@ public class SeedService {
     private final LearningPathRepository learningPathRepository;
     private final LearningPathStepRepository learningPathStepRepository;
     private final TracingPatternRepository tracingPatternRepository;
-    private final StoryRepository storyRepository;
-    private final StoryPageRepository storyPageRepository;
     private final WorldHostRepository worldHostRepository;
     private final WorldNarrativeSituationRepository worldNarrativeSituationRepository;
     private final WorldDiscoveryElementRepository worldDiscoveryElementRepository;
@@ -80,7 +74,6 @@ public class SeedService {
     private final Map<String, Long> topicCache = new HashMap<>();
     private final Map<String, Long> activityCache = new HashMap<>();
     private final Map<String, Long> learningPathCache = new HashMap<>();
-    private final Map<String, Long> storyCache = new HashMap<>();
     private final Map<String, Long> accessibleColorCache = new HashMap<>();
 
     public SeedService(
@@ -94,8 +87,6 @@ public class SeedService {
             LearningPathRepository learningPathRepository,
             LearningPathStepRepository learningPathStepRepository,
             TracingPatternRepository tracingPatternRepository,
-            StoryRepository storyRepository,
-            StoryPageRepository storyPageRepository,
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
@@ -112,8 +103,6 @@ public class SeedService {
         this.learningPathRepository = learningPathRepository;
         this.learningPathStepRepository = learningPathStepRepository;
         this.tracingPatternRepository = tracingPatternRepository;
-        this.storyRepository = storyRepository;
-        this.storyPageRepository = storyPageRepository;
         this.worldHostRepository = worldHostRepository;
         this.worldNarrativeSituationRepository = worldNarrativeSituationRepository;
         this.worldDiscoveryElementRepository = worldDiscoveryElementRepository;
@@ -134,8 +123,6 @@ public class SeedService {
         loaded += loadLearningPaths();
         loaded += loadLearningPathSteps();
         loaded += loadTracingPatterns();
-        loaded += loadStories();
-        loaded += loadStoryPages();
         loaded += loadWorldHosts();
         loaded += loadWorldNarrativeSituations();
         loaded += loadWorldDiscoveryElements();
@@ -428,65 +415,6 @@ public class SeedService {
         return count;
     }
 
-    private int loadStories() {
-        String file = "10-stories.json";
-        var seeds = readSeedFile(file, new TypeReference<List<SeedData.StorySeed>>() {});
-        int count = 0;
-        for (var seed : seeds) {
-            String key = "story:" + seed.title().toLowerCase();
-            if (alreadyLoaded(key)) {
-                log.debug("Skipping already loaded seed: {}", key);
-                continue;
-            }
-            List<Long> topicIds = seed.topicNames() != null
-                ? seed.topicNames().stream().map(this::resolveTopicId).filter(id -> id != null).toList()
-                : Collections.emptyList();
-            var story = new Story();
-            story.setTitle(seed.title());
-            story.setDescription(seed.description());
-            story.setMinAge(seed.minAge());
-            story.setMaxAge(seed.maxAge());
-            story.setEstimatedDurationMinutes(seed.estimatedDurationMinutes());
-            story.setTopicIds(topicIds);
-            story.setStatus(ContentStatus.valueOf(seed.status()));
-            story.setCreatedAt(LocalDateTime.now());
-            var savedStory = storyRepository.save(story);
-            markLoaded(key, file);
-            storyCache.put(seed.title(), savedStory.getId());
-            count++;
-            log.info("Loaded seed: {}", key);
-        }
-        return count;
-    }
-
-    private int loadStoryPages() {
-        String file = "11-story-pages.json";
-        var seeds = readSeedFile(file, new TypeReference<List<SeedData.StoryPageSeed>>() {});
-        int count = 0;
-        for (var seed : seeds) {
-            String key = "story-page:" + seed.storyTitle().toLowerCase() + ":" + seed.pageOrder();
-            if (alreadyLoaded(key)) {
-                log.debug("Skipping already loaded seed: {}", key);
-                continue;
-            }
-            Long storyId = resolveStoryId(seed.storyTitle());
-            if (storyId == null) {
-                log.warn("Story not found for page seed: {}", seed.storyTitle());
-                continue;
-            }
-            var page = new StoryPage();
-            page.setStoryId(storyId);
-            page.setPageOrder(seed.pageOrder());
-            page.setText(seed.text());
-            page.setStatus(ContentStatus.valueOf(seed.status()));
-            page.setCreatedAt(LocalDateTime.now());
-            storyPageRepository.save(page);
-            markLoaded(key, file);
-            count++;
-            log.info("Loaded seed: {}", key);
-        }
-        return count;
-    }
 
     private int loadWorldHosts() {
         String file = "12-world-hosts.json";
@@ -623,16 +551,6 @@ public class SeedService {
             .orElse(null);
     }
 
-    private Long resolveStoryId(String title) {
-        if (storyCache.containsKey(title)) {
-            return storyCache.get(title);
-        }
-        return storyRepository.findAll().stream()
-            .filter(s -> s.getTitle().equals(title))
-            .map(Story::getId)
-            .findFirst()
-            .orElse(null);
-    }
 
     private int loadAccessibleColors() {
         String file = "15-accessible-colors.json";

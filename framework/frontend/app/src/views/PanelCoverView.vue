@@ -1,7 +1,5 @@
 <template>
   <div class="panel-cover-view">
-    <h1 class="panel-cover-view__title">{{ t('views.panelCover.title') }}</h1>
-    <p class="panel-cover-view__description">{{ t('views.panelCover.description') }}</p>
 
     <div class="panel-cover-view__groups">
       <section class="panel-cover-view__group">

@@ -1,6 +1,24 @@
 package es.vargontoc.educational.framework.content.infrastructure.seed;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaEntity;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
 import es.vargontoc.educational.framework.content.model.Category;
@@ -14,30 +32,11 @@ import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
-import es.vargontoc.educational.framework.content.ports.out.StoryPageRepository;
-import es.vargontoc.educational.framework.content.ports.out.StoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -74,12 +73,6 @@ class SeedServiceTest {
     private TracingPatternRepository tracingPatternRepository;
 
     @Mock
-    private StoryRepository storyRepository;
-
-    @Mock
-    private StoryPageRepository storyPageRepository;
-
-    @Mock
     private WorldHostRepository worldHostRepository;
 
     @Mock
@@ -103,7 +96,7 @@ class SeedServiceTest {
             seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository,
             learningPathRepository, learningPathStepRepository, tracingPatternRepository,
-            storyRepository, storyPageRepository, worldHostRepository, worldNarrativeSituationRepository,
+            worldHostRepository, worldNarrativeSituationRepository,
             worldDiscoveryElementRepository, accessibleColorRepository, accessibleColorPaletteRepository, objectMapper
         );
     }
@@ -157,12 +150,8 @@ class SeedServiceTest {
         });
         when(learningPathStepRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(tracingPatternRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(storyRepository.save(any())).thenAnswer(inv -> {
-            var obj = inv.getArgument(0);
-            try { obj.getClass().getMethod("setId", Long.class).invoke(obj, 1L); } catch (Exception ignored) {}
-            return obj;
-        });
-        when(storyPageRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+
         when(worldHostRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(worldNarrativeSituationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(worldDiscoveryElementRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -174,7 +163,7 @@ class SeedServiceTest {
         when(accessibleColorPaletteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(learningPathRepository.findAll()).thenReturn(List.of());
         when(activityRepository.findAll()).thenReturn(List.of());
-        when(storyRepository.findAll()).thenReturn(List.of());
+
     }
 
     @Test

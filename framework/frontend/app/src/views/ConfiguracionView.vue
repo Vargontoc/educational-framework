@@ -1,14 +1,13 @@
 <template>
   <div class="configuracion-view">
-    <div class="configuracion-view__header">
-      <h1 class="configuracion-view__title">{{ t('views.configuracion.title') }}</h1>
-    </div>
 
     <div v-if="loading" class="configuracion-view__loading">
       <NubiSpinner size="lg" />
     </div>
 
     <div v-else class="configuracion-view__sections">
+      <NubiBreadcrumb :items="breadcrumbItems" />
+
       <!-- Sección 1: Audio general -->
       <ConfigSection
         :title="t('views.configuracion.sections.audioGeneral.title')"
@@ -125,6 +124,7 @@ import NubiPinInput from '../components/base/NubiPinInput.vue'
 import NubiButton from '../components/base/NubiButton.vue'
 import ConfigSection from '../components/config/ConfigSection.vue'
 import ToggleWithPercentage from '../components/config/ToggleWithPercentage.vue'
+import NubiBreadcrumb from '@/components/base/NubiBreadcrumb.vue'
 
 import { useGlobalConfig } from '../composables/useGlobalConfig'
 import { useParentalSession } from '../composables/useParentalSession'
@@ -147,6 +147,11 @@ const {
   onPercentageChange,
   getModifiedFields
 } = useGlobalConfig()
+
+const breadcrumbItems = computed(() => [
+  { label: t('views.panel.title'), to: '/panel' },
+  { label: t('views.experiencie.familiar.lecture') }
+])
 
 // Estado de la vista
 const loading = ref(true)
