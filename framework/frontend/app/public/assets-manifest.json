@@ -1,0 +1,11 @@
+{
+    "dev": {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "element_shiny_flower",
+                "url" : "assets/images/Simple_Flower_Bush.webp"
+            }
+        ]
+    }
+}

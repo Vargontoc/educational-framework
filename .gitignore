@@ -31,9 +31,10 @@ docker-compose.override.yml
 backlog/
 !framework/backend/sprints/backlog/
 !framework/backend/sprints/backlog/*.md
+framework/backend/src/main/resources/stories/**
+framework/backend/src/main/resources/stories
 !framework/frontend/sprints/backlog/
 !framework/frontend/sprints/backlog/*.md
-
 # ── Frontend (Vue 3 / Typescript) ────────────
 framework/frontend/app/node_modules/
 framework/frontend/app/dist/

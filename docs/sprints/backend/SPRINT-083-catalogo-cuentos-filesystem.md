@@ -32,7 +32,7 @@ ADR-024 confirma que cada cuento de Lectura Familiar es un recurso compuesto (da
 resources/stories/story_0/
   story.json        -> { "title": string, "pages": [ { "page": int, "text": string }, ... ] }
   cover.png
-  page_1.png
+  page_1.png 
   page_1.mp3
   page_2.png
   page_2.mp3

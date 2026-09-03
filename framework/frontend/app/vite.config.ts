@@ -59,6 +59,9 @@ export default defineConfig(({ mode }) => {
           comments: false
         }
       },
+      manualChunks: {
+        'vendor-phaser': ['Phaser']
+      },
       cssCodeSplit: true,
       assetsInlineLimit: 4096,
       chunkSizeWarningLimit: 1000,

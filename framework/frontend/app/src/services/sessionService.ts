@@ -18,6 +18,13 @@ interface ApiListChildSessionResponse {
   data: ChildSession[]
 }
 
+interface ApiChildSession {
+  success: boolean
+  message: string | null
+  errors: string[]
+  data: ChildSession
+}
+
 export async function getActiveSessions(familyId: number): Promise<ChildSession[]> {
   const response = await apiClient.get<ApiListChildSessionResponse>(
     `/api/v1/sessions/children?familyId=${familyId}`
@@ -36,4 +43,17 @@ export async function expelSession(sessionId: number): Promise<boolean> {
     console.error('Error al expulsar sesión:', error)
     return false
   }
+}
+
+export async function openSession(childId: number) : Promise<ChildSession | null> {
+  const response  = await apiClient.post<ApiChildSession>('/api/v1/sessions/children',{
+    'childProfileId': childId,
+    'heartbeatIntervalSeconds' : 60
+  })
+
+  if (response && response.success && response.data) {
+    return response.data
+  }
+  
+  return null
 }

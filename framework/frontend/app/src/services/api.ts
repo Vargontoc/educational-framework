@@ -79,6 +79,24 @@ async function request<T>(
 }
 
 /**
+ * Realiza una petición HTTP y devuelve el cuerpo como binario (Blob)
+ */
+async function requestBlob(endpoint: string, options: RequestInit = {}): Promise<Blob> {
+  const url = `${API_BASE_URL}${endpoint}`
+
+  const response = await fetch(url, options)
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      message: response.statusText,
+    } as ApiError
+  }
+
+  return await response.blob()
+}
+
+/**
  * Cliente API con métodos HTTP
  */
 function buildHeaders(headers?: Record<string, string>): Record<string, string> {
@@ -92,6 +110,10 @@ export const apiClient = {
   get<T>(endpoint: string, params?: Record<string, string>, headers?: Record<string, string>): Promise<T> {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : ''
     return request<T>(`${endpoint}${queryString}`, { method: 'GET', headers: buildHeaders(headers) })
+  },
+
+  getBlob(endpoint: string, headers?: Record<string, string>): Promise<Blob> {
+    return requestBlob(endpoint, { method: 'GET', headers })
   },
 
   post<T>(endpoint: string, data?: unknown, headers?: Record<string, string>): Promise<T> {

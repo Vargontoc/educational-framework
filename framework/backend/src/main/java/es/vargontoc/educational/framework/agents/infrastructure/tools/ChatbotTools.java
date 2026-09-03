@@ -3,24 +3,22 @@ package es.vargontoc.educational.framework.agents.infrastructure.tools;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
+import es.vargontoc.educational.framework.content.ports.out.StoryCatalogPort;
 import es.vargontoc.educational.framework.family.model.ChildProfile;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 
 @Component
-public class ChildTools {
-    
-    private static final Logger LOG = LoggerFactory.getLogger(ChildTools.class);
+public class ChatbotTools {
 
     private final ChildProfileUseCase childProfile;
-
-    public ChildTools(ChildProfileUseCase childProfile) {
+    private final StoryCatalogPort catalog;
+    public ChatbotTools(ChildProfileUseCase childProfile, StoryCatalogPort catalog) {
         this.childProfile = childProfile;
+        this.catalog = catalog;
     }
 
     @Tool(name = "getAllChilds", description = "Obtiene los perfiles registrados en la aplicacion")
@@ -31,5 +29,10 @@ public class ChildTools {
     @Tool(name = "getChild", description = "Obtiene un perfil registrado en la aplicación")
     ChildProfile getChild(@ToolParam(description = "Nombre del perfil registrado") String name) {
         return childProfile.getAllChildren().stream().filter(c -> c.getName().equalsIgnoreCase(name)).findFirst().orElse(null);
+    }
+
+    @Tool(name = "countStories", description = "Obtiene el numero de cuentos registrados en la app")
+    int countCatalog() {
+        return catalog.loadCatalog().size();
     }
 }

@@ -1,9 +1,1 @@
-{
-    "title" : "Berto, el oso aventurero",
-    "pages" : [
-        {
-            "page" : 1,
-            "text" : "Berto se desperto sonriente"
-        }
-    ]
-}
+{"pages":[{"text":"Chirri corre por el parque, buscando con quién jugar.","page":1},{"text":"Chirri ve a Milo jugando solo. Se acerca para saludarlo, pero Milo sigue sin prestarle atención.","page":2},{"text":"Chirri juega con su pelota. Milo mira desde lo alto del árbol.","page":3},{"text":"Chirri encontró un pedazo de fieltro en el suelo y comenzó a jugar.","page":4},{"text":"Chirri juega contento con el pedazo de fieltro. Milo lo ve desde arriba en la rama.","page":5},{"text":"Chirri tira el fieltro para Milo pero este no llega. Chirri se ríe muy contento.","page":6},{"text":"Milo ahora juega con Chirri en la colina del parque.","page":7},{"text":"Milo ahora juega con Chirri bajo un cielo azul.","page":8}],"title":"Chirri y la Nueva Amiga"}

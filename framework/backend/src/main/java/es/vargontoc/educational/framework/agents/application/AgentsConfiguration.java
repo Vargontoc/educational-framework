@@ -20,7 +20,7 @@ import org.springframework.core.io.Resource;
 
 import es.vargontoc.educational.framework.agents.infrastructure.advisors.CommandInterceptorAdvisor;
 import es.vargontoc.educational.framework.agents.infrastructure.commands.CommandRouter;
-import es.vargontoc.educational.framework.agents.infrastructure.tools.ChildTools;
+import es.vargontoc.educational.framework.agents.infrastructure.tools.ChatbotTools;
 import es.vargontoc.educational.framework.agents.ports.out.ResourceLoaderPort;
 import es.vargontoc.educational.framework.agents.utils.AgentsConstants;
 
@@ -34,7 +34,7 @@ public class AgentsConfiguration {
     @Value("classpath:prompts/system_support_context.st")
     private Resource systemSupport;
     @Bean(name = "chatbot-agent")
-    public ChatClient chatbotAgent(ChatClient.Builder builder, ChildTools tools, CommandRouter router,  RetrievalAugmentationAdvisor vectorAdvisor) {
+    public ChatClient chatbotAgent(ChatClient.Builder builder, ChatbotTools tools, CommandRouter router,  RetrievalAugmentationAdvisor vectorAdvisor) {
         
         return builder
         .defaultTools(tools)

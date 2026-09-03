@@ -67,7 +67,11 @@ import {
   Gamepad2,
   Mail,
   Trash2,
-  Pencil
+  Pencil,
+  Volume2,
+  VolumeX,
+  StepBack,
+  StepForward
 } from '@lucide/vue'
 
 interface Props {
@@ -134,7 +138,11 @@ const lucideIconMap: Record<string, Component> = {
   'mail': Mail,
   'send-horizontal': SendHorizonal,
   'trash-2': Trash2,
-  'pencil': Pencil
+  'pencil': Pencil,
+  'volume-2': Volume2,
+  'volume-x': VolumeX,
+  'step-back': StepBack,
+  'step-forward': StepForward
 }
 
 /**

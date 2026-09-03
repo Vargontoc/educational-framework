@@ -70,6 +70,12 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/story/:id',
+    name: 'reader',
+    component: () => import('../views/parental/StoryView.vue'),
+    meta: { requiresParentAuth: true }
+  },
+  {
     path: '/game/:childId',
     name: 'GameView',
     component: () => import('../views/GameView.vue'),
