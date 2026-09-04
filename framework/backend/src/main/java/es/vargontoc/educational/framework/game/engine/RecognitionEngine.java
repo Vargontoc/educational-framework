@@ -14,9 +14,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import es.vargontoc.educational.framework.game.model.ActionResult;
+import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
+import es.vargontoc.educational.framework.game.model.recognition.RecognitionAttemptContext;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
@@ -59,7 +61,46 @@ public class RecognitionEngine implements GameEnginePort {
 
     @Override
     public ActionResult processAction(GameState gameState, String actionPayload) {
-        throw new UnsupportedOperationException("Unimplemented method 'processAction'");
+        RecognitionState state = deserializeState(gameState.getEnginePayload());
+
+        String selectedOptionId = parseSelectedOptionId(actionPayload);
+        Integer responseTimeMs = parseResponseTimeMs(actionPayload);
+
+        boolean correct = selectedOptionId != null
+                && selectedOptionId.equals(state.getTargetElementId());
+
+        state.setCurrentRoundAttemptCount(state.getCurrentRoundAttemptCount() + 1);
+        state.setSelectedOptionId(selectedOptionId);
+        state.setLastActionAt(LocalDateTime.now());
+
+        if (correct) {
+            state.setCurrentRoundConsecutiveFailures(0);
+            if (state.getCurrentRoundAttemptCount() == 1) {
+                state.setTotalCorrectFirstTry(state.getTotalCorrectFirstTry() + 1);
+            }
+        } else {
+            state.setCurrentRoundConsecutiveFailures(
+                    state.getCurrentRoundConsecutiveFailures() + 1);
+            state.setTotalIncorrectAttempts(state.getTotalIncorrectAttempts() + 1);
+
+            if (state.getCurrentRoundConsecutiveFailures()
+                    >= RecognitionDefaults.HINT_ACTIVATION_THRESHOLD) {
+                if (!state.isHintActive()) {
+                    state.setHintTriggeredAtAttempt(state.getCurrentRoundAttemptCount());
+                }
+                state.setHintActive(true);
+            }
+        }
+
+        gameState.setEnginePayload(serializeState(state));
+
+        ActionResult result = new ActionResult();
+        result.setResultType(correct ? ActionResultType.CORRECT : ActionResultType.INCORRECT);
+        result.setResponseTimeMs(responseTimeMs);
+        result.setNewState(gameState);
+        result.setAttemptContext(serializeAttemptContext(state, responseTimeMs));
+
+        return result;
     }
 
     @Override
@@ -163,6 +204,70 @@ public class RecognitionEngine implements GameEnginePort {
             return OBJECT_MAPPER.writeValueAsString(state);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Failed to serialize RecognitionState", e);
+        }
+    }
+
+    private RecognitionState deserializeState(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return new RecognitionState();
+        }
+        try {
+            return OBJECT_MAPPER.readValue(payload, RecognitionState.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to deserialize RecognitionState", e);
+        }
+    }
+
+    String parseSelectedOptionId(String actionPayload) {
+        if (actionPayload == null || actionPayload.isBlank()) {
+            return null;
+        }
+        try {
+            var node = OBJECT_MAPPER.readTree(actionPayload);
+            var selectedNode = node.get("selectedOptionId");
+            if (selectedNode == null || selectedNode.isNull()) {
+                return null;
+            }
+            return selectedNode.asText();
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    Integer parseResponseTimeMs(String actionPayload) {
+        if (actionPayload == null || actionPayload.isBlank()) {
+            return null;
+        }
+        try {
+            var node = OBJECT_MAPPER.readTree(actionPayload);
+            var timeNode = node.get("responseTimeMs");
+            if (timeNode == null || timeNode.isNull()) {
+                return null;
+            }
+            return timeNode.asInt();
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    private String serializeAttemptContext(RecognitionState state, Integer responseTimeMs) {
+        try {
+            RecognitionAttemptContext ctx = new RecognitionAttemptContext();
+            ctx.setRecognitionCategory(state.getRecognitionCategory());
+            ctx.setRoundIndex(state.getRoundIndex());
+            ctx.setTargetElementId(state.getTargetElementId());
+            ctx.setSelectedOptionId(state.getSelectedOptionId());
+            ctx.setOptionIds(state.getOptionIds());
+            ctx.setFirstTry(state.getCurrentRoundAttemptCount() == 1);
+            ctx.setHintActive(state.isHintActive());
+            ctx.setHintTriggeredBeforeAnswer(
+                    state.getHintTriggeredAtAttempt() != null
+                            && state.getHintTriggeredAtAttempt() < state.getCurrentRoundAttemptCount());
+            ctx.setAttemptNumberInRound(state.getCurrentRoundAttemptCount());
+            ctx.setResponseTimeMs(responseTimeMs != null ? responseTimeMs : 0L);
+            return OBJECT_MAPPER.writeValueAsString(ctx);
+        } catch (JsonProcessingException e) {
+            return null;
         }
     }
 }

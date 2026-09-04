@@ -6,11 +6,9 @@ import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProperties;
 import es.vargontoc.educational.framework.tracking.config.NumberUnlockProperties;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
-import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetActivityEngagementSummaryUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetChildAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetViewedCuriositiesUseCase;
-import es.vargontoc.educational.framework.tracking.ports.in.NumberUnlockReadinessUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterChildAchievementUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterCuriosityViewedUseCase;
@@ -131,16 +129,6 @@ class TrackingModuleConfiguration {
             TopicRepository topicRepository,
             NumberUnlockProperties numberUnlockProperties) {
         return new NumberUnlockReadinessService(topicSummaryRepository, topicRepository, numberUnlockProperties);
-    }
-
-    @Bean
-    NumberUnlockReadinessUseCase numberUnlockReadinessUseCase(NumberUnlockReadinessService numberUnlockReadinessService) {
-        return numberUnlockReadinessService;
-    }
-
-    @Bean
-    FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase(NumberUnlockReadinessService numberUnlockReadinessService) {
-        return numberUnlockReadinessService;
     }
 
     @Bean

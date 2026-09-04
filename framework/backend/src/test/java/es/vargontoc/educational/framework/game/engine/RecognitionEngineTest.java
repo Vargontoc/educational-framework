@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import es.vargontoc.educational.framework.game.model.ActionResult;
+import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -259,5 +262,209 @@ class RecognitionEngineTest {
         RecognitionState state = deserializeState(gs.getEnginePayload());
         assertEquals(1, state.getRoundsShownElementIds().size());
         assertEquals(state.getTargetElementId(), state.getRoundsShownElementIds().get(0));
+    }
+
+    private String buildActionPayload(String selectedOptionId, Integer responseTimeMs) {
+        try {
+            var map = new java.util.LinkedHashMap<String, Object>();
+            map.put("selectedOptionId", selectedOptionId);
+            if (responseTimeMs != null) {
+                map.put("responseTimeMs", responseTimeMs);
+            }
+            return MAPPER.writeValueAsString(map);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private GameState initEngineWithKnownTarget() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = createGameState();
+        List<String> candidates = List.of("elem-1", "elem-2", "elem-3");
+        engine.initGame(gs, buildEngineParams(candidates));
+        return gs;
+    }
+
+    private String findWrongOption(RecognitionState state) {
+        for (String opt : state.getOptionIds()) {
+            if (!opt.equals(state.getTargetElementId())) {
+                return opt;
+            }
+        }
+        return null;
+    }
+
+    @Test
+    void processAction_incorrectAnswerKeepsSameRoundOpen() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String target = stateBefore.getTargetElementId();
+        List<String> optionsBefore = new ArrayList<>(stateBefore.getOptionIds());
+        String wrong = findWrongOption(stateBefore);
+
+        ActionResult result = engine.processAction(gs, buildActionPayload(wrong, 2000));
+
+        assertEquals(ActionResultType.INCORRECT, result.getResultType());
+        RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertEquals(target, stateAfter.getTargetElementId(),
+                "Target must remain the same after incorrect answer");
+        assertEquals(optionsBefore, stateAfter.getOptionIds(),
+                "Options must remain the same after incorrect answer");
+        assertEquals(1, stateAfter.getCurrentRoundAttemptCount());
+        assertEquals(1, stateAfter.getCurrentRoundConsecutiveFailures());
+        assertEquals(1, stateAfter.getTotalIncorrectAttempts());
+        assertEquals(wrong, stateAfter.getSelectedOptionId());
+        assertNotNull(stateAfter.getLastActionAt());
+    }
+
+    @Test
+    void processAction_firstIncorrectDoesNotActivateHint() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String wrong = findWrongOption(stateBefore);
+
+        engine.processAction(gs, buildActionPayload(wrong, 1000));
+
+        RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertFalse(stateAfter.isHintActive(),
+                "Hint must not be active after first incorrect answer");
+        assertNull(stateAfter.getHintTriggeredAtAttempt());
+    }
+
+    @Test
+    void processAction_secondConsecutiveIncorrectActivatesHint() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String wrong = findWrongOption(stateBefore);
+
+        engine.processAction(gs, buildActionPayload(wrong, 1000));
+        engine.processAction(gs, buildActionPayload(wrong, 1500));
+
+        RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertTrue(stateAfter.isHintActive(),
+                "Hint must be active after 2 consecutive failures");
+        assertEquals(2, stateAfter.getHintTriggeredAtAttempt());
+        assertEquals(2, stateAfter.getCurrentRoundAttemptCount());
+        assertEquals(2, stateAfter.getCurrentRoundConsecutiveFailures());
+        assertEquals(2, stateAfter.getTotalIncorrectAttempts());
+    }
+
+    @Test
+    void processAction_correctAfterFailuresReturnsCorrectAndPreservesData() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String target = stateBefore.getTargetElementId();
+        String wrong = findWrongOption(stateBefore);
+
+        engine.processAction(gs, buildActionPayload(wrong, 1000));
+        engine.processAction(gs, buildActionPayload(wrong, 1500));
+
+        ActionResult result = engine.processAction(gs, buildActionPayload(target, 3000));
+
+        assertEquals(ActionResultType.CORRECT, result.getResultType());
+        RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertEquals(0, stateAfter.getCurrentRoundConsecutiveFailures(),
+                "Consecutive failures must reset to 0 on correct answer");
+        assertEquals(3, stateAfter.getCurrentRoundAttemptCount());
+        assertEquals(2, stateAfter.getTotalIncorrectAttempts(),
+                "Total incorrect must preserve previous failures");
+        assertEquals(target, stateAfter.getSelectedOptionId());
+        assertTrue(stateAfter.isHintActive(),
+                "Hint flag remains active once triggered within the round");
+        assertEquals(2, stateAfter.getHintTriggeredAtAttempt(),
+                "Hint triggered attempt must be preserved");
+        assertNotNull(result.getNewState());
+        assertNotNull(result.getAttemptContext());
+        assertEquals(3000, result.getResponseTimeMs());
+    }
+
+    @Test
+    void processAction_correctFirstTryIncrementsTotalCorrectFirstTry() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String target = stateBefore.getTargetElementId();
+
+        ActionResult result = engine.processAction(gs, buildActionPayload(target, 500));
+
+        assertEquals(ActionResultType.CORRECT, result.getResultType());
+        RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertEquals(1, stateAfter.getTotalCorrectFirstTry());
+        assertEquals(1, stateAfter.getCurrentRoundAttemptCount());
+        assertEquals(0, stateAfter.getCurrentRoundConsecutiveFailures());
+        assertEquals(0, stateAfter.getTotalIncorrectAttempts());
+        assertFalse(stateAfter.isHintActive());
+    }
+
+    @Test
+    void processAction_neverReturnsTimeout() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String target = stateBefore.getTargetElementId();
+        String wrong = findWrongOption(stateBefore);
+
+        ActionResult correctResult = engine.processAction(gs, buildActionPayload(target, 100));
+        assertNotEquals(ActionResultType.TIMEOUT, correctResult.getResultType(),
+                "RecognitionEngine must never return TIMEOUT");
+
+        GameState gs2 = initEngineWithKnownTarget();
+        ActionResult incorrectResult = engine.processAction(gs2, buildActionPayload(wrong, 100));
+        assertNotEquals(ActionResultType.TIMEOUT, incorrectResult.getResultType(),
+                "RecognitionEngine must never return TIMEOUT");
+
+        GameState gs3 = initEngineWithKnownTarget();
+        ActionResult nullPayloadResult = engine.processAction(gs3, null);
+        assertNotEquals(ActionResultType.TIMEOUT, nullPayloadResult.getResultType(),
+                "RecognitionEngine must never return TIMEOUT even with null payload");
+    }
+
+    @Test
+    void processAction_responseTimeMsIsPropagated() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String target = stateBefore.getTargetElementId();
+
+        ActionResult result = engine.processAction(gs, buildActionPayload(target, 3500));
+
+        assertEquals(3500, result.getResponseTimeMs());
+    }
+
+    @Test
+    void processAction_nullPayloadReturnsIncorrect() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+
+        ActionResult result = engine.processAction(gs, null);
+
+        assertEquals(ActionResultType.INCORRECT, result.getResultType());
+        RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertEquals(1, stateAfter.getCurrentRoundAttemptCount());
+        assertEquals(1, stateAfter.getCurrentRoundConsecutiveFailures());
+        assertNull(stateAfter.getSelectedOptionId());
+    }
+
+    @Test
+    void processAction_hintStaysActiveAfterActivation() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        GameState gs = initEngineWithKnownTarget();
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String target = stateBefore.getTargetElementId();
+        String wrong = findWrongOption(stateBefore);
+
+        engine.processAction(gs, buildActionPayload(wrong, 1000));
+        engine.processAction(gs, buildActionPayload(wrong, 1000));
+        engine.processAction(gs, buildActionPayload(wrong, 1000));
+
+        RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertTrue(stateAfter.isHintActive());
+        assertEquals(2, stateAfter.getHintTriggeredAtAttempt(),
+                "hintTriggeredAtAttempt must remain at the first activation");
+        assertEquals(3, stateAfter.getCurrentRoundConsecutiveFailures());
     }
 }

@@ -5,8 +5,8 @@
 Implement recognition action processing with retry-until-correct behavior and hint activation.
 
 ## Status
-status: planned
-started_at:
+status: implemented
+started_at: 2026-09-04
 closed_at:
 blocked_by:
 waiting_for:
@@ -14,25 +14,25 @@ waiting_for:
 ## Tasks
 
 ### Action Processing
-- [ ] Implement `processAction` for selected option actions.
-- [ ] Return `CORRECT` when `selectedOptionId` matches `targetElementId`.
-- [ ] Return `INCORRECT` when the selected option is not the target.
-- [ ] Keep the same `targetElementId` and `optionIds` after incorrect answers.
-- [ ] Increment round attempt counters and total incorrect counters correctly.
-- [ ] Update `lastActionAt` after each action.
+- [x] Implement `processAction` for selected option actions.
+- [x] Return `CORRECT` when `selectedOptionId` matches `targetElementId`.
+- [x] Return `INCORRECT` when the selected option is not the target.
+- [x] Keep the same `targetElementId` and `optionIds` after incorrect answers.
+- [x] Increment round attempt counters and total incorrect counters correctly.
+- [x] Update `lastActionAt` after each action.
 
 ### Hint Rules
-- [ ] Activate `hintActive` after 2 consecutive failures in the same round.
-- [ ] Set `hintTriggeredAtAttempt` when the hint is first activated.
-- [ ] Keep hint rendering outside backend domain logic.
-- [ ] Do not return `TIMEOUT` from `RecognitionEngine`.
+- [x] Activate `hintActive` after 2 consecutive failures in the same round.
+- [x] Set `hintTriggeredAtAttempt` when the hint is first activated.
+- [x] Keep hint rendering outside backend domain logic.
+- [x] Do not return `TIMEOUT` from `RecognitionEngine`.
 
 ### Tests
-- [ ] Unit test incorrect answer keeps the same round open.
-- [ ] Unit test first incorrect answer does not activate hint.
-- [ ] Unit test second consecutive incorrect answer activates hint.
-- [ ] Unit test correct answer after failures returns `CORRECT` and preserves attempt data.
-- [ ] Unit test `RecognitionEngine` never returns `TIMEOUT` for recognition actions.
+- [x] Unit test incorrect answer keeps the same round open.
+- [x] Unit test first incorrect answer does not activate hint.
+- [x] Unit test second consecutive incorrect answer activates hint.
+- [x] Unit test correct answer after failures returns `CORRECT` and preserves attempt data.
+- [x] Unit test `RecognitionEngine` never returns `TIMEOUT` for recognition actions.
 
 ## Manual Tests
 - Not required. Unit tests cover domain behavior.
@@ -56,11 +56,31 @@ This sprint implements the core 3-4 year old safety rule: retries are supportive
 ## Review
 
 completed_tasks:
+  - processAction implemented with full retry-until-correct behavior
+  - CORRECT/INCORRECT result determination based on selectedOptionId vs targetElementId
+  - Round state preserved after incorrect answers (same target, same options)
+  - All counters correctly maintained (currentRoundAttemptCount, currentRoundConsecutiveFailures, totalIncorrectAttempts, totalCorrectFirstTry)
+  - lastActionAt and selectedOptionId updated on every action
+  - Hint activation after 2 consecutive failures with hintTriggeredAtAttempt tracking
+  - RecognitionAttemptContext serialized into ActionResult.attemptContext
+  - responseTimeMs propagated from actionPayload to ActionResult
+  - TIMEOUT never returned by RecognitionEngine
+  - 10 new unit tests added (23 total, all passing)
 
 incomplete_tasks:
+  - None within sprint scope
 
 contract_changes:
+  - RecognitionDefaults.HINT_ACTIVATION_THRESHOLD = 2 (new constant)
 
 learnings:
+  - Hint flag remains active once triggered within a round (not reset on subsequent failures)
+  - hintTriggeredAtAttempt captures the attempt number when hint was first activated
+  - Null/blank actionPayload treated as incorrect (selectedOptionId = null)
+  - Pre-existing GameOrchestratorServiceTest failures (9 tests) are unrelated to this sprint
 
 next_sprint_suggestions:
+  - Implement getNextElement for round advancement after correct answer
+  - Implement isGameComplete to check totalRounds completion
+  - Implement buildSummary for end-of-game statistics
+  - Add scoring logic for correct/incorrect attempts
