@@ -7,13 +7,9 @@ import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProp
 import es.vargontoc.educational.framework.tracking.config.NumberUnlockProperties;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetActivityEngagementSummaryUseCase;
-import es.vargontoc.educational.framework.tracking.ports.in.GetChildAchievementsUseCase;
-import es.vargontoc.educational.framework.tracking.ports.in.GetViewedCuriositiesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterChildAchievementUseCase;
-import es.vargontoc.educational.framework.tracking.ports.in.RegisterCuriosityViewedUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
-import es.vargontoc.educational.framework.tracking.ports.in.ResetCuriosityCycleUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityProposalLogRepository;

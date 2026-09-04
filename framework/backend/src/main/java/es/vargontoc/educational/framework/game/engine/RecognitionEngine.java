@@ -7,11 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import es.vargontoc.educational.framework.game.model.ActionResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
@@ -25,9 +23,7 @@ import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 
 public class RecognitionEngine implements GameEnginePort {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final Random random;
 
@@ -128,7 +124,7 @@ public class RecognitionEngine implements GameEnginePort {
             map.put("optionIds", state.getOptionIds());
             map.put("roundIndex", state.getRoundIndex());
             return OBJECT_MAPPER.writeValueAsString(map);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize next element", e);
         }
     }
@@ -218,7 +214,7 @@ public class RecognitionEngine implements GameEnginePort {
                 return List.of();
             }
             return OBJECT_MAPPER.convertValue(candidatesNode, new TypeReference<List<String>>() {});
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return List.of();
         }
     }
@@ -293,7 +289,7 @@ public class RecognitionEngine implements GameEnginePort {
     private String serializeState(RecognitionState state) {
         try {
             return OBJECT_MAPPER.writeValueAsString(state);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize RecognitionState", e);
         }
     }
@@ -304,7 +300,7 @@ public class RecognitionEngine implements GameEnginePort {
         }
         try {
             return OBJECT_MAPPER.readValue(payload, RecognitionState.class);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Failed to deserialize RecognitionState", e);
         }
     }
@@ -319,8 +315,8 @@ public class RecognitionEngine implements GameEnginePort {
             if (selectedNode == null || selectedNode.isNull()) {
                 return null;
             }
-            return selectedNode.asText();
-        } catch (JsonProcessingException e) {
+            return selectedNode.asString();
+        } catch (JacksonException e) {
             return null;
         }
     }
@@ -336,7 +332,7 @@ public class RecognitionEngine implements GameEnginePort {
                 return null;
             }
             return timeNode.asInt();
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return null;
         }
     }
@@ -357,7 +353,7 @@ public class RecognitionEngine implements GameEnginePort {
             ctx.setAttemptNumberInRound(state.getCurrentRoundAttemptCount());
             ctx.setResponseTimeMs(responseTimeMs != null ? responseTimeMs : 0L);
             return OBJECT_MAPPER.writeValueAsString(ctx);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             return null;
         }
     }

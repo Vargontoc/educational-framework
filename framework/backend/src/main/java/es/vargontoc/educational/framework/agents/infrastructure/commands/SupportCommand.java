@@ -29,7 +29,6 @@ public class SupportCommand implements ChatCommand {
 
     @Override
     public String getDescription() {
-        // TODO Auto-generated method stub
         return "Envia un mensaje al equipo de soporte. Tipos: bug, sugerencia o comentario";
     }
 

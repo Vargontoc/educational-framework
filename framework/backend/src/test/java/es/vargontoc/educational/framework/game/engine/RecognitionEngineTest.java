@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import es.vargontoc.educational.framework.game.model.ActionResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
@@ -28,9 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RecognitionEngineTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private GameState createGameState() {
         GameState gs = new GameState();
@@ -461,7 +457,7 @@ class RecognitionEngineTest {
         RecognitionEngine engine = new RecognitionEngine(new Random(42));
         GameState gs = initEngineWithKnownTarget();
         RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
-        String target = stateBefore.getTargetElementId();
+        
         String wrong = findWrongOption(stateBefore);
 
         engine.processAction(gs, buildActionPayload(wrong, 1000));
@@ -473,13 +469,6 @@ class RecognitionEngineTest {
         assertEquals(2, stateAfter.getHintTriggeredAtAttempt(),
                 "hintTriggeredAtAttempt must remain at the first activation");
         assertEquals(3, stateAfter.getCurrentRoundConsecutiveFailures());
-    }
-
-    private GameState initEngineWithCandidates(int seed, List<String> candidates) throws Exception {
-        RecognitionEngine engine = new RecognitionEngine(new Random(seed));
-        GameState gs = createGameState();
-        engine.initGame(gs, buildEngineParams(candidates));
-        return gs;
     }
 
     private void answerCorrectlyForRound(RecognitionEngine engine, GameState gs) throws Exception {

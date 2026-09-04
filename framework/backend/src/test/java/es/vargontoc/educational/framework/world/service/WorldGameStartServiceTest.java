@@ -14,7 +14,7 @@ import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
 import es.vargontoc.educational.framework.world.model.WorldState;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.ports.in.WorldProposalResolutionUseCase;
-import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

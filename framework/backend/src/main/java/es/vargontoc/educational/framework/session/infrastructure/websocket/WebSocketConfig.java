@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;

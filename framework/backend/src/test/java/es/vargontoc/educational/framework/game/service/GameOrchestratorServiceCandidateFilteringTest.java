@@ -23,6 +23,7 @@ import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionS
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -119,7 +120,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(10L)).thenReturn(topic);
         when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
-                eq(100L), any(List.class)))
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic));
@@ -150,7 +151,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(20L)).thenReturn(animalTopic);
         when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
-                eq(100L), any(List.class)))
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
                 .thenReturn(List.of(RecognitionCategory.ANIMAL));
         when(topicUseCase.listTopicsByRecognitionTypeAndHabitat(RecognitionType.ANIMAL, Biome.FARM))
                 .thenReturn(List.of(farmAnimalTopic));
@@ -180,7 +181,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(30L)).thenReturn(shapeTopic);
         when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
-                eq(100L), any(List.class)))
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
                 .thenReturn(List.of(RecognitionCategory.SHAPE));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.SHAPE))
                 .thenReturn(List.of(shapeTopic, anotherShapeTopic));
@@ -208,7 +209,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(40L)).thenReturn(numberTopic);
         when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
-                eq(100L), any(List.class)))
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
                 .thenReturn(List.of());
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
@@ -235,7 +236,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(50L)).thenReturn(letterTopic);
         when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
-                eq(100L), any(List.class)))
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(letterTopic, anotherLetterTopic));

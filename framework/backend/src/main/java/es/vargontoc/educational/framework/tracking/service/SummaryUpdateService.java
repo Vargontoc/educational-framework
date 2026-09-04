@@ -2,7 +2,6 @@ package es.vargontoc.educational.framework.tracking.service;
 
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.ActivitySummary;
-import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.model.TopicPerformanceBand;
 import es.vargontoc.educational.framework.tracking.model.TopicSummary;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;

@@ -23,7 +23,7 @@ public class ChatbotTools {
 
     @Tool(name = "getAllChilds", description = "Obtiene los perfiles registrados en la aplicacion")
     List<String> getAllChilds(){
-        return childProfile.getAllChildren().stream().map(ChildProfile::getName).collect(Collectors.toList());
+        return childProfile.getAllChildren().stream().map(c -> c.getName()).collect(Collectors.toList());
     }
 
     @Tool(name = "getChild", description = "Obtiene un perfil registrado en la aplicación")

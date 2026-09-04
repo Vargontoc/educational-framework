@@ -4,7 +4,6 @@ import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.world.model.WorldHeartbeatResult;
 import es.vargontoc.educational.framework.world.model.WorldInactivityResult;
 import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
-import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
 import es.vargontoc.educational.framework.world.model.WorldState;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;

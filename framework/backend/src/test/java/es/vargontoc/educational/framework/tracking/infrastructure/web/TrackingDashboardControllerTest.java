@@ -1,7 +1,7 @@
 package es.vargontoc.educational.framework.tracking.infrastructure.web;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +15,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TrackingDashboardControllerTest {
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
+    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
             org.testcontainers.utility.DockerImageName.parse("pgvector/pgvector:pg16")
                     .asCompatibleSubstituteFor("postgres"));
 
@@ -102,7 +102,7 @@ class TrackingDashboardControllerTest {
                 .andReturn();
 
         JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
-        return root.path("data").path("token").asText();
+        return root.path("data").path("token").asString();
     }
 
     @Test

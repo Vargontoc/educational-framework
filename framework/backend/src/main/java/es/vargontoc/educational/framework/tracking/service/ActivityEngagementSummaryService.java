@@ -66,7 +66,7 @@ public class ActivityEngagementSummaryService implements GetActivityEngagementSu
         }
 
         List<ActivityEngagementSummary> items = buildersByEngineType.values().stream()
-            .map(ActivityEngagementSummaryBuilder::build)
+            .map(b -> b.build())
             .toList();
 
         return new ActivityEngagementSummaryResult(childProfileId, items);
@@ -74,10 +74,10 @@ public class ActivityEngagementSummaryService implements GetActivityEngagementSu
 
     private Set<Long> collectActivityIds(List<ActivityProposalLog> proposals, List<GameSessionSummary> sessions) {
         Set<Long> activityIds = proposals.stream()
-            .map(ActivityProposalLog::getActivityId)
+            .map(p -> p.getActivityId())
             .collect(Collectors.toSet());
         activityIds.addAll(sessions.stream()
-            .map(GameSessionSummary::getActivityId)
+            .map(s -> s.getActivityId())
             .collect(Collectors.toSet()));
         return activityIds;
     }

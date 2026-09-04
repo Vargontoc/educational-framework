@@ -1,5 +1,5 @@
 import { Scene } from "phaser";
-import { AvatarEvent, ServerGameEvent, WorldDiscoveryElementInteractiveEvent, WorldHeartbeatEvent, WorldSync } from "./GameEvent";
+import { AvatarEvent, ServerGameEvent, WorldDiscoveryElementInteractiveEvent, WorldHeartbeatEvent } from "./GameEvent";
 
 export class WorldMapScene extends Scene {
     websocket?: WebSocket
@@ -48,8 +48,7 @@ export class WorldMapScene extends Scene {
             switch(event.event) {
                 case 'WORLD_STATE_SYNC' :
                     if(event.payload?.status && event.payload.status == 'ACTIVE' && event.payload.destination)  {
-                        // Cargariamos mapa de bioma
-                        let biome = event.payload.destination.biome
+                        // TODO: Cargar mapa de bioma (event.payload.destination.biome)
                         event.payload.destination.discoveryElements.forEach((de)  => {
                             this.add.image(100, 100, de.visualAssetKey)
                                 .setScale(.2, 0.2)

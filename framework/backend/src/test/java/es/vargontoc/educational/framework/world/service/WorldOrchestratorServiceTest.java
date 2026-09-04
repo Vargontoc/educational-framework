@@ -14,8 +14,7 @@ import es.vargontoc.educational.framework.tracking.ports.in.SelectTopicsForDiffi
 import es.vargontoc.educational.framework.world.model.WorldDestination;
 import es.vargontoc.educational.framework.world.model.WorldDestinationSelectionResult;
 import es.vargontoc.educational.framework.world.model.WorldEngagementThresholdConfig;
-import es.vargontoc.educational.framework.world.model.WorldEngagementWindow;
-import es.vargontoc.educational.framework.world.model.SelectedWorldActivity;
+
 import es.vargontoc.educational.framework.world.ports.in.EngagementThresholdConfigUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;

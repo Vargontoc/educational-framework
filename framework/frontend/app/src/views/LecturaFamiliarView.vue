@@ -5,6 +5,16 @@
         <template #image>
           <div class="story-cover" @click="goToStory(item.id)">
             <img v-if="imageCovers[item.id]" :src="imageCovers[item.id]" :alt="item.title" />
+            <button
+              type="button"
+              class="story-cover__narrate-toggle"
+              :class="{ 'story-cover__narrate-toggle--active': narrateEnabled[item.id] }"
+              :disabled="!globalNarrativeVoiceEnabled"
+              :aria-label="narrateEnabled[item.id] ? 'Desactivar narración' : 'Activar narración'"
+              @click.stop="toggleNarrate(item.id)"
+            >
+              <nubi-icon :name="narrateEnabled[item.id] ? 'volume-2' : 'volume-x'" :size="18" />
+            </button>
           </div>
         </template>
       </nubi-card>

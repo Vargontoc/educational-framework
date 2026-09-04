@@ -105,7 +105,7 @@ public class TopicPersistenceAdapter implements TopicRepository {
             return Collections.emptyList();
         }
         return Arrays.stream(raw.split(","))
-            .map(String::trim)
+            .map(s -> s.trim())
             .filter(s -> !s.isEmpty())
             .toList();
     }

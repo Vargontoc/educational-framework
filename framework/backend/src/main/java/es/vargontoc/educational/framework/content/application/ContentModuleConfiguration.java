@@ -3,7 +3,7 @@ package es.vargontoc.educational.framework.content.application;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import es.vargontoc.educational.framework.content.infrastructure.ActivityInformationPortImpl;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.ActivityJpaRepository;

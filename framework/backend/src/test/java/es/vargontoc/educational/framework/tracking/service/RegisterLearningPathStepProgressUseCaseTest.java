@@ -7,7 +7,6 @@ import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepo
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 import es.vargontoc.educational.framework.tracking.model.ChildLearningProgress;
 import es.vargontoc.educational.framework.tracking.model.ChildLearningCompletedStep;
-import es.vargontoc.educational.framework.tracking.model.ChildLearningProgressResponse;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningCompletedStepRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ChildLearningProgressRepository;
 import org.junit.jupiter.api.Test;
@@ -173,7 +172,7 @@ class RegisterLearningPathStepProgressUseCaseTest {
         when(completedStepRepository.save(any(ChildLearningCompletedStep.class))).thenAnswer(inv -> inv.getArgument(0));
         when(completedStepRepository.findByChildProfileIdAndLearningPathId(1L, 1L)).thenReturn(List.of());
 
-        var result = service.registerLearningPathStepProgress(1L, 1L, 10L);
+        service.registerLearningPathStepProgress(1L, 1L, 10L);
 
         ArgumentCaptor<ChildLearningProgress> progressCaptor = ArgumentCaptor.forClass(ChildLearningProgress.class);
         verify(progressRepository).save(progressCaptor.capture());

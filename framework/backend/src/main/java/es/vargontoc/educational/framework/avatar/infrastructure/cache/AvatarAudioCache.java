@@ -10,11 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Base64;
 import java.util.Comparator;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class AvatarAudioCache {
 

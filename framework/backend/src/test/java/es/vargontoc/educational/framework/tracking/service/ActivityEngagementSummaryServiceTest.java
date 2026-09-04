@@ -1,7 +1,5 @@
 package es.vargontoc.educational.framework.tracking.service;
 
-import es.vargontoc.educational.framework.tracking.model.ActivityEngagementSummary;
-import es.vargontoc.educational.framework.tracking.model.ActivityEngagementSummaryResult;
 import es.vargontoc.educational.framework.tracking.model.ActivityProposalLog;
 import es.vargontoc.educational.framework.tracking.model.ActivityProposalOutcome;
 import es.vargontoc.educational.framework.tracking.model.GameSessionSummary;

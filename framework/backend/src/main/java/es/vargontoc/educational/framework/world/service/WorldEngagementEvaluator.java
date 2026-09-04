@@ -71,7 +71,7 @@ public class WorldEngagementEvaluator {
         for (WorldEngineAbandonmentSignal signal : window.getSignals()) {
             if ("ABANDONED".equals(signal.getFinalStatus())) {
                 String engineType = signal.getEngineType();
-                counts.merge(engineType, 1, Integer::sum);
+                counts.merge(engineType, 1, (a, b) -> Integer.sum(a, b));
             }
         }
 

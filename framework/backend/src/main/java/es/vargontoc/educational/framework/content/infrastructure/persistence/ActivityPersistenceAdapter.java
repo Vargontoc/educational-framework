@@ -45,7 +45,7 @@ public class ActivityPersistenceAdapter implements ActivityRepository {
     @Override
     public List<Activity> findByTopicId(Long topicId) {
         var activityIds = activityTopicJpaRepository.findByTopicId(topicId).stream()
-            .map(ActivityTopicJpaEntity::getActivityId)
+            .map(entity -> entity.getActivityId())
             .toList();
 
         return jpaRepository.findAllById(activityIds).stream()
@@ -81,7 +81,7 @@ public class ActivityPersistenceAdapter implements ActivityRepository {
 
     private List<Long> getActivityTopicIds(Long activityId) {
         return activityTopicJpaRepository.findByActivityId(activityId).stream()
-            .map(ActivityTopicJpaEntity::getTopicId)
+            .map(entity -> entity.getTopicId())
             .toList();
     }
 

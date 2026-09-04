@@ -13,7 +13,7 @@ public class CommandRouter {
     private final Map<String, ChatCommand> commands;
 
     public CommandRouter(List<ChatCommand> commandList) {
-        this.commands = commandList.stream().collect(Collectors.toMap(ChatCommand::getTrigger, cmd -> cmd));
+        this.commands = commandList.stream().collect(Collectors.toMap(cmd -> cmd.getTrigger(), cmd -> cmd));
     }
 
     public Optional<String> route(String prompt) {

@@ -1,7 +1,6 @@
 package es.vargontoc.educational.framework.contact.infrastructure.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import es.vargontoc.educational.framework.contact.infrastructure.persistence.ContactMessageJpaEntity;
+import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.contact.infrastructure.persistence.ContactMessageJpaRepository;
 import es.vargontoc.educational.framework.family.infrastructure.web.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;

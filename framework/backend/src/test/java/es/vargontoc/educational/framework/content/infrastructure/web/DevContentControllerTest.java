@@ -1,7 +1,7 @@
 package es.vargontoc.educational.framework.content.infrastructure.web;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -26,10 +26,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -39,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DevContentControllerTest {
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
+    static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
             org.testcontainers.utility.DockerImageName.parse("pgvector/pgvector:pg16")
                     .asCompatibleSubstituteFor("postgres"));
 
@@ -81,7 +79,7 @@ class DevContentControllerTest {
             .andReturn();
 
         JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
-        return root.path("data").path("token").asText();
+        return root.path("data").path("token").asString();
     }
 
     private MockHttpServletRequestBuilder authGet(String url) {
@@ -90,10 +88,6 @@ class DevContentControllerTest {
 
     private MockHttpServletRequestBuilder authPost(String url) {
         return post(url).header("Authorization", "Bearer " + token);
-    }
-
-    private MockHttpServletRequestBuilder authPut(String url) {
-        return put(url).header("Authorization", "Bearer " + token);
     }
 
     @Test

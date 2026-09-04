@@ -1,7 +1,7 @@
 package es.vargontoc.educational.framework.family.infrastructure.web;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

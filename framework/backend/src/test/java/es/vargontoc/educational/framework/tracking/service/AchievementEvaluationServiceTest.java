@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.tracking.service;
 
-import es.vargontoc.educational.framework.tracking.model.AchievementCode;
+
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
@@ -8,12 +8,11 @@ import es.vargontoc.educational.framework.tracking.ports.in.RegisterChildAchieve
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

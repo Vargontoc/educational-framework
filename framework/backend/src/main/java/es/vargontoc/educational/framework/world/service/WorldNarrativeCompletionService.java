@@ -1,6 +1,5 @@
 package es.vargontoc.educational.framework.world.service;
 
-import es.vargontoc.educational.framework.tracking.model.ChildLearningProgressResponse;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterLearningPathStepProgressUseCase;
 import es.vargontoc.educational.framework.world.model.WorldNarrativeCompletionResult;
 import es.vargontoc.educational.framework.world.model.WorldNarrativeCompletionStatus;
@@ -43,7 +42,7 @@ public class WorldNarrativeCompletionService implements WorldNarrativeCompletion
 
         Long childProfileId = worldState.getChildProfileId();
 
-        ChildLearningProgressResponse progressResponse = registerLearningPathStepProgressUseCase.registerLearningPathStepProgress(
+        registerLearningPathStepProgressUseCase.registerLearningPathStepProgress(
             childProfileId, learningPathId, learningPathStepId);
 
         worldState.setNarrativeCompletionStatus(WorldNarrativeCompletionStatus.NO_PENDING);

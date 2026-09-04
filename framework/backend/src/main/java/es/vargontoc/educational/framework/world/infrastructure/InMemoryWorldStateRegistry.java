@@ -35,7 +35,7 @@ public class InMemoryWorldStateRegistry implements WorldStateRegistry {
     @Override
     public Optional<Long> getPendingProposalId(Long childSessionId) {
         return findByChildSessionId(childSessionId)
-            .map(WorldState::getPendingProposalId)
+            .map(ws -> ws.getPendingProposalId())
             .filter(proposalId -> proposalId != null);
     }
 

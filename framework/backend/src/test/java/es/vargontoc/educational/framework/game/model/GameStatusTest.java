@@ -14,7 +14,7 @@ class GameStatusTest {
     @Test
     void gameStatus_doesNotIncludePaused() {
         Set<String> statusNames = Arrays.stream(GameStatus.values())
-            .map(Enum::name)
+            .map(status -> status.name())
             .collect(Collectors.toSet());
 
         assertFalse(statusNames.contains("PAUSED"),
@@ -24,7 +24,7 @@ class GameStatusTest {
     @Test
     void gameStatus_includesAllRequiredStatuses() {
         Set<String> statusNames = Arrays.stream(GameStatus.values())
-            .map(Enum::name)
+            .map(status -> status.name())
             .collect(Collectors.toSet());
 
         assertTrue(statusNames.contains("WAITING"));

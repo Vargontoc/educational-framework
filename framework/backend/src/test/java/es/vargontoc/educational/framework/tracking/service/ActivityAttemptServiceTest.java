@@ -3,7 +3,6 @@ package es.vargontoc.educational.framework.tracking.service;
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.AdaptiveDifficultyAction;
 import es.vargontoc.educational.framework.tracking.model.AdaptiveDifficultyResult;
-import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityAttemptRepository;
@@ -127,7 +126,6 @@ class ActivityAttemptServiceTest {
 
     @Test
     void register_withDifficultyIncrease_returnsUnlockedAchievement() {
-        var captor = ArgumentCaptor.forClass(ActivityAttempt.class);
         when(repository.save(any())).thenAnswer(inv -> {
             var attempt = inv.getArgument(0, ActivityAttempt.class);
             attempt.setId(1L);
@@ -152,7 +150,6 @@ class ActivityAttemptServiceTest {
 
     @Test
     void register_withAttemptAchievement_returnsUnlockedAchievement() {
-        var captor = ArgumentCaptor.forClass(ActivityAttempt.class);
         when(repository.save(any())).thenAnswer(inv -> {
             var attempt = inv.getArgument(0, ActivityAttempt.class);
             attempt.setId(1L);

@@ -1,11 +1,8 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
-import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.shared.model.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 @Entity

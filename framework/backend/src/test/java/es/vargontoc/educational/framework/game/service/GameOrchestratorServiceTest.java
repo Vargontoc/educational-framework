@@ -214,7 +214,7 @@ class GameOrchestratorServiceTest {
         when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
             .thenReturn(List.of());
 
-        ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
         orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
         ActionProcessingResult finalResult = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 

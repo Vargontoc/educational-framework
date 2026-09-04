@@ -7,7 +7,6 @@ public class NewCommand implements ChatCommand{
 
     @Override
     public String getTrigger() {
-        // TODO Auto-generated method stub
         return "/new";
     }
 

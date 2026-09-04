@@ -2,7 +2,6 @@ package es.vargontoc.educational.framework.tracking.service;
 
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.model.GameSessionSummary;
-import es.vargontoc.educational.framework.tracking.model.GameSessionSummaryResult;
 import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 import org.junit.jupiter.api.Test;

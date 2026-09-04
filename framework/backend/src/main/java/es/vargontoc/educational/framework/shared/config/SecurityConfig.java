@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -33,7 +32,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, TokenAuthenticationFilter tokenAuthenticationFilter) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
+            .csrf(csrfConfig -> csrfConfig.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -60,7 +59,7 @@ public class SecurityConfig {
         var configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         var originPatterns = Arrays.stream(allowedOriginPatterns.split(","))
-            .map(String::trim)
+            .map(value -> value.trim())
             .filter(value -> !value.isEmpty())
             .toList();
         if (!originPatterns.isEmpty()) {

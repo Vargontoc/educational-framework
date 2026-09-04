@@ -4,7 +4,6 @@ import es.vargontoc.educational.framework.tracking.model.TopicGroupedByPerforman
 import es.vargontoc.educational.framework.tracking.model.TopicSelectionResult;
 import es.vargontoc.educational.framework.tracking.model.DifficultyLevel;
 import es.vargontoc.educational.framework.tracking.model.TopicPerformanceBand;
-import es.vargontoc.educational.framework.tracking.model.TopicSummary;
 import es.vargontoc.educational.framework.tracking.ports.in.ClassifyTopicsByPerformanceUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.SelectTopicsForDifficultyUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
@@ -12,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 

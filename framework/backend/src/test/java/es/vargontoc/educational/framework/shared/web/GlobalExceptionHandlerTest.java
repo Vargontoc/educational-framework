@@ -61,9 +61,9 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleAppException_returnsConfiguredStatusAndErrorResponse() {
-        var exception = new AppException("domain failure", HttpStatus.UNPROCESSABLE_ENTITY);
+        var exception = new AppException("domain failure", HttpStatus.UNPROCESSABLE_CONTENT);
         var response = handler.handleAppException(exception, mockRequest());
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
+        assertEquals(HttpStatus.UNPROCESSABLE_CONTENT, response.getStatusCode());
         assertFalse(response.getBody().success());
         assertEquals("domain failure", response.getBody().message());
     }

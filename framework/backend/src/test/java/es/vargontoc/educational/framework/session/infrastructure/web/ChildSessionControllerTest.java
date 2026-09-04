@@ -1,7 +1,7 @@
 package es.vargontoc.educational.framework.session.infrastructure.web;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.family.infrastructure.web.AbstractIntegrationTest;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
@@ -179,6 +179,6 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
             .andReturn();
 
         JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
-        return root.path("data").path("token").asText();
+        return root.path("data").path("token").asString();
     }
 }

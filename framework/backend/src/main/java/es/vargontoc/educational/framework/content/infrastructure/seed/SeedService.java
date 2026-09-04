@@ -1,7 +1,8 @@
 package es.vargontoc.educational.framework.content.infrastructure.seed;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaEntity;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
 import es.vargontoc.educational.framework.content.model.AccessibleColor;
@@ -142,7 +143,7 @@ public class SeedService {
         try {
             var resource = new ClassPathResource("seeds/" + fileName);
             return objectMapper.readValue(resource.getInputStream(), typeRef);
-        } catch (IOException e) {
+        } catch (IOException | JacksonException e) {
             log.error("Failed to read seed file: {}", fileName, e);
             return Collections.emptyList();
         }
@@ -513,7 +514,7 @@ public class SeedService {
         }
         return categoryRepository.findAll().stream()
             .filter(c -> c.getName().equals(name))
-            .map(Category::getId)
+            .map(c -> c.getId())
             .findFirst()
             .orElse(null);
     }
@@ -524,7 +525,7 @@ public class SeedService {
         }
         return topicRepository.findAll().stream()
             .filter(t -> t.getName().equals(name))
-            .map(Topic::getId)
+            .map(t -> t.getId())
             .findFirst()
             .orElse(null);
     }
@@ -535,7 +536,7 @@ public class SeedService {
         }
         return activityRepository.findAll().stream()
             .filter(a -> a.getName().equals(name))
-            .map(Activity::getId)
+            .map(a -> a.getId())
             .findFirst()
             .orElse(null);
     }
@@ -546,7 +547,7 @@ public class SeedService {
         }
         return learningPathRepository.findAll().stream()
             .filter(lp -> lp.getName().equals(name))
-            .map(LearningPath::getId)
+            .map(lp -> lp.getId())
             .findFirst()
             .orElse(null);
     }

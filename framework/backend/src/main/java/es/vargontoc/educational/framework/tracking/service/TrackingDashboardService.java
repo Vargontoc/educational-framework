@@ -58,10 +58,10 @@ public class TrackingDashboardService {
         var achievements = achievementAdapter.findByChildProfileId(childProfileId);
         var learningProgressList = progressAdapter.findByChildProfileId(childProfileId);
 
-        int totalAttempts = activitySummaries.stream().mapToInt(ActivitySummary::getTotalAttempts).sum();
-        int totalCorrect = activitySummaries.stream().mapToInt(ActivitySummary::getTotalCorrect).sum();
-        int totalIncorrect = activitySummaries.stream().mapToInt(ActivitySummary::getTotalIncorrect).sum();
-        int totalTimeouts = activitySummaries.stream().mapToInt(ActivitySummary::getTotalTimeouts).sum();
+        int totalAttempts = activitySummaries.stream().mapToInt(s -> s.getTotalAttempts()).sum();
+        int totalCorrect = activitySummaries.stream().mapToInt(s -> s.getTotalCorrect()).sum();
+        int totalIncorrect = activitySummaries.stream().mapToInt(s -> s.getTotalIncorrect()).sum();
+        int totalTimeouts = activitySummaries.stream().mapToInt(s -> s.getTotalTimeouts()).sum();
 
         BigDecimal overallSuccessRate = BigDecimal.ZERO;
         if (totalAttempts > 0) {
@@ -71,8 +71,8 @@ public class TrackingDashboardService {
         }
 
         LocalDateTime lastActivity = activitySummaries.stream()
-                .map(ActivitySummary::getUpdatedAt)
-                .max(LocalDateTime::compareTo)
+                .map(s -> s.getUpdatedAt())
+                .max((d1, d2) -> d1.compareTo(d2))
                 .orElse(null);
 
         int totalStepsCompleted = completedStepAdapter.findByChildProfileId(childProfileId).size();
@@ -127,7 +127,7 @@ public class TrackingDashboardService {
         } else {
             history = difficultyEvolutionAdapter.findByChildProfileId(childProfileId);
             var latestOverall = history.stream()
-                    .max(Comparator.comparing(DifficultyEvolution::getChangedAt))
+                    .max(Comparator.comparing(e -> e.getChangedAt()))
                     .orElse(null);
             if (latestOverall != null) {
                 currentDifficultyLevelId = latestOverall.getDifficultyLevelId();
@@ -163,18 +163,18 @@ public class TrackingDashboardService {
 
         if (!activityResponseTimes.isEmpty()) {
             overallAvg = (int) activityResponseTimes.stream()
-                    .mapToInt(ActivityResponseTime::getAverageResponseTimeMs)
+                    .mapToInt(r -> r.getAverageResponseTimeMs())
                     .average()
                     .orElse(0);
 
             List<Integer> nonNullAvg = activityResponseTimes.stream()
-                    .map(ActivityResponseTime::getAverageResponseTimeMs)
+                    .map(r -> r.getAverageResponseTimeMs())
                     .filter(v -> v != null)
                     .collect(Collectors.toList());
 
             if (!nonNullAvg.isEmpty()) {
-                overallMin = nonNullAvg.stream().min(Integer::compare).orElse(null);
-                overallMax = nonNullAvg.stream().max(Integer::compare).orElse(null);
+                overallMin = nonNullAvg.stream().min((a, b) -> Integer.compare(a, b)).orElse(null);
+                overallMax = nonNullAvg.stream().max((a, b) -> Integer.compare(a, b)).orElse(null);
             }
         }
 

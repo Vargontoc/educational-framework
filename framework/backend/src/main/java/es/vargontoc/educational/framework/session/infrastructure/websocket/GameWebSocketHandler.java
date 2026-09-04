@@ -1,7 +1,7 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
@@ -112,7 +112,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
             JsonNode root = objectMapper.readTree(message.getPayload());
-            String type = root.has("type") ? root.get("type").asText() : "";
+            String type = root.has("type") ? root.get("type").asString() : "";
 
             switch (type) {
                 case "auth" -> handleAuth(session, root);
@@ -341,7 +341,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         GameActionRequest request;
         try {
             Long gameId = root.has("gameId") && !root.get("gameId").isNull() ? root.get("gameId").asLong() : null;
-            String action = root.has("action") && !root.get("action").isNull() ? root.get("action").asText() : null;
+            String action = root.has("action") && !root.get("action").isNull() ? root.get("action").asString() : null;
             Long topicId = root.has("topicId") && !root.get("topicId").isNull() ? root.get("topicId").asLong() : null;
             Integer responseTimeMs = root.has("responseTimeMs") && !root.get("responseTimeMs").isNull()
                 ? root.get("responseTimeMs").asInt() : null;
@@ -580,7 +580,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private void handleWorldDiscoveryInteracted(WebSocketSession session, Long childSessionId, JsonNode root) {
         try {
             String proposalRuntimeId = root.has("proposalRuntimeId") && !root.get("proposalRuntimeId").isNull()
-                ? root.get("proposalRuntimeId").asText() : null;
+                ? root.get("proposalRuntimeId").asString() : null;
             Long discoveryElementId = root.has("discoveryElementId") && !root.get("discoveryElementId").isNull()
                 ? root.get("discoveryElementId").asLong() : null;
 

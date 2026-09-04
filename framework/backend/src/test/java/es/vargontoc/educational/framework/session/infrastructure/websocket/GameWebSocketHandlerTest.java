@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.avatar.infrastructure.dto.GameAvatarEvent;
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
@@ -12,13 +12,10 @@ import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSession;
-import es.vargontoc.educational.framework.world.model.WorldHeartbeatResult;
-import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
 import es.vargontoc.educational.framework.world.model.WorldDestinationSelectionResult;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
-import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;

@@ -1,7 +1,7 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -33,7 +33,7 @@ public class SessionEventPublisher {
             String payload = objectMapper.writeValueAsString(event);
             messagingTemplate.convertAndSend(destination, payload);
             LOGGER.debug("STOMP event sent to {}: {}", destination, event.event());
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             LOGGER.error("Failed to serialize session event: {}", exception.getMessage());
         }
     }
@@ -46,7 +46,7 @@ public class SessionEventPublisher {
                 LOGGER.debug("No active game WebSocket for childSessionId={}, event dropped: {}",
                     childSessionId, event.event());
             }
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             LOGGER.error("Failed to serialize session event: {}", exception.getMessage());
         }
     }

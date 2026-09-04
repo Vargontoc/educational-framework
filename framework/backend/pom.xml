@@ -9,7 +9,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.0</version>
+        <version>4.1.1</version>
         <relativePath/>
     </parent>
 
@@ -23,7 +23,7 @@
         <java.version>21</java.version>
         <spring-ai.version>2.0.0</spring-ai.version>
         <springdoc.version>3.1.0</springdoc.version>
-        <lombok.version>1.18.46</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -43,11 +43,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <!-- Classic Jackson 2 (com.fasterxml.jackson) ObjectMapper bean, alongside Boot 4's default Jackson 3 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-jackson2</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -87,7 +82,7 @@
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
-            <version>7.4</version>
+            <version>9.0</version>
         </dependency>
 
         <!-- Monitoring -->
@@ -100,7 +95,7 @@
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>3.1.8</version>
+            <version>3.2.4</version>
         </dependency>
 
         <!-- API Docs -->
@@ -117,19 +112,26 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Genera metadata de las clases @ConfigurationProperties (prefijo app.*) para autocompletado/validacion en el IDE -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Sanitize  -->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.23.1</version>
+            <version>1.23.2</version>
             <scope>compile</scope>
         </dependency>
 
-        <!-- Motor principal de JAVE2 -->
+        <!-- Motor principal de JAVE2 (transformacion de audio de Chatterbox, uso futuro) -->
         <dependency>
             <groupId>ws.schild</groupId>
             <artifactId>jave-core</artifactId>
-            <version>3.3.1</version>
+            <version>3.5.0</version>
         </dependency>
 
                 <!-- Telegram bot for contact -->
@@ -143,12 +145,12 @@
             <artifactId>telegrambots-abilities</artifactId>
             <version>6.7.0</version>
         </dependency>
-        
-        <!-- Binarios nativos  -->
+
+        <!-- Binarios nativos (todas las plataformas; revisar por Dockerfile/target platform en SPRINT-088) -->
         <dependency>
             <groupId>ws.schild</groupId>
             <artifactId>jave-all-deps</artifactId>
-            <version>3.3.1</version>
+            <version>3.5.0</version>
         </dependency>
 
         <!-- PGVector -->
@@ -215,6 +217,11 @@
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                             <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                            <version>${project.parent.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

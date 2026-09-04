@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import es.vargontoc.educational.framework.contact.infrastructure.mapper.ContactMessageMapper;
 import es.vargontoc.educational.framework.contact.model.ContactMessage;
 import es.vargontoc.educational.framework.contact.ports.out.ContactMessageRepository;
-import io.micrometer.common.lang.NonNull;
+
 
 @Repository
 public class ContactMessagePersistenceAdapter implements ContactMessageRepository {
@@ -20,9 +20,8 @@ public class ContactMessagePersistenceAdapter implements ContactMessageRepositor
     }
 
 
-    @SuppressWarnings("null")
     @Override
-    public ContactMessage save(@NonNull ContactMessage message) {
+    public ContactMessage save(ContactMessage message) {
         return mapper.toDomain(jpaRepository.save(mapper.toJpa(message)));
     }
 

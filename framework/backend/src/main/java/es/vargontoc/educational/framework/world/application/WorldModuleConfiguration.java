@@ -9,7 +9,6 @@ import es.vargontoc.educational.framework.tracking.ports.in.RegisterLearningPath
 import es.vargontoc.educational.framework.tracking.ports.in.ResolveActivityProposalUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.SelectTopicsForDifficultyUseCase;
 import es.vargontoc.educational.framework.world.ports.in.EngagementThresholdConfigUseCase;
-import es.vargontoc.educational.framework.world.ports.in.WorldActivityProposalUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldNarrativeCompletionUseCase;

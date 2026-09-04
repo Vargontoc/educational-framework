@@ -1,6 +1,5 @@
 package es.vargontoc.educational.framework.tracking.infrastructure.web;
 
-import es.vargontoc.educational.framework.family.model.ChildProfile;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;

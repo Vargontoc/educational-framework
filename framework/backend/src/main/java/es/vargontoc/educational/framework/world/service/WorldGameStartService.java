@@ -57,7 +57,7 @@ public class WorldGameStartService implements WorldGameStartUseCase {
             return new WorldGameStartResult(
                 childSessionId,
                 activityId,
-                existingGame.map(GameState::getGameId).orElse(null),
+                existingGame.map(gs -> gs.getGameId()).orElse(null),
                 WorldGameStartStatus.EXISTING_GAME_ACTIVE,
                 null
             );

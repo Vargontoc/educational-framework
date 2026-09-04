@@ -12,7 +12,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import es.vargontoc.educational.framework.content.model.StoryCatalog;
 import es.vargontoc.educational.framework.content.model.StoryCatalogEntry;

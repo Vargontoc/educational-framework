@@ -84,7 +84,7 @@ class WorldGameCompletionListenerTest {
 
     @Test
     void listener_ignoresUnrelatedSession() {
-        Long childSessionId = 100L;
+        
         Long differentSessionId = 200L;
 
         when(worldStateRegistry.findByChildSessionId(differentSessionId)).thenReturn(Optional.empty());

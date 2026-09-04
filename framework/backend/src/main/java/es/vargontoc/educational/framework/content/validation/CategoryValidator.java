@@ -1,7 +1,6 @@
 package es.vargontoc.educational.framework.content.validation;
 
 import es.vargontoc.educational.framework.content.model.ContentStatus;
-import es.vargontoc.educational.framework.shared.exception.ValidationException;
 import es.vargontoc.educational.framework.shared.validation.AbstractValidator;
 
 public class CategoryValidator extends AbstractValidator<CategoryValidator.CategoryValidationInput> {

@@ -7,7 +7,6 @@ import es.vargontoc.educational.framework.content.model.WorldNarrativeSituationP
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
-import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
 import es.vargontoc.educational.framework.content.model.WorldHost;
 import es.vargontoc.educational.framework.content.model.WorldNarrativeSituation;
@@ -131,7 +130,7 @@ public class WorldCatalogService implements WorldCatalogUseCase {
     private CompatibleActivityProjection toCompatibleActivityProjection(Activity source) {
         List<Long> difficultyLevelIds = difficultyLevelRepository.findByActivityId(source.getId())
             .stream()
-            .map(DifficultyLevel::getId)
+            .map(dl -> dl.getId())
             .toList();
 
         return new CompatibleActivityProjection(

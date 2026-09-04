@@ -82,7 +82,7 @@ public class TracingPatternPersistenceAdapter implements TracingPatternRepositor
             return Collections.emptyList();
         }
         return Arrays.stream(raw.split(";"))
-            .map(String::trim)
+            .map(s -> s.trim())
             .filter(s -> !s.isEmpty())
             .map(pair -> {
                 String[] coords = pair.split(",");

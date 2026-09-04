@@ -1,7 +1,6 @@
 package es.vargontoc.educational.framework.tracking.service;
 
 import es.vargontoc.educational.framework.content.model.RecognitionType;
-import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.tracking.config.NumberUnlockProperties;
 import es.vargontoc.educational.framework.tracking.model.NumberUnlockState;
@@ -64,7 +63,7 @@ public class NumberUnlockReadinessService implements NumberUnlockReadinessUseCas
 
     private boolean isCategoryMastered(Long childProfileId, RecognitionType recognitionType) {
         List<Long> topicIds = topicRepository.findByRecognitionType(recognitionType).stream()
-                .map(Topic::getId)
+                .map(t -> t.getId())
                 .toList();
         if (topicIds.isEmpty()) {
             return false;

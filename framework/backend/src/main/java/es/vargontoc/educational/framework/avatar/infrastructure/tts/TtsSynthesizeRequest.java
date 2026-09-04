@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.avatar.infrastructure.tts;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 public record TtsSynthesizeRequest(
     String text,

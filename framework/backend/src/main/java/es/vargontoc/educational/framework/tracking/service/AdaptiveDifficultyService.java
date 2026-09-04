@@ -91,7 +91,7 @@ public class AdaptiveDifficultyService {
 
         double avgResponseTime = attempts.stream()
                 .filter(a -> a.getResponseTimeMs() != null)
-                .mapToInt(ActivityAttempt::getResponseTimeMs)
+                .mapToInt(a -> a.getResponseTimeMs())
                 .average()
                 .orElse(config.targetResponseTimeMs);
 
