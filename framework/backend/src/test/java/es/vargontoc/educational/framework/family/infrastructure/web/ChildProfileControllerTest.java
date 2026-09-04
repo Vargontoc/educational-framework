@@ -15,10 +15,10 @@ import java.util.Map;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,7 +44,7 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
     void createChild_returns201() throws Exception {
         var body = objectMapper.writeValueAsString(Map.of(
             "name", "Kid One",
-            "birthday", LocalDate.now().minusYears(8),
+            "birthday", LocalDate.now().minusYears(3),
             "avatar", "avatar-1",
             "npcVoiceEnabled", true,
             "npcEnabled", true,
@@ -61,10 +61,10 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
 
     @Test
     void createChild_appliesNpcVoiceCeiling() throws Exception {
-        familyUseCase.updateFamily(new es.vargontoc.educational.framework.family.infrastructure.dto.UpdateFamilyRequest("Family One", null, false, true, null, null, null, null, null, null, null));
+        familyUseCase.updateFamily(new es.vargontoc.educational.framework.family.infrastructure.dto.UpdateFamilyRequest("Family One", null, null, null, null, null, null, false, null, null, null));
         var body = objectMapper.writeValueAsString(Map.of(
             "name", "Kid One",
-            "birthday", LocalDate.now().minusYears(8),
+            "birthday", LocalDate.now().minusYears(3),
             "avatar", "avatar-1",
             "npcVoiceEnabled", true,
             "npcEnabled", true,
@@ -81,7 +81,7 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
     void createChild_withNonDefaultColorVisionMode() throws Exception {
         var body = objectMapper.writeValueAsString(Map.of(
             "name", "Kid Color Vision",
-            "birthday", LocalDate.now().minusYears(6),
+            "birthday", LocalDate.now().minusYears(4),
             "avatar", "avatar-cv",
             "npcVoiceEnabled", true,
             "npcEnabled", true,
@@ -112,19 +112,19 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
 
         var patchBody = objectMapper.writeValueAsString(Map.of(
             "name", "Kid Updated",
-            "birthday", LocalDate.now().minusYears(9),
+            "birthday", LocalDate.now().minusYears(4),
             "avatar", "avatar-2",
             "npcVoiceEnabled", true,
             "npcEnabled", true,
             "npcVoiceVolume", 90
         ));
-        mockMvc.perform(put("/api/v1/family/children/{id}", id)
+        mockMvc.perform(patch("/api/v1/family/children/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(patchBody))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.name", is("Kid Updated")));
 
-        mockMvc.perform(delete("/api/v1/family/children/{id}", id))
+        mockMvc.perform(put("/api/v1/family/children/activation/{id}", id))
             .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/v1/family/children/{id}", id))
@@ -142,10 +142,10 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
 
         var patchBody = objectMapper.writeValueAsString(Map.of(
             "name", "Kid CV",
-            "birthday", LocalDate.now().minusYears(7),
+            "birthday", LocalDate.now().minusYears(4),
             "colorVisionMode", "TRITANOPIA"
         ));
-        mockMvc.perform(put("/api/v1/family/children/{id}", id)
+        mockMvc.perform(patch("/api/v1/family/children/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(patchBody))
             .andExpect(status().isOk())
@@ -155,7 +155,7 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
     private Long createChildWithColorVisionAndReturnId(String colorVisionMode) throws Exception {
         var body = objectMapper.writeValueAsString(Map.of(
             "name", "Kid CV",
-            "birthday", LocalDate.now().minusYears(7),
+            "birthday", LocalDate.now().minusYears(3),
             "avatar", "avatar-cv",
             "npcVoiceEnabled", true,
             "npcEnabled", true,
@@ -176,7 +176,7 @@ class ChildProfileControllerTest extends AbstractIntegrationTest {
     private Long createChildAndReturnId() throws Exception {
         var body = objectMapper.writeValueAsString(Map.of(
             "name", "Kid One",
-            "birthday", LocalDate.now().minusYears(8),
+            "birthday", LocalDate.now().minusYears(3),
             "avatar", "avatar-1",
             "npcVoiceEnabled", true,
             "npcEnabled", true,

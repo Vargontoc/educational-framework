@@ -44,6 +44,7 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
     private ChildSessionUseCase childSessionUseCase;
 
     private Long childProfileId;
+    private Long familyId;
     private String token;
 
     @BeforeEach
@@ -51,10 +52,11 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
         var family = familyUseCase.familyExists()
             ? familyUseCase.getFamily()
             : familyUseCase.createFamily("Family One", "1234", true, true);
+        familyId = family.getId();
         childProfileId = childProfileUseCase.createChild(
             family.getId(),
             "Kid One",
-            LocalDate.now().minusYears(8),
+            LocalDate.now().minusYears(3),
             "avatar-1",
             true,
             true,
@@ -80,7 +82,9 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
         var firstId = openSessionAndReturnId();
         var secondId = openSessionAndReturnId();
 
-        mockMvc.perform(get("/api/v1/sessions/children").header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/sessions/children")
+                .param("familyId", familyId.toString())
+                .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.length()", is(1)))
             .andExpect(jsonPath("$.data[0].id", is(secondId.intValue())));
@@ -119,7 +123,9 @@ class ChildSessionControllerTest extends AbstractIntegrationTest {
     void getActiveSessionsReturnsResults() throws Exception {
         openSessionAndReturnId();
 
-        mockMvc.perform(get("/api/v1/sessions/children").header("Authorization", "Bearer " + token))
+        mockMvc.perform(get("/api/v1/sessions/children")
+                .param("familyId", familyId.toString())
+                .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.length()", greaterThanOrEqualTo(1)));
     }

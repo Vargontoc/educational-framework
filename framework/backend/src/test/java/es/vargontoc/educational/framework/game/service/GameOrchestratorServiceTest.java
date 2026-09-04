@@ -12,6 +12,7 @@ import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
+import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
@@ -88,6 +89,7 @@ class GameOrchestratorServiceTest {
         activity.setId(id);
         activity.setName("Test Activity");
         activity.setStatus(ContentStatus.ACTIVE);
+        activity.setGameEngineType(EngineType.RECOGNITION.name());
         return activity;
     }
 
@@ -105,6 +107,7 @@ class GameOrchestratorServiceTest {
         state.setChildSessionId(childSessionId);
         state.setActivityId(activityId);
         state.setDifficultyLevelId(difficultyLevelId);
+        state.setEngine(EngineType.RECOGNITION);
         state.setStatus(status);
         state.setSequenceNumber(0);
         state.setAttempts(0);

@@ -2,8 +2,6 @@ package es.vargontoc.educational.framework.tracking.infrastructure.web;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.vargontoc.educational.framework.family.infrastructure.persistence.FamilyJpaEntity;
-import es.vargontoc.educational.framework.family.infrastructure.persistence.FamilyJpaRepository;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +29,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Single-family happy-path coverage for the tracking dashboard endpoints. Cross-family
+ * authorization (403) is covered separately by {@link TrackingDashboardControllerAuthorizationTest},
+ * a mocked unit test — {@code family} is a schema-enforced singleton table (SPRINT-087), so a
+ * second real family row cannot be persisted here.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers(disabledWithoutDocker = true)
@@ -66,12 +70,8 @@ class TrackingDashboardControllerTest {
     @Autowired
     private ChildProfileUseCase childProfileUseCase;
 
-    @Autowired
-    private FamilyJpaRepository familyJpaRepository;
-
     private String token;
     private Long childProfileId;
-    private Long otherFamilyChildId;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -84,7 +84,7 @@ class TrackingDashboardControllerTest {
         var child = childProfileUseCase.createChild(
                 family.getId(),
                 "Test Child",
-                LocalDate.of(2015, 6, 15),
+                LocalDate.now().minusYears(4),
                 null,
                 true,
                 true,
@@ -92,23 +92,6 @@ class TrackingDashboardControllerTest {
                 null
         );
         childProfileId = child.getId();
-
-        var otherFamily = new FamilyJpaEntity();
-        otherFamily.setName("Other Family");
-        otherFamily.setPinHash("unused-hash");
-        var savedOtherFamily = familyJpaRepository.save(otherFamily);
-
-        var otherChild = childProfileUseCase.createChild(
-                savedOtherFamily.getId(),
-                "Other Child",
-                LocalDate.of(2018, 1, 1),
-                null,
-                true,
-                true,
-                100,
-                null
-        );
-        otherFamilyChildId = otherChild.getId();
     }
 
     private String loginAndReturnToken() throws Exception {
@@ -193,54 +176,5 @@ class TrackingDashboardControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success", is(true)))
                 .andExpect(jsonPath("$.data", hasSize(0)));
-    }
-
-    @Test
-    void getDashboard_unauthorizedChildProfile_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/tracking/children/{childProfileId}/summary", otherFamilyChildId)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getActivities_unauthorizedChildProfile_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/tracking/children/{childProfileId}/activities", otherFamilyChildId)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getTopics_unauthorizedChildProfile_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/tracking/children/{childProfileId}/topics", otherFamilyChildId)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getDifficulty_unauthorizedChildProfile_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/tracking/children/{childProfileId}/difficulty", otherFamilyChildId)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getResponseTime_unauthorizedChildProfile_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/tracking/children/{childProfileId}/response-time", otherFamilyChildId)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getAchievements_unauthorizedChildProfile_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/tracking/children/{childProfileId}/achievements", otherFamilyChildId)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void getLearningProgress_unauthorizedChildProfile_returns403() throws Exception {
-        mockMvc.perform(get("/api/v1/tracking/children/{childProfileId}/learning-progress", otherFamilyChildId)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
     }
 }

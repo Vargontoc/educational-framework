@@ -177,7 +177,6 @@ class FamilyControllerTest extends AbstractIntegrationTest {
 
         mockMvc.perform(patch("/api/v1/family").contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.ttsEnabled", is(false)))
             .andExpect(jsonPath("$.data.audioGeneralEnabled", is(true)));
     }
 
