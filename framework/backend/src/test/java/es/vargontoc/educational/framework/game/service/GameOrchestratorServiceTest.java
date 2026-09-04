@@ -25,7 +25,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.mock.env.MockEnvironment;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -71,19 +70,15 @@ class GameOrchestratorServiceTest {
     private ApplicationEventPublisher eventPublisher;
 
     private GameOrchestratorService orchestratorService;
-    private MockEnvironment environment;
 
     @BeforeEach
     void setUp() {
-        environment = new MockEnvironment();
-        environment.addActiveProfile("dev");
         orchestratorService = new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
-            environment,
             eventPublisher
         );
     }
@@ -244,14 +239,12 @@ class GameOrchestratorServiceTest {
 
     @Test
     void readyGame_notDevProfile_throwsEngineNotAvailable() {
-        environment = new MockEnvironment();
         orchestratorService = new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
-            environment,
             eventPublisher
         );
 

@@ -147,6 +147,7 @@ public class FakeGameEngine implements GameEnginePort {
         clone.setSequenceNumber(source.getSequenceNumber());
         clone.setSystemEventPending(source.isSystemEventPending());
         clone.setEnginePayload(source.getEnginePayload());
+        clone.setEngine(source.getEngine());
         return clone;
     }
 }

@@ -10,7 +10,6 @@ import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionS
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 
 @Configuration
 class GameModuleConfiguration {
@@ -22,7 +21,6 @@ class GameModuleConfiguration {
             RegisterActivityAttemptUseCase registerActivityAttemptUseCase,
             EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase,
             RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase,
-            Environment environment,
             ApplicationEventPublisher eventPublisher) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
@@ -30,7 +28,6 @@ class GameModuleConfiguration {
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
-            environment,
             eventPublisher
         );
     }

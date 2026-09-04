@@ -2,11 +2,15 @@ package es.vargontoc.educational.framework.tracking.application;
 
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
+import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProperties;
+import es.vargontoc.educational.framework.tracking.config.NumberUnlockProperties;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetActivityEngagementSummaryUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetChildAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetViewedCuriositiesUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.NumberUnlockReadinessUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterChildAchievementUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterCuriosityViewedUseCase;
@@ -35,6 +39,7 @@ import es.vargontoc.educational.framework.tracking.service.ChildLearningProgress
 import es.vargontoc.educational.framework.tracking.service.CuriosityViewedService;
 import es.vargontoc.educational.framework.tracking.service.GameCompletionAchievementService;
 import es.vargontoc.educational.framework.tracking.service.GameSessionSummaryService;
+import es.vargontoc.educational.framework.tracking.service.NumberUnlockReadinessService;
 import es.vargontoc.educational.framework.tracking.service.SummaryUpdateService;
 import es.vargontoc.educational.framework.tracking.service.TopicSelectionService;
 import es.vargontoc.educational.framework.tracking.service.TrackingDashboardService;
@@ -43,7 +48,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(AdaptiveDifficultyProperties.class)
+@EnableConfigurationProperties({AdaptiveDifficultyProperties.class, NumberUnlockProperties.class})
 class TrackingModuleConfiguration {
 
     @Bean
@@ -118,6 +123,24 @@ class TrackingModuleConfiguration {
     @Bean
     TopicSelectionService topicSelectionService(TopicSummaryRepository topicSummaryRepository) {
         return new TopicSelectionService(topicSummaryRepository);
+    }
+
+    @Bean
+    NumberUnlockReadinessService numberUnlockReadinessService(
+            TopicSummaryRepository topicSummaryRepository,
+            TopicRepository topicRepository,
+            NumberUnlockProperties numberUnlockProperties) {
+        return new NumberUnlockReadinessService(topicSummaryRepository, topicRepository, numberUnlockProperties);
+    }
+
+    @Bean
+    NumberUnlockReadinessUseCase numberUnlockReadinessUseCase(NumberUnlockReadinessService numberUnlockReadinessService) {
+        return numberUnlockReadinessService;
+    }
+
+    @Bean
+    FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase(NumberUnlockReadinessService numberUnlockReadinessService) {
+        return numberUnlockReadinessService;
     }
 
     @Bean

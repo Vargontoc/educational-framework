@@ -67,6 +67,9 @@ app:
       timeout-penalty-weight: ${APP_TRACKING_AD_TIMEOUT_PENALTY:0.3}
       accuracy-weight: ${APP_TRACKING_AD_ACCURACY_WEIGHT:0.7}
       speed-weight: ${APP_TRACKING_AD_SPEED_WEIGHT:0.3}
+    number-unlock:
+      min-success-rate-percent: ${APP_TRACKING_NUMBER_UNLOCK_MIN_SUCCESS_RATE:80}
+      min-attempts-per-category: ${APP_TRACKING_NUMBER_UNLOCK_MIN_ATTEMPTS:10}
   session:
     default-heartbeat-interval-seconds: 30
     heartbeat-grace-multiplier: 2

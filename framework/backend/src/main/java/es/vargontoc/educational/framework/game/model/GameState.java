@@ -3,6 +3,8 @@ package es.vargontoc.educational.framework.game.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import es.vargontoc.educational.framework.game.model.enums.EngineType;
+
 public class GameState {
 
     private Long gameId;
@@ -24,6 +26,7 @@ public class GameState {
     private Integer sequenceNumber;
     private boolean systemEventPending;
     private String enginePayload;
+    private EngineType engine;
 
     public Long getGameId() {
         return gameId;
@@ -176,4 +179,13 @@ public class GameState {
     public void setEnginePayload(String enginePayload) {
         this.enginePayload = enginePayload;
     }
+
+    public EngineType getEngine() {
+        return engine;
+    }
+
+    public void setEngine(EngineType engine) {
+        this.engine = engine;
+    }
+    
 }

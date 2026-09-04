@@ -4,7 +4,7 @@ import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
-import es.vargontoc.educational.framework.game.engine.FakeGameEngine;
+import es.vargontoc.educational.framework.game.engine.RecognitionEngine;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
@@ -13,6 +13,7 @@ import es.vargontoc.educational.framework.game.model.ActionResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
+import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
@@ -27,8 +28,6 @@ import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionS
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.env.Environment;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +44,6 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final RegisterActivityAttemptUseCase registerActivityAttemptUseCase;
     private final EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase;
     private final RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase;
-    private final Environment environment;
     private final ApplicationEventPublisher eventPublisher;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
@@ -56,15 +54,17 @@ public class GameOrchestratorService implements GameOrchestrator {
             RegisterActivityAttemptUseCase registerActivityAttemptUseCase,
             EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase,
             RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase,
-            Environment environment,
             ApplicationEventPublisher eventPublisher) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.registerActivityAttemptUseCase = registerActivityAttemptUseCase;
         this.evaluateGameCompletionAchievementsUseCase = evaluateGameCompletionAchievementsUseCase;
         this.registerGameSessionSummaryUseCase = registerGameSessionSummaryUseCase;
-        this.environment = environment;
+
         this.eventPublisher = eventPublisher;
+
+
+        this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine());
     }
 
     @Override
@@ -330,27 +330,16 @@ public class GameOrchestratorService implements GameOrchestrator {
     }
 
     private GameEnginePort resolveEngine(GameState state) {
-        String engineType = "fake";
-
-        if (isDevProfile()) {
-            engineInstances.putIfAbsent(engineType, new FakeGameEngine());
-            return engineInstances.get(engineType);
+        try{
+            return engineInstances.get(state.getEngine().name());
+        }catch(Exception e){
+            throw new EngineNotAvailableException(state.getEngine().name());
         }
 
-        throw new EngineNotAvailableException(engineType);
     }
 
     private String getEngineParams(GameState state) {
         return "{\"difficultyLevelId\":" + state.getDifficultyLevelId() + "}";
-    }
-
-    private boolean isDevProfile() {
-        for (String profile : environment.getActiveProfiles()) {
-            if ("dev".equalsIgnoreCase(profile)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private boolean isActive(GameStatus status) {
