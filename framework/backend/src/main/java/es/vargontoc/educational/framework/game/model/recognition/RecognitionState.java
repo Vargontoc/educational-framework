@@ -25,6 +25,8 @@ public class RecognitionState {
     private LocalDateTime lastActionAt;
     private int currentDifficultyLevel;
     private Integer pendingDifficultyLevel;
+    private long totalResponseTimeMs;
+    private List<String> candidateElementIds;
 
     public RecognitionState() {
         this.totalRounds = RecognitionDefaults.DEFAULT_TOTAL_ROUNDS;
@@ -167,5 +169,21 @@ public class RecognitionState {
 
     public void setPendingDifficultyLevel(Integer pendingDifficultyLevel) {
         this.pendingDifficultyLevel = pendingDifficultyLevel;
+    }
+
+    public long getTotalResponseTimeMs() {
+        return totalResponseTimeMs;
+    }
+
+    public void setTotalResponseTimeMs(long totalResponseTimeMs) {
+        this.totalResponseTimeMs = totalResponseTimeMs;
+    }
+
+    public List<String> getCandidateElementIds() {
+        return candidateElementIds;
+    }
+
+    public void setCandidateElementIds(List<String> candidateElementIds) {
+        this.candidateElementIds = candidateElementIds;
     }
 }

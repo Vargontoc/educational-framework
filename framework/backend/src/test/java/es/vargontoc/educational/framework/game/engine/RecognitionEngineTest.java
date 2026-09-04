@@ -353,7 +353,7 @@ class RecognitionEngineTest {
     }
 
     @Test
-    void processAction_correctAfterFailuresReturnsCorrectAndPreservesData() throws Exception {
+    void processAction_correctAfterFailuresReturnsCorrectAndAdvancesRound() throws Exception {
         RecognitionEngine engine = new RecognitionEngine(new Random(42));
         GameState gs = initEngineWithKnownTarget();
         RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
@@ -367,23 +367,28 @@ class RecognitionEngineTest {
 
         assertEquals(ActionResultType.CORRECT, result.getResultType());
         RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertEquals(1, stateAfter.getRoundIndex(), "Round must advance after correct answer");
+        assertEquals(0, stateAfter.getCurrentRoundAttemptCount(),
+                "Per-round attempt count must reset after advancement");
         assertEquals(0, stateAfter.getCurrentRoundConsecutiveFailures(),
                 "Consecutive failures must reset to 0 on correct answer");
-        assertEquals(3, stateAfter.getCurrentRoundAttemptCount());
         assertEquals(2, stateAfter.getTotalIncorrectAttempts(),
                 "Total incorrect must preserve previous failures");
-        assertEquals(target, stateAfter.getSelectedOptionId());
-        assertTrue(stateAfter.isHintActive(),
-                "Hint flag remains active once triggered within the round");
-        assertEquals(2, stateAfter.getHintTriggeredAtAttempt(),
-                "Hint triggered attempt must be preserved");
+        assertEquals(0, stateAfter.getTotalCorrectFirstTry(),
+                "Not a first-try correct, so totalCorrectFirstTry stays 0");
+        assertNull(stateAfter.getSelectedOptionId(),
+                "selectedOptionId must reset after advancement");
+        assertFalse(stateAfter.isHintActive(),
+                "Hint must reset after advancement");
+        assertNull(stateAfter.getHintTriggeredAtAttempt(),
+                "hintTriggeredAtAttempt must reset after advancement");
         assertNotNull(result.getNewState());
         assertNotNull(result.getAttemptContext());
         assertEquals(3000, result.getResponseTimeMs());
     }
 
     @Test
-    void processAction_correctFirstTryIncrementsTotalCorrectFirstTry() throws Exception {
+    void processAction_correctFirstTryIncrementsTotalCorrectFirstTryAndAdvancesRound() throws Exception {
         RecognitionEngine engine = new RecognitionEngine(new Random(42));
         GameState gs = initEngineWithKnownTarget();
         RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
@@ -394,7 +399,9 @@ class RecognitionEngineTest {
         assertEquals(ActionResultType.CORRECT, result.getResultType());
         RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
         assertEquals(1, stateAfter.getTotalCorrectFirstTry());
-        assertEquals(1, stateAfter.getCurrentRoundAttemptCount());
+        assertEquals(1, stateAfter.getRoundIndex(), "Round must advance after correct answer");
+        assertEquals(0, stateAfter.getCurrentRoundAttemptCount(),
+                "Per-round attempt count must reset after advancement");
         assertEquals(0, stateAfter.getCurrentRoundConsecutiveFailures());
         assertEquals(0, stateAfter.getTotalIncorrectAttempts());
         assertFalse(stateAfter.isHintActive());
@@ -466,5 +473,318 @@ class RecognitionEngineTest {
         assertEquals(2, stateAfter.getHintTriggeredAtAttempt(),
                 "hintTriggeredAtAttempt must remain at the first activation");
         assertEquals(3, stateAfter.getCurrentRoundConsecutiveFailures());
+    }
+
+    private GameState initEngineWithCandidates(int seed, List<String> candidates) throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(seed));
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+        return gs;
+    }
+
+    private void answerCorrectlyForRound(RecognitionEngine engine, GameState gs) throws Exception {
+        RecognitionState state = deserializeState(gs.getEnginePayload());
+        String target = state.getTargetElementId();
+        engine.processAction(gs, buildActionPayload(target, 1000));
+    }
+
+    @Test
+    void correctAnswersAdvanceRoundsUntilCompletion() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS; i++) {
+            assertFalse(engine.isGameComplete(gs),
+                    "Game should not be complete before round " + (i + 1));
+            answerCorrectlyForRound(engine, gs);
+        }
+
+        assertTrue(engine.isGameComplete(gs),
+                "Game should be complete after all rounds answered correctly");
+
+        RecognitionState finalState = deserializeState(gs.getEnginePayload());
+        assertEquals(RecognitionDefaults.DEFAULT_TOTAL_ROUNDS, finalState.getRoundIndex());
+        assertEquals(RecognitionDefaults.DEFAULT_TOTAL_ROUNDS, finalState.getTotalCorrectFirstTry());
+        assertEquals(0, finalState.getTotalIncorrectAttempts());
+    }
+
+    @Test
+    void incorrectAnswersDoNotAdvanceRound() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String target = stateBefore.getTargetElementId();
+        String wrong = findWrongOption(stateBefore);
+
+        engine.processAction(gs, buildActionPayload(wrong, 1000));
+        engine.processAction(gs, buildActionPayload(wrong, 1500));
+
+        RecognitionState stateAfterIncorrect = deserializeState(gs.getEnginePayload());
+        assertEquals(0, stateAfterIncorrect.getRoundIndex(),
+                "Round must not advance after incorrect answers");
+        assertEquals(target, stateAfterIncorrect.getTargetElementId(),
+                "Target must remain the same after incorrect answers");
+
+        engine.processAction(gs, buildActionPayload(target, 2000));
+
+        RecognitionState stateAfterCorrect = deserializeState(gs.getEnginePayload());
+        assertEquals(1, stateAfterCorrect.getRoundIndex(),
+                "Round must advance only after correct answer");
+    }
+
+    @Test
+    void threeStarScoring_firstTryAndGoodResponseTime() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS; i++) {
+            RecognitionState state = deserializeState(gs.getEnginePayload());
+            String target = state.getTargetElementId();
+            engine.processAction(gs, buildActionPayload(target, 2000));
+        }
+
+        assertTrue(engine.isGameComplete(gs));
+        ActionResult summary = engine.buildSummary(gs);
+
+        assertEquals(ActionResultType.CORRECT, summary.getResultType());
+        assertTrue(summary.isCompleted());
+        assertEquals(GameStatus.COMPLETED, summary.getNewState().getStatus());
+        assertEquals(3, summary.getNewState().getStarsEarned());
+
+        RecognitionState finalState = deserializeState(gs.getEnginePayload());
+        assertEquals(5, finalState.getTotalCorrectFirstTry());
+        assertEquals(0, finalState.getTotalIncorrectAttempts());
+    }
+
+    @Test
+    void twoStarScoring_completedWithAvgAttemptsAtMostTwo() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS; i++) {
+            RecognitionState state = deserializeState(gs.getEnginePayload());
+            String target = state.getTargetElementId();
+            String wrong = findWrongOption(state);
+            engine.processAction(gs, buildActionPayload(wrong, 1000));
+            engine.processAction(gs, buildActionPayload(target, 8000));
+        }
+
+        assertTrue(engine.isGameComplete(gs));
+        ActionResult summary = engine.buildSummary(gs);
+
+        assertEquals(GameStatus.COMPLETED, summary.getNewState().getStatus());
+        int stars = summary.getNewState().getStarsEarned();
+        assertTrue(stars == 2 || stars == 1,
+                "Expected 2 or fewer stars when each round has 2 attempts, got: " + stars);
+
+        RecognitionState finalState = deserializeState(gs.getEnginePayload());
+        assertEquals(0, finalState.getTotalCorrectFirstTry(),
+                "No round was first-try correct");
+        assertEquals(5, finalState.getTotalIncorrectAttempts());
+    }
+
+    @Test
+    void oneStarMinimum_manyRetriesStillCompletes() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS; i++) {
+            RecognitionState state = deserializeState(gs.getEnginePayload());
+            String target = state.getTargetElementId();
+            String wrong = findWrongOption(state);
+            engine.processAction(gs, buildActionPayload(wrong, 1000));
+            engine.processAction(gs, buildActionPayload(wrong, 1000));
+            engine.processAction(gs, buildActionPayload(wrong, 1000));
+            engine.processAction(gs, buildActionPayload(target, 9000));
+        }
+
+        assertTrue(engine.isGameComplete(gs));
+        ActionResult summary = engine.buildSummary(gs);
+
+        assertEquals(GameStatus.COMPLETED, summary.getNewState().getStatus());
+        assertEquals(ActionResultType.CORRECT, summary.getResultType());
+        assertTrue(summary.isCompleted());
+        int stars = summary.getNewState().getStarsEarned();
+        assertTrue(stars >= 1, "Minimum 1 star guaranteed for completed game");
+
+        RecognitionState finalState = deserializeState(gs.getEnginePayload());
+        assertEquals(15, finalState.getTotalIncorrectAttempts());
+    }
+
+    @Test
+    void buildSummary_neverProducesFailedGameState() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS; i++) {
+            RecognitionState state = deserializeState(gs.getEnginePayload());
+            String target = state.getTargetElementId();
+            String wrong = findWrongOption(state);
+            engine.processAction(gs, buildActionPayload(wrong, 1000));
+            engine.processAction(gs, buildActionPayload(wrong, 1000));
+            engine.processAction(gs, buildActionPayload(wrong, 1000));
+            engine.processAction(gs, buildActionPayload(wrong, 1000));
+            engine.processAction(gs, buildActionPayload(target, 9000));
+        }
+
+        ActionResult summary = engine.buildSummary(gs);
+
+        assertNotEquals(GameStatus.ABANDONED, summary.getNewState().getStatus(),
+                "Completed recognition game must not be ABANDONED");
+        assertEquals(GameStatus.COMPLETED, summary.getNewState().getStatus(),
+                "Completed recognition game must be COMPLETED");
+        assertEquals(ActionResultType.CORRECT, summary.getResultType(),
+                "buildSummary must return CORRECT, not a failure result");
+        assertTrue(summary.getNewState().getStarsEarned() >= 1,
+                "At least 1 star must be awarded");
+    }
+
+    @Test
+    void isGameComplete_falseDuringProgress() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        assertFalse(engine.isGameComplete(gs));
+    }
+
+    @Test
+    void getNextElement_returnsCurrentRoundInfo() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        String nextElement = engine.getNextElement(gs);
+        assertNotNull(nextElement);
+
+        var node = MAPPER.readTree(nextElement);
+        assertNotNull(node.get("targetElementId"));
+        assertNotNull(node.get("optionIds"));
+        assertEquals(0, node.get("roundIndex").asInt());
+    }
+
+    @Test
+    void getNextElement_returnsNullWhenGameComplete() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS; i++) {
+            answerCorrectlyForRound(engine, gs);
+        }
+
+        assertNull(engine.getNextElement(gs));
+    }
+
+    @Test
+    void processAction_accumulatesTotalResponseTime() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        RecognitionState stateBefore = deserializeState(gs.getEnginePayload());
+        String target = stateBefore.getTargetElementId();
+        String wrong = findWrongOption(stateBefore);
+
+        engine.processAction(gs, buildActionPayload(wrong, 1500));
+        engine.processAction(gs, buildActionPayload(target, 2500));
+
+        RecognitionState stateAfter = deserializeState(gs.getEnginePayload());
+        assertEquals(4000L, stateAfter.getTotalResponseTimeMs(),
+                "totalResponseTimeMs must accumulate across actions");
+    }
+
+    @Test
+    void processAction_afterGameCompleteReturnsCompletedResult() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS; i++) {
+            answerCorrectlyForRound(engine, gs);
+        }
+
+        ActionResult result = engine.processAction(gs, buildActionPayload("a", 1000));
+        assertTrue(result.isCompleted(),
+                "Actions after game complete should return completed result");
+    }
+
+    @Test
+    void processAction_completedFlagSetOnLastCorrectAnswer() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS - 1; i++) {
+            ActionResult result = answerCorrectlyForRoundAndReturn(engine, gs);
+            assertFalse(result.isCompleted(),
+                    "Game should not be completed before last round");
+        }
+
+        ActionResult lastResult = answerCorrectlyForRoundAndReturn(engine, gs);
+        assertTrue(lastResult.isCompleted(),
+                "Game should be completed after last correct answer");
+    }
+
+    private ActionResult answerCorrectlyForRoundAndReturn(RecognitionEngine engine, GameState gs) throws Exception {
+        RecognitionState state = deserializeState(gs.getEnginePayload());
+        String target = state.getTargetElementId();
+        return engine.processAction(gs, buildActionPayload(target, 1000));
+    }
+
+    @Test
+    void advanceRound_selectsNewTargetDifferentFromPrevious() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        RecognitionState state0 = deserializeState(gs.getEnginePayload());
+        String firstTarget = state0.getTargetElementId();
+
+        answerCorrectlyForRound(engine, gs);
+
+        RecognitionState state1 = deserializeState(gs.getEnginePayload());
+        assertNotEquals(firstTarget, state1.getTargetElementId(),
+                "New round should select a different target when possible");
+        assertEquals(2, state1.getRoundsShownElementIds().size());
+    }
+
+    @Test
+    void buildSummary_setsCompletedAtAndAttempts() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(42));
+        List<String> candidates = List.of("a", "b", "c", "d", "e", "f", "g");
+        GameState gs = createGameState();
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        for (int i = 0; i < RecognitionDefaults.DEFAULT_TOTAL_ROUNDS; i++) {
+            answerCorrectlyForRound(engine, gs);
+        }
+
+        engine.buildSummary(gs);
+
+        assertNotNull(gs.getCompletedAt());
+        assertEquals(GameStatus.COMPLETED, gs.getStatus());
+        assertEquals(5, gs.getAttempts());
+        assertEquals(0, gs.getIncorrectAttempts());
     }
 }

@@ -63,6 +63,10 @@ public class RecognitionEngine implements GameEnginePort {
     public ActionResult processAction(GameState gameState, String actionPayload) {
         RecognitionState state = deserializeState(gameState.getEnginePayload());
 
+        if (state.getRoundIndex() >= state.getTotalRounds()) {
+            return buildAlreadyCompleteResult(gameState, state);
+        }
+
         String selectedOptionId = parseSelectedOptionId(actionPayload);
         Integer responseTimeMs = parseResponseTimeMs(actionPayload);
 
@@ -72,6 +76,10 @@ public class RecognitionEngine implements GameEnginePort {
         state.setCurrentRoundAttemptCount(state.getCurrentRoundAttemptCount() + 1);
         state.setSelectedOptionId(selectedOptionId);
         state.setLastActionAt(LocalDateTime.now());
+
+        if (responseTimeMs != null) {
+            state.setTotalResponseTimeMs(state.getTotalResponseTimeMs() + responseTimeMs);
+        }
 
         if (correct) {
             state.setCurrentRoundConsecutiveFailures(0);
@@ -92,6 +100,10 @@ public class RecognitionEngine implements GameEnginePort {
             }
         }
 
+        if (correct) {
+            advanceRound(state);
+        }
+
         gameState.setEnginePayload(serializeState(state));
 
         ActionResult result = new ActionResult();
@@ -99,23 +111,100 @@ public class RecognitionEngine implements GameEnginePort {
         result.setResponseTimeMs(responseTimeMs);
         result.setNewState(gameState);
         result.setAttemptContext(serializeAttemptContext(state, responseTimeMs));
+        result.setCompleted(state.getRoundIndex() >= state.getTotalRounds());
 
         return result;
     }
 
     @Override
     public String getNextElement(GameState gameState) {
-        throw new UnsupportedOperationException("Unimplemented method 'getNextElement'");
+        RecognitionState state = deserializeState(gameState.getEnginePayload());
+        if (state.getRoundIndex() >= state.getTotalRounds()) {
+            return null;
+        }
+        try {
+            var map = new java.util.LinkedHashMap<String, Object>();
+            map.put("targetElementId", state.getTargetElementId());
+            map.put("optionIds", state.getOptionIds());
+            map.put("roundIndex", state.getRoundIndex());
+            return OBJECT_MAPPER.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize next element", e);
+        }
     }
 
     @Override
     public boolean isGameComplete(GameState gameState) {
-        throw new UnsupportedOperationException("Unimplemented method 'isGameComplete'");
+        RecognitionState state = deserializeState(gameState.getEnginePayload());
+        return state.getRoundIndex() >= state.getTotalRounds();
     }
 
     @Override
     public ActionResult buildSummary(GameState gameState) {
-        throw new UnsupportedOperationException("Unimplemented method 'buildSummary'");
+        RecognitionState state = deserializeState(gameState.getEnginePayload());
+
+        int stars = calculateStars(state);
+
+        gameState.setStatus(GameStatus.COMPLETED);
+        gameState.setStarsEarned(stars);
+        gameState.setCompletedAt(LocalDateTime.now());
+        gameState.setIncorrectAttempts(state.getTotalIncorrectAttempts());
+        gameState.setAttempts(state.getTotalIncorrectAttempts() + state.getTotalRounds());
+        gameState.setEnginePayload(serializeState(state));
+
+        ActionResult result = new ActionResult();
+        result.setResultType(ActionResultType.CORRECT);
+        result.setNewState(gameState);
+        result.setCompleted(true);
+        return result;
+    }
+
+    private void advanceRound(RecognitionState state) {
+        state.setRoundIndex(state.getRoundIndex() + 1);
+        if (state.getRoundIndex() >= state.getTotalRounds()) {
+            return;
+        }
+        List<String> candidates = state.getCandidateElementIds();
+        String target = selectTarget(candidates, state.getRoundsShownElementIds());
+        state.setTargetElementId(target);
+        state.setOptionIds(buildOptions(candidates, target));
+        state.getRoundsShownElementIds().add(target);
+        state.setCurrentRoundAttemptCount(0);
+        state.setCurrentRoundConsecutiveFailures(0);
+        state.setHintActive(false);
+        state.setHintTriggeredAtAttempt(null);
+        state.setSelectedOptionId(null);
+        state.setRoundStartedAt(LocalDateTime.now());
+    }
+
+    int calculateStars(RecognitionState state) {
+        int totalRounds = state.getTotalRounds();
+        int totalActions = state.getTotalIncorrectAttempts() + totalRounds;
+        long avgResponseTime = totalActions > 0
+                ? state.getTotalResponseTimeMs() / totalActions
+                : 0L;
+
+        if (state.getTotalCorrectFirstTry() >= 4
+                && avgResponseTime <= RecognitionDefaults.GOOD_RESPONSE_TIME_THRESHOLD_MS) {
+            return 3;
+        }
+
+        double avgAttemptsPerRound = totalRounds > 0
+                ? (double) totalActions / totalRounds
+                : 0.0;
+        if (avgAttemptsPerRound <= 2.0) {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    private ActionResult buildAlreadyCompleteResult(GameState gameState, RecognitionState state) {
+        ActionResult result = new ActionResult();
+        result.setResultType(ActionResultType.INCORRECT);
+        result.setNewState(gameState);
+        result.setCompleted(true);
+        return result;
     }
 
     private List<String> parseCandidates(String engineParams) {
@@ -147,6 +236,8 @@ public class RecognitionEngine implements GameEnginePort {
         state.setTotalCorrectFirstTry(0);
         state.setHintActive(false);
         state.setSelectedOptionId(null);
+        state.setTotalResponseTimeMs(0L);
+        state.setCandidateElementIds(new ArrayList<>(candidates));
 
         String target = selectTarget(candidates, state.getRoundsShownElementIds());
         state.setTargetElementId(target);

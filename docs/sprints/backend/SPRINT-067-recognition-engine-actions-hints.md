@@ -5,11 +5,12 @@
 Implement recognition action processing with retry-until-correct behavior and hint activation.
 
 ## Status
-status: implemented
+status: completed
 started_at: 2026-09-04
-closed_at:
+closed_at: 2026-09-04
 blocked_by:
 waiting_for:
+verified_at: 2026-09-04
 
 ## Tasks
 
@@ -84,3 +85,22 @@ next_sprint_suggestions:
   - Implement isGameComplete to check totalRounds completion
   - Implement buildSummary for end-of-game statistics
   - Add scoring logic for correct/incorrect attempts
+
+verification:
+  - All 23 unit tests pass (RecognitionEngineTest: 23 tests, 0 failures).
+  - Main code compiles successfully (`mvn compile` → BUILD SUCCESS).
+  - No framework dependencies (Spring, JPA, Jakarta) in RecognitionEngine.
+  - No prohibited dependencies (world, tracking, content, session) in RecognitionEngine.
+  - No prohibited fields (topicId, promptType, biomeCode, totalTimeouts) in RecognitionEngine or RecognitionState.
+  - processAction implements full retry-until-correct behavior per FEAT-009.
+  - CORRECT/INCORRECT result determination based on selectedOptionId vs targetElementId.
+  - Round state preserved after incorrect answers (same target, same options).
+  - All counters correctly maintained (currentRoundAttemptCount, currentRoundConsecutiveFailures, totalIncorrectAttempts, totalCorrectFirstTry).
+  - lastActionAt and selectedOptionId updated on every action.
+  - Hint activation after 2 consecutive failures with hintTriggeredAtAttempt tracking.
+  - RecognitionAttemptContext serialized into ActionResult.attemptContext.
+  - responseTimeMs propagated from actionPayload to ActionResult.
+  - TIMEOUT never returned by RecognitionEngine (verified by test).
+  - HINT_ACTIVATION_THRESHOLD = 2 added to RecognitionDefaults.
+  - Hint flag remains active once triggered within a round (not reset on subsequent failures).
+  - Null/blank actionPayload treated as incorrect (selectedOptionId = null).

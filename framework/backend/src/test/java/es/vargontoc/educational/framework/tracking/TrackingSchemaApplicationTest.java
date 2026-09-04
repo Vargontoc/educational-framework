@@ -29,7 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TrackingSchemaApplicationTest {
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
+            org.testcontainers.utility.DockerImageName.parse("pgvector/pgvector:pg16")
+                    .asCompatibleSubstituteFor("postgres"));
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

@@ -10,7 +10,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 public abstract class TestcontainersConfiguration {
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
+            org.testcontainers.utility.DockerImageName.parse("pgvector/pgvector:pg16")
+                    .asCompatibleSubstituteFor("postgres"));
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
