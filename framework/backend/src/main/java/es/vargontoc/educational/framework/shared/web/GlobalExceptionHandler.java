@@ -12,9 +12,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -66,6 +70,45 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(exception.getStatus())
             .body(ApiResponse.error(exception.getMessage()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMalformedRequestBody(
+            HttpMessageNotReadableException exception, HttpServletRequest request) {
+        putRequestContext(request, HttpStatus.BAD_REQUEST.value(), exception.getClass().getSimpleName());
+        LOGGER.warn(EXCEPTION_MARKER, "Malformed request body at {} {}: {}",
+            request.getMethod(), request.getRequestURI(), exception.getMessage());
+        MDC.clear();
+        return ResponseEntity
+            .badRequest()
+            .body(ApiResponse.error("Malformed or invalid request body"));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException exception, HttpServletRequest request) {
+        putRequestContext(request, HttpStatus.BAD_REQUEST.value(), exception.getClass().getSimpleName());
+        LOGGER.warn(EXCEPTION_MARKER, "Validation failed at {} {}: {}",
+            request.getMethod(), request.getRequestURI(), exception.getMessage());
+        MDC.clear();
+        return ResponseEntity
+            .badRequest()
+            .body(ApiResponse.error("Validation failed"));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(
+            NoResourceFoundException exception, HttpServletRequest request) {
+        HttpStatus status = request.getRequestURI().startsWith("/api/v1/dev/")
+            ? HttpStatus.UNAUTHORIZED
+            : HttpStatus.NOT_FOUND;
+        putRequestContext(request, status.value(), exception.getClass().getSimpleName());
+        LOGGER.warn(EXCEPTION_MARKER, "No resource found at {} {}",
+            request.getMethod(), request.getRequestURI());
+        MDC.clear();
+        return ResponseEntity
+            .status(status)
+            .body(ApiResponse.error(status == HttpStatus.UNAUTHORIZED ? "Unauthorized" : "Resource not found"));
     }
 
     @ExceptionHandler(Exception.class)

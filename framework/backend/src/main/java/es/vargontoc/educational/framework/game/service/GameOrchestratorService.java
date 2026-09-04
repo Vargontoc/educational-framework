@@ -1,9 +1,13 @@
 package es.vargontoc.educational.framework.game.service;
 
 import es.vargontoc.educational.framework.content.model.Activity;
+import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
+import es.vargontoc.educational.framework.content.model.RecognitionType;
+import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
+import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.game.engine.RecognitionEngine;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
@@ -13,7 +17,9 @@ import es.vargontoc.educational.framework.game.model.ActionResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
+import es.vargontoc.educational.framework.game.model.LaunchContext;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
+import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
@@ -23,6 +29,7 @@ import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import org.slf4j.Logger;
@@ -45,6 +52,8 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase;
     private final RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase;
     private final ApplicationEventPublisher eventPublisher;
+    private final TopicUseCase topicUseCase;
+    private final FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
 
@@ -54,21 +63,28 @@ public class GameOrchestratorService implements GameOrchestrator {
             RegisterActivityAttemptUseCase registerActivityAttemptUseCase,
             EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase,
             RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            TopicUseCase topicUseCase,
+            FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.registerActivityAttemptUseCase = registerActivityAttemptUseCase;
         this.evaluateGameCompletionAchievementsUseCase = evaluateGameCompletionAchievementsUseCase;
         this.registerGameSessionSummaryUseCase = registerGameSessionSummaryUseCase;
-
         this.eventPublisher = eventPublisher;
-
+        this.topicUseCase = topicUseCase;
+        this.filterAllowedRecognitionCategoriesUseCase = filterAllowedRecognitionCategoriesUseCase;
 
         this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine());
     }
 
     @Override
     public GameState startGame(Long childProfileId, Long activityId) {
+        return startGame(childProfileId, activityId, null);
+    }
+
+    @Override
+    public GameState startGame(Long childProfileId, Long activityId, LaunchContext launchContext) {
         GameCatalogReadiness readiness = gameCatalogUseCase.getGameReadiness(childProfileId, activityId);
 
         Activity activity = readiness.activity();
@@ -79,13 +95,28 @@ public class GameOrchestratorService implements GameOrchestrator {
         state.setChildSessionId(childProfileId);
         state.setActivityId(activityId);
         state.setDifficultyLevelId(difficultyLevel.getId());
+        state.setEngine(resolveEngineType(activity));
         state.setStatus(GameStatus.WAITING);
         state.setStartedAt(LocalDateTime.now());
         state.setLastActivityAt(LocalDateTime.now());
 
+        if (state.getEngine() == EngineType.RECOGNITION) {
+            List<String> candidates = resolveCandidates(childProfileId, activity, launchContext);
+            state.setCandidates(candidates);
+        }
+
         gameStateRegistry.save(state);
 
         return state;
+    }
+
+    private EngineType resolveEngineType(Activity activity) {
+        String gameEngineType = activity.getGameEngineType();
+        try {
+            return EngineType.valueOf(gameEngineType);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new EngineNotAvailableException(gameEngineType);
+        }
     }
 
     @Override
@@ -331,15 +362,76 @@ public class GameOrchestratorService implements GameOrchestrator {
 
     private GameEnginePort resolveEngine(GameState state) {
         try{
-            return engineInstances.get(state.getEngine().name());
+            GameEnginePort engine = engineInstances.get(state.getEngine().name());
+            if (engine == null) {
+                throw new EngineNotAvailableException(state.getEngine().name());
+            }
+            return engine;
+        }catch(EngineNotAvailableException e){
+            throw e;
         }catch(Exception e){
             throw new EngineNotAvailableException(state.getEngine().name());
         }
-
     }
 
     private String getEngineParams(GameState state) {
-        return "{\"difficultyLevelId\":" + state.getDifficultyLevelId() + "}";
+        List<String> candidates = state.getCandidates() != null ? state.getCandidates() : List.of();
+        StringBuilder sb = new StringBuilder("{\"candidates\":[");
+        for (int i = 0; i < candidates.size(); i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            sb.append("\"").append(candidates.get(i)).append("\"");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private List<String> resolveCandidates(Long childProfileId, Activity activity, LaunchContext launchContext) {
+        RecognitionCategory category = resolveRecognitionCategory(activity);
+        if (category == null) {
+            return List.of();
+        }
+
+        es.vargontoc.educational.framework.tracking.model.RecognitionCategory trackingCategory =
+                es.vargontoc.educational.framework.tracking.model.RecognitionCategory.valueOf(category.name());
+
+        List<es.vargontoc.educational.framework.tracking.model.RecognitionCategory> allowed =
+                filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
+                        childProfileId, List.of(trackingCategory));
+
+        if (allowed.isEmpty()) {
+            return List.of();
+        }
+
+        RecognitionType recognitionType = RecognitionType.valueOf(category.name());
+
+        List<Topic> topics;
+        if (category == RecognitionCategory.ANIMAL
+                && launchContext != null
+                && launchContext.getHabitatTag() != null
+                && !launchContext.getHabitatTag().isBlank()) {
+            Biome biome = Biome.valueOf(launchContext.getHabitatTag());
+            topics = topicUseCase.listTopicsByRecognitionTypeAndHabitat(recognitionType, biome);
+        } else {
+            topics = topicUseCase.listTopicsByRecognitionType(recognitionType);
+        }
+
+        return topics.stream()
+                .map(t -> String.valueOf(t.getId()))
+                .toList();
+    }
+
+    private RecognitionCategory resolveRecognitionCategory(Activity activity) {
+        List<Long> topicIds = activity.getTopicIds();
+        if (topicIds == null || topicIds.isEmpty()) {
+            return null;
+        }
+        Topic firstTopic = topicUseCase.getTopic(topicIds.get(0));
+        if (firstTopic == null || firstTopic.getRecognitionType() == null) {
+            return null;
+        }
+        return RecognitionCategory.valueOf(firstTopic.getRecognitionType().name());
     }
 
     private boolean isActive(GameStatus status) {

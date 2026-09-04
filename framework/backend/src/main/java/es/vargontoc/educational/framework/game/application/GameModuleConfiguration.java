@@ -1,10 +1,12 @@
 package es.vargontoc.educational.framework.game.application;
 
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
+import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.service.GameOrchestratorService;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,14 +23,18 @@ class GameModuleConfiguration {
             RegisterActivityAttemptUseCase registerActivityAttemptUseCase,
             EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase,
             RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            TopicUseCase topicUseCase,
+            FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
-            eventPublisher
+            eventPublisher,
+            topicUseCase,
+            filterAllowedRecognitionCategoriesUseCase
         );
     }
 }

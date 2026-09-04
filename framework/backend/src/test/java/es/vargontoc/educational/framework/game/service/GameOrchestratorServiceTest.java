@@ -6,6 +6,7 @@ import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
+import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
@@ -18,6 +19,7 @@ import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
+import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,6 +72,12 @@ class GameOrchestratorServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private TopicUseCase topicUseCase;
+
+    @Mock
+    private FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -80,7 +88,9 @@ class GameOrchestratorServiceTest {
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
-            eventPublisher
+            eventPublisher,
+            topicUseCase,
+            filterAllowedRecognitionCategoriesUseCase
         );
     }
 
@@ -117,7 +127,20 @@ class GameOrchestratorServiceTest {
         state.setCurrentScore(BigDecimal.ZERO);
         state.setCurrentStreak(0);
         state.setStarsEarned(0);
+        state.setCandidates(List.of("elem-1"));
+        if (status == GameStatus.IN_PROGRESS || status == GameStatus.STARTING) {
+            state.setEnginePayload(buildTestEnginePayload());
+        }
         return state;
+    }
+
+    private String buildTestEnginePayload() {
+        return "{\"roundIndex\":0,\"totalRounds\":3,\"currentDifficultyLevel\":1," +
+               "\"candidateElementIds\":[\"elem-1\"]," +
+               "\"targetElementId\":\"elem-1\",\"optionIds\":[\"elem-1\"]," +
+               "\"roundsShownElementIds\":[],\"currentRoundAttemptCount\":0," +
+               "\"currentRoundConsecutiveFailures\":0,\"totalIncorrectAttempts\":0," +
+               "\"totalCorrectFirstTry\":0,\"hintActive\":false,\"totalResponseTimeMs\":0}";
     }
 
     @Test
@@ -171,7 +194,7 @@ class GameOrchestratorServiceTest {
         when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
-        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+        ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertEquals(es.vargontoc.educational.framework.game.model.ActionResultType.CORRECT, result.resultType());
         assertNotNull(result.updatedState());
@@ -191,9 +214,9 @@ class GameOrchestratorServiceTest {
         when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
             .thenReturn(List.of());
 
-        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
-        orchestratorService.processAction(1L, "CORRECT:2", null, 2000);
-        ActionProcessingResult finalResult = orchestratorService.processAction(1L, "CORRECT:3", null, 2000);
+        ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        ActionProcessingResult finalResult = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertTrue(finalResult.gameCompleted());
         verify(evaluateGameCompletionAchievementsUseCase).evaluate(anyLong(), anyLong(), isNull());
@@ -211,7 +234,7 @@ class GameOrchestratorServiceTest {
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
         assertThrows(InvalidStateTransitionException.class,
-            () -> orchestratorService.processAction(1L, "CORRECT:1", null, 2000));
+            () -> orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000));
     }
 
     @Test
@@ -248,11 +271,13 @@ class GameOrchestratorServiceTest {
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
-            eventPublisher
+            eventPublisher,
+            topicUseCase,
+            filterAllowedRecognitionCategoriesUseCase
         );
 
         GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.WAITING);
-
+        storedState.setEngine(EngineType.MEMORY);
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
         assertThrows(es.vargontoc.educational.framework.game.exception.EngineNotAvailableException.class,
@@ -277,7 +302,7 @@ class GameOrchestratorServiceTest {
         when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(achievement)));
 
-        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+        ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertFalse(result.unlockedAchievements().isEmpty());
         assertEquals("FIRST_CORRECT_STREAK", result.unlockedAchievements().get(0).achievementCode());
@@ -292,7 +317,7 @@ class GameOrchestratorServiceTest {
         when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(), true, 10L));
 
-        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+        ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertTrue(result.difficultyChanged());
         assertEquals(10L, result.newDifficultyLevelId());
@@ -337,7 +362,7 @@ class GameOrchestratorServiceTest {
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
-        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+        ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertEquals(ActionResultType.CORRECT, result.resultType());
         assertEquals("discarded_system_event_pending", result.attemptContext());
@@ -355,7 +380,7 @@ class GameOrchestratorServiceTest {
         when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), anyLong(), any(), any(), any()))
             .thenThrow(new RuntimeException("Tracking service unavailable"));
 
-        ActionProcessingResult result = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
+        ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertEquals(ActionResultType.CORRECT, result.resultType());
         assertTrue(result.unlockedAchievements().isEmpty());
@@ -388,8 +413,8 @@ class GameOrchestratorServiceTest {
         when(gameStateRegistry.findByGameId(2L)).thenReturn(Optional.of(state2));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
-        ActionProcessingResult result1 = orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
-        ActionProcessingResult result2 = orchestratorService.processAction(2L, "CORRECT:1", null, 2000);
+        ActionProcessingResult result1 = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        ActionProcessingResult result2 = orchestratorService.processAction(2L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertEquals(ActionResultType.CORRECT, result1.resultType());
         assertEquals(ActionResultType.CORRECT, result2.resultType());
@@ -407,9 +432,9 @@ class GameOrchestratorServiceTest {
         when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
             .thenReturn(List.of());
 
-        orchestratorService.processAction(1L, "CORRECT:1", null, 2000);
-        orchestratorService.processAction(1L, "CORRECT:2", null, 2000);
-        orchestratorService.processAction(1L, "CORRECT:3", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         verify(eventPublisher).publishEvent(any(GameSessionCompletedEvent.class));
     }

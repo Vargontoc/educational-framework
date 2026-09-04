@@ -1,12 +1,25 @@
 package es.vargontoc.educational.framework.tracking.infrastructure.persistence;
 
+import es.vargontoc.educational.framework.content.model.Activity;
+import es.vargontoc.educational.framework.content.model.Category;
+import es.vargontoc.educational.framework.content.model.ContentStatus;
+import es.vargontoc.educational.framework.content.model.DifficultyCode;
+import es.vargontoc.educational.framework.content.model.DifficultyLevel;
+import es.vargontoc.educational.framework.content.model.Topic;
+import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
+import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
+import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
+import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
+import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
+import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
+import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,15 +27,14 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers(disabledWithoutDocker = true)
 @Transactional
-@Disabled("Docker/Testcontainers requerido para ejecutar este test de integracion")
 class TrackingRetentionPersistenceTest {
 
     @Container
@@ -46,17 +58,78 @@ class TrackingRetentionPersistenceTest {
     @Autowired
     private ActivityAttemptJpaRepository jpaRepository;
 
+    @Autowired
+    private FamilyUseCase familyUseCase;
+
+    @Autowired
+    private ChildProfileUseCase childProfileUseCase;
+
+    @Autowired
+    private ChildSessionUseCase childSessionUseCase;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private TopicRepository topicRepository;
+
+    @Autowired
+    private ActivityRepository activityRepository;
+
+    @Autowired
+    private DifficultyLevelRepository difficultyLevelRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private Long childProfileId;
+    private Long childSessionId;
+    private Long topicId;
+    private Long activityId;
+    private Long difficultyLevelId;
+
     @BeforeEach
     void setUp() {
         jpaRepository.deleteAll();
+
+        if (!familyUseCase.familyExists()) {
+            familyUseCase.createFamily("Retention Test Family", "1234", true, true);
+        }
+        var family = familyUseCase.getFamily();
+        childProfileId = childProfileUseCase.createChild(
+                family.getId(), "Retention Kid", LocalDate.now().minusYears(3), null, true, true, 100, null
+        ).getId();
+        childSessionId = childSessionUseCase.openSession(
+                childProfileId, family.getId(), 30, "{\"ip\":\"test\",\"userAgent\":\"test\"}"
+        ).getId();
+
+        var category = new Category();
+        category.setName("Retention Test Category");
+        category.setStatus(ContentStatus.ACTIVE);
+        category.setDisplayOrder(1);
+        var savedCategory = categoryRepository.save(category);
+
+        var topic = new Topic();
+        topic.setCategoryId(savedCategory.getId());
+        topic.setName("Retention Test Topic");
+        topic.setStatus(ContentStatus.ACTIVE);
+        topicId = topicRepository.save(topic).getId();
+
+        var activity = new Activity();
+        activity.setName("Retention Test Activity");
+        activity.setStatus(ContentStatus.ACTIVE);
+        activityId = activityRepository.save(activity).getId();
+
+        var difficultyLevel = new DifficultyLevel();
+        difficultyLevel.setActivityId(activityId);
+        difficultyLevel.setDifficultyCode(DifficultyCode.EASY);
+        difficultyLevelId = difficultyLevelRepository.save(difficultyLevel).getId();
     }
 
     @Test
     void deleteCreatedAtBefore_deletesOldAttempts() {
-        var oldAttempt = buildAttempt(LocalDateTime.now().minusDays(200));
-        var recentAttempt = buildAttempt(LocalDateTime.now().minusDays(10));
-        adapter.save(oldAttempt);
-        adapter.save(recentAttempt);
+        saveAttemptWithCreatedAt(LocalDateTime.now().minusDays(200));
+        saveAttemptWithCreatedAt(LocalDateTime.now().minusDays(10));
 
         var cutoff = LocalDateTime.now().minusDays(180);
         int deleted = adapter.deleteCreatedAtBefore(cutoff);
@@ -67,8 +140,7 @@ class TrackingRetentionPersistenceTest {
 
     @Test
     void deleteCreatedAtBefore_keepsRecentAttempts() {
-        var recentAttempt = buildAttempt(LocalDateTime.now().minusDays(5));
-        adapter.save(recentAttempt);
+        saveAttemptWithCreatedAt(LocalDateTime.now().minusDays(5));
 
         var cutoff = LocalDateTime.now().minusDays(180);
         adapter.deleteCreatedAtBefore(cutoff);
@@ -78,8 +150,7 @@ class TrackingRetentionPersistenceTest {
 
     @Test
     void deleteCreatedAtBefore_keepsSummariesAndProgress() {
-        var oldAttempt = buildAttempt(LocalDateTime.now().minusDays(200));
-        adapter.save(oldAttempt);
+        saveAttemptWithCreatedAt(LocalDateTime.now().minusDays(200));
 
         var cutoff = LocalDateTime.now().minusDays(180);
         adapter.deleteCreatedAtBefore(cutoff);
@@ -87,18 +158,24 @@ class TrackingRetentionPersistenceTest {
         assertEquals(0, jpaRepository.count());
     }
 
-    private ActivityAttempt buildAttempt(LocalDateTime createdAt) {
+    /**
+     * {@code created_at} is populated by Spring Data JPA auditing ({@code @CreatedDate}) on
+     * insert, overriding whatever value the domain object carries — so backdating it for a
+     * retention test requires a direct SQL update after the row exists.
+     */
+    private void saveAttemptWithCreatedAt(LocalDateTime createdAt) {
         var attempt = new ActivityAttempt();
-        attempt.setChildProfileId(1L);
-        attempt.setActivityId(1L);
-        attempt.setChildSessionId(1L);
-        attempt.setTopicId(1L);
-        attempt.setDifficultyLevelId(1L);
+        attempt.setChildProfileId(childProfileId);
+        attempt.setActivityId(activityId);
+        attempt.setChildSessionId(childSessionId);
+        attempt.setTopicId(topicId);
+        attempt.setDifficultyLevelId(difficultyLevelId);
         attempt.setResult(AttemptResult.CORRECT);
         attempt.setResponseTimeMs(5000);
         attempt.setAttemptContext("{\"engine\":\"test\"}");
-        attempt.setCreatedAt(createdAt);
-        attempt.setUpdatedAt(createdAt);
-        return attempt;
+
+        var saved = adapter.save(attempt);
+        jpaRepository.flush();
+        jdbcTemplate.update("UPDATE activity_attempt SET created_at = ? WHERE id = ?", createdAt, saved.getId());
     }
 }

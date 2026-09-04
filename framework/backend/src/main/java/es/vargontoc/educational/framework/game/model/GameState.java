@@ -2,6 +2,7 @@ package es.vargontoc.educational.framework.game.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 
@@ -27,6 +28,7 @@ public class GameState {
     private boolean systemEventPending;
     private String enginePayload;
     private EngineType engine;
+    private List<String> candidates;
 
     public Long getGameId() {
         return gameId;
@@ -186,6 +188,14 @@ public class GameState {
 
     public void setEngine(EngineType engine) {
         this.engine = engine;
+    }
+
+    public List<String> getCandidates() {
+        return candidates;
+    }
+
+    public void setCandidates(List<String> candidates) {
+        this.candidates = candidates;
     }
     
 }
