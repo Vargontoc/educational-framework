@@ -137,13 +137,13 @@
                 <!-- Telegram bot for contact -->
         <dependency>
             <groupId>org.telegram</groupId>
-            <artifactId>telegrambots-spring-boot-starter</artifactId>
-            <version>6.7.0</version>
+            <artifactId>telegrambots-springboot-longpolling-starter</artifactId>
+            <version>10.2.1</version>
         </dependency>
         <dependency>
             <groupId>org.telegram</groupId>
-            <artifactId>telegrambots-abilities</artifactId>
-            <version>6.7.0</version>
+            <artifactId>telegrambots-client</artifactId>
+            <version>10.2.1</version>
         </dependency>
 
         <!-- Binarios nativos (todas las plataformas; revisar por Dockerfile/target platform en SPRINT-088) -->

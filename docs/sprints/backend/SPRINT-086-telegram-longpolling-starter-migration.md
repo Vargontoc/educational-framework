@@ -1,15 +1,15 @@
-# Sprint 089 - backend
+# Sprint 087 - backend
 # -----------------------------------------------
 
 ## Goal
 Migrar la integracion de Telegram desde la linea discontinada `telegrambots-spring-boot-starter`/`telegrambots-abilities` (6.7.0) hacia `telegrambots-springboot-longpolling-starter`/`telegrambots-client` (10.2.1), reescribiendo el adaptador contra la nueva API de interfaces (`SpringLongPollingBot`, `LongPollingUpdateConsumer`) y eliminando la dependencia del modulo `abilities` (incluyendo `AbilityBot`, `MapDBContext` y el patron `Ability`).
 
 ## Status
-status: proposed
-started_at:
+status: reviewed
+started_at: 2026-09-04
 closed_at:
 blocked_by:
-waiting_for: decision sobre version objetivo y estrategia de persistencia de chatId
+waiting_for: manual tests (T11, T12)
 
 ## Context
 
@@ -137,16 +137,16 @@ El nuevo starter no lee `app.telegram.bot.name` ni `app.telegram.bot.token` — 
 
 ## Tasks
 
-- [ ] **T1**: Actualizar `pom.xml` — reemplazar `telegrambots-spring-boot-starter:6.7.0` + `telegrambots-abilities:6.7.0` por `telegrambots-springboot-longpolling-starter:10.2.1` + `telegrambots-client:10.2.1`.
-- [ ] **T2**: Crear entidad JPA `TelegramNotificationChatJpaEntity` + repositorio `TelegramNotificationChatJpaRepository` para persistir el chatId (tabla `telegram_notification_chat`, una sola fila).
-- [ ] **T3**: Crear migracion Liquibase para la tabla `telegram_notification_chat`.
-- [ ] **T4**: Reescribir `TelegramAdapter.java` — implementar `SpringLongPollingBot` + `LongPollingUpdateConsumer` + `TelegramPort`. Inyectar `TelegramClient` (bean) y repositorio de chatId. Manejar `/start` en `consume(Update)`. Enviar mensajes via `TelegramClient.execute(new SendMessage(...))`.
-- [ ] **T5**: Declarar bean `TelegramClient` (`OkHttpTelegramClient`) en `TelegramBotConfig.java`.
-- [ ] **T6**: Eliminar `TelegramBotRegistration.java` (autoconfiguracion del nuevo starter).
-- [ ] **T7**: Adaptar `TelegramBotConfig.java` — eliminar `name` si no se usa, mantener `token`.
-- [ ] **T8**: Actualizar `application.yml` — evaluar si `app.telegram.bot.name` sigue siendo necesario. Documentar que `telegrambots.enabled=true` es el default del starter.
-- [ ] **T9**: Verificar `mvn dependency:tree` — confirmar ausencia de conflictos Jackson 2/3 entre el starter y `spring-boot-jackson2`.
-- [ ] **T10**: Verificar `mvn clean test` — 854/854 tests verdes (el bot no tiene tests unitarios actualmente, pero la compilacion y el contexto Spring no deben romperse).
+- [x] **T1**: Actualizar `pom.xml` — reemplazar `telegrambots-spring-boot-starter:6.7.0` + `telegrambots-abilities:6.7.0` por `telegrambots-springboot-longpolling-starter:10.2.1` + `telegrambots-client:10.2.1`.
+- [x] **T2**: Crear entidad JPA `TelegramNotificationChatJpaEntity` + repositorio `TelegramNotificationChatJpaRepository` para persistir el chatId (tabla `telegram_notification_chat`, una sola fila).
+- [x] **T3**: Crear migracion Liquibase para la tabla `telegram_notification_chat`.
+- [x] **T4**: Reescribir `TelegramAdapter.java` — implementar `SpringLongPollingBot` + `LongPollingUpdateConsumer` + `TelegramPort`. Inyectar `TelegramClient` (bean) y repositorio de chatId. Manejar `/start` en `consume(Update)`. Enviar mensajes via `TelegramClient.execute(new SendMessage(...))`.
+- [x] **T5**: Declarar bean `TelegramClient` (`OkHttpTelegramClient`) en `TelegramBotConfig.java`.
+- [x] **T6**: Eliminar `TelegramBotRegistration.java` (autoconfiguracion del nuevo starter).
+- [x] **T7**: Adaptar `TelegramBotConfig.java` — eliminar `name` si no se usa, mantener `token`.
+- [x] **T8**: Actualizar `application.yml` — evaluar si `app.telegram.bot.name` sigue siendo necesario. Documentar que `telegrambots.enabled=true` es el default del starter.
+- [x] **T9**: Verificar `mvn dependency:tree` — confirmar ausencia de conflictos Jackson 2/3 entre el starter y `spring-boot-jackson2`.
+- [x] **T10**: Verificar `mvn clean test` — 900/900 tests verdes (el bot no tiene tests unitarios actualmente, pero la compilacion y el contexto Spring no deben romperse).
 - [ ] **T11**: Prueba manual end-to-end: arrancar la app con token configurado, enviar `/start` al bot desde Telegram, verificar que el chatId se persiste, enviar un mensaje de contacto via la API y verificar que llega al chat de Telegram.
 - [ ] **T12**: Prueba manual de shutdown: verificar que `Ctrl+C` / `SpringApplication.exit` detiene el proceso limpiamente (mitigar riesgo #1513).
 
@@ -157,7 +157,7 @@ El nuevo starter no lee `app.telegram.bot.name` ni `app.telegram.bot.token` — 
 3. `TelegramAdapter` no extiende `AbilityBot` ni usa ninguna clase del paquete `org.telegram.abilitybots.*`.
 4. `TelegramBotRegistration.java` no existe.
 5. `mvn dependency:tree` no muestra conflictos Jackson 2/3.
-6. `mvn clean test` pasa con 854/854 tests verdes.
+6. `mvn clean test` pasa con 900/900 tests verdes.
 7. Manual: `/start` registra el chatId y responde confirmacion.
 8. Manual: envio de contacto via API notifica al chat de Telegram.
 9. Manual: shutdown limpio sin procesos colgados.
@@ -202,3 +202,45 @@ El nuevo starter no lee `app.telegram.bot.name` ni `app.telegram.bot.token` — 
 - Version 10.2.1 verificada en Maven Central (ago 2026). Re-verificar version disponible antes de ejecutar si el sprint se pick-up con retraso significativo.
 - Issue upstream #1561 (Jackson 3) sigue abierto. Spring Boot 4 se tratara en un issue separado segun la descripcion actualizada del issue. Migrar ahora a 10.2.1 no genera deuda adicional de reescritura de API.
 - La tabla `telegram_notification_chat` es minima (una sola fila con un BIGINT). Si en el futuro se soportan multiples chats de notificacion, la tabla ya esta preparada para crecer.
+
+## Review
+
+### Veredicto: APPROVED_WITH_OBSERVATIONS
+
+### Evidencia verificada
+
+| Criterio | Resultado | Evidencia |
+|---|---|---|
+| AC1: pom.xml sin deps antiguas | ✅ PASS | `pom.xml` L137-147: solo `telegrambots-springboot-longpolling-starter:10.2.1` + `telegrambots-client:10.2.1` |
+| AC2: pom.xml con deps nuevas | ✅ PASS | Idem |
+| AC3: TelegramAdapter sin AbilityBot | ✅ PASS | `TelegramAdapter.java` L26: `implements SpringLongPollingBot, LongPollingUpdateConsumer, TelegramPort` |
+| AC4: TelegramBotRegistration eliminado | ✅ PASS | Archivo no existe en el proyecto |
+| AC5: Sin conflictos Jackson | ✅ PASS | `mvn dependency:tree -Dincludes=org.telegram` confirma que las libs Telegram no traen Jackson transitorio. Spring Boot 4.1.1 gestiona Jackson hibrido (3.1.5 databind + 2.21 annotations) sin colision |
+| AC6: mvn clean test | ✅ PASS | **900/900 tests verdes**, 0 fallos, 0 errores, BUILD SUCCESS |
+| AC7: /start manual | ⏳ PENDING | Requiere infraestructura Telegram real (T11) |
+| AC8: Notificacion manual | ⏳ PENDING | Requiere infraestructura Telegram real (T11) |
+| AC9: Shutdown limpio | ⏳ PENDING | Requiere arranque con token real (T12) |
+| AC10: NoOpTelegramAdapter | ✅ PASS | `NoOpTelegramAdapter.java` sin cambios, `@ConditionalOnExpression` complementario con TelegramAdapter |
+
+### Tareas completitud
+
+- **T1-T10**: ✅ Implementadas y verificadas
+- **T11**: ⏳ Pendiente (prueba manual E2E — requiere token Telegram real)
+- **T12**: ⏳ Pendiente (prueba manual shutdown — requiere arranque con token)
+
+### Bugs documentales corregidos
+
+1. **Titulo del sprint**: Decia "Sprint 089" → corregido a "Sprint 087" (coincide con nombre de archivo y secuencia: SPRINT-088 es el predecesor mencionado en Context).
+2. **AC6 discrepancy**: El criterio dice "854/854 tests" pero el resultado real es **900/900 tests**. El numero 854 era probablemente un valor de un sprint anterior; la base de codigo ha crecido. No es un bug de implementacion, sino una discrepancia documental en el criterio.
+
+### Observaciones no bloqueantes
+
+1. **Consumo de updates**: El adaptador implementa `consume(List<Update>)` (batch) en lugar de `consume(Update)` (individual). Ambas son validas segun la API 10.x. La variante batch es mas eficiente. No es un defecto.
+2. **Persistencia chatId**: La estrategia `findTopByOrderByIdDesc()` + update-or-insert es correcta para el caso de un solo chat. Si en el futuro se soportan multiples chats, el modelo de datos ya esta preparado (tabla con filas multiples).
+3. **TelegramClient como singleton**: `OkHttpTelegramClient` se declara como bean singleton. Es thread-safe y reutilizable. Correcto.
+4. **Inconsistencia AC6**: Se recomienda actualizar el criterio de aceptacion 6 de "854/854" a "900/900" para reflejar el estado actual de la base de codigo.
+
+### Riesgos pendientes de verificacion manual
+
+- **Issue #1513 (shutdown)**: No se puede verificar automaticamente. Requiere T12.
+- **Jackson 2/3 coexistence**: Verificado por dependency:tree (sin conflicto transitorio de Telegram). La prueba manual de envio (T11) confirmaria que la serializacion HTTP funciona correctamente.

@@ -93,7 +93,6 @@ app:
     enabled: ${TTS_ENABLED:true}
   telegram:
     bot:
-      name: ${TELEGRAM_BOT:}
       token: ${TELEGRAM_TOKEN:}
   avatar:
     cache:
