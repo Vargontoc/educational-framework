@@ -1,17 +1,18 @@
 package es.vargontoc.educational.framework.tracking.service;
 
+import es.vargontoc.educational.framework.tracking.config.ElementMasteryProperties;
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.ActivitySummary;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.model.TopicPerformanceBand;
 import es.vargontoc.educational.framework.tracking.model.TopicSummary;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.ElementSummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -32,7 +33,9 @@ class SummaryUpdateServiceTest {
     @Mock
     private TopicSummaryRepository topicSummaryRepository;
 
-    @InjectMocks
+    @Mock
+    private ElementSummaryRepository elementSummaryRepository;
+
     private SummaryUpdateService service;
 
     private ActivityAttempt correctAttempt;
@@ -41,6 +44,9 @@ class SummaryUpdateServiceTest {
 
     @BeforeEach
     void setUp() {
+        ElementMasteryProperties masteryProperties = new ElementMasteryProperties();
+        service = new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository, elementSummaryRepository, masteryProperties);
+
         correctAttempt = new ActivityAttempt();
         correctAttempt.setChildProfileId(10L);
         correctAttempt.setActivityId(20L);

@@ -96,6 +96,8 @@ public class RecognitionEngine implements GameEnginePort {
             }
         }
 
+        String attemptContextJson = serializeAttemptContext(state, responseTimeMs);
+
         if (correct) {
             advanceRound(state);
         }
@@ -106,7 +108,7 @@ public class RecognitionEngine implements GameEnginePort {
         result.setResultType(correct ? ActionResultType.CORRECT : ActionResultType.INCORRECT);
         result.setResponseTimeMs(responseTimeMs);
         result.setNewState(gameState);
-        result.setAttemptContext(serializeAttemptContext(state, responseTimeMs));
+        result.setAttemptContext(attemptContextJson);
         result.setCompleted(state.getRoundIndex() >= state.getTotalRounds());
 
         return result;

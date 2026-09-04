@@ -69,8 +69,16 @@ public class ChildSessionService implements ChildSessionUseCase {
     @Override
     public ChildSession closeSession(Long id) {
         var session = findById(id);
+        Long childSessionId = session.getId();
         closeExistingSession(session, LocalDateTime.now(), ChildSessionStatus.CLOSED);
         var saved = childSessionRepository.save(session);
+
+        try {
+            gameOrchestrator.clearSessionData(childSessionId);
+        } catch (Exception e) {
+            // Log but don't fail the session close
+        }
+
         return saved;
     }
 
@@ -89,6 +97,12 @@ public class ChildSessionService implements ChildSessionUseCase {
 
         try {
             gameOrchestrator.abandonGameForSession(childSessionId);
+        } catch (Exception e) {
+            // Log but don't fail the session close
+        }
+
+        try {
+            gameOrchestrator.clearSessionData(childSessionId);
         } catch (Exception e) {
             // Log but don't fail the session close
         }
@@ -161,6 +175,12 @@ public class ChildSessionService implements ChildSessionUseCase {
 
             try {
                 gameOrchestrator.abandonGameForSession(childSessionId);
+            } catch (Exception e) {
+                // Log but don't fail the batch
+            }
+
+            try {
+                gameOrchestrator.clearSessionData(childSessionId);
             } catch (Exception e) {
                 // Log but don't fail the batch
             }

@@ -1,4 +1,4 @@
-description: Payload containing game state. Returned by GAME_STARTED, GAME_READY, GAME_ABANDONED.
+description: Payload containing game state. Returned by GAME_STARTED, GAME_READY, GAME_ABANDONED, and within GAME_ACTION_RESULT.
 type: object
 properties:
   gameId:
@@ -30,3 +30,48 @@ properties:
   completedAt:
     type: string
     format: date-time
+  engine:
+    type: string
+    enum:
+      - RECOGNITION
+      - MEMORY
+    description: Engine type running the game session. Only present when an engine is assigned.
+  starsEarned:
+    type: integer
+    description: Child-facing completion result (0-3 stars). Present when the game assigns a star rating.
+  recognitionState:
+    type: object
+    description: >-
+      Child-facing recognition round state. Only present when engine is RECOGNITION.
+      Internal tracking fields (candidateElementIds, attempt counters, response times,
+      pendingDifficultyLevel) are intentionally excluded.
+    properties:
+      recognitionCategory:
+        type: string
+        enum:
+          - LETTER
+          - NUMBER
+          - SHAPE
+          - COLOR
+          - ANIMAL
+      roundIndex:
+        type: integer
+        description: Zero-based index of the current round.
+      totalRounds:
+        type: integer
+        description: Total rounds required to complete the game.
+      targetElementId:
+        type: string
+        description: Identifier of the target element the child must recognise.
+      optionIds:
+        type: array
+        items:
+          type: string
+        description: Identifiers of the option elements shown for the current round.
+      hintActive:
+        type: boolean
+        description: Whether the hint is currently active for the round.
+    required:
+      - roundIndex
+      - totalRounds
+      - hintActive

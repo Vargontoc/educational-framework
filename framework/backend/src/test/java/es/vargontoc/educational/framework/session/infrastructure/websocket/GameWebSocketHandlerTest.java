@@ -9,6 +9,9 @@ import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
+import es.vargontoc.educational.framework.game.model.enums.EngineType;
+import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
+import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSession;
@@ -32,10 +35,14 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -590,6 +597,151 @@ class GameWebSocketHandlerTest {
             .anyMatch(m -> m.getPayload().contains("GAME_ABANDONED")));
         assertTrue(captor.getAllValues().stream()
             .anyMatch(m -> m.getPayload().contains("ABANDONED")));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_recognitionEngine_includesRecognitionStateFields() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+        state.setStarsEarned(0);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.ANIMAL);
+        recognitionState.setRoundIndex(2);
+        recognitionState.setTotalRounds(5);
+        recognitionState.setTargetElementId("elem-1");
+        recognitionState.setOptionIds(List.of("elem-1", "elem-2", "elem-3"));
+        recognitionState.setHintActive(true);
+        recognitionState.setCandidateElementIds(List.of("elem-1", "elem-2", "elem-3", "elem-4", "elem-5"));
+        recognitionState.setCurrentRoundAttemptCount(2);
+        recognitionState.setCurrentRoundConsecutiveFailures(1);
+        recognitionState.setTotalIncorrectAttempts(3);
+        recognitionState.setTotalCorrectFirstTry(1);
+        recognitionState.setTotalResponseTimeMs(5000L);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            state.setEnginePayload(mapper.writeValueAsString(recognitionState));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        assertEquals("RECOGNITION", payload.get("engine"));
+        assertEquals(0, payload.get("starsEarned"));
+        assertNotNull(payload.get("recognitionState"));
+
+        Map<String, Object> recPayload = (Map<String, Object>) payload.get("recognitionState");
+        assertEquals("ANIMAL", recPayload.get("recognitionCategory"));
+        assertEquals(2, recPayload.get("roundIndex"));
+        assertEquals(5, recPayload.get("totalRounds"));
+        assertEquals("elem-1", recPayload.get("targetElementId"));
+        assertEquals(List.of("elem-1", "elem-2", "elem-3"), recPayload.get("optionIds"));
+        assertEquals(true, recPayload.get("hintActive"));
+    }
+
+    @Test
+    void gameStateToPayload_memoryEngine_doesNotIncludeRecognitionState() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.MEMORY);
+        state.setStarsEarned(0);
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        assertEquals("MEMORY", payload.get("engine"));
+        assertNull(payload.get("recognitionState"));
+    }
+
+    @Test
+    void gameStateToPayload_nullEngine_doesNotIncludeEngineOrRecognitionState() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        assertFalse(payload.containsKey("engine"));
+        assertFalse(payload.containsKey("recognitionState"));
+    }
+
+    @Test
+    void gameStateToPayload_completedGame_includesStarsEarned() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.COMPLETED);
+        state.setEngine(EngineType.RECOGNITION);
+        state.setStarsEarned(3);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.LETTER);
+        recognitionState.setRoundIndex(5);
+        recognitionState.setTotalRounds(5);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            state.setEnginePayload(mapper.writeValueAsString(recognitionState));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        assertEquals(3, payload.get("starsEarned"));
+        assertEquals("COMPLETED", payload.get("status"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_recognitionEngine_doesNotExposeInternalFields() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.NUMBER);
+        recognitionState.setRoundIndex(1);
+        recognitionState.setTotalRounds(5);
+        recognitionState.setTargetElementId("elem-10");
+        recognitionState.setOptionIds(List.of("elem-10", "elem-11", "elem-12"));
+        recognitionState.setHintActive(false);
+        recognitionState.setCandidateElementIds(List.of("elem-10", "elem-11", "elem-12", "elem-13", "elem-14"));
+        recognitionState.setCurrentRoundAttemptCount(1);
+        recognitionState.setCurrentRoundConsecutiveFailures(0);
+        recognitionState.setTotalIncorrectAttempts(2);
+        recognitionState.setTotalCorrectFirstTry(0);
+        recognitionState.setTotalResponseTimeMs(3000L);
+        recognitionState.setPendingDifficultyLevel(2);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            state.setEnginePayload(mapper.writeValueAsString(recognitionState));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+        Map<String, Object> recPayload = (Map<String, Object>) payload.get("recognitionState");
+
+        assertFalse(recPayload.containsKey("candidateElementIds"));
+        assertFalse(recPayload.containsKey("currentRoundAttemptCount"));
+        assertFalse(recPayload.containsKey("currentRoundConsecutiveFailures"));
+        assertFalse(recPayload.containsKey("totalIncorrectAttempts"));
+        assertFalse(recPayload.containsKey("totalCorrectFirstTry"));
+        assertFalse(recPayload.containsKey("totalResponseTimeMs"));
+        assertFalse(recPayload.containsKey("pendingDifficultyLevel"));
+        assertFalse(recPayload.containsKey("roundsShownElementIds"));
+        assertFalse(recPayload.containsKey("selectedOptionId"));
+        assertFalse(recPayload.containsKey("hintTriggeredAtAttempt"));
+        assertFalse(recPayload.containsKey("currentDifficultyLevel"));
+        assertFalse(payload.containsKey("candidates"));
+    }
+
+    @Test
+    void gameStateToPayload_recognitionEngine_withInvalidEnginePayload_doesNotThrow() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+        state.setEnginePayload("invalid-json{{{");
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        assertNotNull(payload.get("recognitionState"));
     }
 
     private ChildSession childSession(Long id, ChildSessionStatus status) {

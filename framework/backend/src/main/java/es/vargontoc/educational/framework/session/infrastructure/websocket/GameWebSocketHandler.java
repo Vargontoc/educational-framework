@@ -41,6 +41,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import es.vargontoc.educational.framework.game.model.enums.EngineType;
+import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -534,7 +537,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         return payload;
     }
 
-    private Map<String, Object> gameStateToPayload(es.vargontoc.educational.framework.game.model.GameState state) {
+    Map<String, Object> gameStateToPayload(es.vargontoc.educational.framework.game.model.GameState state) {
         Map<String, Object> payload = new java.util.HashMap<>();
         payload.put("gameId", state.getGameId());
         payload.put("status", state.getStatus().name());
@@ -555,7 +558,34 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         if (state.getCompletedAt() != null) {
             payload.put("completedAt", state.getCompletedAt());
         }
+        if (state.getEngine() != null) {
+            payload.put("engine", state.getEngine().name());
+        }
+        if (state.getStarsEarned() != null) {
+            payload.put("starsEarned", state.getStarsEarned());
+        }
+        if (state.getEnginePayload() != null && state.getEngine() == EngineType.RECOGNITION) {
+            RecognitionState recognitionState = deserializeRecognitionState(state.getEnginePayload());
+            Map<String, Object> recognitionPayload = new java.util.HashMap<>();
+            recognitionPayload.put("recognitionCategory", recognitionState.getRecognitionCategory() != null
+                ? recognitionState.getRecognitionCategory().name() : null);
+            recognitionPayload.put("roundIndex", recognitionState.getRoundIndex());
+            recognitionPayload.put("totalRounds", recognitionState.getTotalRounds());
+            recognitionPayload.put("targetElementId", recognitionState.getTargetElementId());
+            recognitionPayload.put("optionIds", recognitionState.getOptionIds());
+            recognitionPayload.put("hintActive", recognitionState.isHintActive());
+            payload.put("recognitionState", recognitionPayload);
+        }
         return payload;
+    }
+
+    private RecognitionState deserializeRecognitionState(String payload) {
+        try {
+            return objectMapper.readValue(payload, RecognitionState.class);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to deserialize RecognitionState from enginePayload: {}", e.getMessage());
+            return new RecognitionState();
+        }
     }
 
     private void handleWorldHeartbeat(WebSocketSession session, Long childSessionId) {

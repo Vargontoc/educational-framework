@@ -2,8 +2,10 @@ package es.vargontoc.educational.framework.tracking.application;
 
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.tracking.config.AdaptiveDifficultyProperties;
+import es.vargontoc.educational.framework.tracking.config.ElementMasteryProperties;
 import es.vargontoc.educational.framework.tracking.config.NumberUnlockProperties;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.GetActivityEngagementSummaryUseCase;
@@ -21,6 +23,8 @@ import es.vargontoc.educational.framework.tracking.ports.out.CuriosityViewedRepo
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyEvolutionRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelConfigPort;
 import es.vargontoc.educational.framework.tracking.ports.out.DifficultyLevelNavigationPort;
+import es.vargontoc.educational.framework.tracking.ports.out.ElementProgressPort;
+import es.vargontoc.educational.framework.tracking.ports.out.ElementSummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import es.vargontoc.educational.framework.tracking.service.ActivityAttemptService;
@@ -42,14 +46,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties({AdaptiveDifficultyProperties.class, NumberUnlockProperties.class})
+@EnableConfigurationProperties({AdaptiveDifficultyProperties.class, NumberUnlockProperties.class, ElementMasteryProperties.class})
 class TrackingModuleConfiguration {
 
     @Bean
     SummaryUpdateService summaryUpdateService(
             ActivitySummaryRepository activitySummaryRepository,
-            TopicSummaryRepository topicSummaryRepository) {
-        return new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository);
+            TopicSummaryRepository topicSummaryRepository,
+            ElementSummaryRepository elementSummaryRepository,
+            ElementMasteryProperties elementMasteryProperties) {
+        return new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository, elementSummaryRepository, elementMasteryProperties);
     }
 
     @Bean
@@ -155,5 +161,13 @@ class TrackingModuleConfiguration {
             GameSessionSummaryRepository sessionSummaryRepository,
             ActivityInformationPort activityInformationPort) {
         return new ActivityEngagementSummaryService(proposalLogRepository, sessionSummaryRepository, activityInformationPort);
+    }
+
+    @Bean
+    ElementProgressPort elementProgressPort(
+            ElementSummaryRepository elementSummaryRepository,
+            RecognitionElementRepository recognitionElementRepository) {
+        return new es.vargontoc.educational.framework.tracking.infrastructure.persistence.ElementProgressPortAdapter(
+                elementSummaryRepository, recognitionElementRepository);
     }
 }

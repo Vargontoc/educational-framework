@@ -10,5 +10,11 @@
     "description": "Números, formas y operaciones básicas",
     "status": "ACTIVE",
     "displayOrder": 2
+  },
+  {
+    "name": "Lenguaje",
+    "description": "Letras, palabras y reconocimiento lingüístico",
+    "status": "ACTIVE",
+    "displayOrder": 3
   }
 ]

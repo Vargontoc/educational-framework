@@ -21,6 +21,9 @@ public class ActivityAttemptJpaEntity extends BaseEntity {
     @Column(name = "topic_id", nullable = false)
     private Long topicId;
 
+    @Column(name = "element_id")
+    private Long elementId;
+
     @Column(name = "difficulty_level_id", nullable = false)
     private Long difficultyLevelId;
 
@@ -63,6 +66,14 @@ public class ActivityAttemptJpaEntity extends BaseEntity {
 
     public void setTopicId(Long topicId) {
         this.topicId = topicId;
+    }
+
+    public Long getElementId() {
+        return elementId;
+    }
+
+    public void setElementId(Long elementId) {
+        this.elementId = elementId;
     }
 
     public Long getDifficultyLevelId() {

@@ -23,6 +23,7 @@ import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
@@ -38,6 +39,7 @@ import es.vargontoc.educational.framework.content.service.DifficultyLevelService
 import es.vargontoc.educational.framework.content.service.GameCatalogService;
 import es.vargontoc.educational.framework.content.service.LearningPathService;
 import es.vargontoc.educational.framework.content.service.LearningPathStepService;
+import es.vargontoc.educational.framework.content.service.RecognitionElementService;
 import es.vargontoc.educational.framework.content.service.TopicService;
 import es.vargontoc.educational.framework.content.service.TracingPatternService;
 import es.vargontoc.educational.framework.content.service.WorldCatalogService;
@@ -55,6 +57,11 @@ class ContentModuleConfiguration {
     @Bean
     TopicService topicService(TopicRepository topicRepository, CategoryRepository categoryRepository) {
         return new TopicService(topicRepository, categoryRepository);
+    }
+
+    @Bean
+    RecognitionElementService recognitionElementService(RecognitionElementRepository recognitionElementRepository) {
+        return new RecognitionElementService(recognitionElementRepository);
     }
 
     @Bean
@@ -139,12 +146,13 @@ class ContentModuleConfiguration {
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             AccessibleColorRepository accessibleColorRepository,
             AccessibleColorPaletteRepository accessibleColorPaletteRepository,
+            RecognitionElementRepository recognitionElementRepository,
             ObjectMapper objectMapper) {
         return new SeedService(seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
             learningPathStepRepository, tracingPatternRepository,
             worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository,
-            accessibleColorRepository, accessibleColorPaletteRepository, objectMapper);
+            accessibleColorRepository, accessibleColorPaletteRepository, recognitionElementRepository, objectMapper);
     }
 
     @Bean

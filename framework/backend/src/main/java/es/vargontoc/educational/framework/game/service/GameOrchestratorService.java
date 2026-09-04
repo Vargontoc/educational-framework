@@ -21,9 +21,12 @@ import es.vargontoc.educational.framework.game.model.LaunchContext;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
+import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
+import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
+import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
@@ -32,9 +35,13 @@ import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompleti
 import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
+import es.vargontoc.educational.framework.tracking.ports.out.ElementProgressPort;
+import es.vargontoc.educational.framework.tracking.model.ElementMasteryState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,35 +52,42 @@ import java.util.concurrent.locks.ReentrantLock;
 public class GameOrchestratorService implements GameOrchestrator {
 
     private static final Logger log = LoggerFactory.getLogger(GameOrchestratorService.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final GameCatalogUseCase gameCatalogUseCase;
     private final GameStateRegistry gameStateRegistry;
+    private final SessionAntiRepetitionRegistry sessionAntiRepetitionRegistry;
     private final RegisterActivityAttemptUseCase registerActivityAttemptUseCase;
     private final EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase;
     private final RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase;
     private final ApplicationEventPublisher eventPublisher;
     private final TopicUseCase topicUseCase;
     private final FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase;
+    private final ElementProgressPort elementProgressPort;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
 
     public GameOrchestratorService(
             GameCatalogUseCase gameCatalogUseCase,
             GameStateRegistry gameStateRegistry,
+            SessionAntiRepetitionRegistry sessionAntiRepetitionRegistry,
             RegisterActivityAttemptUseCase registerActivityAttemptUseCase,
             EvaluateGameCompletionAchievementsUseCase evaluateGameCompletionAchievementsUseCase,
             RegisterGameSessionSummaryUseCase registerGameSessionSummaryUseCase,
             ApplicationEventPublisher eventPublisher,
             TopicUseCase topicUseCase,
-            FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase) {
+            FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase,
+            ElementProgressPort elementProgressPort) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
+        this.sessionAntiRepetitionRegistry = sessionAntiRepetitionRegistry;
         this.registerActivityAttemptUseCase = registerActivityAttemptUseCase;
         this.evaluateGameCompletionAchievementsUseCase = evaluateGameCompletionAchievementsUseCase;
         this.registerGameSessionSummaryUseCase = registerGameSessionSummaryUseCase;
         this.eventPublisher = eventPublisher;
         this.topicUseCase = topicUseCase;
         this.filterAllowedRecognitionCategoriesUseCase = filterAllowedRecognitionCategoriesUseCase;
+        this.elementProgressPort = elementProgressPort;
 
         this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine());
     }
@@ -169,11 +183,27 @@ public class GameOrchestratorService implements GameOrchestrator {
             }
 
             GameEnginePort engine = resolveEngine(state);
+
+            String targetBeforeAction = null;
+            if (state.getEngine() == EngineType.RECOGNITION && state.getEnginePayload() != null) {
+                RecognitionState recStateBefore = deserializeRecognitionState(state.getEnginePayload());
+                targetBeforeAction = recStateBefore.getTargetElementId();
+            }
+
             ActionResult engineResult = engine.processAction(state, actionPayload);
 
             state.setLastActivityAt(LocalDateTime.now());
 
             AttemptResult trackingResult = mapToTrackingResult(engineResult.getResultType());
+
+            Long elementId = null;
+            if (targetBeforeAction != null) {
+                try {
+                    elementId = Long.parseLong(targetBeforeAction);
+                } catch (NumberFormatException e) {
+                    log.debug("targetElementId '{}' is not a numeric element ID, skipping element tracking", targetBeforeAction);
+                }
+            }
 
             List<UnlockedAchievement> allUnlockedAchievements = new ArrayList<>();
             boolean difficultyChanged = false;
@@ -185,6 +215,7 @@ public class GameOrchestratorService implements GameOrchestrator {
                     state.getActivityId(),
                     gameId,
                     topicId,
+                    elementId,
                     state.getDifficultyLevelId(),
                     trackingResult,
                     responseTimeMs,
@@ -200,10 +231,24 @@ public class GameOrchestratorService implements GameOrchestrator {
                         && !attemptResult.newDifficultyLevelId().equals(state.getDifficultyLevelId())) {
                     difficultyChanged = true;
                     newDifficultyLevelId = attemptResult.newDifficultyLevelId();
-                    state.setDifficultyLevelId(newDifficultyLevelId);
+
+                    if (state.getEngine() == EngineType.RECOGNITION) {
+                        applyDeferredDifficulty(state, newDifficultyLevelId);
+                    } else {
+                        state.setDifficultyLevelId(newDifficultyLevelId);
+                    }
                 }
             } catch (Exception e) {
                 log.warn("Tracking operation failed, continuing without tracking update: {}", e.getMessage());
+            }
+
+            if (engineResult.getResultType() == ActionResultType.CORRECT
+                    && state.getEngine() == EngineType.RECOGNITION) {
+                if (targetBeforeAction != null && topicId != null) {
+                    sessionAntiRepetitionRegistry.registerRecentElement(
+                            state.getChildSessionId(), topicId, targetBeforeAction);
+                }
+                promotePendingDifficulty(state);
             }
 
             boolean gameCompleted = engineResult.isCompleted();
@@ -356,6 +401,11 @@ public class GameOrchestratorService implements GameOrchestrator {
         }
     }
 
+    @Override
+    public void clearSessionData(Long childSessionId) {
+        sessionAntiRepetitionRegistry.clearSession(childSessionId);
+    }
+
     private ReentrantLock getLock(Long gameId) {
         return gameLocks.computeIfAbsent(gameId, k -> new ReentrantLock());
     }
@@ -417,9 +467,59 @@ public class GameOrchestratorService implements GameOrchestrator {
             topics = topicUseCase.listTopicsByRecognitionType(recognitionType);
         }
 
-        return topics.stream()
+        List<String> candidates = topics.stream()
                 .map(t -> String.valueOf(t.getId()))
                 .toList();
+
+        Long topicKey = activity.getTopicIds() != null && !activity.getTopicIds().isEmpty()
+                ? activity.getTopicIds().get(0) : null;
+        if (topicKey != null) {
+            List<String> recentElements = sessionAntiRepetitionRegistry.getRecentElements(childProfileId, topicKey);
+            if (!recentElements.isEmpty()) {
+                List<String> filtered = candidates.stream()
+                        .filter(c -> !recentElements.contains(c))
+                        .toList();
+                if (filtered.size() >= RecognitionDefaults.MIN_OPTIONS_PER_ROUND) {
+                    candidates = filtered;
+                } else {
+                    log.warn("Anti-repetition filtering left too few candidates ({}) for childSessionId={}, topicId={}. Using all candidates.",
+                            filtered.size(), childProfileId, topicKey);
+                }
+            }
+        }
+
+        candidates = prioritizeByMastery(childProfileId, topicKey, candidates);
+
+        return candidates;
+    }
+
+    private List<String> prioritizeByMastery(Long childProfileId, Long topicId, List<String> candidates) {
+        if (topicId == null || candidates.isEmpty()) {
+            return candidates;
+        }
+        var summaries = elementProgressPort.getElementSummariesForChildInTopic(childProfileId, topicId);
+        if (summaries.isEmpty()) {
+            return candidates;
+        }
+        Map<String, ElementMasteryState> masteryByElementId = new java.util.HashMap<>();
+        for (var s : summaries) {
+            masteryByElementId.put(String.valueOf(s.getElementId()), s.getMasteryState());
+        }
+        return candidates.stream()
+                .sorted((a, b) -> {
+                    int orderA = masteryOrder(masteryByElementId.getOrDefault(a, ElementMasteryState.NOT_STARTED));
+                    int orderB = masteryOrder(masteryByElementId.getOrDefault(b, ElementMasteryState.NOT_STARTED));
+                    return Integer.compare(orderA, orderB);
+                })
+                .toList();
+    }
+
+    private int masteryOrder(ElementMasteryState state) {
+        return switch (state) {
+            case NOT_STARTED -> 0;
+            case LEARNING -> 1;
+            case MASTERED -> 2;
+        };
     }
 
     private RecognitionCategory resolveRecognitionCategory(Activity activity) {
@@ -465,6 +565,47 @@ public class GameOrchestratorService implements GameOrchestrator {
             log.debug("Published GameSessionCompletedEvent: gameId={}, status={}", gameId, status);
         } catch (Exception e) {
             log.warn("Failed to publish GameSessionCompletedEvent: {}", e.getMessage());
+        }
+    }
+
+    private void applyDeferredDifficulty(GameState state, Long newDifficultyLevelId) {
+        try {
+            RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
+            recState.setPendingDifficultyLevel(newDifficultyLevelId.intValue());
+            state.setEnginePayload(serializeRecognitionState(recState));
+        } catch (Exception e) {
+            log.warn("Failed to apply deferred difficulty: {}", e.getMessage());
+            state.setDifficultyLevelId(newDifficultyLevelId);
+        }
+    }
+
+    private void promotePendingDifficulty(GameState state) {
+        try {
+            RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
+            if (recState.getPendingDifficultyLevel() != null) {
+                recState.setCurrentDifficultyLevel(recState.getPendingDifficultyLevel());
+                state.setDifficultyLevelId(recState.getPendingDifficultyLevel().longValue());
+                recState.setPendingDifficultyLevel(null);
+                state.setEnginePayload(serializeRecognitionState(recState));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to promote pending difficulty: {}", e.getMessage());
+        }
+    }
+
+    private RecognitionState deserializeRecognitionState(String payload) {
+        try {
+            return OBJECT_MAPPER.readValue(payload, RecognitionState.class);
+        } catch (JacksonException e) {
+            throw new IllegalStateException("Failed to deserialize RecognitionState", e);
+        }
+    }
+
+    private String serializeRecognitionState(RecognitionState state) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(state);
+        } catch (JacksonException e) {
+            throw new IllegalStateException("Failed to serialize RecognitionState", e);
         }
     }
 }

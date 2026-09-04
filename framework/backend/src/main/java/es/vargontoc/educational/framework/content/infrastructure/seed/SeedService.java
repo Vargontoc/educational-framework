@@ -17,6 +17,7 @@ import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.LearningPath;
 import es.vargontoc.educational.framework.content.model.LearningPathStep;
+import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.model.TracingPattern;
 import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
@@ -32,6 +33,7 @@ import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
@@ -69,6 +71,7 @@ public class SeedService {
     private final WorldDiscoveryElementRepository worldDiscoveryElementRepository;
     private final AccessibleColorRepository accessibleColorRepository;
     private final AccessibleColorPaletteRepository accessibleColorPaletteRepository;
+    private final RecognitionElementRepository recognitionElementRepository;
     private final ObjectMapper objectMapper;
 
     private final Map<String, Long> categoryCache = new HashMap<>();
@@ -93,6 +96,7 @@ public class SeedService {
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             AccessibleColorRepository accessibleColorRepository,
             AccessibleColorPaletteRepository accessibleColorPaletteRepository,
+            RecognitionElementRepository recognitionElementRepository,
             ObjectMapper objectMapper) {
         this.seedStateRepository = seedStateRepository;
         this.categoryRepository = categoryRepository;
@@ -109,6 +113,7 @@ public class SeedService {
         this.worldDiscoveryElementRepository = worldDiscoveryElementRepository;
         this.accessibleColorRepository = accessibleColorRepository;
         this.accessibleColorPaletteRepository = accessibleColorPaletteRepository;
+        this.recognitionElementRepository = recognitionElementRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -128,6 +133,7 @@ public class SeedService {
         loaded += loadWorldNarrativeSituations();
         loaded += loadWorldDiscoveryElements();
         loaded += loadAccessibleColors();
+        loaded += loadRecognitionElements();
         log.info("Seed loading complete. {} records loaded.", loaded);
     }
 
@@ -587,6 +593,37 @@ public class SeedService {
                     count++;
                 }
             }
+            log.info("Loaded seed: {}", key);
+        }
+        return count;
+    }
+
+    private int loadRecognitionElements() {
+        String file = "16-recognition-elements.json";
+        var seeds = readSeedFile(file, new TypeReference<List<SeedData.RecognitionElementSeed>>() {});
+        int count = 0;
+        for (var seed : seeds) {
+            String key = "recognition-element:" + seed.topicName().toLowerCase() + ":" + seed.code().toLowerCase();
+            if (alreadyLoaded(key)) {
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+            Long topicId = resolveTopicId(seed.topicName());
+            if (topicId == null) {
+                log.warn("Topic not found for recognition element seed: {}", seed.topicName());
+                continue;
+            }
+            var element = new RecognitionElement();
+            element.setTopicId(topicId);
+            element.setCode(seed.code());
+            element.setDisplayValue(seed.displayValue());
+            element.setResourceRefs(seed.resourceRefs());
+            element.setSortOrder(seed.sortOrder());
+            element.setStatus(ContentStatus.valueOf(seed.status()));
+            element.setCreatedAt(LocalDateTime.now());
+            recognitionElementRepository.save(element);
+            markLoaded(key, file);
+            count++;
             log.info("Loaded seed: {}", key);
         }
         return count;

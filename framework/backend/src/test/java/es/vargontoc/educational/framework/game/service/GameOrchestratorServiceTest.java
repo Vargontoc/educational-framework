@@ -16,12 +16,14 @@ import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
+import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
+import es.vargontoc.educational.framework.tracking.ports.out.ElementProgressPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,6 +63,9 @@ class GameOrchestratorServiceTest {
     private GameStateRegistry gameStateRegistry;
 
     @Mock
+    private SessionAntiRepetitionRegistry sessionAntiRepetitionRegistry;
+
+    @Mock
     private RegisterActivityAttemptUseCase registerActivityAttemptUseCase;
 
     @Mock
@@ -78,6 +83,9 @@ class GameOrchestratorServiceTest {
     @Mock
     private FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase;
 
+    @Mock
+    private ElementProgressPort elementProgressPort;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -85,12 +93,14 @@ class GameOrchestratorServiceTest {
         orchestratorService = new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
+            sessionAntiRepetitionRegistry,
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
             eventPublisher,
             topicUseCase,
-            filterAllowedRecognitionCategoriesUseCase
+            filterAllowedRecognitionCategoriesUseCase,
+            elementProgressPort
         );
     }
 
@@ -191,14 +201,14 @@ class GameOrchestratorServiceTest {
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
         ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertEquals(es.vargontoc.educational.framework.game.model.ActionResultType.CORRECT, result.resultType());
         assertNotNull(result.updatedState());
-        verify(registerActivityAttemptUseCase).register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any());
+        verify(registerActivityAttemptUseCase).register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any());
         verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 
@@ -209,7 +219,7 @@ class GameOrchestratorServiceTest {
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
         doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
         when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
             .thenReturn(List.of());
@@ -268,12 +278,14 @@ class GameOrchestratorServiceTest {
         orchestratorService = new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
+            sessionAntiRepetitionRegistry,
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
             eventPublisher,
             topicUseCase,
-            filterAllowedRecognitionCategoriesUseCase
+            filterAllowedRecognitionCategoriesUseCase,
+            elementProgressPort
         );
 
         GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.WAITING);
@@ -299,7 +311,7 @@ class GameOrchestratorServiceTest {
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(achievement)));
 
         ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
@@ -314,7 +326,7 @@ class GameOrchestratorServiceTest {
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(), true, 10L));
 
         ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
@@ -367,7 +379,7 @@ class GameOrchestratorServiceTest {
         assertEquals(ActionResultType.CORRECT, result.resultType());
         assertEquals("discarded_system_event_pending", result.attemptContext());
         verify(registerActivityAttemptUseCase, never()).register(
-            anyLong(), anyLong(), anyLong(), any(), anyLong(), any(), any(), any()
+            anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()
         );
     }
 
@@ -377,7 +389,7 @@ class GameOrchestratorServiceTest {
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), anyLong(), any(), any(), any()))
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
             .thenThrow(new RuntimeException("Tracking service unavailable"));
 
         ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
@@ -427,7 +439,7 @@ class GameOrchestratorServiceTest {
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
         doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), anyLong(), any(), any(), any()))
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
         when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
             .thenReturn(List.of());

@@ -37,4 +37,5 @@
     <include file="db/changelog/migrations/030__create_chatbot_message.xml"/>
     <include file="db/changelog/migrations/031__add_title_to_conversations.xml"/>
     <include file="db/changelog/migrations/032__drop_story_and_story_page.xml"/>
+    <include file="db/changelog/migrations/033__add_element_tracking.xml"/>
 </databaseChangeLog>

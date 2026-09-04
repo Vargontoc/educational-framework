@@ -87,6 +87,9 @@ class SeedServiceTest {
     @Mock
     private AccessibleColorPaletteRepository accessibleColorPaletteRepository;
 
+    @Mock
+    private es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository recognitionElementRepository;
+
     private SeedService seedService;
 
     @BeforeEach
@@ -97,7 +100,8 @@ class SeedServiceTest {
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository,
             learningPathRepository, learningPathStepRepository, tracingPatternRepository,
             worldHostRepository, worldNarrativeSituationRepository,
-            worldDiscoveryElementRepository, accessibleColorRepository, accessibleColorPaletteRepository, objectMapper
+            worldDiscoveryElementRepository, accessibleColorRepository, accessibleColorPaletteRepository,
+            recognitionElementRepository, objectMapper
         );
     }
 
@@ -123,7 +127,7 @@ class SeedServiceTest {
             cat.setId(1L);
             return cat;
         });
-        when(categoryRepository.findAll()).thenReturn(List.of(buildCategory(1L, "Naturaleza"), buildCategory(2L, "Matemáticas")));
+        when(categoryRepository.findAll()).thenReturn(List.of(buildCategory(1L, "Naturaleza"), buildCategory(2L, "Matemáticas"), buildCategory(3L, "Lenguaje")));
         when(topicRepository.save(any(Topic.class))).thenAnswer(inv -> {
             var topic = inv.getArgument(0, Topic.class);
             topic.setId(1L);
@@ -173,7 +177,7 @@ class SeedServiceTest {
 
         seedService.loadAll();
 
-        verify(categoryRepository, times(2)).save(any(Category.class));
+        verify(categoryRepository, times(3)).save(any(Category.class));
     }
 
     @Test
@@ -196,7 +200,7 @@ class SeedServiceTest {
 
         seedService.loadAll();
 
-        verify(categoryRepository, times(1)).save(any(Category.class));
+        verify(categoryRepository, times(2)).save(any(Category.class));
     }
 
     @Test

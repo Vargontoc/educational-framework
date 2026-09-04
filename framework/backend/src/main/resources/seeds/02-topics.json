@@ -38,5 +38,15 @@
     "maxAge": 6,
     "recognitionType": "SHAPE",
     "habitatTag": null
+  },
+  {
+    "name": "Letras",
+    "categoryName": "Lenguaje",
+    "description": "Reconocimiento de letras del abecedario",
+    "status": "ACTIVE",
+    "minAge": 3,
+    "maxAge": 6,
+    "recognitionType": "LETTER",
+    "habitatTag": null
   }
 ]

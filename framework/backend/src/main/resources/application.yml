@@ -78,6 +78,9 @@ app:
     number-unlock:
       min-success-rate-percent: ${APP_TRACKING_NUMBER_UNLOCK_MIN_SUCCESS_RATE:80}
       min-attempts-per-category: ${APP_TRACKING_NUMBER_UNLOCK_MIN_ATTEMPTS:10}
+    element-mastery:
+      mastered-success-rate-percent: ${APP_TRACKING_ELEMENT_MASTERY_SUCCESS_RATE:80}
+      min-attempts-for-mastery: ${APP_TRACKING_ELEMENT_MASTERY_MIN_ATTEMPTS:3}
   session:
     default-heartbeat-interval-seconds: 30
     heartbeat-grace-multiplier: 2

@@ -1,32 +1,46 @@
 package es.vargontoc.educational.framework.tracking.service;
 
+import es.vargontoc.educational.framework.tracking.config.ElementMasteryProperties;
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.ActivitySummary;
+import es.vargontoc.educational.framework.tracking.model.ElementMasteryState;
+import es.vargontoc.educational.framework.tracking.model.ElementSummary;
 import es.vargontoc.educational.framework.tracking.model.TopicPerformanceBand;
 import es.vargontoc.educational.framework.tracking.model.TopicSummary;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
+import es.vargontoc.educational.framework.tracking.ports.out.ElementSummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 
 @Transactional
 public class SummaryUpdateService {
 
     private final ActivitySummaryRepository activitySummaryRepository;
     private final TopicSummaryRepository topicSummaryRepository;
+    private final ElementSummaryRepository elementSummaryRepository;
+    private final ElementMasteryProperties elementMasteryProperties;
 
     public SummaryUpdateService(
             ActivitySummaryRepository activitySummaryRepository,
-            TopicSummaryRepository topicSummaryRepository) {
+            TopicSummaryRepository topicSummaryRepository,
+            ElementSummaryRepository elementSummaryRepository,
+            ElementMasteryProperties elementMasteryProperties) {
         this.activitySummaryRepository = activitySummaryRepository;
         this.topicSummaryRepository = topicSummaryRepository;
+        this.elementSummaryRepository = elementSummaryRepository;
+        this.elementMasteryProperties = elementMasteryProperties;
     }
 
     public void updateSummaries(ActivityAttempt attempt) {
         updateActivitySummary(attempt);
         updateTopicSummary(attempt);
+        if (attempt.getElementId() != null) {
+            updateElementSummary(attempt);
+        }
     }
 
     private void updateActivitySummary(ActivityAttempt attempt) {
@@ -94,6 +108,59 @@ public class SummaryUpdateService {
         }
 
         topicSummaryRepository.save(summary);
+    }
+
+    private void updateElementSummary(ActivityAttempt attempt) {
+        var summary = elementSummaryRepository
+            .findByChildProfileIdAndElementId(attempt.getChildProfileId(), attempt.getElementId())
+            .orElseGet(() -> createElementSummary(attempt));
+
+        summary.setTotalAttempts(summary.getTotalAttempts() + 1);
+
+        switch (attempt.getResult()) {
+            case CORRECT -> summary.setTotalCorrect(summary.getTotalCorrect() + 1);
+            case INCORRECT -> summary.setTotalIncorrect(summary.getTotalIncorrect() + 1);
+            case TIMEOUT -> summary.setTotalIncorrect(summary.getTotalIncorrect() + 1);
+        }
+
+        summary.setSuccessRatePercent(calculateSuccessRate(
+            summary.getTotalCorrect(), summary.getTotalAttempts()));
+
+        if (attempt.getResponseTimeMs() != null) {
+            summary.setAverageResponseTimeMs(calculateIncrementalAverage(
+                summary.getAverageResponseTimeMs(),
+                attempt.getResponseTimeMs(),
+                summary.getTotalAttempts()));
+        }
+
+        summary.setLastSeenAt(LocalDateTime.now());
+        summary.setMasteryState(determineMasteryState(summary));
+
+        elementSummaryRepository.save(summary);
+    }
+
+    private ElementSummary createElementSummary(ActivityAttempt attempt) {
+        var summary = new ElementSummary();
+        summary.setChildProfileId(attempt.getChildProfileId());
+        summary.setElementId(attempt.getElementId());
+        summary.setTotalAttempts(0);
+        summary.setTotalCorrect(0);
+        summary.setTotalIncorrect(0);
+        summary.setAverageResponseTimeMs(0);
+        summary.setMasteryState(ElementMasteryState.NOT_STARTED);
+        return summary;
+    }
+
+    ElementMasteryState determineMasteryState(ElementSummary summary) {
+        if (summary.getTotalAttempts() < elementMasteryProperties.getMinAttemptsForMastery()) {
+            return ElementMasteryState.LEARNING;
+        }
+        if (summary.getSuccessRatePercent() != null
+                && summary.getSuccessRatePercent().compareTo(
+                        BigDecimal.valueOf(elementMasteryProperties.getMasteredSuccessRatePercent())) >= 0) {
+            return ElementMasteryState.MASTERED;
+        }
+        return ElementMasteryState.LEARNING;
     }
 
     private ActivitySummary createActivitySummary(ActivityAttempt attempt) {

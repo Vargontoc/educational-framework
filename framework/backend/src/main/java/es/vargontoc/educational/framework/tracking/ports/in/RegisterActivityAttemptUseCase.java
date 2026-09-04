@@ -10,6 +10,7 @@ public interface RegisterActivityAttemptUseCase {
             Long activityId,
             Long childSessionId,
             Long topicId,
+            Long elementId,
             Long difficultyLevelId,
             AttemptResult result,
             Integer responseTimeMs,

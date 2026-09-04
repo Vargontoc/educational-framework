@@ -9,6 +9,7 @@ public class ActivityAttempt {
     private Long activityId;
     private Long childSessionId;
     private Long topicId;
+    private Long elementId;
     private Long difficultyLevelId;
     private AttemptResult result;
     private Integer responseTimeMs;
@@ -57,6 +58,14 @@ public class ActivityAttempt {
 
     public void setTopicId(Long topicId) {
         this.topicId = topicId;
+    }
+
+    public Long getElementId() {
+        return elementId;
+    }
+
+    public void setElementId(Long elementId) {
+        this.elementId = elementId;
     }
 
     public Long getDifficultyLevelId() {

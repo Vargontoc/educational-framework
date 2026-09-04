@@ -1,0 +1,66 @@
+[
+  {
+    "topicName": "Letras",
+    "code": "letter_a",
+    "displayValue": "A",
+    "resourceRefs": "{\"audio\":\"tts://letter_a\",\"image\":\"img://letter_a\"}",
+    "sortOrder": 1,
+    "status": "ACTIVE"
+  },
+  {
+    "topicName": "Letras",
+    "code": "letter_b",
+    "displayValue": "B",
+    "resourceRefs": "{\"audio\":\"tts://letter_b\",\"image\":\"img://letter_b\"}",
+    "sortOrder": 2,
+    "status": "ACTIVE"
+  },
+  {
+    "topicName": "Letras",
+    "code": "letter_c",
+    "displayValue": "C",
+    "resourceRefs": "{\"audio\":\"tts://letter_c\",\"image\":\"img://letter_c\"}",
+    "sortOrder": 3,
+    "status": "ACTIVE"
+  },
+  {
+    "topicName": "Letras",
+    "code": "letter_d",
+    "displayValue": "D",
+    "resourceRefs": "{\"audio\":\"tts://letter_d\",\"image\":\"img://letter_d\"}",
+    "sortOrder": 4,
+    "status": "ACTIVE"
+  },
+  {
+    "topicName": "Letras",
+    "code": "letter_e",
+    "displayValue": "E",
+    "resourceRefs": "{\"audio\":\"tts://letter_e\",\"image\":\"img://letter_e\"}",
+    "sortOrder": 5,
+    "status": "ACTIVE"
+  },
+  {
+    "topicName": "Letras",
+    "code": "letter_m",
+    "displayValue": "M",
+    "resourceRefs": "{\"audio\":\"tts://letter_m\",\"image\":\"img://letter_m\"}",
+    "sortOrder": 6,
+    "status": "ACTIVE"
+  },
+  {
+    "topicName": "Letras",
+    "code": "letter_o",
+    "displayValue": "O",
+    "resourceRefs": "{\"audio\":\"tts://letter_o\",\"image\":\"img://letter_o\"}",
+    "sortOrder": 7,
+    "status": "ACTIVE"
+  },
+  {
+    "topicName": "Letras",
+    "code": "letter_s",
+    "displayValue": "S",
+    "resourceRefs": "{\"audio\":\"tts://letter_s\",\"image\":\"img://letter_s\"}",
+    "sortOrder": 8,
+    "status": "ACTIVE"
+  }
+]

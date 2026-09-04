@@ -61,7 +61,7 @@ class ActivityAttemptServiceTest {
         when(achievementEvaluationService.evaluateAttemptAchievements(anyLong(), anyLong(), anyLong(), any(AttemptResult.class)))
                 .thenReturn(Collections.emptyList());
 
-        var result = service.register(10L, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, 5000, null);
+        var result = service.register(10L, 20L, 30L, 40L, null, 50L, AttemptResult.CORRECT, 5000, null);
 
         assertNotNull(result);
         assertEquals(1L, result.attemptId());
@@ -96,7 +96,7 @@ class ActivityAttemptServiceTest {
                 .thenReturn(Collections.emptyList());
 
         String context = "{\"engine\":\"memory\",\"level\":3}";
-        var result = service.register(10L, 20L, 30L, 40L, 50L, AttemptResult.INCORRECT, 3000, context);
+        var result = service.register(10L, 20L, 30L, 40L, null, 50L, AttemptResult.INCORRECT, 3000, context);
 
         assertNotNull(result);
         verify(repository).save(captor.capture());
@@ -109,19 +109,19 @@ class ActivityAttemptServiceTest {
     @Test
     void register_missingChildProfileId_throwsValidationException() {
         assertThrows(ValidationException.class, () ->
-            service.register(null, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, null, null));
+            service.register(null, 20L, 30L, 40L, null, 50L, AttemptResult.CORRECT, null, null));
     }
 
     @Test
     void register_missingActivityId_throwsValidationException() {
         assertThrows(ValidationException.class, () ->
-            service.register(10L, null, 30L, 40L, 50L, AttemptResult.CORRECT, null, null));
+            service.register(10L, null, 30L, 40L, null, 50L, AttemptResult.CORRECT, null, null));
     }
 
     @Test
     void register_missingResult_throwsValidationException() {
         assertThrows(ValidationException.class, () ->
-            service.register(10L, 20L, 30L, 40L, 50L, null, null, null));
+            service.register(10L, 20L, 30L, 40L, null, 50L, null, null, null));
     }
 
     @Test
@@ -141,7 +141,7 @@ class ActivityAttemptServiceTest {
         when(achievementEvaluationService.evaluateAttemptAchievements(anyLong(), anyLong(), anyLong(), any()))
                 .thenReturn(Collections.emptyList());
 
-        var result = service.register(10L, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, 5000, null);
+        var result = service.register(10L, 20L, 30L, 40L, null, 50L, AttemptResult.CORRECT, 5000, null);
 
         assertNotNull(result);
         assertEquals(1, result.unlockedAchievements().size());
@@ -163,7 +163,7 @@ class ActivityAttemptServiceTest {
         when(achievementEvaluationService.evaluateAttemptAchievements(anyLong(), anyLong(), anyLong(), any(AttemptResult.class)))
                 .thenReturn(List.of(streakAchievement));
 
-        var result = service.register(10L, 20L, 30L, 40L, 50L, AttemptResult.CORRECT, 5000, null);
+        var result = service.register(10L, 20L, 30L, 40L, null, 50L, AttemptResult.CORRECT, 5000, null);
 
         assertNotNull(result);
         assertEquals(1, result.unlockedAchievements().size());

@@ -42,6 +42,7 @@ public class ActivityAttemptPersistenceAdapter implements ActivityAttemptReposit
         target.setActivityId(source.getActivityId());
         target.setChildSessionId(source.getChildSessionId());
         target.setTopicId(source.getTopicId());
+        target.setElementId(source.getElementId());
         target.setDifficultyLevelId(source.getDifficultyLevelId());
         target.setResult(AttemptResult.valueOf(source.getResult()));
         target.setResponseTimeMs(source.getResponseTimeMs());
@@ -58,6 +59,7 @@ public class ActivityAttemptPersistenceAdapter implements ActivityAttemptReposit
         target.setActivityId(source.getActivityId());
         target.setChildSessionId(source.getChildSessionId());
         target.setTopicId(source.getTopicId());
+        target.setElementId(source.getElementId());
         target.setDifficultyLevelId(source.getDifficultyLevelId());
         target.setResult(source.getResult().name());
         target.setResponseTimeMs(source.getResponseTimeMs());

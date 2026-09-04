@@ -41,6 +41,7 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
             Long activityId,
             Long childSessionId,
             Long topicId,
+            Long elementId,
             Long difficultyLevelId,
             AttemptResult result,
             Integer responseTimeMs,
@@ -53,6 +54,7 @@ public class ActivityAttemptService implements RegisterActivityAttemptUseCase {
         attempt.setActivityId(activityId);
         attempt.setChildSessionId(childSessionId);
         attempt.setTopicId(topicId);
+        attempt.setElementId(elementId);
         attempt.setDifficultyLevelId(difficultyLevelId);
         attempt.setResult(result);
         attempt.setResponseTimeMs(responseTimeMs);

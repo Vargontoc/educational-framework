@@ -155,4 +155,13 @@ public final class SeedData {
         Integer sortOrder,
         List<AccessibleColorPaletteSeed> palettes
     ) {}
+
+    public record RecognitionElementSeed(
+        String topicName,
+        String code,
+        String displayValue,
+        String resourceRefs,
+        Integer sortOrder,
+        String status
+    ) {}
 }

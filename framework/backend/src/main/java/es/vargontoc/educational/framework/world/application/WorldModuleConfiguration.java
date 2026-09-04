@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.world.application;
 
+import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.content.ports.in.WorldCatalogUseCase;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
@@ -66,9 +67,10 @@ class WorldModuleConfiguration {
                                                GameStateRegistry gameStateRegistry,
                                                WorldProposalResolutionUseCase worldProposalResolutionUseCase,
                                                WorldOrchestrator worldOrchestrator,
-                                               WorldStateRegistry worldStateRegistry) {
+                                               WorldStateRegistry worldStateRegistry,
+                                               TopicUseCase topicUseCase) {
         return new WorldGameStartService(gameOrchestrator, gameStateRegistry,
-            worldProposalResolutionUseCase, worldOrchestrator, worldStateRegistry);
+            worldProposalResolutionUseCase, worldOrchestrator, worldStateRegistry, topicUseCase);
     }
 
     @Bean

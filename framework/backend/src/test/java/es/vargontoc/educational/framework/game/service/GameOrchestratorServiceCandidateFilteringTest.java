@@ -15,11 +15,13 @@ import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.LaunchContext;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
+import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.tracking.model.RecognitionCategory;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
+import es.vargontoc.educational.framework.tracking.ports.out.ElementProgressPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +52,9 @@ class GameOrchestratorServiceCandidateFilteringTest {
     private GameStateRegistry gameStateRegistry;
 
     @Mock
+    private SessionAntiRepetitionRegistry sessionAntiRepetitionRegistry;
+
+    @Mock
     private RegisterActivityAttemptUseCase registerActivityAttemptUseCase;
 
     @Mock
@@ -67,6 +72,9 @@ class GameOrchestratorServiceCandidateFilteringTest {
     @Mock
     private FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase;
 
+    @Mock
+    private ElementProgressPort elementProgressPort;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -74,12 +82,14 @@ class GameOrchestratorServiceCandidateFilteringTest {
         orchestratorService = new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
+            sessionAntiRepetitionRegistry,
             registerActivityAttemptUseCase,
             evaluateGameCompletionAchievementsUseCase,
             registerGameSessionSummaryUseCase,
             eventPublisher,
             topicUseCase,
-            filterAllowedRecognitionCategoriesUseCase
+            filterAllowedRecognitionCategoriesUseCase,
+            elementProgressPort
         );
     }
 
