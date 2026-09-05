@@ -1,134 +1,68 @@
 import { openSession } from "@/services/sessionService";
 import { Scene } from "phaser";
-import { AuthGameEvent, AvatarEvent, HeartbeatEvent, ServerGameEvent } from "./GameEvent";
 import router from "@/router";
 
 export class LoadingScene extends Scene {
-    assetsLoaded: boolean = false
-    greetAvatar: boolean = false
-    websocket?: WebSocket
-    worldMapPending: boolean = false
-
     constructor() {
-        super({ 'key': "loading", active: true })
+        super({ key: 'loading', active: true })
     }
 
     create() {
-        
-        const child = this.registry.get('childId') as number
+        const childId = this.registry.get('childId') as number
 
-        openSession(child).then((session) => {
-            if(session != null) {
-                this.connectWebSocket(session.id).then((ws) => {
-                    this.websocket = ws
-                })
-            }
-        }).catch(error => {
-            console.log(error)
+        this.showLoadingPlaceholder()
+
+        openSession(childId)
+            .then(session => {
+                if (!session) {
+                    this.handleBlockedProfile()
+                    return
+                }
+                this.loadAssetsSilently()
+            })
+            .catch(error => {
+                console.error('Error opening session:', error)
+                this.handleSessionError()
+            })
+    }
+
+    showLoadingPlaceholder() {
+        this.add.rectangle(400, 300, 800, 600, 0xf0f4f8)
+
+        const icon = this.add.circle(400, 280, 40, 0x4a90e2)
+        this.tweens.add({
+            targets: icon,
+            alpha: 0.3,
+            duration: 1000,
+            yoyo: true,
+            repeat: -1
         })
     }
 
-
-    connectWebSocket(child: number): Promise<WebSocket> {
-        return new Promise((resolve, reject) => {
-            const ws = new WebSocket(`ws://localhost:8080/ws/game?childSessionId=${child}`)
-            ws.onopen = () =>  {
-                console.log('⚡ Conexion establecida')
-                const authEvent = new AuthGameEvent()
-                authEvent.childSessionId = child
-                ws.send(JSON.stringify(authEvent))
-
-                const heartbeatId = setInterval(() => {
-                    if(ws.readyState == WebSocket.OPEN){
-                        ws.send(JSON.stringify(new HeartbeatEvent()))
-                    }
-                }, 6000)
-                this.registry.set('wsHeartbeat', heartbeatId)
-
-                // Solo limpiamos nuestro propio intervalo: el websocket se
-                // entrega a la siguiente escena (world-map), que sigue
-                // necesitando recibir mensajes por él.
-                const cleanup = () => {
-                    clearInterval(heartbeatId)
-                }
-                this.events.once('shutdown', cleanup)
-                this.events.once('destroy', cleanup)
-
-                resolve(ws)
-            }
-            ws.onmessage = (msg) => {
-                if(msg.data){
-                    this.readEvent(JSON.parse(msg.data))
-                }
-            }
-            ws.onclose = () => {
-                console.log('⚡ Sesión cerrada')
-                clearInterval(this.registry.get('wsHeartbeat'))
-            }
-            ws.onerror = (err) => reject(err)
-        });
-    }
-    
-    preload() {
-        const loadingText = this.add.text(400, 300, 'Descargando manifest de assets...', { fontSize: '20px' }).setOrigin(0.5);
-
-       this.load.setBaseURL('/')
-       this.load.pack('packManifest', 'assets-manifest.json', 'dev')
-
-        this.load.on('progress', (value: number) => {
-            loadingText.setText(`Cargando recursos: ${Math.round(value * 100)}%`);
-        })
+    loadAssetsSilently() {
+        this.load.setBaseURL('/')
+        this.load.pack('packManifest', 'assets-manifest.json', 'dev')
 
         this.load.on('complete', () => {
-            this.assetsLoaded = true
-            if(this.worldMapPending) {
-                this.goToWorldMap()
-            }
+            this.goToBaseState()
         })
+
+        this.load.on('loaderror', (file: Phaser.Loader.File) => {
+            console.error('Failed to load asset:', file.key, file.url)
+        })
+
+        this.load.start()
     }
 
-    readEvent(event: ServerGameEvent | AvatarEvent)
-    {
-        console.log(event)
-        if(!event) return
-
-        if(event.event === 'GAME_AVATAR_EVENT') {
-            
-            switch(event.eventType) {
-                case 'SESSION_CONNECTED':
-                    if(event.audioAvailable == true &&  event.audioId) {
-                        // Play audio
-
-                    }else {
-                        this.greetAvatar = true
-                        this.goToWorldMap()
-                    }
-                    break;
-                case 'SESSION_DISCONNECTED':
-                    if(event.audioAvailable == true &&  event.audioId) {
-                        // Play audio
-
-                    }else {
-                        router.replace({name: 'Home'})
-                    } 
-                    break;
-            }
-            return
-        }else {
-            // event queda estrechado a ServerGameEvent
-            if(event.payload){
-                console.log(event.payload)
-            }
-        }
-
+    goToBaseState() {
+        this.scene.start('base-state')
     }
 
-    goToWorldMap() {
-        if(this.assetsLoaded && this.websocket) {
-            this.worldMapPending = false
-            this.scene.start('world-map', { websocket: this.websocket })
-        } else {
-            this.worldMapPending = true
-        }
+    handleBlockedProfile() {
+        router.replace({ name: 'Home' })
+    }
+
+    handleSessionError() {
+        router.replace({ name: 'Home' })
     }
 }

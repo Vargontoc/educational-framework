@@ -36,10 +36,22 @@
                   <ChildProfileCard
                     :profile="item"
                     :selected="selectedProfileId === item.id"
+                    :disabled="validatingProfile"
                     @select="handleSelectProfile(item)"
                   />
                 </template>
               </NubiGrid>
+              <Transition name="nubi-fade">
+                <div v-if="validatingProfile" class="child-selection-modal__validating-overlay">
+                  <NubiSpinner size="lg" :label="t('views.home.childSelection.validating')" show-label />
+                </div>
+              </Transition>
+            </div>
+          </Transition>
+
+          <Transition name="nubi-fade">
+            <div v-if="showBlockedNotice" class="child-selection-modal__blocked-overlay">
+              <BlockedProfileNotice @close="handleBlockedNoticeClose" />
             </div>
           </Transition>
         </div>
@@ -106,8 +118,10 @@ import NubiSpinner from '../base/NubiSpinner.vue'
 import NubiErrorState from '../base/NubiErrorState.vue'
 import NubiPinInput from '../base/NubiPinInput.vue'
 import ChildProfileCard from './ChildProfileCard.vue'
+import BlockedProfileNotice from './BlockedProfileNotice.vue'
 import ChildRegistrationStepper from '../ninos/ChildRegistrationStepper.vue'
 import { getFamily, verifyPin, type ChildProfile, type ChildProfileExtended } from '../../services/familyService'
+import { openSession } from '../../services/sessionService'
 import { useChildProfiles } from '../../composables/useChildProfiles'
 import { useSessionStore } from '../../stores/session'
 import { useParentalAuthStore } from '../../stores/parentalAuth'
@@ -147,6 +161,8 @@ const pin = ref('')
 const pinError = ref('')
 const pinVerifying = ref(false)
 const pinInputRef = ref<InstanceType<typeof NubiPinInput> | null>(null)
+const showBlockedNotice = ref(false)
+const validatingProfile = ref(false)
 
 const modalTitle = computed(() => {
   if (currentView.value === 'pin-verification') {
@@ -191,10 +207,32 @@ async function loadData(): Promise<void> {
   await fetchProfiles()
 }
 
-function handleSelectProfile(profile: ChildProfile): void {
+async function handleSelectProfile(profile: ChildProfile): Promise<void> {
+  if (validatingProfile.value) return
+
   selectedProfileId.value = profile.id
-  sessionStore.selectChild(String(profile.id))
-  router.replace({ name: 'GameView', params: { childId: String(profile.id) } })
+  validatingProfile.value = true
+
+  try {
+    const session = await openSession(profile.id)
+
+    if (!session) {
+      showBlockedNotice.value = true
+      return
+    }
+
+    sessionStore.selectChild(String(profile.id))
+    router.replace({ name: 'GameView', params: { childId: String(profile.id) } })
+  } catch {
+    showBlockedNotice.value = true
+  } finally {
+    validatingProfile.value = false
+  }
+}
+
+function handleBlockedNoticeClose(): void {
+  showBlockedNotice.value = false
+  selectedProfileId.value = null
 }
 
 function handleRegisterChild(): void {
@@ -274,6 +312,7 @@ onMounted(() => {
 <style scoped>
 .child-selection-modal__content {
   min-height: 200px;
+  position: relative;
 }
 
 .child-selection-modal__state {
@@ -294,6 +333,28 @@ onMounted(() => {
 
 .child-selection-modal__grid-wrapper {
   padding: var(--nubi-spacing-sm) 0;
+}
+
+.child-selection-modal__blocked-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--nubi-overlay-bg);
+  border-radius: var(--nubi-radius-xl);
+  z-index: 10;
+}
+
+.child-selection-modal__validating-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--nubi-overlay-bg);
+  border-radius: var(--nubi-radius-xl);
+  z-index: 5;
 }
 
 .child-selection-modal__pin-view {

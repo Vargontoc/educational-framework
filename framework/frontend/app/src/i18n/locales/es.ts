@@ -251,6 +251,7 @@ export default {
         noProfiles: 'No hay perfiles registrados',
         registerChild: 'Registrar niño',
         selectProfile: 'Seleccionar perfil de {name}',
+        validating: 'Validando perfil...',
         pinVerification: {
           title: 'Verificación parental',
           description: 'Introduce tu PIN de seguridad para continuar',
@@ -348,7 +349,12 @@ export default {
     game: {
       title: 'Juego',
       description: 'Vista de juego para',
-      childId: 'Niño seleccionado: {childId}'
+      childId: 'Niño seleccionado: {childId}',
+      blockedProfile: {
+        notice: 'Este perfil no puede jugar ahora',
+        close: 'Cerrar',
+        iconLabel: 'Perfil no disponible'
+      }
     },
     docs: {
       title: 'Documentación',

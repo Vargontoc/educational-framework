@@ -7,9 +7,8 @@
 import { Game } from 'phaser';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { LoadingScene } from '@/components/game/LoadingScene';
-import {  WorldMapScene } from '@/components/game/WorldMapScene';
+import { BaseStateScene } from '@/components/game/BaseStateScene';
 import { useRoute } from 'vue-router';
-import { RecognitionGameScene } from '@/components/game/RecognitionGameScene';
 
 const gameContainer = ref(null)
 const route = useRoute()
@@ -25,7 +24,7 @@ const loadPhaserGame = async () => {
       width: 800,
       height: 600,
       parent: gameContainer.value,
-      scene: [LoadingScene, WorldMapScene, RecognitionGameScene],
+      scene: [LoadingScene, BaseStateScene],
       backgroundColor: "#028af8",
       callbacks: {
         preBoot: (game: { registry: { set: (arg0: string, arg1: string | string[]) => void; }; }) => {

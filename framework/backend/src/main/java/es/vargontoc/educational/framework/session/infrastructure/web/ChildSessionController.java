@@ -8,6 +8,8 @@ import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
 import es.vargontoc.educational.framework.shared.config.SessionProperties;
 import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,10 +48,13 @@ public class ChildSessionController {
         var heartbeatInterval = request.heartbeatIntervalSeconds() != null
             ? request.heartbeatIntervalSeconds()
             : sessionProperties.getDefaultHeartbeatIntervalSeconds();
-        var familyId = childProfileUseCase.getChild(request.childProfileId()).getFamilyId();
+
+        var child = childProfileUseCase.getChild(request.childProfileId());
+        if(!child.isActive())
+            return ResponseEntity.status(HttpStatus.LOCKED).body(ApiResponse.error("Perfil bloqueado"));
         var session = childSessionUseCase.openSession(
             request.childProfileId(),
-            familyId,
+            child.getFamilyId(),
             heartbeatInterval,
             connectionMeta(servletRequest)
         );

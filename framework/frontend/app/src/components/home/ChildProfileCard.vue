@@ -1,12 +1,13 @@
 <template>
   <div
-    :class="['child-profile-card', { 'child-profile-card--selected': selected }]"
-    role="button"
-    tabindex="0"
+    :class="['child-profile-card', { 'child-profile-card--selected': selected, 'child-profile-card--disabled': disabled }]"
+    :role="disabled ? undefined : 'button'"
+    :tabindex="disabled ? -1 : 0"
     :aria-label="t('views.home.childSelection.selectProfile', { name: profile.name })"
-    @click="$emit('select')"
-    @keydown.enter="$emit('select')"
-    @keydown.space.prevent="$emit('select')"
+    :aria-disabled="disabled"
+    @click="!disabled && $emit('select')"
+    @keydown.enter="!disabled && $emit('select')"
+    @keydown.space.prevent="!disabled && $emit('select')"
   >
     <div class="child-profile-card__avatar">
       <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -25,10 +26,12 @@ import type { ChildProfile } from '../../services/familyService'
 interface Props {
   profile: ChildProfile
   selected?: boolean
+  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  selected: false
+  selected: false,
+  disabled: false
 })
 
 defineEmits<{
@@ -77,6 +80,17 @@ const avatarHref = computed(() => {
 .child-profile-card--selected {
   border-color: var(--nubi-color-primary);
   box-shadow: 0 0 0 2px var(--nubi-color-primary-light);
+}
+
+.child-profile-card--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.child-profile-card--disabled:hover {
+  border-color: var(--nubi-border-default);
+  background-color: var(--nubi-bg-surface);
 }
 
 .child-profile-card__avatar {
