@@ -5,10 +5,12 @@ import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
+import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.model.RecognitionType;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
@@ -69,6 +71,9 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
     @Mock
     private ElementProgressPort elementProgressPort;
 
+    @Mock
+    private RecognitionElementRepository recognitionElementRepository;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -83,7 +88,8 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
             eventPublisher,
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
-            elementProgressPort
+            elementProgressPort,
+            recognitionElementRepository
         );
     }
 
@@ -94,6 +100,7 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
         GameCatalogReadiness readiness = new GameCatalogReadiness(activity, dl, true);
 
         Topic topic = createTopic(10L, RecognitionType.LETTER);
+        RecognitionElement element = createElement(100L, 10L);
 
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(10L)).thenReturn(topic);
@@ -102,9 +109,11 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic));
+        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(element));
 
         ElementSummary masteredSummary = new ElementSummary();
-        masteredSummary.setElementId(10L);
+        masteredSummary.setElementId(100L);
         masteredSummary.setMasteryState(ElementMasteryState.MASTERED);
 
         when(elementProgressPort.getElementSummariesForChildInTopic(100L, 10L))
@@ -114,7 +123,7 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
 
         GameState result = orchestratorService.startGame(100L, 1L);
 
-        assertEquals(List.of("10"), result.getCandidates());
+        assertEquals(List.of("100"), result.getCandidates());
     }
 
     @Test
@@ -124,6 +133,12 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
         GameCatalogReadiness readiness = new GameCatalogReadiness(activity, dl, true);
 
         Topic topic = createTopic(10L, RecognitionType.LETTER);
+        Topic topic2 = createTopic(20L, RecognitionType.LETTER);
+        Topic topic3 = createTopic(30L, RecognitionType.LETTER);
+
+        RecognitionElement element10 = createElement(100L, 10L);
+        RecognitionElement element20 = createElement(200L, 20L);
+        RecognitionElement element30 = createElement(300L, 30L);
 
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(10L)).thenReturn(topic);
@@ -131,18 +146,22 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
                 eq(100L), org.mockito.ArgumentMatchers.<List<RecognitionCategory>>any()))
                 .thenReturn(List.of(RecognitionCategory.LETTER));
 
-        Topic topic2 = createTopic(20L, RecognitionType.LETTER);
-        Topic topic3 = createTopic(30L, RecognitionType.LETTER);
-
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic, topic2, topic3));
 
+        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(element10));
+        when(recognitionElementRepository.findByTopicIdAndStatus(20L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(element20));
+        when(recognitionElementRepository.findByTopicIdAndStatus(30L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(element30));
+
         ElementSummary mastered = new ElementSummary();
-        mastered.setElementId(10L);
+        mastered.setElementId(100L);
         mastered.setMasteryState(ElementMasteryState.MASTERED);
 
         ElementSummary learning = new ElementSummary();
-        learning.setElementId(20L);
+        learning.setElementId(200L);
         learning.setMasteryState(ElementMasteryState.LEARNING);
 
         when(elementProgressPort.getElementSummariesForChildInTopic(100L, 10L))
@@ -154,9 +173,9 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
 
         List<String> candidates = result.getCandidates();
         assertEquals(3, candidates.size());
-        assertEquals("30", candidates.get(0));
-        assertEquals("20", candidates.get(1));
-        assertEquals("10", candidates.get(2));
+        assertEquals("300", candidates.get(0));
+        assertEquals("200", candidates.get(1));
+        assertEquals("100", candidates.get(2));
     }
 
     private Activity createActivity(Long id, List<Long> topicIds) {
@@ -183,5 +202,13 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
         topic.setName("Topic " + id);
         topic.setRecognitionType(recognitionType);
         return topic;
+    }
+
+    private RecognitionElement createElement(Long id, Long topicId) {
+        RecognitionElement element = new RecognitionElement();
+        element.setId(id);
+        element.setTopicId(topicId);
+        element.setStatus(ContentStatus.ACTIVE);
+        return element;
     }
 }

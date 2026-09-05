@@ -5,10 +5,12 @@ import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
+import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.model.RecognitionType;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
@@ -83,6 +85,9 @@ class GameOrchestratorServiceSprint070Test {
     @Mock
     private FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase;
 
+    @Mock
+    private RecognitionElementRepository recognitionElementRepository;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -97,7 +102,8 @@ class GameOrchestratorServiceSprint070Test {
             eventPublisher,
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
-            org.mockito.Mockito.mock(ElementProgressPort.class)
+            org.mockito.Mockito.mock(ElementProgressPort.class),
+            recognitionElementRepository
         );
     }
 
@@ -132,6 +138,7 @@ class GameOrchestratorServiceSprint070Test {
         GameState state = new GameState();
         state.setGameId(gameId);
         state.setChildSessionId(childSessionId);
+        state.setChildProfileId(200L);
         state.setActivityId(activityId);
         state.setDifficultyLevelId(difficultyLevelId);
         state.setEngine(EngineType.RECOGNITION);
@@ -183,6 +190,11 @@ class GameOrchestratorServiceSprint070Test {
         Topic topic12 = createTopic(12L, RecognitionType.LETTER);
         Topic topic13 = createTopic(13L, RecognitionType.LETTER);
 
+        RecognitionElement elem100 = createElement(100L, 10L);
+        RecognitionElement elem110 = createElement(110L, 11L);
+        RecognitionElement elem120 = createElement(120L, 12L);
+        RecognitionElement elem130 = createElement(130L, 13L);
+
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(10L)).thenReturn(topic10);
         when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
@@ -190,8 +202,16 @@ class GameOrchestratorServiceSprint070Test {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic10, topic11, topic12, topic13));
+        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(elem100));
+        when(recognitionElementRepository.findByTopicIdAndStatus(11L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(elem110));
+        when(recognitionElementRepository.findByTopicIdAndStatus(12L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(elem120));
+        when(recognitionElementRepository.findByTopicIdAndStatus(13L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(elem130));
         when(sessionAntiRepetitionRegistry.getRecentElements(100L, 10L))
-                .thenReturn(List.of("10", "11"));
+                .thenReturn(List.of("100", "110"));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
         GameState result = orchestratorService.startGame(100L, 1L);
@@ -199,10 +219,10 @@ class GameOrchestratorServiceSprint070Test {
         assertNotNull(result);
         assertNotNull(result.getCandidates());
         assertEquals(2, result.getCandidates().size());
-        assertTrue(result.getCandidates().contains("12"));
-        assertTrue(result.getCandidates().contains("13"));
-        assertFalse(result.getCandidates().contains("10"));
-        assertFalse(result.getCandidates().contains("11"));
+        assertTrue(result.getCandidates().contains("120"));
+        assertTrue(result.getCandidates().contains("130"));
+        assertFalse(result.getCandidates().contains("100"));
+        assertFalse(result.getCandidates().contains("110"));
     }
 
     @Test
@@ -214,6 +234,9 @@ class GameOrchestratorServiceSprint070Test {
         Topic topic10 = createTopic(10L, RecognitionType.LETTER);
         Topic topic11 = createTopic(11L, RecognitionType.LETTER);
 
+        RecognitionElement elem100 = createElement(100L, 10L);
+        RecognitionElement elem110 = createElement(110L, 11L);
+
         when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
         when(topicUseCase.getTopic(10L)).thenReturn(topic10);
         when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
@@ -221,8 +244,12 @@ class GameOrchestratorServiceSprint070Test {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic10, topic11));
+        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(elem100));
+        when(recognitionElementRepository.findByTopicIdAndStatus(11L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(elem110));
         when(sessionAntiRepetitionRegistry.getRecentElements(100L, 10L))
-                .thenReturn(List.of("10", "11"));
+                .thenReturn(List.of("100", "110"));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
         GameState result = orchestratorService.startGame(100L, 1L);
@@ -230,8 +257,8 @@ class GameOrchestratorServiceSprint070Test {
         assertNotNull(result);
         assertNotNull(result.getCandidates());
         assertEquals(2, result.getCandidates().size());
-        assertTrue(result.getCandidates().contains("10"));
-        assertTrue(result.getCandidates().contains("11"));
+        assertTrue(result.getCandidates().contains("100"));
+        assertTrue(result.getCandidates().contains("110"));
     }
 
     @Test
@@ -373,5 +400,13 @@ class GameOrchestratorServiceSprint070Test {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private RecognitionElement createElement(Long id, Long topicId) {
+        RecognitionElement element = new RecognitionElement();
+        element.setId(id);
+        element.setTopicId(topicId);
+        element.setStatus(ContentStatus.ACTIVE);
+        return element;
     }
 }

@@ -71,6 +71,31 @@ properties:
       hintActive:
         type: boolean
         description: Whether the hint is currently active for the round.
+      elements:
+        type: array
+        description: >-
+          Metadata for each element referenced in targetElementId and optionIds.
+          Allows the client to render the round without a separate fetch.
+          Only present when engine is RECOGNITION and element IDs are resolvable.
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              description: Element identifier (matches targetElementId/optionIds values).
+            code:
+              type: string
+              description: Machine-readable code (e.g. "letter_a").
+            displayValue:
+              type: string
+              description: Human-readable display value (e.g. "A").
+            resourceRefs:
+              type: object
+              description: >-
+                Opaque JSON object with media references (e.g. {"audio":"tts://letter_a","image":"img://letter_a"}).
+                Structure is content-defined; client should handle missing keys gracefully.
+          required:
+            - id
     required:
       - roundIndex
       - totalRounds

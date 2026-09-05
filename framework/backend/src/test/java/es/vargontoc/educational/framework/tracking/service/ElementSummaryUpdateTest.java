@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.tracking.service;
 
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.tracking.config.ElementMasteryProperties;
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
@@ -20,6 +21,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,6 +39,9 @@ class ElementSummaryUpdateTest {
     @Mock
     private ElementSummaryRepository elementSummaryRepository;
 
+    @Mock
+    private RecognitionElementRepository recognitionElementRepository;
+
     private SummaryUpdateService service;
 
     @BeforeEach
@@ -43,7 +49,8 @@ class ElementSummaryUpdateTest {
         ElementMasteryProperties props = new ElementMasteryProperties();
         props.setMasteredSuccessRatePercent(80);
         props.setMinAttemptsForMastery(3);
-        service = new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository, elementSummaryRepository, props);
+        service = new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository, elementSummaryRepository, props, recognitionElementRepository);
+        lenient().when(recognitionElementRepository.existsById(anyLong())).thenReturn(true);
     }
 
     @Test

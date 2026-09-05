@@ -3,6 +3,7 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 import tools.jackson.databind.ObjectMapper;
 
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.stomp.StompConnectAuthInterceptor;
@@ -46,6 +47,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WorldStateRegistry worldStateRegistry;
     private final WorldOrchestrator worldOrchestrator;
     private final ThreadPoolTaskScheduler webSocketBrokerTaskScheduler;
+    private final RecognitionElementRepository recognitionElementRepository;
 
     public WebSocketConfig(
             ChildSessionUseCase childSessionUseCase,
@@ -59,7 +61,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             WorldGameStartUseCase worldGameStartUseCase,
             WorldStateRegistry worldStateRegistry,
             WorldOrchestrator worldOrchestrator,
-            ThreadPoolTaskScheduler webSocketBrokerTaskScheduler) {
+            ThreadPoolTaskScheduler webSocketBrokerTaskScheduler,
+            RecognitionElementRepository recognitionElementRepository) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.stompConnectAuthInterceptor = stompConnectAuthInterceptor;
@@ -72,6 +75,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.worldStateRegistry = worldStateRegistry;
         this.worldOrchestrator = worldOrchestrator;
         this.webSocketBrokerTaskScheduler = webSocketBrokerTaskScheduler;
+        this.recognitionElementRepository = recognitionElementRepository;
     }
 
     // ── STOMP (parental channel) ──────────────────────────────────────
@@ -116,6 +120,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public GameWebSocketHandler gameWebSocketHandler() {
         return new GameWebSocketHandler(childSessionUseCase, objectMapper, avatarLifecycleService,
             gameOrchestrator, gameStateRegistry,
-            worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator);
+            worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
+            recognitionElementRepository);
     }
 }

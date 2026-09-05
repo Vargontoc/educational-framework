@@ -3,6 +3,8 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.avatar.infrastructure.dto.GameAvatarEvent;
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.content.model.RecognitionElement;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
@@ -83,6 +85,9 @@ class GameWebSocketHandlerTest {
     private WorldOrchestrator worldOrchestrator;
 
     @Mock
+    private RecognitionElementRepository recognitionElementRepository;
+
+    @Mock
     private WebSocketSession session;
 
     private GameWebSocketHandler handler;
@@ -91,7 +96,8 @@ class GameWebSocketHandlerTest {
     void setUp() {
         handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarLifecycleService,
             gameOrchestrator, gameStateRegistry,
-            worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator);
+            worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
+            recognitionElementRepository);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))
@@ -742,6 +748,123 @@ class GameWebSocketHandlerTest {
         Map<String, Object> payload = handler.gameStateToPayload(state);
 
         assertNotNull(payload.get("recognitionState"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_recognitionEngine_withNumericElementIds_includesElementsArray() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.LETTER);
+        recognitionState.setRoundIndex(0);
+        recognitionState.setTotalRounds(5);
+        recognitionState.setTargetElementId("100");
+        recognitionState.setOptionIds(List.of("100", "200", "300"));
+        recognitionState.setHintActive(false);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            state.setEnginePayload(mapper.writeValueAsString(recognitionState));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        RecognitionElement elem100 = new RecognitionElement();
+        elem100.setId(100L);
+        elem100.setCode("letter_a");
+        elem100.setDisplayValue("A");
+        elem100.setResourceRefs("{\"audio\":\"tts://letter_a\",\"image\":\"img://letter_a\"}");
+
+        RecognitionElement elem200 = new RecognitionElement();
+        elem200.setId(200L);
+        elem200.setCode("letter_b");
+        elem200.setDisplayValue("B");
+        elem200.setResourceRefs("{\"audio\":\"tts://letter_b\"}");
+
+        RecognitionElement elem300 = new RecognitionElement();
+        elem300.setId(300L);
+        elem300.setCode("letter_c");
+        elem300.setDisplayValue("C");
+        elem300.setResourceRefs(null);
+
+        when(recognitionElementRepository.findAllById(org.mockito.ArgumentMatchers.<List<Long>>any()))
+            .thenReturn(List.of(elem100, elem200, elem300));
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        Map<String, Object> recPayload = (Map<String, Object>) payload.get("recognitionState");
+        assertNotNull(recPayload.get("elements"));
+
+        List<Map<String, Object>> elements = (List<Map<String, Object>>) recPayload.get("elements");
+        assertEquals(3, elements.size());
+
+        Map<String, Object> first = elements.stream().filter(e -> "100".equals(e.get("id"))).findFirst().orElseThrow();
+        assertEquals("letter_a", first.get("code"));
+        assertEquals("A", first.get("displayValue"));
+        assertNotNull(first.get("resourceRefs"));
+        assertTrue(first.get("resourceRefs") instanceof tools.jackson.databind.JsonNode);
+
+        Map<String, Object> third = elements.stream().filter(e -> "300".equals(e.get("id"))).findFirst().orElseThrow();
+        assertFalse(third.containsKey("resourceRefs"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_recognitionEngine_withNonNumericElementIds_skipsElements() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.LETTER);
+        recognitionState.setRoundIndex(0);
+        recognitionState.setTotalRounds(5);
+        recognitionState.setTargetElementId("elem-1");
+        recognitionState.setOptionIds(List.of("elem-1", "elem-2", "elem-3"));
+        recognitionState.setHintActive(false);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            state.setEnginePayload(mapper.writeValueAsString(recognitionState));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        Map<String, Object> recPayload = (Map<String, Object>) payload.get("recognitionState");
+        assertFalse(recPayload.containsKey("elements"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_recognitionEngine_emptyFindAllById_noElementsKey() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.NUMBER);
+        recognitionState.setRoundIndex(0);
+        recognitionState.setTotalRounds(5);
+        recognitionState.setTargetElementId("500");
+        recognitionState.setOptionIds(List.of("500", "600"));
+        recognitionState.setHintActive(false);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            state.setEnginePayload(mapper.writeValueAsString(recognitionState));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        when(recognitionElementRepository.findAllById(org.mockito.ArgumentMatchers.<List<Long>>any()))
+            .thenReturn(List.of());
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        Map<String, Object> recPayload = (Map<String, Object>) payload.get("recognitionState");
+        assertFalse(recPayload.containsKey("elements"));
     }
 
     private ChildSession childSession(Long id, ChildSessionStatus status) {

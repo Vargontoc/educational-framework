@@ -64,6 +64,21 @@ export class WorldMapScene extends Scene {
                         })
                     }
                     break;
+                case 'WORLD_ACTIVITY_STARTED':
+                    if(event.payload) {
+                        switch(event.payload.engine){
+                            case 'RECOGNITION':
+                                this.scene.start('recognition-game', {
+                                    websocket: this.websocket,
+                                    activityId: event.payload.activityId
+                                })
+                                break;
+                            default:
+                                console.log('Aun no esta la escena para este engine: ' + event.payload.engine)
+                                break;
+                        }
+                    }
+                    break;
                 default:
                     break;
             }

@@ -69,13 +69,16 @@ public class WorldGameStartService implements WorldGameStartUseCase {
                 activityId,
                 existingGame.map(gs -> gs.getGameId()).orElse(null),
                 WorldGameStartStatus.EXISTING_GAME_ACTIVE,
-                null
+                null,
+                existingGame.map(s -> s.getEngine()).orElse(null)
             );
         }
 
         try {
             LaunchContext launchContext = buildLaunchContext(worldState, activityId);
             GameState startedGame = gameOrchestrator.startGame(childProfileId, activityId, launchContext);
+            startedGame.setChildSessionId(childSessionId);
+            gameStateRegistry.save(startedGame);
 
             worldProposalResolutionUseCase.resolveProposal(childSessionId, ActivityProposalOutcome.STARTED);
 
@@ -84,7 +87,8 @@ public class WorldGameStartService implements WorldGameStartUseCase {
                 activityId,
                 startedGame.getGameId(),
                 WorldGameStartStatus.STARTED,
-                null
+                null,
+                startedGame.getEngine()
             );
 
         } catch (EngineNotAvailableException e) {
@@ -178,7 +182,8 @@ public class WorldGameStartService implements WorldGameStartUseCase {
             activityId,
             null,
             status,
-            fallbackDestination
+            fallbackDestination,
+            null
         );
     }
 }

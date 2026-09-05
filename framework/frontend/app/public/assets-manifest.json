@@ -7,5 +7,50 @@
                 "url" : "assets/images/Simple_Flower_Bush.webp"
             }
         ]
-    }
+    },
+    "recognition-letters" :  {
+            "files" : [
+                {
+                    "type": "image",
+                    "key": "img_letter_A",
+                    "url": "assets/images/letters/letter_A.webp"
+                },
+                {
+                    "type": "image",
+                    "key": "img_letter_B",
+                    "url": "assets/images/letters/letter_B.webp"
+                },
+                {
+                    "type": "image",
+                    "key": "img_letter_C",
+                    "url": "assets/images/letters/letter_C.webp"
+                },
+                {
+                    "type": "image",
+                    "key": "img_letter_D",
+                    "url": "assets/images/letters/letter_D.webp"
+                },
+                {
+                    "type": "image",
+                    "key": "img_letter_E",
+                    "url": "assets/images/letters/letter_E.webp"
+                },
+                {
+                    "type": "image",
+                    "key": "img_letter_M",
+                    "url": "assets/images/letters/letter_M.webp"
+                },
+                {
+                    "type": "image",
+                    "key": "img_letter_O",
+                    "url": "assets/images/letters/letter_O.webp"
+                },
+                {
+                    "type": "image",
+                    "key": "img_letter_S",
+                    "url": "assets/images/letters/letter_S.webp"
+                }
+            ]
+        }
+    
 }

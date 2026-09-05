@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.tracking.service;
 
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.tracking.config.ElementMasteryProperties;
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.ActivitySummary;
@@ -10,6 +11,8 @@ import es.vargontoc.educational.framework.tracking.model.TopicSummary;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ElementSummaryRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.TopicSummaryRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -19,20 +22,25 @@ import java.time.LocalDateTime;
 @Transactional
 public class SummaryUpdateService {
 
+    private static final Logger log = LoggerFactory.getLogger(SummaryUpdateService.class);
+
     private final ActivitySummaryRepository activitySummaryRepository;
     private final TopicSummaryRepository topicSummaryRepository;
     private final ElementSummaryRepository elementSummaryRepository;
     private final ElementMasteryProperties elementMasteryProperties;
+    private final RecognitionElementRepository recognitionElementRepository;
 
     public SummaryUpdateService(
             ActivitySummaryRepository activitySummaryRepository,
             TopicSummaryRepository topicSummaryRepository,
             ElementSummaryRepository elementSummaryRepository,
-            ElementMasteryProperties elementMasteryProperties) {
+            ElementMasteryProperties elementMasteryProperties,
+            RecognitionElementRepository recognitionElementRepository) {
         this.activitySummaryRepository = activitySummaryRepository;
         this.topicSummaryRepository = topicSummaryRepository;
         this.elementSummaryRepository = elementSummaryRepository;
         this.elementMasteryProperties = elementMasteryProperties;
+        this.recognitionElementRepository = recognitionElementRepository;
     }
 
     public void updateSummaries(ActivityAttempt attempt) {
@@ -111,6 +119,11 @@ public class SummaryUpdateService {
     }
 
     private void updateElementSummary(ActivityAttempt attempt) {
+        if (!recognitionElementRepository.existsById(attempt.getElementId())) {
+            log.warn("Skipping element summary update: elementId={} does not exist in recognition_element", attempt.getElementId());
+            return;
+        }
+
         var summary = elementSummaryRepository
             .findByChildProfileIdAndElementId(attempt.getChildProfileId(), attempt.getElementId())
             .orElseGet(() -> createElementSummary(attempt));

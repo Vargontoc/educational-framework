@@ -54,8 +54,9 @@ class TrackingModuleConfiguration {
             ActivitySummaryRepository activitySummaryRepository,
             TopicSummaryRepository topicSummaryRepository,
             ElementSummaryRepository elementSummaryRepository,
-            ElementMasteryProperties elementMasteryProperties) {
-        return new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository, elementSummaryRepository, elementMasteryProperties);
+            ElementMasteryProperties elementMasteryProperties,
+            RecognitionElementRepository recognitionElementRepository) {
+        return new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository, elementSummaryRepository, elementMasteryProperties, recognitionElementRepository);
     }
 
     @Bean

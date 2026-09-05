@@ -86,6 +86,9 @@ class GameOrchestratorServiceTest {
     @Mock
     private ElementProgressPort elementProgressPort;
 
+    @Mock
+    private es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository recognitionElementRepository;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -100,7 +103,8 @@ class GameOrchestratorServiceTest {
             eventPublisher,
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
-            elementProgressPort
+            elementProgressPort,
+            recognitionElementRepository
         );
     }
 
@@ -121,10 +125,11 @@ class GameOrchestratorServiceTest {
         return dl;
     }
 
-    private GameState createRealGameState(Long gameId, Long childSessionId, Long activityId, Long difficultyLevelId, GameStatus status) {
+    private GameState createRealGameState(Long gameId, Long childSessionId, Long childProfileId, Long activityId, Long difficultyLevelId, GameStatus status) {
         GameState state = new GameState();
         state.setGameId(gameId);
         state.setChildSessionId(childSessionId);
+        state.setChildProfileId(childProfileId);
         state.setActivityId(activityId);
         state.setDifficultyLevelId(difficultyLevelId);
         state.setEngine(EngineType.RECOGNITION);
@@ -166,7 +171,7 @@ class GameOrchestratorServiceTest {
 
         assertNotNull(result);
         assertEquals(GameStatus.WAITING, result.getStatus());
-        assertEquals(100L, result.getChildSessionId());
+        assertEquals(100L, result.getChildProfileId());
         assertEquals(1L, result.getActivityId());
         assertEquals(5L, result.getDifficultyLevelId());
         assertNotNull(result.getStartedAt());
@@ -175,7 +180,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void readyGame_transitionsToStartingThenInProgress() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.WAITING);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
@@ -188,7 +193,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void readyGame_invalidTransition_throwsException() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
@@ -197,7 +202,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_correctAction_calls_tracking() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
@@ -214,7 +219,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_completedAction_calls_game_completion_and_summary() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
@@ -239,7 +244,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_gameNotInProgress_throwsException() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.WAITING);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
@@ -249,7 +254,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void abandonGame_removesFromRegistryAndRegistersSummary() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
@@ -258,14 +263,14 @@ class GameOrchestratorServiceTest {
         assertEquals(GameStatus.ABANDONED, result.getStatus());
         verify(gameStateRegistry).remove(1L);
         verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
-            eq(100L), eq(1L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
+            eq(200L), eq(100L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
             any(), any(), eq(es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus.ABANDONED)
         );
     }
 
     @Test
     void abandonGame_alreadyCompleted_throwsException() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.COMPLETED);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.COMPLETED);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
@@ -285,10 +290,11 @@ class GameOrchestratorServiceTest {
             eventPublisher,
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
-            elementProgressPort
+            elementProgressPort,
+            recognitionElementRepository
         );
 
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.WAITING);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
         storedState.setEngine(EngineType.MEMORY);
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
@@ -305,7 +311,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_unlocked_achievements_returned() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         UnlockedAchievement achievement = new UnlockedAchievement("FIRST_CORRECT_STREAK", 1L, null);
 
@@ -322,7 +328,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_difficulty_change_updates_state() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
@@ -338,7 +344,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void abandonGameForSession_withActiveGame_abandonsAndRegistersSummary() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
@@ -349,7 +355,7 @@ class GameOrchestratorServiceTest {
         assertEquals(GameStatus.ABANDONED, storedState.getStatus());
         verify(gameStateRegistry).remove(1L);
         verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
-            eq(100L), eq(1L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
+            eq(200L), eq(100L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
             any(), any(), eq(es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus.ABANDONED)
         );
     }
@@ -369,7 +375,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_withSystemEventPending_discardsActionAndDoesNotRegisterAttempt() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
         storedState.setSystemEventPending(true);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
@@ -385,7 +391,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_trackingFails_continuesWithoutTracking() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
@@ -400,7 +406,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void abandonGameForSession_trackingFails_stillAbandonsGame() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
@@ -418,8 +424,8 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_withDifferentGameIds_runConcurrently() {
-        GameState state1 = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
-        GameState state2 = createRealGameState(2L, 101L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState state1 = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState state2 = createRealGameState(2L, 101L, 201L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(state1));
         when(gameStateRegistry.findByGameId(2L)).thenReturn(Optional.of(state2));
@@ -434,7 +440,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void processAction_completedAction_publishesGameSessionCompletedEvent() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
@@ -453,7 +459,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void abandonGame_publishesGameSessionCompletedEvent() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
@@ -464,7 +470,7 @@ class GameOrchestratorServiceTest {
 
     @Test
     void abandonGameForSession_publishesGameSessionCompletedEvent() {
-        GameState storedState = createRealGameState(1L, 100L, 1L, 5L, GameStatus.IN_PROGRESS);
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));

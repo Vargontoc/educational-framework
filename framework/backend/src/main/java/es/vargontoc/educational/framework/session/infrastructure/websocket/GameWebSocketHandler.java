@@ -4,6 +4,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.content.model.RecognitionElement;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
@@ -71,6 +73,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final WorldGameStartUseCase worldGameStartUseCase;
     private final WorldStateRegistry worldStateRegistry;
     private final WorldOrchestrator worldOrchestrator;
+    private final RecognitionElementRepository recognitionElementRepository;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -87,7 +90,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                              WorldHeartbeatUseCase worldHeartbeatUseCase,
                              WorldGameStartUseCase worldGameStartUseCase,
                              WorldStateRegistry worldStateRegistry,
-                             WorldOrchestrator worldOrchestrator) {
+                             WorldOrchestrator worldOrchestrator,
+                             RecognitionElementRepository recognitionElementRepository) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarLifecycleService = avatarLifecycleService;
@@ -97,6 +101,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         this.worldGameStartUseCase = worldGameStartUseCase;
         this.worldStateRegistry = worldStateRegistry;
         this.worldOrchestrator = worldOrchestrator;
+        this.recognitionElementRepository = recognitionElementRepository;
     }
 
     @Override
@@ -429,6 +434,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             Long childProfileId = childSession.getChildProfileId();
 
             var gameState = gameOrchestrator.startGame(childProfileId, activityId);
+            gameState.setChildSessionId(childSessionId);
+            gameStateRegistry.save(gameState);
 
             SessionEvent event = SessionEvent.of(SessionEventType.GAME_STARTED, childSessionId, gameStateToPayload(gameState));
             sendToSession(childSessionId, objectMapper.writeValueAsString(event));
@@ -574,6 +581,39 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             recognitionPayload.put("targetElementId", recognitionState.getTargetElementId());
             recognitionPayload.put("optionIds", recognitionState.getOptionIds());
             recognitionPayload.put("hintActive", recognitionState.isHintActive());
+
+            java.util.Set<Long> elementIds = new java.util.LinkedHashSet<>();
+            if (recognitionState.getTargetElementId() != null) {
+                try { elementIds.add(Long.parseLong(recognitionState.getTargetElementId())); } catch (NumberFormatException ignored) {}
+            }
+            if (recognitionState.getOptionIds() != null) {
+                for (String optId : recognitionState.getOptionIds()) {
+                    try { elementIds.add(Long.parseLong(optId)); } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            if (!elementIds.isEmpty()) {
+                List<RecognitionElement> elements = recognitionElementRepository.findAllById(new java.util.ArrayList<>(elementIds));
+                if (!elements.isEmpty()) {
+                    List<Map<String, Object>> elementsArray = new java.util.ArrayList<>();
+                    for (RecognitionElement el : elements) {
+                        Map<String, Object> entry = new java.util.LinkedHashMap<>();
+                        entry.put("id", String.valueOf(el.getId()));
+                        entry.put("code", el.getCode());
+                        entry.put("displayValue", el.getDisplayValue());
+                        if (el.getResourceRefs() != null && !el.getResourceRefs().isBlank()) {
+                            try {
+                                entry.put("resourceRefs", objectMapper.readTree(el.getResourceRefs()));
+                            } catch (Exception e) {
+                                entry.put("resourceRefs", el.getResourceRefs());
+                            }
+                        }
+                        elementsArray.add(entry);
+                    }
+                    recognitionPayload.put("elements", elementsArray);
+                }
+            }
+
             payload.put("recognitionState", recognitionPayload);
         }
         return payload;
@@ -649,6 +689,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 payload.put("gameId", activityPayload.gameId());
                 payload.put("activityId", activityPayload.activityId());
                 payload.put("transition", activityPayload.transition());
+                payload.put("engine",  startResult.getEngine().name());
                 SessionEvent event = SessionEvent.of(SessionEventType.WORLD_ACTIVITY_STARTED, childSessionId, payload);
                 sendToSession(childSessionId, objectMapper.writeValueAsString(event));
             } else {

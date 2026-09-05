@@ -16,6 +16,7 @@ import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
+import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionAttemptContext;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
@@ -52,6 +53,7 @@ public class RecognitionEngine implements GameEnginePort {
 
         List<String> candidates = parseCandidates(engineParams);
         RecognitionState state = buildInitialState(candidates);
+        state.setRecognitionCategory(parseRecognitionCategory(engineParams));
         gameState.setEnginePayload(serializeState(state));
     }
 
@@ -218,6 +220,22 @@ public class RecognitionEngine implements GameEnginePort {
             return OBJECT_MAPPER.convertValue(candidatesNode, new TypeReference<List<String>>() {});
         } catch (JacksonException e) {
             return List.of();
+        }
+    }
+
+    private RecognitionCategory parseRecognitionCategory(String engineParams) {
+        if (engineParams == null || engineParams.isBlank()) {
+            return null;
+        }
+        try {
+            var node = OBJECT_MAPPER.readTree(engineParams);
+            var categoryNode = node.get("recognitionCategory");
+            if (categoryNode == null || categoryNode.isNull()) {
+                return null;
+            }
+            return RecognitionCategory.valueOf(categoryNode.asString());
+        } catch (JacksonException | IllegalArgumentException e) {
+            return null;
         }
     }
 

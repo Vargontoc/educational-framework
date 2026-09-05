@@ -2,6 +2,7 @@ package es.vargontoc.educational.framework.game.application;
 
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
@@ -29,7 +30,8 @@ class GameModuleConfiguration {
             ApplicationEventPublisher eventPublisher,
             TopicUseCase topicUseCase,
             FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase,
-            ElementProgressPort elementProgressPort) {
+            ElementProgressPort elementProgressPort,
+            RecognitionElementRepository recognitionElementRepository) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
@@ -40,7 +42,8 @@ class GameModuleConfiguration {
             eventPublisher,
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
-            elementProgressPort
+            elementProgressPort,
+            recognitionElementRepository
         );
     }
 }

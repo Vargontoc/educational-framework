@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.tracking.service;
 
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.tracking.config.ElementMasteryProperties;
 import es.vargontoc.educational.framework.tracking.model.ActivityAttempt;
 import es.vargontoc.educational.framework.tracking.model.ActivitySummary;
@@ -21,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +38,9 @@ class SummaryUpdateServiceTest {
     @Mock
     private ElementSummaryRepository elementSummaryRepository;
 
+    @Mock
+    private RecognitionElementRepository recognitionElementRepository;
+
     private SummaryUpdateService service;
 
     private ActivityAttempt correctAttempt;
@@ -45,7 +50,7 @@ class SummaryUpdateServiceTest {
     @BeforeEach
     void setUp() {
         ElementMasteryProperties masteryProperties = new ElementMasteryProperties();
-        service = new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository, elementSummaryRepository, masteryProperties);
+        service = new SummaryUpdateService(activitySummaryRepository, topicSummaryRepository, elementSummaryRepository, masteryProperties, recognitionElementRepository);
 
         correctAttempt = new ActivityAttempt();
         correctAttempt.setChildProfileId(10L);
@@ -329,6 +334,45 @@ class SummaryUpdateServiceTest {
         var saved = topicCaptor.getValue();
         assertEquals(0, saved.getFailureRatePercent().compareTo(new BigDecimal("9.09")));
         assertEquals(TopicPerformanceBand.STRONG, saved.getPerformanceBand());
+    }
+
+    @Test
+    void elementSummary_skippedWhenElementIdDoesNotExist() {
+        correctAttempt.setElementId(999L);
+
+        when(activitySummaryRepository.findByChildProfileIdAndActivityId(10L, 20L))
+            .thenReturn(Optional.empty());
+        when(activitySummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(topicSummaryRepository.findByChildProfileIdAndTopicId(10L, 40L))
+            .thenReturn(Optional.empty());
+        when(topicSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(recognitionElementRepository.existsById(999L)).thenReturn(false);
+
+        service.updateSummaries(correctAttempt);
+
+        verify(elementSummaryRepository, never()).save(any());
+        verify(activitySummaryRepository).save(any());
+        verify(topicSummaryRepository).save(any());
+    }
+
+    @Test
+    void elementSummary_updatedWhenElementIdExists() {
+        correctAttempt.setElementId(100L);
+
+        when(activitySummaryRepository.findByChildProfileIdAndActivityId(10L, 20L))
+            .thenReturn(Optional.empty());
+        when(activitySummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(topicSummaryRepository.findByChildProfileIdAndTopicId(10L, 40L))
+            .thenReturn(Optional.empty());
+        when(topicSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(recognitionElementRepository.existsById(100L)).thenReturn(true);
+        when(elementSummaryRepository.findByChildProfileIdAndElementId(10L, 100L))
+            .thenReturn(Optional.empty());
+        when(elementSummaryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.updateSummaries(correctAttempt);
+
+        verify(elementSummaryRepository).save(any());
     }
 
     private TopicSummary createTopicSummaryWithFailures(int total, int failures) {

@@ -76,6 +76,9 @@ class GameOrchestratorServiceTrackingIntegrationTest {
     @Mock
     private ElementProgressPort elementProgressPort;
 
+    @Mock
+    private es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository recognitionElementRepository;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -90,7 +93,8 @@ class GameOrchestratorServiceTrackingIntegrationTest {
             eventPublisher,
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
-            elementProgressPort
+            elementProgressPort,
+            recognitionElementRepository
         );
     }
 
@@ -99,6 +103,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
         GameState state = new GameState();
         state.setGameId(gameId);
         state.setChildSessionId(childSessionId);
+        state.setChildProfileId(200L);
         state.setActivityId(activityId);
         state.setDifficultyLevelId(difficultyLevelId);
         state.setEngine(EngineType.RECOGNITION);
@@ -161,7 +166,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
 
         ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
         verify(registerActivityAttemptUseCase).register(
-                eq(100L), eq(1L), eq(1L), eq(10L), any(), eq(5L),
+                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
                 any(), eq(2000), contextCaptor.capture());
 
         String capturedContext = contextCaptor.getValue();
@@ -203,7 +208,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
 
         ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
         verify(registerActivityAttemptUseCase).register(
-                eq(100L), eq(1L), eq(1L), eq(10L), any(), eq(5L),
+                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
                 any(), eq(1500), contextCaptor.capture());
 
         try {
@@ -234,7 +239,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
 
         ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
         verify(registerActivityAttemptUseCase).register(
-                eq(100L), eq(1L), eq(1L), eq(10L), any(), eq(5L),
+                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
                 any(), eq(3000), contextCaptor.capture());
 
         try {
@@ -264,7 +269,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
 
         ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
         verify(registerActivityAttemptUseCase).register(
-                eq(100L), eq(1L), eq(1L), eq(10L), any(), eq(5L),
+                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
                 any(), eq(2000), contextCaptor.capture());
 
         try {
@@ -301,7 +306,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
         ArgumentCaptor<Integer> timeoutCaptor = ArgumentCaptor.forClass(Integer.class);
 
         verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
-                eq(100L), eq(1L), eq(1L), eq(5L), eq(5L),
+                eq(200L), eq(100L), eq(1L), eq(5L), eq(5L),
                 scoreCaptor.capture(), attemptsCaptor.capture(),
                 correctCaptor.capture(), timeoutCaptor.capture(),
                 any(), any(), any());
@@ -327,7 +332,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
                 1L, "{\"selectedOptionId\":\"11\",\"responseTimeMs\":2000}", 10L, 2000);
 
         verify(registerActivityAttemptUseCase).register(
-                eq(100L), eq(1L), eq(1L), eq(10L), any(), eq(5L),
+                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
                 any(), eq(2000), any(String.class));
     }
 }

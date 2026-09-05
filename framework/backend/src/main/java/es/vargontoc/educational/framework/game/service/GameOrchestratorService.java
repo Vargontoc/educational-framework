@@ -2,12 +2,15 @@ package es.vargontoc.educational.framework.game.service;
 
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Biome;
+import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
+import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.model.RecognitionType;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
+import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.engine.RecognitionEngine;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
@@ -64,6 +67,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final TopicUseCase topicUseCase;
     private final FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase;
     private final ElementProgressPort elementProgressPort;
+    private final RecognitionElementRepository recognitionElementRepository;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
 
@@ -77,7 +81,8 @@ public class GameOrchestratorService implements GameOrchestrator {
             ApplicationEventPublisher eventPublisher,
             TopicUseCase topicUseCase,
             FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase,
-            ElementProgressPort elementProgressPort) {
+            ElementProgressPort elementProgressPort,
+            RecognitionElementRepository recognitionElementRepository) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.sessionAntiRepetitionRegistry = sessionAntiRepetitionRegistry;
@@ -88,6 +93,7 @@ public class GameOrchestratorService implements GameOrchestrator {
         this.topicUseCase = topicUseCase;
         this.filterAllowedRecognitionCategoriesUseCase = filterAllowedRecognitionCategoriesUseCase;
         this.elementProgressPort = elementProgressPort;
+        this.recognitionElementRepository = recognitionElementRepository;
 
         this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine());
     }
@@ -106,7 +112,7 @@ public class GameOrchestratorService implements GameOrchestrator {
 
         GameState state = new GameState();
         state.setGameId(generateGameId());
-        state.setChildSessionId(childProfileId);
+        state.setChildProfileId(childProfileId);
         state.setActivityId(activityId);
         state.setDifficultyLevelId(difficultyLevel.getId());
         state.setEngine(resolveEngineType(activity));
@@ -117,6 +123,7 @@ public class GameOrchestratorService implements GameOrchestrator {
         if (state.getEngine() == EngineType.RECOGNITION) {
             List<String> candidates = resolveCandidates(childProfileId, activity, launchContext);
             state.setCandidates(candidates);
+            state.setRecognitionCategory(resolveRecognitionCategory(activity));
         }
 
         gameStateRegistry.save(state);
@@ -205,15 +212,24 @@ public class GameOrchestratorService implements GameOrchestrator {
                 }
             }
 
+            if (state.getEngine() == EngineType.RECOGNITION && elementId != null) {
+                List<RecognitionElement> resolvedElements = recognitionElementRepository.findAllById(List.of(elementId));
+                if (!resolvedElements.isEmpty()) {
+                    topicId = resolvedElements.get(0).getTopicId();
+                } else {
+                    log.debug("No RecognitionElement found for elementId={}, keeping client-supplied topicId", elementId);
+                }
+            }
+
             List<UnlockedAchievement> allUnlockedAchievements = new ArrayList<>();
             boolean difficultyChanged = false;
             Long newDifficultyLevelId = null;
 
             try {
                 AttemptRegistrationResult attemptResult = registerActivityAttemptUseCase.register(
-                    state.getChildSessionId(),
+                    state.getChildProfileId(),
                     state.getActivityId(),
-                    gameId,
+                    state.getChildSessionId(),
                     topicId,
                     elementId,
                     state.getDifficultyLevelId(),
@@ -259,7 +275,7 @@ public class GameOrchestratorService implements GameOrchestrator {
 
                 try {
                     List<UnlockedAchievement> completionAchievements = evaluateGameCompletionAchievementsUseCase.evaluate(
-                        state.getChildSessionId(),
+                        state.getChildProfileId(),
                         state.getActivityId(),
                         topicId
                     );
@@ -268,8 +284,8 @@ public class GameOrchestratorService implements GameOrchestrator {
                     }
 
                     registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                        state.getChildProfileId(),
                         state.getChildSessionId(),
-                        gameId,
                         state.getActivityId(),
                         state.getDifficultyLevelId(),
                         newDifficultyLevelId != null ? newDifficultyLevelId : state.getDifficultyLevelId(),
@@ -324,8 +340,8 @@ public class GameOrchestratorService implements GameOrchestrator {
 
             try {
                 registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                    state.getChildProfileId(),
                     state.getChildSessionId(),
-                    gameId,
                     state.getActivityId(),
                     state.getDifficultyLevelId(),
                     state.getDifficultyLevelId(),
@@ -374,8 +390,8 @@ public class GameOrchestratorService implements GameOrchestrator {
 
             try {
                 registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                    state.getChildProfileId(),
                     state.getChildSessionId(),
-                    gameId,
                     state.getActivityId(),
                     state.getDifficultyLevelId(),
                     state.getDifficultyLevelId(),
@@ -433,7 +449,11 @@ public class GameOrchestratorService implements GameOrchestrator {
             }
             sb.append("\"").append(candidates.get(i)).append("\"");
         }
-        sb.append("]}");
+        sb.append("]");
+        if (state.getRecognitionCategory() != null) {
+            sb.append(",\"recognitionCategory\":\"").append(state.getRecognitionCategory().name()).append("\"");
+        }
+        sb.append("}");
         return sb.toString();
     }
 
@@ -467,9 +487,17 @@ public class GameOrchestratorService implements GameOrchestrator {
             topics = topicUseCase.listTopicsByRecognitionType(recognitionType);
         }
 
-        List<String> candidates = topics.stream()
-                .map(t -> String.valueOf(t.getId()))
-                .toList();
+        List<String> candidates = new ArrayList<>();
+        for (Topic topic : topics) {
+            List<RecognitionElement> elements = recognitionElementRepository.findByTopicIdAndStatus(topic.getId(), ContentStatus.ACTIVE);
+            if (elements.isEmpty()) {
+                log.warn("Topic {} has zero active recognition elements, skipping", topic.getId());
+                continue;
+            }
+            for (RecognitionElement element : elements) {
+                candidates.add(String.valueOf(element.getId()));
+            }
+        }
 
         Long topicKey = activity.getTopicIds() != null && !activity.getTopicIds().isEmpty()
                 ? activity.getTopicIds().get(0) : null;

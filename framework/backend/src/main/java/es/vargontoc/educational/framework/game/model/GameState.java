@@ -5,11 +5,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
+import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 
 public class GameState {
 
     private Long gameId;
     private Long childSessionId;
+    private Long childProfileId;
     private Long activityId;
     private Long difficultyLevelId;
     private GameStatus status;
@@ -29,6 +31,7 @@ public class GameState {
     private String enginePayload;
     private EngineType engine;
     private List<String> candidates;
+    private RecognitionCategory recognitionCategory;
 
     public Long getGameId() {
         return gameId;
@@ -44,6 +47,14 @@ public class GameState {
 
     public void setChildSessionId(Long childSessionId) {
         this.childSessionId = childSessionId;
+    }
+
+    public Long getChildProfileId() {
+        return childProfileId;
+    }
+
+    public void setChildProfileId(Long childProfileId) {
+        this.childProfileId = childProfileId;
     }
 
     public Long getActivityId() {
@@ -197,5 +208,13 @@ public class GameState {
     public void setCandidates(List<String> candidates) {
         this.candidates = candidates;
     }
-    
+
+    public RecognitionCategory getRecognitionCategory() {
+        return recognitionCategory;
+    }
+
+    public void setRecognitionCategory(RecognitionCategory recognitionCategory) {
+        this.recognitionCategory = recognitionCategory;
+    }
+
 }

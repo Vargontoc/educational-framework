@@ -2,7 +2,7 @@ asyncapi: 2.6.0
 info:
   title: Educational Framework WebSocket Contract
   description: Baseline real-time contract for FEAT-002 session events.
-  version: 1.7.0
+  version: 1.8.0
 
 channels:
   /ws/parent:

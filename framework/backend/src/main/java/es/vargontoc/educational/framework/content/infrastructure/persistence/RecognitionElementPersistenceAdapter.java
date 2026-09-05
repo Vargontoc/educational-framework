@@ -18,7 +18,7 @@ public class RecognitionElementPersistenceAdapter implements RecognitionElementR
 
     @Override
     public List<RecognitionElement> findByTopicIdAndStatus(Long topicId, ContentStatus status) {
-        return jpaRepository.findByTopicIdAndStatus(topicId, status)
+        return jpaRepository.findByTopicIdAndStatus(topicId, status.name())
                 .stream()
                 .map(RecognitionElementPersistenceAdapter::toDomain)
                 .toList();
@@ -27,6 +27,19 @@ public class RecognitionElementPersistenceAdapter implements RecognitionElementR
     @Override
     public RecognitionElement save(RecognitionElement element) {
         return toDomain(jpaRepository.save(toJpa(element)));
+    }
+
+    @Override
+    public boolean existsById(Long id) {
+        return jpaRepository.existsById(id);
+    }
+
+    @Override
+    public List<RecognitionElement> findAllById(List<Long> ids) {
+        return jpaRepository.findAllById(ids)
+                .stream()
+                .map(RecognitionElementPersistenceAdapter::toDomain)
+                .toList();
     }
 
     static RecognitionElement toDomain(RecognitionElementJpaEntity source) {

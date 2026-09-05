@@ -1,5 +1,7 @@
 package es.vargontoc.educational.framework.world.model;
 
+import es.vargontoc.educational.framework.game.model.enums.EngineType;
+
 public class WorldGameStartResult {
 
     private Long childSessionId;
@@ -7,17 +9,19 @@ public class WorldGameStartResult {
     private Long gameId;
     private WorldGameStartStatus status;
     private WorldDestination safeFallbackDestination;
+    private EngineType engine;
 
     public WorldGameStartResult() {
     }
 
     public WorldGameStartResult(Long childSessionId, Long activityId, Long gameId, WorldGameStartStatus status,
-                             WorldDestination safeFallbackDestination) {
+                             WorldDestination safeFallbackDestination, EngineType engine) {
         this.childSessionId = childSessionId;
         this.activityId = activityId;
         this.gameId = gameId;
         this.status = status;
         this.safeFallbackDestination = safeFallbackDestination;
+        this.engine = engine;
     }
 
     public Long getChildSessionId() {
@@ -59,4 +63,14 @@ public class WorldGameStartResult {
     public void setSafeFallbackDestination(WorldDestination safeFallbackDestination) {
         this.safeFallbackDestination = safeFallbackDestination;
     }
+
+    public EngineType getEngine() {
+        return engine;
+    }
+
+    public void setEngine(EngineType engine) {
+        this.engine = engine;
+    }
+
+    
 }

@@ -113,7 +113,7 @@ public class TelegramAdapter implements SpringLongPollingBot, LongPollingUpdateC
 
     private Long getRegisteredChatId() {
         return chatRepository.findTopByOrderByIdDesc()
-                .map(TelegramNotificationChatJpaEntity::getChatId)
+                .map(e -> e.getChatId())
                 .orElse(null);
     }
 
