@@ -1,0 +1,119 @@
+# Stack de pruebas E2E (Cypress) para framework/frontend/app.
+#
+# Aislado del stack de desarrollo/producción (docker-compose.yml): red, nombre de
+# proyecto y puertos publicados propios para poder ejecutarse en paralelo sin
+# colisionar. Las credenciales de base de datos son de usar y tirar (contenedor
+# efímero sin volumen persistente), por eso van hardcodeadas aquí.
+#
+# Dos formas de uso:
+#
+# 1) Ciclo completo de una sola vez (CI / uso puntual):
+#      ./scripts/run-e2e.sh
+#
+# 2) Flujo iterativo (agente revisor / desarrollo activo): evita reconstruir y
+#    recrear db+api+app en cada ejecución de los tests. db, api y app quedan
+#    arriba entre ejecuciones; solo se reconstruyen api/app cuando hay código
+#    nuevo (rebuild incremental gracias a la cache de capas de Docker).
+#      ./scripts/e2e-up.sh     # build + arranque de db/api/app (repetir tras cada cambio de código)
+#      ./scripts/e2e-test.sh   # ejecuta Cypress contra el stack ya arrancado (repetible, sin build)
+#      ./scripts/e2e-down.sh   # limpieza final: para y elimina contenedores/red/volúmenes
+#
+# El servicio "cypress" usa el profile "test" para que un `docker compose up`
+# normal no lo arranque junto al resto del stack.
+name: educational-framework-e2e
+services:
+
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: educational_e2e
+      POSTGRES_USER: educational_e2e
+      POSTGRES_PASSWORD: educational_e2e
+    networks:
+      - e2e-network
+    ports:
+      - "${E2E_DB_BIND_IP:-127.0.0.1}:${E2E_DB_HOST_PORT:-15433}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U educational_e2e -d educational_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: ./framework/backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/educational_e2e
+      SPRING_DATASOURCE_USERNAME: educational_e2e
+      SPRING_DATASOURCE_PASSWORD: educational_e2e
+      SERVER_PORT: 8080
+      # RAG carga documentos contra Ollama en el arranque (no es un uso perezoso),
+      # por lo que la API no levanta sin un Ollama real accesible con los modelos
+      # ya descargados (pull-model-strategy: never). Se reutiliza el Ollama local
+      # del host, igual que en docker-compose.yml (dev/prod).
+      SPRING_AI_OLLAMA_BASE_URL: http://host.docker.internal:11434
+      # TTS no forma parte del alcance de este stack E2E (solo app + api).
+      TTS_BASE_URL: http://tts.e2e.invalid:8081
+      TTS_ENABLED: "false"
+      JWT_SECRET: e2e_test_secret_not_for_production_0123456789abcdef
+      JWT_EXPIRATION_MS: 86400000
+      APP_CORS_ALLOWED_ORIGINS: http://app,http://localhost:${E2E_APP_HOST_PORT:-8880}
+      LOGGING_LEVEL_ES_VARGONTOC: WARN
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - e2e-network
+    ports:
+      - "${E2E_API_BIND_IP:-127.0.0.1}:${E2E_API_HOST_PORT:-18080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  app:
+    build:
+      context: ./framework/frontend/app
+      dockerfile: Dockerfile
+    networks:
+      - e2e-network
+    ports:
+      - "${E2E_APP_BIND_IP:-127.0.0.1}:${E2E_APP_HOST_PORT:-8880}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/ || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+
+  cypress:
+    profiles: ["test"]
+    image: cypress/included:16.0.0
+    working_dir: /e2e
+    volumes:
+      - ./framework/frontend/app/cypress.config.ts:/e2e/cypress.config.ts
+      - ./framework/frontend/app/cypress:/e2e/cypress
+    environment:
+      CYPRESS_BASE_URL: http://app:80
+    networks:
+      - e2e-network
+    depends_on:
+      app:
+        condition: service_healthy
+    entrypoint: ["cypress", "run", "--browser", "electron"]
+
+networks:
+  e2e-network:
+    driver: bridge

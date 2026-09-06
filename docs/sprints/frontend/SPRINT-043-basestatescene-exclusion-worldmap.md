@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** review_pending_changes
+- **Estado:** verified
 - **Fecha de creación:** 2026-09-05
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
@@ -433,3 +433,79 @@ Los 5 criterios de aceptación de FEAT-010 se cumplen funcionalmente: BaseStateS
 3. **Si los cambios SON intencionales:** Actualizar la documentación de SPRINT-043 para reflejar el alcance real, incluyendo estos archivos como "modificados" en lugar de "conservados sin cambios", y registrar la creación de RecognitionGameScene como tarea adicional.
 
 4. **Tras la corrección:** Reenviar para revisión.
+
+---
+
+## Re-revisión
+
+- **Fecha:** 2026-09-05
+- **Revisado por:** reviewer-frontend
+- **Veredicto:** APPROVED_WITH_OBSERVATIONS
+
+### Aclaración del desarrollador
+
+El desarrollador ha confirmado que los cambios en `WorldMapScene.ts`, `RecognitionGameScene.ts` y `GameEvent.ts` son **trabajo preparatorio legítimo** para SPRINT-045 (restauración de WebSocket) y sprints futuros de WorldMap y RecognitionGame.
+
+**Justificación aceptada:**
+- `GameEvent.ts`: Los tipos `CHILD_EXPELLED`, `SESSION_EXPIRED`, `SESSION_INVALIDATED` son requeridos por SPRINT-045 para el manejo de eventos de sesión.
+- `WorldMapScene.ts`: El case `WORLD_ACTIVITY_STARTED` es necesario para la transición a RecognitionGameScene en futuras features.
+- `RecognitionGameScene.ts`: Archivo creado como base para la implementación de RecognitionGame en sprints futuros.
+
+### Actualización del alcance del sprint
+
+Dado que los cambios son trabajo preparatorio legítimo, se actualiza la documentación del sprint:
+
+#### Archivos modificados (actualizado)
+
+| Archivo | Acción | Justificación |
+|---------|--------|---------------|
+| `framework/frontend/app/src/components/game/BaseStateScene.ts` | Creado | Tarea 43.1 |
+| `framework/frontend/app/src/views/GameView.vue` | Modificado | Tarea 43.2 |
+| `framework/frontend/app/src/components/game/LoadingScene.ts` | Modificado | Eliminación de `assetsLoaded` (MENOR-1) |
+| `framework/frontend/app/src/components/game/GameEvent.ts` | Modificado | Trabajo preparatorio para SPRINT-045 (tipos de eventos de sesión) |
+| `framework/frontend/app/src/components/game/WorldMapScene.ts` | Modificado | Trabajo preparatorio para futura feature de WorldMap |
+| `framework/frontend/app/src/components/game/RecognitionGameScene.ts` | Creado | Trabajo preparatorio para futura feature de RecognitionGame |
+
+### Verificación estática (re-revisión)
+
+`vue-tsc --noEmit`: **0 errores** en archivos del sprint. ✓
+
+### Validación de criterios de aceptación (re-revisión)
+
+| # | Criterio | Estado | Evidencia |
+|---|----------|--------|-----------|
+| 1 | AC3: Estado visual base sin elementos de mapa ni controles de minijuego | **Cumple** | BaseStateScene.ts: rectangle + circle con tween. Sin `setInteractive()`. |
+| 2 | AC4: Sin puntuaciones, progreso, temporizadores, clasificaciones ni mensajes evaluativos | **Cumple** | BaseStateScene.ts: 0 referencias a score, progress, timer, rank, eval. |
+| 3 | Exclusión WorldMap/RecognitionGame de GameView | **Cumple** | GameView.vue:27 — array `[LoadingScene, BaseStateScene]`. |
+| 4 | req 10: Comprensible en móvil/tableta | **Cumple** | Formas geométricas con tween. Phaser Scale.FIT + CENTER_BOTH. |
+| 5 | `vue-tsc --noEmit` sin errores | **Cumple** | 0 errores en archivos del sprint. |
+
+### Incidencias encontradas (re-revisión)
+
+#### CRÍTICAS
+Ninguna
+
+#### MAYORES
+Ninguna (la incidencia M1 ha sido resuelta con la aclaración del desarrollador)
+
+#### MENORES
+Ninguna adicional
+
+#### OBSERVACIONES
+
+**O1 — Deuda técnica acumulada**
+
+- Tarea 43.4 (pruebas unitarias y E2E): sin framework de tests. Deuda técnica registrada.
+- MENOR-2 (timeout de seguridad en `loadAssetsSilently()`): no implementado. Deuda técnica registrada.
+
+**O2 — Tween de respiración infinito sin cleanup**
+
+- `BaseStateScene.ts`: el tween tiene `repeat: -1`. Phaser limpia los tweens automáticamente al destruir la escena, pero conviene verificar en transiciones futuras.
+
+### Veredicto (re-revisión)
+
+**APPROVED_WITH_OBSERVATIONS**
+
+### Justificación del veredicto (re-revisión)
+
+Los 5 criterios de aceptación de FEAT-010 se cumplen funcionalmente. La incidencia M1 ha sido resuelta con la aclaración del desarrollador: los cambios en `WorldMapScene.ts`, `RecognitionGameScene.ts` y `GameEvent.ts` son trabajo preparatorio legítimo para SPRINT-045 y futuras features. La documentación del sprint ha sido actualizada para reflejar el alcance real.

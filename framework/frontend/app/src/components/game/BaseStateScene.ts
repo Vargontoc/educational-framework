@@ -1,14 +1,29 @@
 import { Scene } from 'phaser'
+import { ServerGameEvent, AvatarEvent, GameErrorPayload } from './GameEvent'
+import { ConnectionMonitor } from './ConnectionMonitor'
+import { connectWebSocket, clearWebSocketHeartbeat } from './websocket'
+import { ErrorClassifier } from './ErrorClassifier'
 
 export class BaseStateScene extends Scene {
+  websocket?: WebSocket
+  sessionId?: number
+  childId?: number
+  connectionMonitor?: ConnectionMonitor
+
   constructor() {
     super({ key: 'base-state', active: false })
+  }
+
+  init(data: { websocket: WebSocket; sessionId: number; childId: number }) {
+    this.websocket = data.websocket
+    this.sessionId = data.sessionId
+    this.childId = data.childId
   }
 
   create() {
     this.add.rectangle(400, 300, 800, 600, 0xe8f4f8)
 
-    const nubiPlaceholder = this.add.circle(400, 260, 60, 0x7ec8e3)
+    const nubiPlaceholder = this.add.circle(400, 240, 60, 0x7ec8e3)
     
     this.tweens.add({
       targets: nubiPlaceholder,
@@ -19,5 +34,207 @@ export class BaseStateScene extends Scene {
       repeat: -1,
       ease: 'Sine.easeInOut'
     })
+
+    const statusText = this.add.text(400, 340, 'Listo para jugar', {
+      fontSize: '28px',
+      color: '#111827',
+      fontFamily: 'Nunito, sans-serif',
+      fontStyle: '600'
+    })
+    statusText.setOrigin(0.5, 0.5)
+
+    this.connectionMonitor = new ConnectionMonitor(
+      () => {
+        this.attemptReconnect()
+      },
+      () => {
+        this.goToFarewell()
+      }
+    )
+
+    if (this.websocket) {
+      this.manageWebSocket(this.websocket)
+    }
+  }
+
+  manageWebSocket(ws: WebSocket) {
+    ws.onmessage = (msg) => {
+      if (msg.data) {
+        this.readEvent(JSON.parse(msg.data))
+      }
+    }
+
+    ws.onclose = () => {
+      clearWebSocketHeartbeat(ws)
+      this.connectionMonitor?.handleWebSocketClose()
+    }
+
+    ws.onerror = () => {
+      clearWebSocketHeartbeat(ws)
+    }
+
+    const cleanup = () => {
+      ws.onmessage = null
+      ws.onclose = null
+      ws.onerror = null
+    }
+    this.events.once('shutdown', cleanup)
+    this.events.once('destroy', cleanup)
+  }
+
+  async attemptReconnect() {
+    if (this.sessionId === undefined) {
+      this.goToFarewell()
+      return
+    }
+
+    this.cleanupWebSocket()
+
+    try {
+      const ws = await connectWebSocket(this.sessionId)
+      this.websocket = ws
+      this.setupWebSocketHandlers(ws)
+      this.connectionMonitor?.notifyReconnectSuccess()
+    } catch {
+      this.connectionMonitor?.notifyReconnectFailure()
+    }
+  }
+
+  setupWebSocketHandlers(ws: WebSocket) {
+    ws.onmessage = (msg) => {
+      if (msg.data) {
+        this.readEvent(JSON.parse(msg.data))
+      }
+    }
+
+    ws.onclose = () => {
+      clearWebSocketHeartbeat(ws)
+      this.connectionMonitor?.handleWebSocketClose()
+    }
+
+    ws.onerror = () => {
+      clearWebSocketHeartbeat(ws)
+    }
+  }
+
+  readEvent(event: ServerGameEvent | AvatarEvent) {
+    console.log(event)
+    if (!event) return
+
+    if (event.event === 'GAME_AVATAR_EVENT') {
+      this.handleAvatarEvent(event)
+      return
+    }
+    switch (event.event) {
+      case 'AUTH_ACK':
+      case 'HEARTBEAT_ACK':
+        break
+
+      case 'CHILD_EXPELLED':
+        this.handleExpulsion()
+        break
+
+      case 'SESSION_EXPIRED':
+      case 'SESSION_INVALIDATED':
+        this.handleSessionExpired()
+        break
+
+      case 'CHILD_TTS_ACTIVATED':
+        this.handleTTSActivated()
+        break
+
+      case 'CHILD_TTS_DEACTIVATED':
+        this.handleTTSDeactivated()
+        break
+
+      case 'CHILD_AGENT_ACTIVATED':
+        this.handleAgentActivated()
+        break
+
+      case 'CHILD_AGENT_DEACTIVATED':
+        this.handleAgentDeactivated()
+        break
+
+      case 'GAME_ERROR':
+        this.handleGameError(event.payload)
+        break
+
+      default:
+        break
+    }
+  }
+
+  handleAvatarEvent(event: AvatarEvent) {
+    switch(event.eventType){
+        case 'SESSION_DISCONNECTED':
+            this.goToFarewell()
+            break;
+        default:
+            break;
+    }
+  }
+
+  handleExpulsion() {
+    this.cleanupWebSocket()
+    this.goToFarewell()
+  }
+
+  handleSessionExpired() {
+    this.cleanupWebSocket()
+    this.connectionMonitor?.handleSessionExpired()
+  }
+
+  handleTTSActivated() {
+    this.registry.set('ttsEnabled', true)
+    this.events.emit('tts-state-changed', true)
+    console.log('TTS activated during session')
+  }
+
+  handleTTSDeactivated() {
+    this.registry.set('ttsEnabled', false)
+    this.events.emit('tts-state-changed', false)
+    console.log('TTS deactivated during session')
+  }
+
+  handleAgentActivated() {
+    this.registry.set('npcEnabled', true)
+    this.events.emit('npc-state-changed', true)
+    console.log('NPC activated during session')
+  }
+
+  handleAgentDeactivated() {
+    this.registry.set('npcEnabled', false)
+    this.events.emit('npc-state-changed', false)
+    console.log('NPC deactivated during session')
+  }
+
+  handleGameError(payload: GameErrorPayload | null) {
+    const classified = ErrorClassifier.classifyFromBackendEvent({
+      event: 'GAME_ERROR',
+      payload: payload ?? undefined
+    })
+
+    if (classified.severity === 'RECOVERABLE') {
+      console.log('Recoverable error:', classified.message)
+      return
+    }
+
+    console.log('Critical error:', classified.message)
+    this.handleSessionExpired()
+  }
+
+  goToFarewell() {
+    this.cleanupWebSocket()
+    this.scene.start('farewell')
+  }
+
+  cleanupWebSocket() {
+    if (this.websocket) {
+      clearWebSocketHeartbeat(this.websocket)
+      this.websocket.onmessage = null
+      this.websocket.onclose = null
+      this.websocket.onerror = null
+      this.websocket = undefined
+    }
   }
 }

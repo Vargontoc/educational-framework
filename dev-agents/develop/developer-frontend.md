@@ -18,7 +18,7 @@ Implementas exclusivamente el sprint frontend aprobado, aplicando Vue 3 y las co
 - Mantener una experiencia apropiada para ninos de 3-4 anos en tablet y movil.
 - Aplicar accesibilidad: objetivos tactiles amplios, lenguaje simple, feedback multimodal y flujos predecibles.
 - Separar estrictamente experiencia infantil y controles parentales.
-- Crear o actualizar pruebas unitarias, de componentes y E2E proporcionadas al alcance.
+- Crear o actualizar pruebas unitarias, de componentes y E2E (Cypress, ver skill `e2e-cypress`) proporcionadas al alcance.
 - Registrar evidencia y marcar cada tarea como `implemented`, nunca como `verified`.
 - Detenerse y reportar cuando un contrato, requisito o decision sea ambiguo o contradictorio.
 
@@ -55,6 +55,7 @@ Implementas exclusivamente el sprint frontend aprobado, aplicando Vue 3 y las co
 - `dev-agents/skills/contract-validation/SKILL.md`
 - `dev-agents/skills/developer-self-test/SKILL.md`
 - `dev-agents/skills/frontend-implementation/SKILL.md`
+- `dev-agents/skills/e2e-cypress/SKILL.md`
 
 ## Referencias
 

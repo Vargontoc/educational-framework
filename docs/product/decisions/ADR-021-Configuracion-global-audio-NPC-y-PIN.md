@@ -49,7 +49,7 @@ Se confirma una única vista de Configuración con secciones visualmente separad
 La vista incluye:
 
 - **Audio general:** interruptor on/off y valor porcentual. Este ajuste solo controla el audio general; no altera por sí mismo la voz del NPC ni la voz narrativa.
-- **NPC:** interruptor on/off para la presencia e interacción visual del NPC en el juego. Al desactivarlo, no aparece, se mueve ni anima, y no produce intervenciones de voz. La voz narrativa sigue siendo independiente.
+- **NPC:** interruptor on/off para la presencia e interacción visual del NPC en el juego. Al desactivarlo, no aparece, se mueve ni anima, y no produce intervenciones de voz. La voz narrativa sigue siendo independiente. Como excepción limitada confirmada posteriormente en FEAT-010, la animación visual no verbal de despedida ante una pérdida de conexión se conserva incluso con NPC desactivado, para dar al niño un cierre mínimo; esta excepción no activa voz.
 - **Voz del NPC:** interruptor on/off y valor porcentual. Si solo se desactiva esta voz, el NPC permanece presente e interactivo, pero no habla.
 - **Voz narrativa:** interruptor on/off y valor porcentual, independiente del NPC.
 - **PIN familiar:** creación de un PIN nuevo de cuatro dígitos numéricos y confirmación mediante una segunda introducción. Se permite repetir el PIN actual. Tras guardar un cambio de PIN correcto, la sesión parental se cierra y la persona vuelve a Home.
@@ -65,6 +65,7 @@ Esta decisión favorece controles reversibles, distingue el NPC de sus voces y e
 - El juego puede continuar sin audio, voz o NPC, sin penalizaciones ni mensajes negativos.
 - La desactivación de voz del NPC no elimina sus animaciones e interacción visual.
 - La voz narrativa sigue disponible aunque el NPC esté desactivado.
+- La escena de continuidad ante pérdida de conexión puede mostrar una animación visual no verbal de Nubi aunque el NPC esté desactivado; no anula la preferencia de voz del NPC.
 
 ### Experiencia parental
 
@@ -96,7 +97,7 @@ Esta decisión favorece controles reversibles, distingue el NPC de sus voces y e
 ### Preguntas abiertas para los responsables técnicos
 
 - **Frontend:** validar que la jerarquía de secciones, los controles porcentuales, el estado apagado y «Guardar cambios» sean comprensibles en móvil y tableta.
-- **Backend, agentes y TTS:** validar que la configuración global se respete sin activar intervenciones de voz NPC cuando el NPC o su voz estén desactivados, y que la voz narrativa conserve su independencia funcional.
+- **Backend, agentes y TTS:** validar que la configuración global se respete sin activar intervenciones de voz NPC cuando el NPC o su voz estén desactivados, incluida la excepción visual no verbal de continuidad definida en FEAT-010, y que la voz narrativa conserve su independencia funcional.
 - **Backend y seguridad:** validar el cierre de sesión posterior a un cambio correcto de PIN y que no se exponga el PIN.
 
 ## Referencias

@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+public/assets
+public/assets/**
+
+# Cypress E2E - artefactos generados en cada ejecución
+cypress/results
+cypress/videos
+cypress/screenshots
+cypress/downloads

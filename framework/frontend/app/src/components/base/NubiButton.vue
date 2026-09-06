@@ -161,8 +161,8 @@ function handleClick(event: MouseEvent) {
 }
 
 .nubi-button--secondary:hover:not(:disabled) {
-  background-color: var(--nubi-color-primary-light);
-  color: var(--nubi-color-white);
+  background-color: var(--nubi-bg-surface-tertiary);
+  color: var(--nubi-color-primary-dark);
 }
 
 .nubi-button--secondary:active:not(:disabled) {

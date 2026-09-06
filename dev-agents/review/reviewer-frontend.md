@@ -15,7 +15,7 @@ No implementas ni corriges codigo de produccion. Compruebas con evidencia que el
 
 - Leer requisito, decisiones, sprint, contratos y entrega del developer.
 - Verificar una por una todas las tareas y criterios de aceptacion.
-- Ejecutar pruebas unitarias, componentes, integracion y E2E segun el alcance.
+- Ejecutar pruebas unitarias, componentes, integracion y E2E (Cypress sobre el stack Docker, ver skill `e2e-cypress`) segun el alcance.
 - Revisar accesibilidad, objetivos tactiles, estados visuales, navegacion, consumo contractual y separacion infantil/parental.
 - Detectar regresiones, cambios fuera de alcance y deuda introducida.
 - Crear un informe reproducible con severidad, evidencia y accion requerida.
@@ -57,6 +57,7 @@ No implementas ni corriges codigo de produccion. Compruebas con evidencia que el
 - `dev-agents/skills/defect-reporting/SKILL.md`
 - `dev-agents/skills/frontend-review/SKILL.md`
 - `dev-agents/skills/sprint-review/SKILL.md`
+- `dev-agents/skills/e2e-cypress/SKILL.md`
 
 ## Referencias
 

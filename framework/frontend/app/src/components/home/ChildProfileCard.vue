@@ -116,4 +116,20 @@ const avatarHref = computed(() => {
   white-space: nowrap;
   display: block;
 }
+
+@media (max-width: 480px) {
+  .child-profile-card {
+    padding: var(--nubi-spacing-md);
+    gap: var(--nubi-spacing-xs);
+  }
+
+  .child-profile-card__avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .child-profile-card__name {
+    font-size: var(--nubi-font-size-sm);
+  }
+}
 </style>

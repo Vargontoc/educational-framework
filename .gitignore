@@ -27,6 +27,7 @@ framework/tts/.ruff_cache/
 # ── Docker ───────────────────────────────────
 # Never commit generated docker volumes or override files
 docker-compose.override.yml
+docker-compose.e2e.override.yml
 
 backlog/
 !framework/backend/sprints/backlog/

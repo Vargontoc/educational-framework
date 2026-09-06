@@ -34,7 +34,7 @@ Dar a la familia control global, claro y reversible sobre el audio y la presenci
 1. La vista de Configuración solo está disponible para un adulto con acceso parental válido.
 2. Debe presentar en una misma vista secciones visualmente diferenciadas de: Audio general, NPC, Voz del NPC, Voz narrativa y PIN familiar.
 3. Audio general debe disponer de interruptor on/off y valor porcentual. Su estado no debe modificar automáticamente los controles de voz NPC ni narrativa.
-4. NPC debe disponer de interruptor on/off. Desactivarlo elimina su presencia, movimiento, animaciones e intervenciones de voz en el juego, sin desactivar la voz narrativa.
+4. NPC debe disponer de interruptor on/off. Desactivarlo elimina su presencia, movimiento, animaciones e intervenciones de voz en el juego, sin desactivar la voz narrativa, salvo la excepción de continuidad definida en FEAT-010: la animación visual no verbal de despedida ante pérdida de conexión se mantiene para dar al niño un cierre mínimo.
 5. Voz del NPC debe disponer de interruptor on/off y valor porcentual. Desactivarla mantiene al NPC visualmente presente e interactivo cuando el NPC esté activado, pero sin intervenciones habladas.
 6. Voz narrativa debe disponer de interruptor on/off y valor porcentual. Es independiente del NPC y de la voz del NPC.
 7. Los controles con porcentaje deben permitir ajustar el valor de forma gradual y establecerlo directamente en 0.
@@ -54,7 +54,7 @@ Dar a la familia control global, claro y reversible sobre el audio y la presenci
 1. Una persona sin acceso parental válido no puede ver ni modificar los ajustes globales.
 2. La vista muestra cinco secciones diferenciadas: Audio general, NPC, Voz del NPC, Voz narrativa y PIN familiar.
 3. Audio general puede activarse, desactivarse y recibir un valor porcentual sin cambiar automáticamente las voces NPC o narrativa.
-4. Con NPC desactivado, el juego no muestra ni anima al NPC y este no realiza intervenciones de voz; la voz narrativa puede mantenerse activa.
+4. Con NPC desactivado, el juego no muestra ni anima al NPC y este no realiza intervenciones de voz; la voz narrativa puede mantenerse activa. La única excepción es la animación visual no verbal de despedida ante pérdida de conexión definida en FEAT-010; esta excepción no habilita voz del NPC.
 5. Con NPC activo y Voz del NPC desactivada, el NPC permanece visible e interactivo sin hablar.
 6. Voz narrativa se puede activar, desactivar y ajustar independientemente del NPC.
 7. Cada control porcentual permite establecer el valor directamente en 0; al hacerlo, su interruptor queda apagado.

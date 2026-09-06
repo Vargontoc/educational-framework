@@ -2,6 +2,14 @@ export type TYPE_SEND_EVENT = 'auth' | 'heartbeat' | 'world_discovery_interacted
 export type SERVER_EVENT =
     'AUTH_ACK' |
     'HEARTBEAT_ACK' |
+    'CHILD_EXPELLED' |
+    'SESSION_EXPIRED' |
+    'SESSION_INVALIDATED' |
+    'CHILD_TTS_ACTIVATED' |
+    'CHILD_TTS_DEACTIVATED' |
+    'CHILD_AGENT_ACTIVATED' |
+    'CHILD_AGENT_DEACTIVATED' |
+    'GAME_ERROR' |
     'WORLD_STATE_SYNC' |
     'GAME_AVATAR_EVENT' |
     `WORLD_ACTIVITY_STARTED` |
@@ -27,8 +35,21 @@ interface BaseServerGameEvent<E extends Exclude<SERVER_EVENT, 'GAME_AVATAR_EVENT
     payload: P
 }
 
+export interface GameErrorPayload {
+  errorCode?: string
+  message?: string
+}
+
 export type AuthAckEvent = BaseServerGameEvent<'AUTH_ACK', null>
 export type HeartbeatAckEvent = BaseServerGameEvent<'HEARTBEAT_ACK', null>
+export type ChildExpelledEvent = BaseServerGameEvent<'CHILD_EXPELLED', null>
+export type SessionExpiredEvent = BaseServerGameEvent<'SESSION_EXPIRED', null>
+export type SessionInvalidatedEvent = BaseServerGameEvent<'SESSION_INVALIDATED', null>
+export type ChildTTSActivatedEvent = BaseServerGameEvent<'CHILD_TTS_ACTIVATED', null>
+export type ChildTTSDeactivatedEvent = BaseServerGameEvent<'CHILD_TTS_DEACTIVATED', null>
+export type ChildAgentActivatedEvent = BaseServerGameEvent<'CHILD_AGENT_ACTIVATED', null>
+export type ChildAgentDeactivatedEvent = BaseServerGameEvent<'CHILD_AGENT_DEACTIVATED', null>
+export type GameErrorEvent = BaseServerGameEvent<'GAME_ERROR', GameErrorPayload | null>
 export type WorldStateSyncEvent = BaseServerGameEvent<'WORLD_STATE_SYNC', WorldSync>
 export type GameStateEvent = BaseServerGameEvent<'WORLD_ACTIVITY_STARTED', GameState>
 export type GameStartedEvent = BaseServerGameEvent<'GAME_STARTED', RecognitionEnginePayload>
@@ -39,6 +60,14 @@ export type GameResultEvent = BaseServerGameEvent<'GAME_ACTION_RESULT', BaseGame
 // y súmalo a esta unión: el resto del código estrechará payload automáticamente por event.event
 export type ServerGameEvent = AuthAckEvent
     | HeartbeatAckEvent 
+    | ChildExpelledEvent
+    | SessionExpiredEvent
+    | SessionInvalidatedEvent
+    | ChildTTSActivatedEvent
+    | ChildTTSDeactivatedEvent
+    | ChildAgentActivatedEvent
+    | ChildAgentDeactivatedEvent
+    | GameErrorEvent
     | WorldStateSyncEvent 
     | GameStateEvent
     | GameStartedEvent
