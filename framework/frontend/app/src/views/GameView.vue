@@ -49,13 +49,43 @@ const loadPhaserGame = async () => {
       w.__NUBI_GAME_STATE__ = {
         get childId() { return gameInstance.registry?.get('childId') ?? null },
         get npcEnabled() { return gameInstance.registry?.get('npcEnabled') ?? false },
-        get ttsEnabled() { return gameInstance.registry?.get('voiceEnabled') ?? false },
+        get ttsEnabled() { return gameInstance.registry?.get('ttsEnabled') ?? false },
         get activeScene() {
           try {
             const scenes = gameInstance.scene?.scenes ?? []
             const active = scenes.find((s: any) => s.scene?.isActive?.())
             return active?.scene?.key ?? null
           } catch { return null }
+        },
+        get sceneKeys() {
+          try {
+            return gameInstance.scene?.scenes?.map((s: any) => s.scene?.key).filter(Boolean) ?? []
+          } catch { return [] }
+        },
+        get wsReadyState(): number | null {
+          try {
+            const scenes = gameInstance.scene?.scenes ?? []
+            const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+            return active?.websocket?.readyState ?? null
+          } catch { return null }
+        },
+        injectWsEvent(event: unknown) {
+          try {
+            const scenes = gameInstance.scene?.scenes ?? []
+            const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+            if (active && typeof active.readEvent === 'function') {
+              active.readEvent(event)
+            }
+          } catch { /* noop */ }
+        },
+        closeWs() {
+          try {
+            const scenes = gameInstance.scene?.scenes ?? []
+            const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+            if (active?.websocket) {
+              active.websocket.close()
+            }
+          } catch { /* noop */ }
         }
       }
     }

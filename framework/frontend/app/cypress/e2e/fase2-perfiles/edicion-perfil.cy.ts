@@ -17,27 +17,30 @@ function loginAndGoToNinos() {
 describe('Edicion de perfil individual (SPRINT-028)', () => {
   it('editar nombre persiste los cambios via PATCH', () => {
     const familyName = uniqueFamilyName('Edit')
+    const childOriginalName = `Laura-${Date.now()}`
+    const childNewName = `Laura María-${Date.now()}`
     createFamilyViaApi({ name: familyName, pin: PIN })
-    createChildViaApi({ name: 'Laura', birthday: '2022-01-10', avatar: 'avatar-1' })
+    createChildViaApi({ name: childOriginalName, birthday: '2022-01-10', avatar: 'avatar-1' })
 
     loginAndGoToNinos()
-    cy.contains('.parental-child-card__name', 'Laura').should('be.visible')
+    cy.contains('.parental-child-card__name', childOriginalName).should('be.visible')
 
     cy.intercept('GET', '**/api/v1/family/children/*').as('getChild')
     cy.intercept('GET', '**/api/v1/family').as('getFamily')
 
-    cy.contains('.parental-child-card', 'Laura').click({ force: true })
+    cy.contains('.parental-child-card', childOriginalName).click({ force: true })
     cy.url().should('include', '/panel/ninos/')
     cy.wait('@getChild')
     cy.get('.child-profile-edit-view').should('be.visible')
 
     cy.intercept('PATCH', '**/api/v1/family/children/*').as('updateChild')
 
-    cy.get('.nubi-text-input input').clear().type('Laura María')
+    cy.get('.nubi-text-input input').clear()
+    cy.get('.nubi-text-input input').type(childNewName)
 
-    cy.contains('button', 'Guardar cambios').click({ force: true })
+    cy.contains('button', 'Guardar cambios').should('be.enabled').click({ force: true })
     cy.wait('@updateChild').its('request.body').then((body) => {
-      expect(body.name).to.eq('Laura María')
+      expect(body.name).to.eq(childNewName)
     })
   })
 

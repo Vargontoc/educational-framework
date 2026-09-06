@@ -11,7 +11,16 @@
 import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs'
 import { computeBackoffDelay, type ConnectionStatus } from './websocket'
 
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8080'
+function resolveWsBaseUrl(): string {
+  const envUrl = import.meta.env.VITE_WS_BASE_URL
+  if (envUrl && envUrl.length > 'wss://'.length) {
+    return envUrl
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}`
+}
+
+const WS_BASE_URL = resolveWsBaseUrl()
 
 const RECONNECT_BASE_DELAY = 1000
 const RECONNECT_MAX_DELAY = 30000

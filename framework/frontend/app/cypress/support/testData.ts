@@ -1,3 +1,13 @@
+const baseUrl = Cypress.config('baseUrl') || 'http://localhost:80'
+let apiUrl: string
+if (baseUrl.includes('app:')) {
+  apiUrl = baseUrl.replace(/app(:\d+)?/, 'api:8080')
+} else if (baseUrl.includes('8880')) {
+  apiUrl = 'http://localhost:18080'
+} else {
+  apiUrl = 'http://localhost:8080'
+}
+
 export interface TestFamily {
   name: string
   pin: string
@@ -33,7 +43,7 @@ export function createFamilyViaApi(family?: Partial<TestFamily>) {
   }
   return cy.request({
     method: 'POST',
-    url: '/api/v1/family',
+    url: `${apiUrl}/api/v1/family`,
     body: payload,
     failOnStatusCode: false
   }).then((response) => {
@@ -54,7 +64,7 @@ export function createChildViaApi(child?: Partial<TestChild>) {
   }
   return cy.request({
     method: 'POST',
-    url: '/api/v1/family/children',
+    url: `${apiUrl}/api/v1/family/children`,
     body: payload
   })
 }

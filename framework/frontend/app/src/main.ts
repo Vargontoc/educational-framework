@@ -17,11 +17,15 @@ import './styles/main.css'
 const app = createApp(App)
 
 // Plugins
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
 app.use(i18n)
 
 // Montaje de la aplicación
 app.mount('#app')
+
+// Exponer Pinia para pruebas E2E (acceso al estado del store desde Cypress)
+;(window as any).__nubi_pinia = pinia
 
 

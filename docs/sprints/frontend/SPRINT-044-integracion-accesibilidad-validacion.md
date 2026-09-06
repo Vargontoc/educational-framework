@@ -238,19 +238,16 @@ Ninguno nuevo. Este sprint consume los contratos definidos en sprints anteriores
 
 ### Tarea 44.5: Pruebas E2E completas
 
-**Estado:** ⏸ PENDIENTE (deuda técnica)
+**Estado:** ✅ IMPLEMENTADA (resuelta por SPRINT-055)
 
 **Criterios de aceptación:**
-- ⏸ Prueba E2E: Flujo completo de perfil habilitado (HomeView → GameView → BaseStateScene).
-- ⏸ Prueba E2E: Flujo completo de perfil bloqueado (HomeView → aviso neutral).
-- ⏸ Prueba E2E: Recarga de página en GameView.
-- ⏸ Prueba E2E: Flujo sin audio/NPC.
+- ✅ Prueba E2E: Flujo completo de perfil habilitado (HomeView → GameView → BaseStateScene). — Cubierta por `cypress/e2e/fase7-gameview/loading-scene.cy.ts` (SPRINT-055) y `cypress/e2e/fase2-perfiles/perfil-bloqueado.cy.ts` (SPRINT-050).
+- ✅ Prueba E2E: Flujo completo de perfil bloqueado (HomeView → aviso neutral). — Cubierta por `cypress/e2e/fase2-perfiles/perfil-bloqueado.cy.ts` (SPRINT-050).
+- ✅ Prueba E2E: Recarga de página en GameView. — Cubierta por `cypress/e2e/fase7-gameview/recuperacion-despedida.cy.ts` (SPRINT-055).
+- ✅ Prueba E2E: Flujo sin audio/NPC. — Cubierta por `cypress/e2e/fase7-gameview/preferencias-dinamicas.cy.ts` (SPRINT-055).
 
-**Deuda técnica:**
-- No existe framework de tests E2E en el proyecto (registrado en sprints anteriores)
-- Se requiere implementación de Cypress, Playwright o similar
-- Las pruebas manuales han validado los flujos principales, pero no hay automatización
-- Sin framework de tests, no se puede marcar como completada
+**Resolución:**
+- Deuda técnica resuelta por SPRINT-055 (E2E Fase 7: GameView y escenas Phaser). Los 4 flujos E2E pendientes quedan cubiertos por los specs de Fase 7 más el spec `perfil-bloqueado.cy.ts` de Fase 2 (SPRINT-050).
 
 ### Tarea 44.6: Documentación final de FEAT-010
 
@@ -299,7 +296,7 @@ Ninguno nuevo. Este sprint consume los contratos definidos en sprints anteriores
 3. ⏸ El placeholder visual es adecuado para niños de 3-4 años (validado con contenido). *(FEAT-010 §6)* **PENDIENTE**
 4. ⏸ El aviso neutral es comprensible y no revela información parental (validado con producto). *(FEAT-010 §6)* **PENDIENTE**
 5. ⏸ BaseStateScene es visualmente comprensible y no sugiere interactividad (validado con producto). *(FEAT-010 §6)* **PENDIENTE**
-6. ⏸ Todas las pruebas E2E pasan sin errores. **PENDIENTE (sin framework de tests)**
+6. ✅ Todas las pruebas E2E pasan sin errores. **RESUELTO por SPRINT-055**
 7. ✅ `vue-tsc --noEmit` sin errores en los archivos modificados (errores preexistentes en archivos .story.vue no relacionados con este sprint).
 
 ## Dependencias bloqueantes
@@ -453,16 +450,15 @@ npx vue-tsc --noEmit
    - Producto debe validar que BaseStateScene no sugiere interactividad
    - Sin esta validación, no se puede completar el sprint
 
-3. **Pruebas E2E** (Tarea 44.5):
-   - No existe framework de tests E2E en el proyecto
-   - Se requiere implementación de Cypress, Playwright o similar
-   - Registrado como deuda técnica
+3. **Pruebas E2E** (Tarea 44.5): — ✅ RESUELTO por SPRINT-055
+   - Framework de tests E2E (Cypress) implementado en sprints anteriores (SPRINT-048)
+   - 4 flujos E2E pendientes cubiertos por SPRINT-055 (Fase 7) y SPRINT-050 (Fase 2)
 
 ### Conclusión
 
-El sprint ha completado las tareas de validación de accesibilidad y responsividad (44.1 y 44.2), corrigiendo problemas de contraste y añadiendo elementos de accesibilidad donde era necesario. Las tareas 44.3, 44.4 y 44.5 requieren validación externa o implementación de framework de tests, por lo que no se pueden completar en este momento.
+El sprint ha completado las tareas de validación de accesibilidad y responsividad (44.1 y 44.2), corrigiendo problemas de contraste y añadiendo elementos de accesibilidad donde era necesario. Las tareas 44.3 y 44.4 requieren validación externa, por lo que no se pueden completar en este momento. La tarea 44.5 (pruebas E2E) ha sido resuelta por SPRINT-055 (E2E Fase 7: GameView y escenas Phaser).
 
-FEAT-010 NO se puede marcar como `completed` hasta obtener las validaciones de contenido y producto.
+FEAT-010 NO se puede marcar como `completed` hasta obtener las validaciones de contenido y producto (tareas 44.3 y 44.4).
 
 ---
 
@@ -513,13 +509,13 @@ Las siguientes tareas siguen pendientes y son correctas en su estado actual:
 
 - **Tarea 44.3:** Validación con contenido (PENDIENTE - dependencia externa)
 - **Tarea 44.4:** Validación con producto (PENDIENTE - dependencia externa)
-- **Tarea 44.5:** Pruebas E2E (DEUDA TÉCNICA - sin framework de tests)
+- **Tarea 44.5:** Pruebas E2E — ✅ RESUELTO por SPRINT-055 (E2E Fase 7)
 
 ### Observaciones
 
 **OBS-1:** Las validaciones de contenido y producto son dependencias externas críticas. Sin estas validaciones, FEAT-010 no puede marcarse como completada.
 
-**OBS-2:** La deuda técnica de pruebas E2E es consistente con sprints anteriores. No existe framework de tests en el proyecto.
+**OBS-2:** La deuda técnica de pruebas E2E fue resuelta por SPRINT-055 (E2E Fase 7: GameView y escenas Phaser). El framework Cypress ya estaba disponible (SPRINT-048).
 
 ### Veredicto
 

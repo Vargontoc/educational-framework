@@ -111,13 +111,18 @@ Las transformaciones CSS complejas (`rotate() + scale()`) no son robustas para s
 - No se usarán rotaciones CSS (`rotate()`) ni escalados complejos (`scale()`) para simular landscape
 - El contenido se reacomodará naturalmente según la orientación del dispositivo
 
+### Aclaración posterior para GameView
+
+La experiencia jugable infantil se diferencia del resto de vistas: según FEAT-011, carga, `GameView`, World Map y minijuegos futuros se presentan exclusivamente en horizontal. No se fuerza la orientación del dispositivo. En vertical se muestra una indicación visual amable de Nubi para girarlo y la escena jugable no se inicia ni se pierde; al recuperar horizontal se conserva y restablece su estado.
+
+Para preservar la comprensión infantil, GameView prioriza mostrar toda la escena esencial y admite márgenes únicamente decorativos cuando la proporción del dispositivo lo requiera. Esta aclaración sustituye la pregunta abierta sobre si GameView requiere horizontal forzado.
+
 ### Alcance inicial
 
 **Vista prioritaria:** HomeView (pantalla principal)
 
 **Vistas pendientes de análisis:**
 - PanelControlView (panel parental)
-- GameView (experiencia de juego)
 - DocumentationView (documentación)
 
 ### Criterios de diseño
@@ -135,7 +140,7 @@ Las transformaciones CSS complejas (`rotate() + scale()`) no son robustas para s
 
 - **Positivo:** Elimina problemas de centrado y escalado que pueden confundir al niño
 - **Positivo:** Interactividad táctil preservada sin transformaciones CSS problemáticas
-- **Neutro:** La experiencia de juego (GameView) se analizará específicamente en futuras decisiones
+- **Positivo:** La experiencia de juego mantiene una orientación única y predecible, con una indicación amable cuando el dispositivo esté en vertical.
 
 ### Experiencia parental
 
@@ -161,21 +166,19 @@ Las transformaciones CSS complejas (`rotate() + scale()`) no son robustas para s
 ### Límites
 
 - Esta decisión solo aplica a las vistas que se rediseñen explícitamente
-- GameView (experiencia de juego) requiere análisis específico por su criticidad
-- Los minijuegos pueden requerir landscape forzado si la mecánica de juego lo exige
+- GameView y los minijuegos se limitan a orientación horizontal conforme a FEAT-011; no se fuerzan mediante mecanismos técnicos de orientación.
 
 ### Exclusiones
 
 - No se modifica la política de PWA (`orientation: landscape` en manifest)
 - No se modifica la política de Screen Orientation API
-- No se implementa indicación visual para girar el dispositivo (ADR-010)
+- La indicación visual para girar el dispositivo queda excluida de las vistas generales; se admite únicamente en la experiencia jugable infantil, conforme a FEAT-011.
 
 ### Preguntas abiertas para responsables técnicos
 
-1. **¿GameView requiere landscape forzado?** Analizar si los minijuegos específicos necesitan landscape para su mecánica de juego
-2. **¿Cómo gestionar la transición entre vistas con diferente orientación?** Definir si algunas vistas requieren landscape y otras portrait, y cómo gestionar la transición
-3. **¿Qué breakpoints usar para portrait?** Definir si se usan los breakpoints estándar de TailwindCSS o se requieren específicos para dispositivos target
-4. **¿Cómo validar el diseño portrait en dispositivos reales?** Definir estrategia de pruebas en Samsung Galaxy A15 y tablets Android
+1. **¿Cómo gestionar la transición entre vistas con diferente orientación?** Validar el paso entre vistas generales adaptables y GameView horizontal sin introducir confusión al niño.
+2. **¿Qué viewports horizontales deben validarse?** Los responsables técnicos deben proponerlos para móviles y tabletas target.
+3. **¿Cómo validar la composición horizontal en dispositivos reales?** Definir la validación en móviles y tabletas Android objetivo.
 
 ---
 

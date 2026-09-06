@@ -238,6 +238,7 @@ export const useWSStore = defineStore('ws', () => {
     chatbotConversationId,
     chatbotError,
     subscribeChatbotTopic,
+    handleChatbotEvent,
     loadChatbotConversation,
     resetChatbotConversation,
     appendUserMessage

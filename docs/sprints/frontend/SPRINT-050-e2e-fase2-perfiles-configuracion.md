@@ -120,7 +120,7 @@ Cubrir con E2E la gestión de perfiles infantiles (cuadrícula, edición, accesi
 ```bash
 docker compose -f docker-compose.e2e.yml up -d --build --wait db api app
 docker compose -f docker-compose.e2e.yml --profile test run --rm cypress
-# Resultado: 36/36 tests passing, 0 failures (15 specs, 16 archivos)
+# Resultado: 43/43 tests passing, 0 failures (19 specs, 19 archivos)
 docker compose -f docker-compose.e2e.yml down
 ```
 
@@ -165,7 +165,7 @@ docker compose -f docker-compose.e2e.yml down
 ### Validaciones ejecutadas
 
 - **Validación estática:** `npx vue-tsc --noEmit` — sin errores nuevos en archivos del sprint.
-- **Ejecución E2E:** 36/36 tests pasando (100%), 15/15 specs en verde.
+- **Ejecución E2E:** 43/43 tests pasando (100%), 19/19 specs en verde.
 - **Alineación contractual:** Endpoints alineados con contratos existentes.
 
 ### Decisiones técnicas verificadas
@@ -183,17 +183,34 @@ docker compose -f docker-compose.e2e.yml down
 
 El contrato `activate-children.yaml` especifica `204 No Content` como respuesta exitosa, pero el spec `cuadricula-perfiles.cy.ts` mockea con `statusCode: 200`. Como es un mock de Cypress para testing, no afecta la funcionalidad real.
 
+**O2 — Corrección de fallo preexistente en `edicion-perfil.cy.ts` (2026-09-06)**
+
+**Causa raíz:** El test `editar nombre persiste los cambios via PATCH` fallaba intermitentemente cuando la base de datos Docker persistía estado entre ejecuciones. El test usaba nombres fijos ('Laura' → 'Laura María'), y si la base de datos ya contenía un perfil con nombre 'Laura María' (de una ejecución anterior que completó el guardado), el test no detectaba cambios en el input (`hasChanges === false`), el botón "Guardar cambios" permanecía deshabilitado, y la petición PATCH nunca se enviaba.
+
+**Corrección aplicada:**
+1. **Nombres dinámicos:** El test ahora usa `uniqueFamilyName()` y timestamps para generar nombres únicos de niño (`Laura-${Date.now()}` → `Laura María-${Date.now()}`), garantizando que siempre haya cambios detectables respecto al estado persistido.
+2. **URLs API absolutas:** Los helpers de soporte (`testData.ts`, `commands.ts`) y specs con `cy.request` directo (`cuadricula-perfiles.cy.ts`) ahora calculan la URL base de la API dinámicamente desde `Cypress.config('baseUrl')`, soportando tanto el entorno Docker (`http://app:80` → `http://api:8080`) como el local (`http://localhost:8880` → `http://localhost:18080` o `http://localhost:80`).
+3. **Aserción de habilitado:** Se añadió `.should('be.enabled')` antes del click en "Guardar cambios" para fallar rápido si el botón está deshabilitado, en lugar de esperar un timeout en `cy.wait('@updateChild')`.
+
+**Archivos modificados:**
+- `cypress/e2e/fase2-perfiles/edicion-perfil.cy.ts` — Nombres dinámicos, aserción de botón habilitado.
+- `cypress/e2e/fase2-perfiles/cuadricula-perfiles.cy.ts` — URLs API absolutas.
+- `cypress/support/testData.ts` — Cálculo dinámico de `apiUrl`.
+- `cypress/support/commands.ts` — Cálculo dinámico de `apiUrl`.
+
+**Resultado:** 43/43 tests pasando (100%), 19/19 specs en verde.
+
 ### Criterios de aceptación del sprint
 
 | # | Criterio | Estado |
 |---|----------|--------|
-| 1 | Los 6 specs existen y pasan en verde | ✅ 36/36 tests |
+| 1 | Los 6 specs existen y pasan en verde | ✅ 43/43 tests |
 | 2 | Cada spec cubre al menos un caso positivo y negativo | ✅ Verificado |
 | 3 | Polling controlado vía `cy.intercept`, sin `cy.wait(ms)` fijos | ✅ Verificado |
 
 ### Conclusión
 
-El SPRINT-050 está completo y verificado. Todos los criterios de aceptación están demostrados con evidencia de archivos, specs de humo y ejecución E2E en verde (36/36 tests, 15/15 specs).
+El SPRINT-050 está completo y verificado. Todos los criterios de aceptación están demostrados con evidencia de archivos, specs de humo y ejecución E2E en verde (43/43 tests, 19/19 specs).
 
 Las fases 3-7 (SPRINT-051 a SPRINT-055) pueden arrancar asumiendo que la gestión de perfiles y configuración global está cubierta y funcional.
 
@@ -201,4 +218,4 @@ Las fases 3-7 (SPRINT-051 a SPRINT-055) pueden arrancar asumiendo que la gestió
 
 **Estado:** Verificado por `reviewer-frontend`
 **Fecha de verificación:** 2026-09-06
-**Resultado:** 36/36 tests pasando, 15/15 specs en verde
+**Resultado:** 43/43 tests pasando, 19/19 specs en verde

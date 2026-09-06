@@ -1,6 +1,15 @@
 import { createFamilyViaApi, createChildViaApi, uniqueFamilyName } from '../../support/testData'
 
 const PIN = '1234'
+const baseUrl = Cypress.config('baseUrl') || 'http://localhost:80'
+let apiUrl: string
+if (baseUrl.includes('app:')) {
+  apiUrl = baseUrl.replace(/app(:\d+)?/, 'api:8080')
+} else if (baseUrl.includes('8880')) {
+  apiUrl = 'http://localhost:18080'
+} else {
+  apiUrl = 'http://localhost:8080'
+}
 
 function loginAndGoToPanel() {
   cy.visit('/')
@@ -25,11 +34,11 @@ describe('Cuadrícula de perfiles — sesiones, expulsar, bloquear (SPRINT-027)'
 
     let realChildId = 0
     cy.request({
-      method: 'POST', url: '/api/v1/auth/login', body: { pin: PIN }
+      method: 'POST', url: `${apiUrl}/api/v1/auth/login`, body: { pin: PIN }
     }).then((resp) => {
       const { token } = resp.body.data
       return cy.request({
-        method: 'GET', url: '/api/v1/family/children',
+        method: 'GET', url: `${apiUrl}/api/v1/family/children`,
         headers: { Authorization: `Bearer ${token}` }
       }).then((childResp) => {
         realChildId = childResp.body.data[0].id
@@ -113,11 +122,11 @@ describe('Cuadrícula de perfiles — sesiones, expulsar, bloquear (SPRINT-027)'
 
     let realChildId = 0
     cy.request({
-      method: 'POST', url: '/api/v1/auth/login', body: { pin: PIN }
+      method: 'POST', url: `${apiUrl}/api/v1/auth/login`, body: { pin: PIN }
     }).then((resp) => {
       const { token } = resp.body.data
       return cy.request({
-        method: 'GET', url: '/api/v1/family/children',
+        method: 'GET', url: `${apiUrl}/api/v1/family/children`,
         headers: { Authorization: `Bearer ${token}` }
       }).then((childResp) => {
         realChildId = childResp.body.data[0].id

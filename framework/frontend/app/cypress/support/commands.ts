@@ -1,4 +1,13 @@
 const DEFAULT_PIN = '1234'
+const baseUrl = Cypress.config('baseUrl') || 'http://localhost:80'
+let apiUrl: string
+if (baseUrl.includes('app:')) {
+  apiUrl = baseUrl.replace(/app(:\d+)?/, 'api:8080')
+} else if (baseUrl.includes('8880')) {
+  apiUrl = 'http://localhost:18080'
+} else {
+  apiUrl = 'http://localhost:8080'
+}
 
 function persistAuth(token: string, sessionId: number, familyId: number) {
   const sessionData = JSON.stringify({
@@ -31,7 +40,7 @@ Cypress.Commands.add('loginAsParent', (pin: string = DEFAULT_PIN) => {
     () => {
       cy.request({
         method: 'POST',
-        url: '/api/v1/auth/login',
+        url: `${apiUrl}/api/v1/auth/login`,
         body: { pin }
       }).then((response) => {
         expect(response.status).to.be.oneOf([200, 201])
@@ -55,7 +64,7 @@ Cypress.Commands.add('selectChildProfile', (name: string) => {
     () => {
       cy.request({
         method: 'POST',
-        url: '/api/v1/auth/login',
+        url: `${apiUrl}/api/v1/auth/login`,
         body: { pin: DEFAULT_PIN }
       }).then((loginResp) => {
         expect(loginResp.body.success).to.eq(true)
@@ -63,7 +72,7 @@ Cypress.Commands.add('selectChildProfile', (name: string) => {
         persistAuth(token, sessionId, familyId)
         cy.request({
           method: 'GET',
-          url: '/api/v1/family/children',
+          url: `${apiUrl}/api/v1/family/children`,
           headers: { Authorization: `Bearer ${token}` }
         }).then((childrenResp) => {
           expect(childrenResp.body.success).to.eq(true)
@@ -73,7 +82,7 @@ Cypress.Commands.add('selectChildProfile', (name: string) => {
           expect(child, `child profile "${name}" not found`).to.not.be.undefined
           cy.request({
             method: 'POST',
-            url: '/api/v1/sessions/children',
+            url: `${apiUrl}/api/v1/sessions/children`,
             headers: { Authorization: `Bearer ${token}` },
             body: { childProfileId: child.id, heartbeatIntervalSeconds: 60 }
           }).then((sessionResp) => {
