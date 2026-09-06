@@ -43,6 +43,22 @@ const loadPhaserGame = async () => {
   }
     
     gameInstance = new Phaser.Game(config)
+
+    if (typeof window !== 'undefined' && (window as any).Cypress) {
+      const w = window as any
+      w.__NUBI_GAME_STATE__ = {
+        get childId() { return gameInstance.registry?.get('childId') ?? null },
+        get npcEnabled() { return gameInstance.registry?.get('npcEnabled') ?? false },
+        get ttsEnabled() { return gameInstance.registry?.get('voiceEnabled') ?? false },
+        get activeScene() {
+          try {
+            const scenes = gameInstance.scene?.scenes ?? []
+            const active = scenes.find((s: any) => s.scene?.isActive?.())
+            return active?.scene?.key ?? null
+          } catch { return null }
+        }
+      }
+    }
 }
 
 onMounted(() => {
@@ -50,6 +66,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (typeof window !== 'undefined' && (window as any).Cypress) {
+    delete (window as any).__NUBI_GAME_STATE__
+  }
   if(gameInstance) {
     gameInstance.destroy(true)
   }
