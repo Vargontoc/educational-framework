@@ -9,9 +9,12 @@ export class FarewellScene extends Scene {
   }
 
   create() {
-    this.add.rectangle(400, 300, 800, 600, 0xfef3c7)
+    const cx = 640
+    const cy = 360
 
-    const nubiPlaceholder = this.add.circle(400, 240, 80, 0x7ec8e3)
+    this.add.rectangle(cx, cy, 1280, 720, 0xfef3c7)
+
+    const nubiPlaceholder = this.add.circle(cx, cy - 72, 80, 0x7ec8e3)
     this.tweens.add({
       targets: nubiPlaceholder,
       alpha: 0.5,
@@ -21,7 +24,7 @@ export class FarewellScene extends Scene {
       ease: 'Sine.easeInOut'
     })
 
-    const farewellText = this.add.text(400, 380, '\u00a1Hasta pronto!', {
+    const farewellText = this.add.text(cx, cy + 96, '\u00a1Hasta pronto!', {
       fontSize: '32px',
       color: '#111827',
       fontFamily: 'Nunito, sans-serif',

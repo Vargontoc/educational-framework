@@ -14,6 +14,22 @@ export class WorldMapScene extends Scene {
         if(this.websocket) {
             this.manageWebsocket(this.websocket)
         }
+
+        this.events.on('pause', () => {
+            clearInterval(this.registry.get('wsWorldbeat'))
+        })
+
+        this.events.on('resume', () => {
+            if (this.websocket) {
+                const ws = this.websocket
+                const heartbeatId = setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify(new WorldHeartbeatEvent()))
+                    }
+                }, 1000)
+                this.registry.set('wsWorldbeat', heartbeatId)
+            }
+        })
     }
     
     preload() {

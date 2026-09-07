@@ -20,6 +20,16 @@ export class RecognitionGameScene extends Scene {
         this.activityId = data.activityId
     }
 
+    create() {
+        this.events.on('pause', () => {
+            this.bloackActions = true
+        })
+
+        this.events.on('resume', () => {
+            this.bloackActions = false
+        })
+    }
+
     preload() {
         if(this.websocket) {
             this.manageWs(this.websocket)

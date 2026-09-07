@@ -354,6 +354,9 @@ export default {
         notice: 'Este perfil no puede jugar ahora',
         close: 'Cerrar',
         iconLabel: 'Perfil no disponible'
+      },
+      orientationRequired: {
+        hint: 'Gira tu tablet'
       }
     },
     docs: {

@@ -5,16 +5,19 @@
 
 <script setup lang="ts">
 import { Game } from 'phaser';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { LoadingScene } from '@/components/game/LoadingScene';
 import { BaseStateScene } from '@/components/game/BaseStateScene';
 import { FarewellScene } from '@/components/game/FarewellScene';
+import { OrientationRequiredScene } from '@/components/game/OrientationRequiredScene';
 import { useRoute } from 'vue-router';
 import { useGlobalConfig } from '@/composables/useGlobalConfig';
+import { useGameOrientation } from '@/composables/useGameOrientation';
 
 const gameContainer = ref(null)
 const route = useRoute()
 const { persisted: globalConfig } = useGlobalConfig()
+const { isPortrait } = useGameOrientation()
 
 let gameInstance = null as unknown as Game;
 
@@ -24,10 +27,10 @@ const loadPhaserGame = async () => {
     
     const config = {
       type: Phaser.AUTO,
-      width: 800,
-      height: 600,
+      width: 1280,
+      height: 720,
       parent: gameContainer.value,
-      scene: [LoadingScene, BaseStateScene, FarewellScene],
+      scene: [LoadingScene, BaseStateScene, FarewellScene, OrientationRequiredScene],
       backgroundColor: "#028af8",
       callbacks: {
         preBoot: (game: { registry: { set: (arg0: string, arg1: unknown) => void; }; }) => {
@@ -43,6 +46,31 @@ const loadPhaserGame = async () => {
   }
     
     gameInstance = new Phaser.Game(config)
+
+    watch(isPortrait, (newVal) => {
+      if (!gameInstance) return
+
+      const scenePlugin = gameInstance.scene
+
+      if (newVal) {
+        const activeScene = scenePlugin.scenes.find((s: any) => s.scene.isActive())
+        if (activeScene && activeScene.scene.key !== 'orientation-required') {
+          gameInstance.registry.set('previousSceneKey', activeScene.scene.key)
+          activeScene.scene.pause()
+          scenePlugin.start('orientation-required')
+        }
+      } else {
+        const previousKey = gameInstance.registry.get('previousSceneKey') as string
+        if (previousKey) {
+          scenePlugin.stop('orientation-required')
+          const previousScene = scenePlugin.getScene(previousKey)
+          if (previousScene) {
+            previousScene.scene.resume()
+          }
+          gameInstance.registry.set('previousSceneKey', null)
+        }
+      }
+    })
 
     if (typeof window !== 'undefined' && (window as any).Cypress) {
       const w = window as any
@@ -113,7 +141,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-color: var(--nubi-bg-surface-secondary);
+  background-color: #028af8;
 }
 
 .game-view :deep(canvas) {

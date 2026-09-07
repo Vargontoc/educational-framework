@@ -129,9 +129,12 @@ export class LoadingScene extends Scene {
     }
 
     showLoadingPlaceholder() {
-        this.add.rectangle(400, 300, 800, 600, 0xf0f4f8)
+        const cx = 640
+        const cy = 360
 
-        const icon = this.add.circle(400, 260, 40, 0x4a90e2)
+        this.add.rectangle(cx, cy, 1280, 720, 0xf0f4f8)
+
+        const icon = this.add.circle(cx, cy - 48, 40, 0x4a90e2)
         this.tweens.add({
             targets: icon,
             alpha: 0.3,
@@ -140,7 +143,7 @@ export class LoadingScene extends Scene {
             repeat: -1
         })
 
-        const loadingText = this.add.text(400, 340, 'Preparando...', {
+        const loadingText = this.add.text(cx, cy + 48, 'Preparando...', {
             fontSize: '24px',
             color: '#111827',
             fontFamily: 'Nunito, sans-serif',
