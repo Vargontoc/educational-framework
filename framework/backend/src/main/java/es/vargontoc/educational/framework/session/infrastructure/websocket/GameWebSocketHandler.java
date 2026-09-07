@@ -248,6 +248,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         try {
+            
             var result = avatarservice.processEvent(new AvatarEventRequest(childSessionId, AvatarEventType.FAREWELL, null));
             if (result.isPresent()) {
                 sendToSession(childSessionId, objectMapper.writeValueAsString(result.event()));

@@ -1,10 +1,13 @@
 package es.vargontoc.educational.framework.avatar.service;
 
+import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
+import es.vargontoc.educational.framework.audio.domain.AudioRequest;
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
 import es.vargontoc.educational.framework.avatar.domain.AvatarEventRequest;
-import es.vargontoc.educational.framework.avatar.domain.AvatarEventResult;
+import es.vargontoc.educational.framework.avatar.domain.AvatarLifecycleResult;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
+import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.family.model.ChildProfile;
@@ -30,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,177 +48,200 @@ class AvatarServiceTest {
     private AvatarEventCatalogRepository avatarEventCatalogRepository;
 
     @Mock
-    private TtsClient ttsClient;
+    private AudioUseCase audio;
 
     private AvatarService avatarService;
 
     @BeforeEach
     void setUp() {
-        avatarService = new AvatarService(childSessionRepository, childProfileRepository, avatarEventCatalogRepository, ttsClient);
+        avatarService = new AvatarService(childSessionRepository, childProfileRepository, avatarEventCatalogRepository, audio);
     }
 
     @Test
-    void processAvatarEvent_activeSession_returnsCatalogText() {
-        ChildSession session = createActiveSession(1L, 100L, 10L);
-        ChildProfile childProfile = createChildProfile(100L, true, true);
-        AvatarEventCatalog catalog = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES", "Great job!");
+    void processEvent_activeSessionNpcAndVoiceEnabled_returnsAudioResult() {
+        ChildSession session = createActiveSession(1L, 100L);
+        ChildProfile childProfile = createChildProfile(100L, "Ada", true, true);
+        AvatarEventCatalog catalog = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, "Great job <name>!");
 
         when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
         when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
-        when(avatarEventCatalogRepository.findActiveByFilters(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES"))
+        when(avatarEventCatalogRepository.findByEventType(AvatarEventType.ACTIVITY_COMPLETED))
             .thenReturn(List.of(catalog));
-        when(ttsClient.synthesize(anyString(), anyString(), any(), anyString()))
-            .thenReturn("fake-mp3-data".getBytes());
+        when(audio.getAudio(any(AudioRequest.class))).thenReturn("fake-mp3-data".getBytes());
 
-        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
-        AvatarEventResult result = avatarService.processAvatarEvent(request);
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, null);
+        AvatarLifecycleResult result = avatarService.processEvent(request);
 
         assertNotNull(result);
-        assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
-        assertEquals("Great job!", result.getText());
-        assertTrue(result.isAudioAvailable());
-        assertFalse(result.isSuppressed());
-        assertNotNull(result.getAudioData());
+        assertTrue(result.isPresent());
+        assertEquals("ACTIVITY_COMPLETED", result.event().eventType());
+        assertTrue(result.event().audioAvailable());
+        assertNotNull(result.event().audioId());
+        assertNotNull(result.audioData());
     }
 
     @Test
-    void processAvatarEvent_inactiveSession_throwsSessionException() {
-        ChildSession session = createInactiveSession(1L, 100L, 10L);
+    void processEvent_inactiveSession_throwsSessionException() {
+        ChildSession session = createSession(1L, 100L, ChildSessionStatus.CLOSED);
 
         when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
 
-        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, null);
 
-        assertThrows(SessionException.class, () -> avatarService.processAvatarEvent(request));
+        assertThrows(SessionException.class, () -> avatarService.processEvent(request));
     }
 
     @Test
-    void processAvatarEvent_missingSession_throwsResourceNotFound() {
+    void processEvent_missingSession_throwsResourceNotFound() {
         when(childSessionRepository.findById(999L)).thenReturn(Optional.empty());
 
-        AvatarEventRequest request = new AvatarEventRequest(999L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
+        AvatarEventRequest request = new AvatarEventRequest(999L, AvatarEventType.ACTIVITY_COMPLETED, null);
 
-        assertThrows(ResourceNotFoundException.class, () -> avatarService.processAvatarEvent(request));
+        assertThrows(ResourceNotFoundException.class, () -> avatarService.processEvent(request));
     }
 
     @Test
-    void processAvatarEvent_agentDisabled_returnsSuppressedResult() {
-        ChildSession session = createActiveSession(1L, 100L, 10L);
-        ChildProfile childProfile = createChildProfile(100L, true, false);
+    void processEvent_missingChildProfile_throwsResourceNotFound() {
+        ChildSession session = createActiveSession(1L, 100L);
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+        when(childProfileRepository.findById(100L)).thenReturn(Optional.empty());
+
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, null);
+
+        assertThrows(ResourceNotFoundException.class, () -> avatarService.processEvent(request));
+    }
+
+    @Test
+    void processEvent_npcDisabled_returnsFallbackResult() {
+        ChildSession session = createActiveSession(1L, 100L);
+        ChildProfile childProfile = createChildProfile(100L, "Ada", true, false);
 
         when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
         when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
 
-        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
-        AvatarEventResult result = avatarService.processAvatarEvent(request);
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, null);
+        AvatarLifecycleResult result = avatarService.processEvent(request);
 
         assertNotNull(result);
-        assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
-        assertNull(result.getText());
-        assertFalse(result.isAudioAvailable());
-        assertTrue(result.isSuppressed());
+        assertFalse(result.event().audioAvailable());
+        assertNull(result.event().audioId());
+        assertNull(result.audioData());
     }
 
     @Test
-    void processAvatarEvent_ttsDisabled_returnsTextOnlyResult() {
-        ChildSession session = createActiveSession(1L, 100L, 10L);
-        ChildProfile childProfile = createChildProfile(100L, false, true);
-        AvatarEventCatalog catalog = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES", "Great job!");
+    void processEvent_npcVoiceDisabled_returnsFallbackResult() {
+        ChildSession session = createActiveSession(1L, 100L);
+        ChildProfile childProfile = createChildProfile(100L, "Ada", false, true);
+        AvatarEventCatalog catalog = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, "Great job!");
 
         when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
         when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
-        when(avatarEventCatalogRepository.findActiveByFilters(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES"))
+        when(avatarEventCatalogRepository.findByEventType(AvatarEventType.ACTIVITY_COMPLETED))
             .thenReturn(List.of(catalog));
 
-        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
-        AvatarEventResult result = avatarService.processAvatarEvent(request);
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, null);
+        AvatarLifecycleResult result = avatarService.processEvent(request);
 
         assertNotNull(result);
-        assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
-        assertEquals("Great job!", result.getText());
-        assertFalse(result.isAudioAvailable());
-        assertFalse(result.isSuppressed());
-        assertNull(result.getAudioData());
+        assertFalse(result.event().audioAvailable());
+        assertNull(result.audioData());
     }
 
     @Test
-    void processAvatarEvent_noCatalogMatch_returnsFallbackText() {
-        ChildSession session = createActiveSession(1L, 100L, 10L);
-        ChildProfile childProfile = createChildProfile(100L, true, true);
+    void processEvent_noCatalogMatch_returnsFallbackResult() {
+        ChildSession session = createActiveSession(1L, 100L);
+        ChildProfile childProfile = createChildProfile(100L, "Ada", true, true);
 
         when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
         when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
-        when(avatarEventCatalogRepository.findActiveByFilters(any(), any(), any()))
+        when(avatarEventCatalogRepository.findByEventType(AvatarEventType.ACTIVITY_COMPLETED))
             .thenReturn(List.of());
-        when(ttsClient.synthesize(anyString(), anyString(), any(), anyString()))
-            .thenReturn("fake-mp3-data".getBytes());
 
-        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
-        AvatarEventResult result = avatarService.processAvatarEvent(request);
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, null);
+        AvatarLifecycleResult result = avatarService.processEvent(request);
 
         assertNotNull(result);
-        assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
-        assertEquals("Thank you for using the educational framework!", result.getText());
-        assertTrue(result.isAudioAvailable());
-        assertFalse(result.isSuppressed());
+        assertFalse(result.event().audioAvailable());
+        assertNull(result.audioData());
     }
 
     @Test
-    void processAvatarEvent_ttsEnabled_butSynthesisFails_returnsTextOnly() {
-        ChildSession session = createActiveSession(1L, 100L, 10L);
-        ChildProfile childProfile = createChildProfile(100L, true, true);
-        AvatarEventCatalog catalog = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES", "Great job!");
+    void processEvent_audioSynthesisFails_returnsFallbackResult() {
+        ChildSession session = createActiveSession(1L, 100L);
+        ChildProfile childProfile = createChildProfile(100L, "Ada", true, true);
+        AvatarEventCatalog catalog = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, "Great job!");
 
         when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
         when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
-        when(avatarEventCatalogRepository.findActiveByFilters(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.NEUTRAL, "es-ES"))
+        when(avatarEventCatalogRepository.findByEventType(AvatarEventType.ACTIVITY_COMPLETED))
             .thenReturn(List.of(catalog));
-        when(ttsClient.synthesize(anyString(), anyString(), any(), anyString()))
-            .thenThrow(new TtsException("TTS timeout", "CONNECTION_ERROR", true));
+        when(audio.getAudio(any(AudioRequest.class))).thenThrow(new RuntimeException("TTS timeout"));
 
-        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, "es-ES", null);
-        AvatarEventResult result = avatarService.processAvatarEvent(request);
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, null);
+        AvatarLifecycleResult result = avatarService.processEvent(request);
 
         assertNotNull(result);
-        assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
-        assertEquals("Great job!", result.getText());
-        assertFalse(result.isAudioAvailable());
-        assertFalse(result.isSuppressed());
-        assertNull(result.getAudioData());
+        assertFalse(result.event().audioAvailable());
+        assertNull(result.audioData());
     }
 
-    private ChildSession createActiveSession(Long sessionId, Long childProfileId, Long familyId) {
+    @Test
+    void processEvent_multipleCatalogEntries_doesNotRepeatConsecutively() {
+        ChildSession session = createActiveSession(1L, 100L);
+        ChildProfile childProfile = createChildProfile(100L, "Ada", true, true);
+        AvatarEventCatalog catalogA = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, "Message A");
+        catalogA.setId(1L);
+        AvatarEventCatalog catalogB = createCatalog(AvatarEventType.ACTIVITY_COMPLETED, "Message B");
+        catalogB.setId(2L);
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+        when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
+        when(avatarEventCatalogRepository.findByEventType(AvatarEventType.ACTIVITY_COMPLETED))
+            .thenReturn(List.of(catalogA, catalogB));
+        when(audio.getAudio(any(AudioRequest.class))).thenReturn("fake-mp3-data".getBytes());
+
+        var requestCaptor = org.mockito.ArgumentCaptor.forClass(AudioRequest.class);
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.ACTIVITY_COMPLETED, null);
+
+        avatarService.processEvent(request);
+        avatarService.processEvent(request);
+        avatarService.processEvent(request);
+
+        org.mockito.Mockito.verify(audio, org.mockito.Mockito.times(3)).getAudio(requestCaptor.capture());
+        var texts = requestCaptor.getAllValues().stream().map((ar) -> ar.text()).toList();
+        for (int i = 1; i < texts.size(); i++) {
+            assertFalse(texts.get(i).equals(texts.get(i - 1)),
+                "Consecutive avatar messages should not repeat when alternatives exist");
+        }
+    }
+
+    private ChildSession createActiveSession(Long sessionId, Long childProfileId) {
+        return createSession(sessionId, childProfileId, ChildSessionStatus.ACTIVE);
+    }
+
+    private ChildSession createSession(Long sessionId, Long childProfileId, ChildSessionStatus status) {
         ChildSession session = new ChildSession();
         session.setId(sessionId);
         session.setChildProfileId(childProfileId);
-        session.setFamilyId(familyId);
-        session.setStatus(ChildSessionStatus.ACTIVE);
+        session.setStatus(status);
         return session;
     }
 
-    private ChildSession createInactiveSession(Long sessionId, Long childProfileId, Long familyId) {
-        ChildSession session = new ChildSession();
-        session.setId(sessionId);
-        session.setChildProfileId(childProfileId);
-        session.setFamilyId(familyId);
-        session.setStatus(ChildSessionStatus.CLOSED);
-        return session;
-    }
-
-    private ChildProfile createChildProfile(Long id, boolean ttsEnabled, boolean agentEnabled) {
+    private ChildProfile createChildProfile(Long id, String name, boolean npcVoiceEnabled, boolean npcEnabled) {
         ChildProfile profile = new ChildProfile();
         profile.setId(id);
-        profile.setNpcVoiceEnabled(ttsEnabled);
-        profile.setNpcEnabled(agentEnabled);
+        profile.setName(name);
+        profile.setNpcVoiceEnabled(npcVoiceEnabled);
+        profile.setNpcEnabled(npcEnabled);
         return profile;
     }
 
-    private AvatarEventCatalog createCatalog(AvatarEventType eventType, AvatarTone tone, String locale, String messageText) {
+    private AvatarEventCatalog createCatalog(AvatarEventType eventType, String messageText) {
         AvatarEventCatalog catalog = new AvatarEventCatalog();
         catalog.setId(1L);
         catalog.setEventType(eventType);
-        catalog.setTone(tone);
-        catalog.setLocale(locale);
+        catalog.setTone(TonePreset.CALM);
         catalog.setMessageText(messageText);
         catalog.setStatus(ContentStatus.ACTIVE);
         return catalog;

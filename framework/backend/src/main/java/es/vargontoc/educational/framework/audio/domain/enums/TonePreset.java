@@ -11,7 +11,7 @@ public enum TonePreset {
     CALM(0.45, 0.5, 0.8),
     ADVENTURE(0.85, 0.4, 0.9),
     INTENSE(0.3, 0.6, 0.6),
-    NEUTRO(0.5, 0.5, 0.8),
+    NEUTRAL(0.5, 0.5, 0.8),
     CUSTOM(null, null, null);
 
     private final Double exaggeration;

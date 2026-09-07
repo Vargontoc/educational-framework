@@ -282,7 +282,7 @@ class DevContentControllerTest {
     void avatarEvents_create_thenList() throws Exception {
         var body = objectMapper.writeValueAsString(Map.of(
             "eventType", "ACTIVITY_COMPLETED",
-            "tone", "JOYFUL",
+            "tone", "ADVENTURE",
             "locale", "es-ES",
             "messageText", "Has completado la actividad!",
             "status", "ACTIVE"
@@ -294,7 +294,7 @@ class DevContentControllerTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.success", is(true)))
             .andExpect(jsonPath("$.data.eventType", is("ACTIVITY_COMPLETED")))
-            .andExpect(jsonPath("$.data.tone", is("JOYFUL")))
+            .andExpect(jsonPath("$.data.tone", is("ADVENTURE")))
             .andExpect(jsonPath("$.data.status", is("ACTIVE")));
 
         mockMvc.perform(authGet("/api/v1/dev/content/avatar-events"))
@@ -306,7 +306,7 @@ class DevContentControllerTest {
     void avatarEvents_create_blankMessage_returns400() throws Exception {
         var body = objectMapper.writeValueAsString(Map.of(
             "eventType", "ACTIVITY_COMPLETED",
-            "tone", "JOYFUL",
+            "tone", "ADVENTURE",
             "locale", "es-ES",
             "messageText", "  ",
             "status", "ACTIVE"

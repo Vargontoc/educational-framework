@@ -1,14 +1,14 @@
 [
   {
     "eventType": "ACTIVITY_COMPLETED",
-    "tone": "JOYFUL",
+    "tone": "ADVENTURE",
     "locale": "es-ES",
     "messageText": "¡Has completado la actividad! ¡Muy bien!",
     "status": "ACTIVE"
   },
   {
     "eventType": "ACTIVITY_STARTED",
-    "tone": "ENTHUSIASTIC",
+    "tone": "ADVENTURE",
     "locale": "es-ES",
     "messageText": "¡Vamos a jugar! ¡Prepárate!",
     "status": "ACTIVE"
@@ -22,23 +22,23 @@
   },
   {
     "eventType": "HELP_REQUESTED",
-    "tone": "NEUTRAL",
+    "tone": "NEUTRO",
     "locale": "es-ES",
     "messageText": "¡Claro! Voy a ayudarte.",
     "status": "ACTIVE"
   },
   {
-    "eventType": "OUT_OF_SCOPE_QUERY",
+    "eventType": "WELCOME",
     "tone": "CALM",
     "locale": "es-ES",
-    "messageText": "Esa es una buena pregunta, pero no es parte de esta actividad.",
+    "messageText": "¡Hola <name>! ¡Bienvenido, vamos a jugar!",
     "status": "ACTIVE"
   },
   {
-    "eventType": "CURIOSITY_REQUESTED",
-    "tone": "ENTHUSIASTIC",
+    "eventType": "FAREWELL",
+    "tone": "CALM",
     "locale": "es-ES",
-    "messageText": "¡Sabías que...!",
+    "messageText": "¡Hasta la próxima, <name>! Lo has hecho genial.",
     "status": "ACTIVE"
   }
 ]

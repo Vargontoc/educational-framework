@@ -1,8 +1,8 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class AvatarEventCatalogPersistenceAdapterTest {
         var result = adapter.save(event);
 
         assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
-        assertEquals(AvatarTone.JOYFUL, result.getTone());
+        assertEquals(TonePreset.ADVENTURE, result.getTone());
         assertEquals("es-ES", result.getLocale());
         assertEquals("Has completado la actividad!", result.getMessageText());
         assertEquals(ContentStatus.ACTIVE, result.getStatus());
@@ -53,7 +53,7 @@ class AvatarEventCatalogPersistenceAdapterTest {
 
         assertTrue(result.isPresent());
         assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.get().getEventType());
-        assertEquals(AvatarTone.JOYFUL, result.get().getTone());
+        assertEquals(TonePreset.ADVENTURE, result.get().getTone());
         assertEquals("es-ES", result.get().getLocale());
         assertEquals("Has completado la actividad!", result.get().getMessageText());
         assertEquals(ContentStatus.ACTIVE, result.get().getStatus());
@@ -62,7 +62,7 @@ class AvatarEventCatalogPersistenceAdapterTest {
     private AvatarEventCatalog buildDomain() {
         var event = new AvatarEventCatalog();
         event.setEventType(AvatarEventType.ACTIVITY_COMPLETED);
-        event.setTone(AvatarTone.JOYFUL);
+        event.setTone(TonePreset.ADVENTURE);
         event.setLocale("es-ES");
         event.setMessageText("Has completado la actividad!");
         event.setStatus(ContentStatus.ACTIVE);
@@ -74,7 +74,7 @@ class AvatarEventCatalogPersistenceAdapterTest {
         var entity = new AvatarEventCatalogJpaEntity();
         entity.setId(1L);
         entity.setEventType("ACTIVITY_COMPLETED");
-        entity.setTone("JOYFUL");
+        entity.setTone("ADVENTURE");
         entity.setLocale("es-ES");
         entity.setMessageText("Has completado la actividad!");
         entity.setStatus("ACTIVE");

@@ -1,8 +1,8 @@
 package es.vargontoc.educational.framework.content.service;
 
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
@@ -40,23 +40,23 @@ class AvatarEventCatalogServiceTest {
         when(avatarEventCatalogRepository.save(any(AvatarEventCatalog.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = avatarEventCatalogService.createAvatarEvent(
-            AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.JOYFUL, "es-ES", "Has completado la actividad!", ContentStatus.ACTIVE);
+            AvatarEventType.ACTIVITY_COMPLETED, TonePreset.ADVENTURE, "es-ES", "Has completado la actividad!", ContentStatus.ACTIVE);
 
         assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
-        assertEquals(AvatarTone.JOYFUL, result.getTone());
+        assertEquals(TonePreset.ADVENTURE, result.getTone());
         assertNotNull(result.getCreatedAt());
     }
 
     @Test
     void createAvatarEvent_nullEventType_throwsValidation() {
         assertThrows(ValidationException.class, () ->
-            avatarEventCatalogService.createAvatarEvent(null, AvatarTone.JOYFUL, "es-ES", "Some message", ContentStatus.ACTIVE));
+            avatarEventCatalogService.createAvatarEvent(null, TonePreset.ADVENTURE, "es-ES", "Some message", ContentStatus.ACTIVE));
     }
 
     @Test
     void createAvatarEvent_blankMessage_throwsValidation() {
         assertThrows(ValidationException.class, () ->
-            avatarEventCatalogService.createAvatarEvent(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.JOYFUL, "es-ES", " ", ContentStatus.ACTIVE));
+            avatarEventCatalogService.createAvatarEvent(AvatarEventType.ACTIVITY_COMPLETED, TonePreset.ADVENTURE, "es-ES", " ", ContentStatus.ACTIVE));
     }
 
     @Test
@@ -78,10 +78,10 @@ class AvatarEventCatalogServiceTest {
 
     @Test
     void listActiveAvatarEventsByFilters_returnsFiltered() {
-        when(avatarEventCatalogRepository.findActiveByFilters(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.JOYFUL, "es-ES"))
+        when(avatarEventCatalogRepository.findActiveByFilters(AvatarEventType.ACTIVITY_COMPLETED, TonePreset.ADVENTURE, "es-ES"))
             .thenReturn(List.of(new AvatarEventCatalog()));
 
-        var result = avatarEventCatalogService.listActiveAvatarEventsByFilters(AvatarEventType.ACTIVITY_COMPLETED, AvatarTone.JOYFUL, "es-ES");
+        var result = avatarEventCatalogService.listActiveAvatarEventsByFilters(AvatarEventType.ACTIVITY_COMPLETED, TonePreset.ADVENTURE, "es-ES");
 
         assertEquals(1, result.size());
     }

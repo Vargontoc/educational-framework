@@ -1,8 +1,11 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import tools.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.avatar.domain.AvatarEventRequest;
+import es.vargontoc.educational.framework.avatar.domain.AvatarLifecycleResult;
 import es.vargontoc.educational.framework.avatar.domain.GameAvatarEvent;
-import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
+import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
@@ -64,7 +67,7 @@ class GameWebSocketHandlerTest {
     private ChildSessionUseCase childSessionUseCase;
 
     @Mock
-    private AvatarLifecycleService avatarLifecycleService;
+    private AvatarService avatarService;
 
     @Mock
     private GameOrchestrator gameOrchestrator;
@@ -94,7 +97,7 @@ class GameWebSocketHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarLifecycleService,
+        handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarService,
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
             recognitionElementRepository);
@@ -204,16 +207,16 @@ class GameWebSocketHandlerTest {
         var childSession = childSession(5L, ChildSessionStatus.ACTIVE);
         when(childSessionUseCase.getSession(5L)).thenReturn(childSession);
         when(session.isOpen()).thenReturn(true);
-        var avatarResult = new AvatarLifecycleService.AvatarLifecycleResult(
+        var avatarResult = new AvatarLifecycleResult(
             GameAvatarEvent.welcome(5L, true, "audio-id-123", "Hola, vamos a jugar!"),
             "mp3-data".getBytes()
         );
-        when(avatarLifecycleService.welcome(5L)).thenReturn(avatarResult);
+        when(avatarService.processEvent(eq(new AvatarEventRequest(5L, AvatarEventType.WELCOME, null)))).thenReturn(avatarResult);
 
         handler.afterConnectionEstablished(session);
         handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":5}"));
 
-        verify(avatarLifecycleService).welcome(5L);
+        verify(avatarService).processEvent(eq(new AvatarEventRequest(5L, AvatarEventType.WELCOME, null)));
         var captor = ArgumentCaptor.forClass(TextMessage.class);
         verify(session, org.mockito.Mockito.atLeast(2)).sendMessage(captor.capture());
         assertTrue(captor.getAllValues().stream()
@@ -232,15 +235,15 @@ class GameWebSocketHandlerTest {
         handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":6}"));
         assertTrue(handler.hasActiveSession(6L));
 
-        var avatarResult = new AvatarLifecycleService.AvatarLifecycleResult(
+        var avatarResult = new AvatarLifecycleResult(
             GameAvatarEvent.farewell(6L, true, "audio-id-456", "Vaya, parece que es hora de despedirnos. Hasta la proxima."),
             "mp3-data".getBytes()
         );
-        when(avatarLifecycleService.farewell(6L)).thenReturn(avatarResult);
+        when(avatarService.processEvent(eq(new AvatarEventRequest(6L, AvatarEventType.FAREWELL, null)))).thenReturn(avatarResult);
 
         handler.sendFarewellAndClose(6L);
 
-        verify(avatarLifecycleService).farewell(6L);
+        verify(avatarService).processEvent(eq(new AvatarEventRequest(6L, AvatarEventType.FAREWELL, null)));
         verify(session).close(CloseStatus.NORMAL);
     }
 
@@ -257,11 +260,11 @@ class GameWebSocketHandlerTest {
         var childSession = childSession(7L, ChildSessionStatus.ACTIVE);
         when(childSessionUseCase.getSession(7L)).thenReturn(childSession);
         when(session.isOpen()).thenReturn(true);
-        var avatarResult = new AvatarLifecycleService.AvatarLifecycleResult(
+        var avatarResult = new AvatarLifecycleResult(
             GameAvatarEvent.welcome(7L, false, null, "Hola, vamos a jugar!"),
             null
         );
-        when(avatarLifecycleService.welcome(7L)).thenReturn(avatarResult);
+        when(avatarService.processEvent(eq(new AvatarEventRequest(7L, AvatarEventType.WELCOME, null)))).thenReturn(avatarResult);
 
         handler.afterConnectionEstablished(session);
         handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":7}"));

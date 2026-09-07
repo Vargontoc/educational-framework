@@ -1,15 +1,18 @@
 package es.vargontoc.educational.framework.avatar.infrastructure.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.audio.domain.AudioRequest;
 import es.vargontoc.educational.framework.avatar.application.ports.in.AvatarUseCase;
 import es.vargontoc.educational.framework.avatar.domain.AvatarEventRequest;
+import es.vargontoc.educational.framework.avatar.domain.AvatarLifecycleResult;
 import es.vargontoc.educational.framework.avatar.domain.GameAvatarEvent;
 import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
-import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarLifecycleService.AvatarLifecycleResult;
 import es.vargontoc.educational.framework.avatar.infrastructure.validation.AvatarValidator;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
@@ -37,6 +40,7 @@ public class AvatarService implements AvatarUseCase {
 
     private final AudioUseCase audio;
 
+    private final Map<String, Long> lastShownCatalogIdByChild = new ConcurrentHashMap<>();
 
     public AvatarService(
             ChildSessionRepository childSessionRepository,
@@ -62,12 +66,13 @@ public class AvatarService implements AvatarUseCase {
             return createFallbackResult(session.getId(), request.eventType());
         }
 
-        String text = resolveCatalog(request.eventType(), childProfile);
+        AvatarEventCatalog event = resolveCatalog(request.eventType(), childProfile);
 
-        if(childProfile.isNpcVoiceEnabled() && text != null && !text.trim().isBlank()) {
+        if(childProfile.isNpcVoiceEnabled() && event != null && event.getMessageText() != null && !event.getMessageText().trim().isBlank()) {
             
             try {
-                byte[] data = audio.getAudio(new AudioRequest(text, 0, 0, 0));
+                
+                byte[] data = audio.getAudio(AudioRequest.withPreset(event.getMessageText().replace("<name>", childProfile.getName()), event.getTone()));
                 return createResult(session.getId(), request.eventType(), data);
             }catch(Exception e) {
                 log.error("Error generate audio: {}", e.getMessage(), e);
@@ -78,14 +83,24 @@ public class AvatarService implements AvatarUseCase {
         return createFallbackResult(session.getId(), request.eventType());
     }
 
-    String resolveCatalog(AvatarEventType type, ChildProfile profile) {
+    AvatarEventCatalog resolveCatalog(AvatarEventType type, ChildProfile profile) {
         List<AvatarEventCatalog> catalog = avatarEventCatalogRepository.findByEventType(type);
         if(catalog.isEmpty())
             return null;
 
-        // TODO: Aleatorio + patron antirepeticion
+        String key = profile.getId() + ":" + type.name();
+        Long lastShownId = lastShownCatalogIdByChild.get(key);
 
-        return catalog.get(0).getMessageText().replace("<name>", profile.getName());
+        List<AvatarEventCatalog> candidates = catalog;
+        if(catalog.size() > 1 && lastShownId != null) {
+            candidates = catalog.stream()
+                .filter(c -> !lastShownId.equals(c.getId()))
+                .toList();
+        }
+
+        AvatarEventCatalog selected = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+        lastShownCatalogIdByChild.put(key, selected.getId());
+        return selected;
     }
 
 
