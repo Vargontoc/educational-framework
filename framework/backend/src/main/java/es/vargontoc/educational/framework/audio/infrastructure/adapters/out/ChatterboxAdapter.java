@@ -45,7 +45,7 @@ public class ChatterboxAdapter implements AudioPort {
         
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("input", request.text());
-        body.put("voice", "npc-nubi");
+        body.put("voice", "nubi-npc-voice");
         body.put("response_format", "wav");
         body.put("exaggeration", request.exageration());
         body.put("cfg_weight", request.cfg());

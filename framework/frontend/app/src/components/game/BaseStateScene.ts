@@ -1,8 +1,12 @@
 import { Scene } from 'phaser'
+import router from "@/router";
 import { ServerGameEvent, AvatarEvent, GameErrorPayload } from './GameEvent'
 import { ConnectionMonitor } from './ConnectionMonitor'
 import { connectWebSocket, clearWebSocketHeartbeat } from './websocket'
 import { ErrorClassifier } from './ErrorClassifier'
+import { MessageRouter } from '@/services/MessageRouter'
+import { AudioService } from '@/services/AudioService'
+import { AudioCache } from '@/services/AudioCache'
 
 export class BaseStateScene extends Scene {
   websocket?: WebSocket
@@ -62,9 +66,16 @@ export class BaseStateScene extends Scene {
 
   manageWebSocket(ws: WebSocket) {
     ws.onmessage = (msg) => {
-      if (msg.data) {
-        this.readEvent(JSON.parse(msg.data))
-      }
+      MessageRouter.route(
+        msg.data,
+        (jsonData) => {
+          this.readEvent(jsonData as ServerGameEvent | AvatarEvent)
+        },
+        (binaryData) => {
+          const audioService = this.registry.get('audioService') as AudioService
+          void audioService.handleBinaryFrame(binaryData)
+        }
+      )
     }
 
     ws.onclose = () => {
@@ -105,9 +116,16 @@ export class BaseStateScene extends Scene {
 
   setupWebSocketHandlers(ws: WebSocket) {
     ws.onmessage = (msg) => {
-      if (msg.data) {
-        this.readEvent(JSON.parse(msg.data))
-      }
+      MessageRouter.route(
+        msg.data,
+        (jsonData) => {
+          this.readEvent(jsonData as ServerGameEvent | AvatarEvent)
+        },
+        (binaryData) => {
+          const audioService = this.registry.get('audioService') as AudioService
+          void audioService.handleBinaryFrame(binaryData)
+        }
+      )
     }
 
     ws.onclose = () => {
@@ -169,15 +187,61 @@ export class BaseStateScene extends Scene {
 
   handleAvatarEvent(event: AvatarEvent) {
     switch(event.eventType){
-        case 'SESSION_DISCONNECTED':
-            this.goToFarewell()
-            break;
+        case 'FAREWELL':
+            this.handleFarewellEvent(event)
+            break
         default:
-            break;
+            break
+    }
+  }
+
+  handleFarewellEvent(event: AvatarEvent) {
+    // El backend cierra este socket tras el farewell; evitar que ConnectionMonitor
+    // intente reconectar una sesión que ya va a quedar inactiva/expulsada
+    this.connectionMonitor?.disable()
+
+    const audioService = this.registry.get('audioService') as AudioService
+
+    // Escuchar cuando el audio termine y mandar a home
+    audioService.once('audio-completed', () => {
+      this.cleanupWebSocket()
+      setTimeout(() => {
+        router.replace({ name: 'Home' })
+      }, 1000);
+    })
+
+    if (event.audioAvailable && event.audioId) {
+      let fallbackTimeout: ReturnType<typeof setTimeout> | null = null
+
+      const handleAudioReceived = (audioId: string) => {
+        if (audioId === event.audioId) {
+          // Audio dinámico recibido, cancelar fallback
+          if (fallbackTimeout) {
+            clearTimeout(fallbackTimeout)
+            fallbackTimeout = null
+          }
+          audioService.playDynamic(audioId)
+          audioService.off('audio-received', handleAudioReceived)
+        }
+      }
+      audioService.on('audio-received', handleAudioReceived)
+
+      // Timeout de 3 segundos para fallback a estático si no llega el dinámico
+      fallbackTimeout = setTimeout(() => {
+        if (!audioService.isCurrentlyPlaying()) {
+          console.warn('Audio dinámico no recibido en 3s, usando fallback estático')
+          audioService.off('audio-received', handleAudioReceived)
+          audioService.playStatic('farewell')
+        }
+      }, 3000)
+    } else {
+      // No hay audio dinámico, reproducir estático directamente
+      audioService.playStatic('farewell')
     }
   }
 
   handleExpulsion() {
+    this.connectionMonitor?.disable()
     this.cleanupWebSocket()
     this.goToFarewell()
   }
@@ -237,7 +301,28 @@ export class BaseStateScene extends Scene {
       this.websocket.onmessage = null
       this.websocket.onclose = null
       this.websocket.onerror = null
+      this.websocket.close()
       this.websocket = undefined
+    }
+  }
+
+  shutdown() {
+    const audioService = this.registry.get('audioService') as AudioService
+    if (audioService) {
+      audioService.stop()
+    }
+    this.cleanupWebSocket()
+  }
+
+  destroy() {
+    const audioService = this.registry.get('audioService') as AudioService
+    if (audioService) {
+      audioService.dispose()
+    }
+
+    const audioCache = this.registry.get('audioCache') as AudioCache
+    if (audioCache) {
+      audioCache.clear()
     }
   }
 }

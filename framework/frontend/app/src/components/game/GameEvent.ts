@@ -17,7 +17,7 @@ export type SERVER_EVENT =
     'GAME_READY' |
     'GAME_ACTION_RESULT'
 export type GAME_RESULT_TYPE = 'CORRECT' | 'INCORRECT' | 'TIMEOUT'
-export type AVATAR_TYPE_EVENT = 'SESSION_CONNECTED' | 'SESSION_DISCONNECTED'
+export type AVATAR_TYPE_EVENT = 'WELCOME' | 'FAREWELL'
 export type GAME_ENGINE = 'RECOGNITION' | 'MEMORY' | 'ASSOCIATION' | 'COUNT' | 'COMPARE' | 'PUZZLE'
 export type RECOGNITION_TYPE = 'LETTER' | 'NUMBER'
 
@@ -79,7 +79,7 @@ export type ServerGameEvent = AuthAckEvent
 export class AvatarEvent {
     event: 'GAME_AVATAR_EVENT' = 'GAME_AVATAR_EVENT'
     sessionId: number = 0
-    eventType: AVATAR_TYPE_EVENT = 'SESSION_CONNECTED'
+    eventType: AVATAR_TYPE_EVENT = 'WELCOME'
     audioAvailable: boolean = false
     audioId?: string
     text: string = ''

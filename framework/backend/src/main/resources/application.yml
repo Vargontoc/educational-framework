@@ -88,7 +88,7 @@ app:
     scheduling:
       enabled: ${APP_SESSION_SCHEDULING_ENABLED:true}
   audio:
-    base-url: ${TTS_BASE_URL:http://localhost:8081}
+    base-url: ${CHATTERBOX_BASE_URL:http://localhost:4123}
     cache:
       max-entries: ${AVATAR_CACHE_MAX_ENTRIES:1024}
       expire-after-write-minutes: ${AVATAR_CACHE_EXPIRE_MINUTES:60}

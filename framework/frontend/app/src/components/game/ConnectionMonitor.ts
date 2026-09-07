@@ -3,6 +3,7 @@ export class ConnectionMonitor {
   private maxReconnectAttempts = 3
   private reconnectIntervalMs = 5000
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private disabled = false
 
   private onConnectionLost: () => void
   private onRecoveryFailed: () => void
@@ -28,7 +29,17 @@ export class ConnectionMonitor {
     this.onRecoveryFailed()
   }
 
+  // Llamar cuando el cierre del socket es esperado (farewell/expulsión) para no reintentar reconectar una sesión ya finalizada
+  disable() {
+    this.disabled = true
+    this.clearTimer()
+  }
+
   private scheduleReconnect() {
+    if (this.disabled) {
+      return
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       this.clearTimer()
       this.onRecoveryFailed()

@@ -7,6 +7,7 @@ const WS_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080
 export function connectWebSocket(sessionId: number): Promise<WebSocket> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`${WS_BASE_URL}/ws/game?childSessionId=${sessionId}`)
+    ws.binaryType = 'arraybuffer'
 
     ws.onopen = () => {
       const authEvent = new AuthGameEvent()

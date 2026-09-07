@@ -5,6 +5,16 @@
                 "type" : "image",
                 "key" : "element_shiny_flower",
                 "url" : "assets/images/Simple_Flower_Bush.webp"
+            },
+            {
+                "type" : "audio",
+                "key" : "welcome",
+                "url" : "audio/welcome.wav"
+            },
+            {
+                "type" : "audio",
+                "key" : "farewell",
+                "url" : "audio/farewell.wav"
             }
         ]
     },

@@ -29,7 +29,7 @@ public class AudioCacheStorage {
     private final Cache<AudioCache, byte[]> internalCache;
 
     public AudioCacheStorage(
-        @Value("classpath:/stories") Resource cachePath,
+        @Value("classpath:/cache/audios") Resource cachePath,
         AudioCacheConfiguration properties) {
         this.properties = properties;
         try {

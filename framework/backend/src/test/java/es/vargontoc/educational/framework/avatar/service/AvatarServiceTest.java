@@ -93,6 +93,25 @@ class AvatarServiceTest {
     }
 
     @Test
+    void processEvent_farewellOnClosedSession_doesNotThrow() {
+        ChildSession session = createSession(1L, 100L, ChildSessionStatus.CLOSED);
+        ChildProfile childProfile = createChildProfile(100L, "Ada", true, true);
+        AvatarEventCatalog catalog = createCatalog(AvatarEventType.FAREWELL, "Bye <name>!");
+
+        when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
+        when(childProfileRepository.findById(100L)).thenReturn(Optional.of(childProfile));
+        when(avatarEventCatalogRepository.findByEventType(AvatarEventType.FAREWELL))
+            .thenReturn(List.of(catalog));
+        when(audio.getAudio(any(AudioRequest.class))).thenReturn("fake-mp3-data".getBytes());
+
+        AvatarEventRequest request = new AvatarEventRequest(1L, AvatarEventType.FAREWELL, null);
+        AvatarLifecycleResult result = avatarService.processEvent(request);
+
+        assertNotNull(result);
+        assertTrue(result.event().audioAvailable());
+    }
+
+    @Test
     void processEvent_missingSession_throwsResourceNotFound() {
         when(childSessionRepository.findById(999L)).thenReturn(Optional.empty());
 

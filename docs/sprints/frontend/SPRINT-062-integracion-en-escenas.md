@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** pending
+- **Estado:** implemented
 - **Fecha de creación:** 2026-09-07
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA

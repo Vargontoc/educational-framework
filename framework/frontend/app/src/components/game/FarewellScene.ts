@@ -1,5 +1,7 @@
 import { Scene } from 'phaser'
 import router from '@/router'
+import { AudioService } from '@/services/AudioService'
+import { AudioCache } from '@/services/AudioCache'
 
 export class FarewellScene extends Scene {
   private farewellDuration = 5000
@@ -45,7 +47,29 @@ export class FarewellScene extends Scene {
     const voiceEnabled = this.registry.get('voiceEnabled') as boolean ?? true
 
     if (npcEnabled && ttsEnabled && voiceEnabled) {
-      console.log('Farewell voice would play here')
+      const audioService = this.registry.get('audioService') as AudioService | undefined
+      if (audioService) {
+        audioService.playStatic('farewell')
+      }
+    }
+  }
+
+  shutdown() {
+    const audioService = this.registry.get('audioService') as AudioService
+    if (audioService) {
+      audioService.stop()
+    }
+  }
+
+  destroy() {
+    const audioService = this.registry.get('audioService') as AudioService
+    if (audioService) {
+      audioService.dispose()
+    }
+
+    const audioCache = this.registry.get('audioCache') as AudioCache
+    if (audioCache) {
+      audioCache.clear()
     }
   }
 }

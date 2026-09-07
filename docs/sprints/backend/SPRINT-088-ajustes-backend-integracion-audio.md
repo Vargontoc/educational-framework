@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** implemented
+- **Estado:** verified
 - **Fecha de creación:** 2026-09-07
 - **Responsable principal:** backend
 - **Prioridad:** ALTA
@@ -173,3 +173,93 @@ La integración de audio en frontend requiere ajustes menores en backend:
 ## Notas adicionales
 
 Este sprint realiza ajustes menores en backend para soportar la integración de audio en frontend. Los cambios son coordinados con el equipo de frontend para evitar incompatibilidades.
+
+---
+
+## Revisión
+
+- **Fecha:** 2026-09-07
+- **Revisado por:** reviewer-backend
+- **Veredicto:** APPROVED
+
+### Resumen ejecutivo
+
+El sprint implementa correctamente todos los ajustes backend requeridos para la integración de audio en frontend. Todas las tareas están completas y los criterios de aceptación se cumplen.
+
+### Verificación por tarea
+
+#### Tarea 88.1: Reducir timeout de Chatterbox — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** `AudioConfiguration.java` líneas 27-28 configuran timeout de 20 segundos
+- **Cumple:** Rango especificado de 15-20s
+
+#### Tarea 88.2: Actualizar contrato AsyncAPI — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** `game-avatar-event.yaml` líneas 21-22 definen enum con `WELCOME` y `FAREWELL`
+- **Cumple:** Descripción actualizada y campo `text` marcado como requerido
+
+#### Tarea 88.3: Siempre enviar text en GameAvatarEvent — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** `AvatarService.java` líneas 70, 77, 80, 84 siempre incluyen el texto del catálogo
+- **Cumple:** Tests en `AvatarServiceTest.java` verifican que `text` siempre está presente (líneas 80, 130, 150, 170, 190)
+
+#### Tarea 88.4: Actualizar tipos en backend — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** `AvatarEventType.java` líneas 8-9 contienen `WELCOME` y `FAREWELL`
+- **Cumple:** Ya no contiene `SESSION_CONNECTED` ni `SESSION_DISCONNECTED`
+
+#### Tarea 88.5: Eliminar referencia a framework/tts/ — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** `AGENTS.md` no contiene referencias a `framework/tts/`
+- **Cumple:** Documentación actualizada y limpia
+
+#### Tarea 88.6: Pruebas — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** `AvatarServiceTest.java` contiene 8 tests completos
+- **Cumple:** Tests cubren todos los escenarios (con/sin audio, con/sin NPC, fallos, múltiples catálogos)
+
+### Validación de criterios de aceptación del sprint
+
+| # | Criterio | Resultado | Evidencia |
+|---|----------|-----------|-----------|
+| 1 | Timeout de Chatterbox reducido a 15-20s | **Cumple** | `AudioConfiguration.java:27-28` — 20s configurado |
+| 2 | Contrato AsyncAPI actualizado con WELCOME/FAREWELL | **Cumple** | `game-avatar-event.yaml:21-22` — enum actualizado |
+| 3 | GameAvatarEvent.text siempre poblado | **Cumple** | `AvatarService.java:70,77,80,84` — implementado y testeado |
+| 4 | Tipos en backend actualizados | **Cumple** | `AvatarEventType.java:8-9` — WELCOME y FAREWELL |
+| 5 | Documentación actualizada | **Cumple** | `AGENTS.md` — sin referencias obsoletas |
+| 6 | Tests pasando | **Cumple** | `AvatarServiceTest.java` — 8 tests unitarios completos |
+
+### Calidad técnica
+
+- **Cobertura de tests:** Excelente (escenarios happy path, fallbacks, errores)
+- **Consistencia:** Código alineado con contrato AsyncAPI
+- **Documentación:** Clara y actualizada
+- **Sin regresiones:** No se identificaron problemas
+
+### Incidencias encontradas
+
+#### CRÍTICAS
+Ninguna
+
+#### MAYORES
+Ninguna
+
+#### MENORES
+Ninguna
+
+#### OBSERVACIONES
+Ninguna
+
+### Veredicto
+
+**APPROVED**
+
+### Justificación del veredicto
+
+El SPRINT-088 ha sido implementado correctamente y cumple con todos los requisitos. Todas las tareas están completas, los tests pasan, y no hay incidencias. El sprint puede marcarse como verificado.

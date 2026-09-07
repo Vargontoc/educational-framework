@@ -65,6 +65,7 @@ export class WebSocketClient {
 
     const url = `${WS_BASE_URL}${this.options.endpoint}`
     this.ws = new WebSocket(url)
+    this.ws.binaryType = 'arraybuffer'
 
     this.ws.onopen = () => {
       this.setStatus('connected')

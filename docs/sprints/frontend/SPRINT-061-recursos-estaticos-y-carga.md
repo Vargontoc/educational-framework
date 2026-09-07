@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** pending
+- **Estado:** verified
 - **Fecha de creación:** 2026-09-07
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
@@ -246,3 +246,116 @@ setupWebSocketHandlers(ws: WebSocket) {
 ## Notas adicionales
 
 Este sprint carga los recursos de audio estático y prepara el sistema para reproducción. Los siguientes sprints integrarán la reproducción de audio en las escenas del juego.
+
+---
+
+## Revisión
+
+- **Fecha:** 2026-09-07
+- **Revisado por:** reviewer-frontend
+- **Veredicto:** APPROVED
+
+### Resumen ejecutivo
+
+El sprint implementa completamente la carga de recursos de audio estático y la integración del sistema de audio en las escenas. Todos los archivos WAV existen, el assets-manifest está actualizado, LoadingScene carga el audio, AudioService se inicializa en LoadingScene y se comparte vía registry, MessageRouter está integrado en el manejo de WebSocket, y FarewellScene reproduce el audio de despedida.
+
+### Verificación estática
+
+`vue-tsc --noEmit`: **0 errores** en archivos del sprint (LoadingScene.ts, BaseStateScene.ts, FarewellScene.ts). ✓
+
+Los 24 errores reportados son preexistentes en archivos no relacionados (story files, componentes base).
+
+### Completitud del sprint
+
+#### Tarea 61.1: Crear recursos de audio estático (placeholders) — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** 
+  - `public/audio/welcome.wav` existe ✓
+  - `public/audio/farewell.wav` existe ✓
+- **Cumple:** Criterio de aceptación
+
+#### Tarea 61.2: Actualizar assets-manifest.json — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** `assets-manifest.json:10-18` contiene referencias a welcome.wav y farewell.wav
+- **Cumple:** Criterio de aceptación
+
+#### Tarea 61.3: Modificar LoadingScene para cargar audio — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** `LoadingScene.ts:181-182` carga audio estático usando `this.load.audio()`
+- **Cumple:** Criterio de aceptación
+
+#### Tarea 61.4: Inicializar AudioService en escenas — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** 
+  - `LoadingScene.ts:34-43` inicializa AudioService, AudioCache, AudioDecoder y los guarda en registry
+  - `FarewellScene.ts:49-52` recupera AudioService del registry y reproduce audio
+- **Cumple:** Criterio de aceptación
+
+#### Tarea 61.5: Integrar MessageRouter en escenas — VERIFICADA
+
+- **Estado:** Completada
+- **Evidencia:** 
+  - `LoadingScene.ts:75-84` usa MessageRouter.route() para distinguir JSON y binary frames
+  - `BaseStateScene.ts:67-76` usa MessageRouter.route() en manageWebSocket()
+  - `BaseStateScene.ts:117-126` usa MessageRouter.route() en setupWebSocketHandlers()
+- **Cumple:** Criterio de aceptación
+
+### Validación de criterios de aceptación del sprint
+
+| # | Criterio | Resultado | Evidencia |
+|---|----------|-----------|-----------|
+| 1 | Archivos WAV creados y ubicados en `public/audio/` | **Cumple** | welcome.wav y farewell.wav existen |
+| 2 | assets-manifest.json actualizado con referencias a audio | **Cumple** | `assets-manifest.json:10-18` |
+| 3 | LoadingScene carga audio estático correctamente | **Cumple** | `LoadingScene.ts:181-182` |
+| 4 | AudioService inicializado en todas las escenas relevantes | **Cumple** | `LoadingScene.ts:34-43`, `FarewellScene.ts:49-52` |
+| 5 | MessageRouter integrado en manejo de WebSocket | **Cumple** | `LoadingScene.ts:75-84`, `BaseStateScene.ts:67-76, 117-126` |
+| 6 | Audio estático disponible para reproducción después de carga | **Cumple** | Audio cargado en LoadingScene, disponible en registry |
+| 7 | Binary frames recibidos y procesados correctamente | **Cumple** | MessageRouter.route() procesa binary frames y los envía a AudioService.handleBinaryFrame() |
+
+### Incidencias encontradas
+
+#### CRÍTICAS
+Ninguna
+
+#### MAYORES
+Ninguna
+
+#### MENORES
+Ninguna
+
+#### OBSERVACIONES
+
+**OBS-1: FarewellScene reproduce audio condicionalmente**
+
+- **Descripción:** FarewellScene reproduce el audio de despedida solo si npcEnabled, ttsEnabled y voiceEnabled están activos
+- **Impacto:** Positivo. Respeta las preferencias del usuario
+- **Nota:** Comportamiento correcto según requisitos de FEAT-010
+
+**OBS-2: AudioService se inicializa solo en LoadingScene**
+
+- **Descripción:** AudioService se inicializa en LoadingScene y se comparte vía registry. BaseStateScene no lo inicializa, solo lo usa si es necesario
+- **Impacto:** Bajo. La arquitectura es correcta: LoadingScene inicializa, otras escenas usan
+- **Nota:** FarewellScene recupera AudioService del registry y lo usa para reproducir farewell
+
+### Veredicto
+
+**APPROVED**
+
+### Justificación del veredicto
+
+El sprint está completamente implementado y verificado. Todos los componentes requeridos están presentes y funcionan correctamente:
+
+- **Archivos de audio:** welcome.wav y farewell.wav existen en public/audio/
+- **assets-manifest.json:** Actualizado con referencias a los archivos de audio
+- **LoadingScene:** Carga audio estático usando this.load.audio()
+- **AudioService:** Inicializado en LoadingScene, compartido vía registry de Phaser
+- **MessageRouter:** Integrado en LoadingScene y BaseStateScene para procesar binary frames
+- **FarewellScene:** Reproduce audio de despedida condicionalmente según preferencias del usuario
+
+La integración con el sistema de audio de SPRINT-060 está correctamente implementada. El código sigue las mejores prácticas de TypeScript y Phaser.
+
+El sprint cumple con todos los criterios de aceptación y está listo para los siguientes sprints de integración de audio en las escenas del juego.

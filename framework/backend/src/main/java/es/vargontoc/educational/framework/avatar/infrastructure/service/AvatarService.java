@@ -59,7 +59,9 @@ public class AvatarService implements AvatarUseCase {
     public AvatarLifecycleResult processEvent(AvatarEventRequest request) {
         validator.validateForProcess(request);
 
-        ChildSession session = findActiveSession(request.childSessionId());
+        ChildSession session = request.eventType() == AvatarEventType.FAREWELL
+            ? findSession(request.childSessionId())
+            : findActiveSession(request.childSessionId());
         ChildProfile childProfile = findChildProfile(session.getChildProfileId());
 
         if(!childProfile.isNpcEnabled()) {
@@ -106,14 +108,18 @@ public class AvatarService implements AvatarUseCase {
 
 
     private ChildSession findActiveSession(Long sessionId) {
-        ChildSession session = childSessionRepository.findById(sessionId)
-            .orElseThrow(() -> new ResourceNotFoundException("Child session not found: " + sessionId));
+        ChildSession session = findSession(sessionId);
 
         if (!ChildSessionStatus.ACTIVE.equals(session.getStatus())) {
             throw new SessionException("Child session is not active");
         }
 
         return session;
+    }
+
+    private ChildSession findSession(Long sessionId) {
+        return childSessionRepository.findById(sessionId)
+            .orElseThrow(() -> new ResourceNotFoundException("Child session not found: " + sessionId));
     }
 
     private ChildProfile findChildProfile(Long childProfileId) {
@@ -125,7 +131,7 @@ public class AvatarService implements AvatarUseCase {
     {
         if(audio == null || audio.length <= 0)
             return createFallbackResult(sessionId, type, text);
-        return new AvatarLifecycleResult(new GameAvatarEvent(null, sessionId, type.name(), true, UUID.randomUUID().toString(), text), audio);
+        return new AvatarLifecycleResult(new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, type.name(), true, UUID.randomUUID().toString(), text), audio);
     }
 
     private AvatarLifecycleResult createFallbackResult(Long sessionId, AvatarEventType type, String text) {

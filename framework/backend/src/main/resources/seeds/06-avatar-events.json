@@ -22,7 +22,7 @@
   },
   {
     "eventType": "HELP_REQUESTED",
-    "tone": "NEUTRO",
+    "tone": "NEUTRAL",
     "locale": "es-ES",
     "messageText": "¡Claro! Voy a ayudarte.",
     "status": "ACTIVE"

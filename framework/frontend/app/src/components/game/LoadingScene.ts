@@ -3,11 +3,19 @@ import { Scene } from "phaser";
 import router from "@/router";
 import { ServerGameEvent, AvatarEvent } from "./GameEvent";
 import { connectWebSocket, clearWebSocketHeartbeat } from "./websocket";
+import { AudioService } from "@/services/AudioService";
+import { AudioCache } from "@/services/AudioCache";
+import { AudioDecoder } from "@/services/AudioDecoder";
+import { MessageRouter } from "@/services/MessageRouter";
 
 export class LoadingScene extends Scene {
     websocket?: WebSocket
     sessionId?: number
     childId?: number
+    private assetsLoaded = false
+    private welcomeAudioCompleted = false
+    private welcomeEventReceived = false
+    private transferredWebSocket = false
 
     constructor() {
         super({ key: 'loading', active: true })
@@ -26,6 +34,17 @@ export class LoadingScene extends Scene {
         if (this.registry.get('voiceEnabled') === undefined) {
             this.registry.set('voiceEnabled', false)
         }
+
+        const audioDecoder = new AudioDecoder()
+        const audioCache = new AudioCache()
+        const audioService = new AudioService({
+            scene: this,
+            audioCache,
+            audioDecoder
+        })
+
+        this.registry.set('audioService', audioService)
+        this.registry.set('audioCache', audioCache)
 
         this.showLoadingPlaceholder()
 
@@ -57,9 +76,16 @@ export class LoadingScene extends Scene {
 
     setupWebSocketHandlers(ws: WebSocket) {
         ws.onmessage = (msg) => {
-            if (msg.data) {
-                this.readEvent(JSON.parse(msg.data))
-            }
+            MessageRouter.route(
+                msg.data,
+                (jsonData) => {
+                    this.readEvent(jsonData as ServerGameEvent | AvatarEvent)
+                },
+                (binaryData) => {
+                    const audioService = this.registry.get('audioService') as AudioService
+                    void audioService.handleBinaryFrame(binaryData)
+                }
+            )
         }
 
         ws.onclose = () => {
@@ -74,12 +100,14 @@ export class LoadingScene extends Scene {
             this.handleAvatarEvent(event)
             return
         }
-        console.log(event)
+    
         switch (event.event) {
             case 'AUTH_ACK':
+                console.log('Perfil identificado')
                 break
 
             case 'HEARTBEAT_ACK':
+                console.log('Heartbeat recibido')
                 break
 
             case 'CHILD_EXPELLED':
@@ -98,15 +126,98 @@ export class LoadingScene extends Scene {
 
     handleAvatarEvent(event: AvatarEvent) {
         switch(event.eventType){
-            case 'SESSION_DISCONNECTED':
-                if(event.audioAvailable){
-
-                }else {
-                    this.handleSessionExpired()
-                }
-                break;
+            case 'WELCOME':
+                this.handleWelcomeEvent(event)
+                break
+            case 'FAREWELL':
+                this.handleFarewellEvent(event)
+                break
             default:
-                break;
+                break
+        }
+    }
+
+    handleWelcomeEvent(event: AvatarEvent) {
+        this.welcomeEventReceived = true
+        const audioService = this.registry.get('audioService') as AudioService
+
+        // Escuchar cuando el audio termine (cualquier audio: estático o dinámico)
+        audioService.once('audio-completed', () => {
+            this.welcomeAudioCompleted = true
+            // Esperar 1 segundo después de que termine el audio
+            this.time.delayedCall(1000, () => {
+                this.tryGoToBaseState()
+            })
+        })
+
+        if (event.audioAvailable && event.audioId) {
+            let fallbackTimeout: ReturnType<typeof setTimeout> | null = null
+
+            const handleAudioReceived = (audioId: string) => {
+                if (audioId === event.audioId) {
+                    // Audio dinámico recibido, cancelar fallback
+                    if (fallbackTimeout) {
+                        clearTimeout(fallbackTimeout)
+                        fallbackTimeout = null
+                    }
+                    audioService.playDynamic(audioId)
+                    audioService.off('audio-received', handleAudioReceived)
+                }
+            }
+            audioService.on('audio-received', handleAudioReceived)
+
+            // Timeout de 3 segundos para fallback a estático si no llega el dinámico
+            fallbackTimeout = setTimeout(() => {
+                if (!audioService.isCurrentlyPlaying()) {
+                    console.warn('Audio dinámico no recibido en 3s, usando fallback estático')
+                    audioService.off('audio-received', handleAudioReceived)
+                    audioService.playStatic('welcome')
+                }
+            }, 3000)
+        } else {
+            // No hay audio dinámico, reproducir estático directamente
+            audioService.playStatic('welcome')
+        }
+    }
+
+    handleFarewellEvent(event: AvatarEvent) {
+        const audioService = this.registry.get('audioService') as AudioService
+
+        // Escuchar cuando el audio termine
+        audioService.once('audio-completed', () => {
+            // Esperar 1 segundo después de que termine el audio
+            this.time.delayedCall(1000, () => {
+                this.goToBaseState()
+            })
+        })
+
+        if (event.audioAvailable && event.audioId) {
+            let fallbackTimeout: ReturnType<typeof setTimeout> | null = null
+
+            const handleAudioReceived = (audioId: string) => {
+                if (audioId === event.audioId) {
+                    // Audio dinámico recibido, cancelar fallback
+                    if (fallbackTimeout) {
+                        clearTimeout(fallbackTimeout)
+                        fallbackTimeout = null
+                    }
+                    audioService.playDynamic(audioId)
+                    audioService.off('audio-received', handleAudioReceived)
+                }
+            }
+            audioService.on('audio-received', handleAudioReceived)
+
+            // Timeout de 3 segundos para fallback a estático si no llega el dinámico
+            fallbackTimeout = setTimeout(() => {
+                if (!audioService.isCurrentlyPlaying()) {
+                    console.warn('Audio dinámico no recibido en 3s, usando fallback estático')
+                    audioService.off('audio-received', handleAudioReceived)
+                    audioService.playStatic('farewell')
+                }
+            }, 3000)
+        } else {
+            // No hay audio dinámico, reproducir estático directamente
+            audioService.playStatic('farewell')
         }
     }
 
@@ -156,8 +267,19 @@ export class LoadingScene extends Scene {
         this.load.setBaseURL('/')
         this.load.pack('packManifest', 'assets-manifest.json', 'dev')
 
+        this.load.audio('welcome', 'audio/welcome.wav')
+        this.load.audio('farewell', 'audio/farewell.wav')
+
         this.load.on('complete', () => {
-            this.goToBaseState()
+            this.assetsLoaded = true
+            // Esperar hasta 5 segundos para recibir el evento WELCOME
+            // Si no se recibe, transicionar de todos modos
+            setTimeout(() => {
+                if (!this.welcomeEventReceived) {
+                    console.warn('Evento WELCOME no recibido en 5s, transicionando a base-state')
+                    this.tryGoToBaseState()
+                }
+            }, 5000)
         })
 
         this.load.on('loaderror', (file: Phaser.Loader.File) => {
@@ -167,8 +289,17 @@ export class LoadingScene extends Scene {
         this.load.start()
     }
 
+    tryGoToBaseState() {
+        // Solo transicionar si los assets están cargados Y el audio de bienvenida ha terminado
+        // O si no se recibió evento WELCOME (fallback)
+        if (this.assetsLoaded && (this.welcomeAudioCompleted || !this.welcomeEventReceived)) {
+            this.goToBaseState()
+        }
+    }
+
     goToBaseState() {
         if (this.websocket && this.sessionId !== undefined && this.childId !== undefined) {
+            this.transferredWebSocket = true
             this.scene.start('base-state', {
                 websocket: this.websocket,
                 sessionId: this.sessionId,
@@ -185,5 +316,27 @@ export class LoadingScene extends Scene {
 
     handleSessionError() {
         router.replace({ name: 'Home' })
+    }
+
+    shutdown() {
+        const audioService = this.registry.get('audioService') as AudioService
+        if (audioService) {
+            audioService.stop()
+        }
+        if (!this.transferredWebSocket) {
+            this.cleanupWebSocket()
+        }
+    }
+
+    destroy() {
+        const audioService = this.registry.get('audioService') as AudioService
+        if (audioService) {
+            audioService.dispose()
+        }
+
+        const audioCache = this.registry.get('audioCache') as AudioCache
+        if (audioCache) {
+            audioCache.clear()
+        }
     }
 }
