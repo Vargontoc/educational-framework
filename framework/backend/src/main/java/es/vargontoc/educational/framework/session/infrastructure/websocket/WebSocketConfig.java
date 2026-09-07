@@ -1,8 +1,7 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import tools.jackson.databind.ObjectMapper;
-
-import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
@@ -39,7 +38,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ObjectMapper objectMapper;
     private final StompConnectAuthInterceptor stompConnectAuthInterceptor;
     private final StompSubscribeInterceptor stompSubscribeInterceptor;
-    private final AvatarLifecycleService avatarLifecycleService;
+    private final AvatarService avatarService;
     private final GameOrchestrator gameOrchestrator;
     private final GameStateRegistry gameStateRegistry;
     private final WorldHeartbeatUseCase worldHeartbeatUseCase;
@@ -54,7 +53,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             ObjectMapper objectMapper,
             StompConnectAuthInterceptor stompConnectAuthInterceptor,
             StompSubscribeInterceptor stompSubscribeInterceptor,
-            AvatarLifecycleService avatarLifecycleService,
+            AvatarService avatarLifecycleService,
             GameOrchestrator gameOrchestrator,
             GameStateRegistry gameStateRegistry,
             WorldHeartbeatUseCase worldHeartbeatUseCase,
@@ -67,7 +66,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.objectMapper = objectMapper;
         this.stompConnectAuthInterceptor = stompConnectAuthInterceptor;
         this.stompSubscribeInterceptor = stompSubscribeInterceptor;
-        this.avatarLifecycleService = avatarLifecycleService;
+        this.avatarService = avatarLifecycleService;
         this.gameOrchestrator = gameOrchestrator;
         this.gameStateRegistry = gameStateRegistry;
         this.worldHeartbeatUseCase = worldHeartbeatUseCase;
@@ -118,7 +117,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Bean
     public GameWebSocketHandler gameWebSocketHandler() {
-        return new GameWebSocketHandler(childSessionUseCase, objectMapper, avatarLifecycleService,
+        return new GameWebSocketHandler(childSessionUseCase, objectMapper, avatarService,
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
             recognitionElementRepository);

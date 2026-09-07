@@ -2,8 +2,9 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
-import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.avatar.domain.AvatarEventRequest;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
+import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
@@ -66,7 +67,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private final ChildSessionUseCase childSessionUseCase;
     private final ObjectMapper objectMapper;
-    private final AvatarLifecycleService avatarLifecycleService;
+    private final AvatarService avatarservice;
     private final GameOrchestrator gameOrchestrator;
     private final GameStateRegistry gameStateRegistry;
     private final WorldHeartbeatUseCase worldHeartbeatUseCase;
@@ -84,7 +85,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     });
 
     public GameWebSocketHandler(ChildSessionUseCase childSessionUseCase, ObjectMapper objectMapper,
-                             AvatarLifecycleService avatarLifecycleService,
+                             AvatarService avatarService,
                              GameOrchestrator gameOrchestrator,
                              GameStateRegistry gameStateRegistry,
                              WorldHeartbeatUseCase worldHeartbeatUseCase,
@@ -94,7 +95,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                              RecognitionElementRepository recognitionElementRepository) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
-        this.avatarLifecycleService = avatarLifecycleService;
+        this.avatarservice = avatarService;
         this.gameOrchestrator = gameOrchestrator;
         this.gameStateRegistry = gameStateRegistry;
         this.worldHeartbeatUseCase = worldHeartbeatUseCase;
@@ -247,7 +248,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         try {
-            var result = avatarLifecycleService.farewell(childSessionId);
+            var result = avatarservice.processEvent(new AvatarEventRequest(childSessionId, AvatarEventType.FAREWELL, null));
             if (result.isPresent()) {
                 sendToSession(childSessionId, objectMapper.writeValueAsString(result.event()));
                 if (result.audioData() != null && result.event().audioId() != null) {
@@ -263,7 +264,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private void sendWelcomeAvatar(Long childSessionId) {
         try {
-            var result = avatarLifecycleService.welcome(childSessionId);
+            var result = avatarservice.processEvent(new AvatarEventRequest(childSessionId, AvatarEventType.WELCOME, null));
             if (result.isPresent()) {
                 sendToSession(childSessionId, objectMapper.writeValueAsString(result.event()));
                 if (result.audioData() != null && result.event().audioId() != null) {

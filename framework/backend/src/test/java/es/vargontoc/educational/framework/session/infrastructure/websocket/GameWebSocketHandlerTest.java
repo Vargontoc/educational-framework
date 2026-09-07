@@ -1,8 +1,8 @@
 package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import tools.jackson.databind.ObjectMapper;
-import es.vargontoc.educational.framework.avatar.infrastructure.dto.GameAvatarEvent;
-import es.vargontoc.educational.framework.avatar.service.AvatarLifecycleService;
+import es.vargontoc.educational.framework.avatar.domain.GameAvatarEvent;
+import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;

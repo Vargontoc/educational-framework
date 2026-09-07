@@ -2,11 +2,14 @@ package es.vargontoc.educational.framework.content.model;
 
 import java.time.LocalDateTime;
 
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
+
 public class AvatarEventCatalog {
 
     private Long id;
     private AvatarEventType eventType;
-    private AvatarTone tone;
+    private TonePreset tone;
     private String locale;
     private String messageText;
     private ContentStatus status;
@@ -29,11 +32,11 @@ public class AvatarEventCatalog {
         this.eventType = eventType;
     }
 
-    public AvatarTone getTone() {
+    public TonePreset getTone() {
         return tone;
     }
 
-    public void setTone(AvatarTone tone) {
+    public void setTone(TonePreset tone) {
         this.tone = tone;
     }
 

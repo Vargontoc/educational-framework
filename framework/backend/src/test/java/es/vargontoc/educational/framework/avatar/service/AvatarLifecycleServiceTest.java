@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.avatar.service;
 
+import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarLifecycleService;
 import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsException;
 import es.vargontoc.educational.framework.avatar.ports.out.TtsClient;
 import es.vargontoc.educational.framework.family.model.ChildProfile;

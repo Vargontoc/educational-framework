@@ -1,7 +1,8 @@
 package es.vargontoc.educational.framework.content.validation;
 
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
+
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.shared.validation.AbstractValidator;
 
@@ -17,13 +18,13 @@ public class AvatarEventCatalogValidator extends AbstractValidator<AvatarEventCa
         requireNonNull(target.status(), "status");
     }
 
-    public void validateForCreate(AvatarEventType eventType, AvatarTone tone, String messageText, String locale, ContentStatus status) {
+    public void validateForCreate(AvatarEventType eventType, TonePreset tone, String messageText, String locale, ContentStatus status) {
         validate(new AvatarEventCatalogValidationInput(eventType, tone, messageText, locale, status));
     }
 
-    public void validateForUpdate(AvatarEventType eventType, AvatarTone tone, String messageText, String locale, ContentStatus status) {
+    public void validateForUpdate(AvatarEventType eventType, TonePreset tone, String messageText, String locale, ContentStatus status) {
         validate(new AvatarEventCatalogValidationInput(eventType, tone, messageText, locale, status));
     }
 
-    public record AvatarEventCatalogValidationInput(AvatarEventType eventType, AvatarTone tone, String messageText, String locale, ContentStatus status) {}
+    public record AvatarEventCatalogValidationInput(AvatarEventType eventType, TonePreset tone, String messageText, String locale, ContentStatus status) {}
 }

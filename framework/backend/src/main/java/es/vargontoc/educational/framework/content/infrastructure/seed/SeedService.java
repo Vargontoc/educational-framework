@@ -3,13 +3,13 @@ package es.vargontoc.educational.framework.content.infrastructure.seed;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaEntity;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
 import es.vargontoc.educational.framework.content.model.AccessibleColor;
 import es.vargontoc.educational.framework.content.model.AccessibleColorPalette;
 import es.vargontoc.educational.framework.content.model.Activity;
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
 import es.vargontoc.educational.framework.content.model.Category;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.Curiosity;
@@ -318,7 +318,7 @@ public class SeedService {
             }
             var event = new es.vargontoc.educational.framework.content.model.AvatarEventCatalog();
             event.setEventType(AvatarEventType.valueOf(seed.eventType()));
-            event.setTone(AvatarTone.valueOf(seed.tone()));
+            event.setTone(TonePreset.valueOf(seed.tone()));
             event.setLocale(seed.locale());
             event.setMessageText(seed.messageText());
             event.setStatus(ContentStatus.valueOf(seed.status()));

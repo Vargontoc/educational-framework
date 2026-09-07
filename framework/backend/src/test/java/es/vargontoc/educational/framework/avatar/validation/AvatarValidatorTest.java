@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.avatar.validation;
 
-import es.vargontoc.educational.framework.avatar.infrastructure.dto.AvatarEventRequest;
+import es.vargontoc.educational.framework.avatar.domain.AvatarEventRequest;
+import es.vargontoc.educational.framework.avatar.infrastructure.validation.AvatarValidator;
 import es.vargontoc.educational.framework.content.model.AvatarEventType;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 import org.junit.jupiter.api.Test;

@@ -1,8 +1,8 @@
 package es.vargontoc.educational.framework.content.ports.out;
 
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +15,7 @@ public interface AvatarEventCatalogRepository {
 
     List<AvatarEventCatalog> findByEventType(AvatarEventType eventType);
 
-    List<AvatarEventCatalog> findActiveByFilters(AvatarEventType eventType, AvatarTone tone, String locale);
+    List<AvatarEventCatalog> findActiveByFilters(AvatarEventType eventType, TonePreset tone, String locale);
 
     AvatarEventCatalog save(AvatarEventCatalog event);
 }

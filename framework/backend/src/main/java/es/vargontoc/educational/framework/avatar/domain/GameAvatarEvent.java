@@ -1,4 +1,4 @@
-package es.vargontoc.educational.framework.avatar.infrastructure.dto;
+package es.vargontoc.educational.framework.avatar.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

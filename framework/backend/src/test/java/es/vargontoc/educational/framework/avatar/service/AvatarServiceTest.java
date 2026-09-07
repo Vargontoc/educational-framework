@@ -1,9 +1,7 @@
 package es.vargontoc.educational.framework.avatar.service;
 
-import es.vargontoc.educational.framework.avatar.infrastructure.dto.AvatarEventRequest;
-import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsException;
-import es.vargontoc.educational.framework.avatar.model.AvatarEventResult;
-import es.vargontoc.educational.framework.avatar.ports.out.TtsClient;
+import es.vargontoc.educational.framework.avatar.domain.AvatarEventRequest;
+import es.vargontoc.educational.framework.avatar.domain.AvatarEventResult;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
 import es.vargontoc.educational.framework.content.model.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarTone;

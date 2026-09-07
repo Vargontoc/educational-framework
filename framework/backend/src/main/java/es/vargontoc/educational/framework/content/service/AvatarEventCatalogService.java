@@ -1,8 +1,8 @@
 package es.vargontoc.educational.framework.content.service;
 
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.ports.in.AvatarEventCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
@@ -25,7 +25,7 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
     }
 
     @Override
-    public AvatarEventCatalog createAvatarEvent(AvatarEventType eventType, AvatarTone tone, String locale, String messageText, ContentStatus status) {
+    public AvatarEventCatalog createAvatarEvent(AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status) {
         avatarEventCatalogValidator.validateForCreate(eventType, tone, messageText, locale, status);
 
         var event = new AvatarEventCatalog();
@@ -60,12 +60,12 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AvatarEventCatalog> listActiveAvatarEventsByFilters(AvatarEventType eventType, AvatarTone tone, String locale) {
+    public List<AvatarEventCatalog> listActiveAvatarEventsByFilters(AvatarEventType eventType, TonePreset tone, String locale) {
         return avatarEventCatalogRepository.findActiveByFilters(eventType, tone, locale);
     }
 
     @Override
-    public AvatarEventCatalog updateAvatarEvent(Long id, AvatarEventType eventType, AvatarTone tone, String locale, String messageText, ContentStatus status) {
+    public AvatarEventCatalog updateAvatarEvent(Long id, AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status) {
         avatarEventCatalogValidator.validateForUpdate(eventType, tone, messageText, locale, status);
 
         var existing = avatarEventCatalogRepository.findById(id)

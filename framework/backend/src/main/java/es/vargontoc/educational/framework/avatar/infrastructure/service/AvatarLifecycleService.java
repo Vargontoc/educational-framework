@@ -1,9 +1,8 @@
-package es.vargontoc.educational.framework.avatar.service;
+package es.vargontoc.educational.framework.avatar.infrastructure.service;
 
-import es.vargontoc.educational.framework.avatar.infrastructure.dto.GameAvatarEvent;
-import es.vargontoc.educational.framework.avatar.infrastructure.tts.TtsException;
-import es.vargontoc.educational.framework.avatar.ports.out.TtsClient;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
+import es.vargontoc.educational.framework.avatar.domain.GameAvatarEvent;
+
+import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.family.model.ChildProfile;
 import es.vargontoc.educational.framework.family.ports.out.ChildProfileRepository;
 import es.vargontoc.educational.framework.session.model.ChildSession;
@@ -11,32 +10,30 @@ import es.vargontoc.educational.framework.session.ports.out.ChildSessionReposito
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import java.util.Optional;
-import java.util.UUID;
 
 public class AvatarLifecycleService {
 
     private static final Logger log = LoggerFactory.getLogger(AvatarLifecycleService.class);
     private static final String WELCOME_TEXT = "Hola, vamos a jugar!";
     private static final String FAREWELL_TEXT = "Vaya, parece que es hora de despedirnos. Hasta la proxima.";
-    private static final String CONTEXT_NPC = "npc";
-    private static final AvatarTone DEFAULT_TONE = AvatarTone.NEUTRAL;
-    private static final String DEFAULT_LOCALE = "es";
 
-    private final TtsClient ttsClient;
     private final ChildProfileRepository profileRepository;
     private final ChildSessionRepository sessionRepository;
+    private final AvatarEventCatalogRepository catalogRepository;
 
     public AvatarLifecycleService(
-            TtsClient ttsClient,
             ChildProfileRepository profileRepository,
-            ChildSessionRepository sessionRepository) {
-        this.ttsClient = ttsClient;
+            ChildSessionRepository sessionRepository,
+            AvatarEventCatalogRepository catalogRepository) {
+
         this.profileRepository = profileRepository;
         this.sessionRepository = sessionRepository;
+        this.catalogRepository = catalogRepository;
     }
 
-    public AvatarLifecycleResult welcome(Long childSessionId) {
+    public AvatarLifecycleResult welwcome(Long childSessionId) {
         Optional<ChildSession> sessionOpt = sessionRepository.findById(childSessionId);
         if (sessionOpt.isEmpty()) {
             log.debug("Welcome: session not found {}", childSessionId);
@@ -59,7 +56,7 @@ public class AvatarLifecycleService {
         return buildAvatarEvent(childSessionId, WELCOME_TEXT, true, profile);
     }
 
-    public AvatarLifecycleResult farewell(Long childSessionId) {
+    public AvatarLifecycleResult fardewell(Long childSessionId) {
         Optional<ChildSession> sessionOpt = sessionRepository.findById(childSessionId);
         if (sessionOpt.isEmpty()) {
             log.debug("Farewell: session not found {}", childSessionId);
@@ -92,19 +89,25 @@ public class AvatarLifecycleService {
             return new AvatarLifecycleResult(event, null);
         }
 
-        try {
-            byte[] audioData = ttsClient.synthesize(text, DEFAULT_LOCALE, DEFAULT_TONE, CONTEXT_NPC);
-            if (audioData != null && audioData.length > 0) {
-                String audioId = UUID.randomUUID().toString();
-                GameAvatarEvent event = isWelcome
-                    ? GameAvatarEvent.welcome(childSessionId, true, audioId, text)
-                    : GameAvatarEvent.farewell(childSessionId, true, audioId, text);
-                return new AvatarLifecycleResult(event, audioData);
+
+
+        /*
+            try {
+                byte[] audioData = ttsClient.synthesize(text, DEFAULT_LOCALE, DEFAULT_TONE, CONTEXT_NPC);
+                if (audioData != null && audioData.length > 0) {
+                    String audioId = UUID.randomUUID().toString();
+                    GameAvatarEvent event = isWelcome
+                        ? GameAvatarEvent.welcome(childSessionId, true, audioId, text)
+                        : GameAvatarEvent.farewell(childSessionId, true, audioId, text);
+                    return new AvatarLifecycleResult(event, audioData);
+                }
+            } catch (TtsException e) {
+                log.warn("Avatar lifecycle TTS failed for session {}: errorCode={}, message={}",
+                    childSessionId, e.getErrorCode(), e.getMessage());
             }
-        } catch (TtsException e) {
-            log.warn("Avatar lifecycle TTS failed for session {}: errorCode={}, message={}",
-                childSessionId, e.getErrorCode(), e.getMessage());
-        }
+        
+        */
+
 
         GameAvatarEvent event = isWelcome
             ? GameAvatarEvent.welcome(childSessionId, false, null, text)

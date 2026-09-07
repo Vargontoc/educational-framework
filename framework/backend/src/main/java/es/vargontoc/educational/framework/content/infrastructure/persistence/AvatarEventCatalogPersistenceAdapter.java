@@ -1,8 +1,8 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import org.springframework.stereotype.Repository;
@@ -41,7 +41,7 @@ public class AvatarEventCatalogPersistenceAdapter implements AvatarEventCatalogR
     }
 
     @Override
-    public List<AvatarEventCatalog> findActiveByFilters(AvatarEventType eventType, AvatarTone tone, String locale) {
+    public List<AvatarEventCatalog> findActiveByFilters(AvatarEventType eventType, TonePreset tone, String locale) {
         if (eventType == null || tone == null || locale == null) {
             return Collections.emptyList();
         }
@@ -61,7 +61,7 @@ public class AvatarEventCatalogPersistenceAdapter implements AvatarEventCatalogR
         var target = new AvatarEventCatalog();
         target.setId(source.getId());
         target.setEventType(AvatarEventType.valueOf(source.getEventType()));
-        target.setTone(AvatarTone.valueOf(source.getTone()));
+        target.setTone(TonePreset.valueOf(source.getTone()));
         target.setLocale(source.getLocale());
         target.setMessageText(source.getMessageText());
         target.setStatus(ContentStatus.valueOf(source.getStatus()));

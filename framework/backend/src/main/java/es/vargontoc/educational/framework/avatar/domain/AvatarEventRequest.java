@@ -1,13 +1,14 @@
-package es.vargontoc.educational.framework.avatar.infrastructure.dto;
+package es.vargontoc.educational.framework.avatar.domain;
 
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
+
 
 import java.util.Map;
+
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 
 public record AvatarEventRequest(
     Long childSessionId,
     AvatarEventType eventType,
-    String locale,
     Map<String, Object> context
 ) {
     public AvatarEventRequest {

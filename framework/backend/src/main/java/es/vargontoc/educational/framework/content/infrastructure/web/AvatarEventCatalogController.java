@@ -1,11 +1,11 @@
 package es.vargontoc.educational.framework.content.infrastructure.web;
 
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
+import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.infrastructure.dto.AvatarEventCatalogResponse;
 import es.vargontoc.educational.framework.content.infrastructure.dto.CreateAvatarEventCatalogRequest;
 import es.vargontoc.educational.framework.content.infrastructure.dto.UpdateAvatarEventCatalogRequest;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
-import es.vargontoc.educational.framework.content.model.AvatarEventType;
-import es.vargontoc.educational.framework.content.model.AvatarTone;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.ports.in.AvatarEventCatalogUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
@@ -37,7 +37,7 @@ public class AvatarEventCatalogController {
     public ResponseEntity<ApiResponse<AvatarEventCatalogResponse>> createAvatarEvent(@RequestBody CreateAvatarEventCatalogRequest request) {
         var event = avatarEventCatalogUseCase.createAvatarEvent(
             AvatarEventType.valueOf(request.eventType()),
-            AvatarTone.valueOf(request.tone()),
+            TonePreset.valueOf(request.tone()),
             request.locale(),
             request.messageText(),
             ContentStatus.valueOf(request.status())
@@ -55,7 +55,7 @@ public class AvatarEventCatalogController {
         if (eventType != null && tone != null && locale != null) {
             events = avatarEventCatalogUseCase.listActiveAvatarEventsByFilters(
                 AvatarEventType.valueOf(eventType),
-                AvatarTone.valueOf(tone),
+                TonePreset.valueOf(tone),
                 locale
             );
         } else if (eventType != null) {
@@ -84,7 +84,7 @@ public class AvatarEventCatalogController {
         var event = avatarEventCatalogUseCase.updateAvatarEvent(
             id,
             AvatarEventType.valueOf(request.eventType()),
-            AvatarTone.valueOf(request.tone()),
+            TonePreset.valueOf(request.tone()),
             request.locale(),
             request.messageText(),
             ContentStatus.valueOf(request.status())
