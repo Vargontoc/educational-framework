@@ -21,8 +21,8 @@ public enum SessionEventType {
     GAME_STARTED("Game created and waiting to be ready."),
     GAME_READY("Game transitioned to IN_PROGRESS and ready for actions."),
     GAME_ABANDONED("Game was abandoned by client."),
-    SESSION_CONNECTED("Game client authenticated and avatar welcome sent."),
-    SESSION_DISCONNECTED("Backend-initiated session end with avatar farewell sent."),
+    WELCOME("Game client authenticated and avatar welcome sent."),
+    FAREWELL("Backend-initiated session end with avatar farewell sent."),
     WORLD_STATE_SYNC("World map state synchronization."),
     WORLD_DESTINATION_READY("Child arrived at destination with discovery elements."),
     WORLD_ACTIVITY_STARTED("Activity launched from world map.");

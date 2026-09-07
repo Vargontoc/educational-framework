@@ -63,24 +63,25 @@ public class AvatarService implements AvatarUseCase {
         ChildProfile childProfile = findChildProfile(session.getChildProfileId());
 
         if(!childProfile.isNpcEnabled()) {
-            return createFallbackResult(session.getId(), request.eventType());
+            return createFallbackResult(session.getId(), request.eventType(), "");
         }
 
         AvatarEventCatalog event = resolveCatalog(request.eventType(), childProfile);
+        String messageText = (event != null && event.getMessageText() != null) ? event.getMessageText() : "";
 
         if(childProfile.isNpcVoiceEnabled() && event != null && event.getMessageText() != null && !event.getMessageText().trim().isBlank()) {
             
             try {
                 
                 byte[] data = audio.getAudio(AudioRequest.withPreset(event.getMessageText().replace("<name>", childProfile.getName()), event.getTone()));
-                return createResult(session.getId(), request.eventType(), data);
+                return createResult(session.getId(), request.eventType(), data, messageText);
             }catch(Exception e) {
                 log.error("Error generate audio: {}", e.getMessage(), e);
-                return createFallbackResult(session.getId(), request.eventType());
+                return createFallbackResult(session.getId(), request.eventType(), messageText);
             }
         }
 
-        return createFallbackResult(session.getId(), request.eventType());
+        return createFallbackResult(session.getId(), request.eventType(), messageText);
     }
 
     AvatarEventCatalog resolveCatalog(AvatarEventType type, ChildProfile profile) {
@@ -120,15 +121,15 @@ public class AvatarService implements AvatarUseCase {
             .orElseThrow(() -> new ResourceNotFoundException("Child profile not found: " + childProfileId));
     }
 
-    private AvatarLifecycleResult createResult(Long sessionId, AvatarEventType type, byte[] audio) 
+    private AvatarLifecycleResult createResult(Long sessionId, AvatarEventType type, byte[] audio, String text) 
     {
         if(audio == null || audio.length <= 0)
-            return createFallbackResult(sessionId, type);
-        return new AvatarLifecycleResult(new GameAvatarEvent(null, sessionId, type.name(), true, UUID.randomUUID().toString(), ""), audio);
+            return createFallbackResult(sessionId, type, text);
+        return new AvatarLifecycleResult(new GameAvatarEvent(null, sessionId, type.name(), true, UUID.randomUUID().toString(), text), audio);
     }
 
-    private AvatarLifecycleResult createFallbackResult(Long sessionId, AvatarEventType type) {
-        return new AvatarLifecycleResult(new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, type.name(), false, null, null), null);
+    private AvatarLifecycleResult createFallbackResult(Long sessionId, AvatarEventType type, String text) {
+        return new AvatarLifecycleResult(new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, type != null ? type.name() : null, false, null, text), null);
     }
     
     

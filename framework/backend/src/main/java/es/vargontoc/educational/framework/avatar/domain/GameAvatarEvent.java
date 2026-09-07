@@ -13,10 +13,10 @@ public record GameAvatarEvent(
     @JsonProperty("text") String text
 ) {
     public static GameAvatarEvent welcome(Long sessionId, boolean audioAvailable, String audioId, String text) {
-        return new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, "SESSION_CONNECTED", audioAvailable, audioId, text);
+        return new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, "WELCOME", audioAvailable, audioId, text);
     }
 
     public static GameAvatarEvent farewell(Long sessionId, boolean audioAvailable, String audioId, String text) {
-        return new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, "SESSION_DISCONNECTED", audioAvailable, audioId, text);
+        return new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, "FAREWELL", audioAvailable, audioId, text);
     }
 }

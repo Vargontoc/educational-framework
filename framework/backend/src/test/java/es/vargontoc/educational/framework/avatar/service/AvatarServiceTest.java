@@ -77,6 +77,7 @@ class AvatarServiceTest {
         assertEquals("ACTIVITY_COMPLETED", result.event().eventType());
         assertTrue(result.event().audioAvailable());
         assertNotNull(result.event().audioId());
+        assertEquals("Great job <name>!", result.event().text());
         assertNotNull(result.audioData());
     }
 
@@ -126,6 +127,7 @@ class AvatarServiceTest {
         assertNotNull(result);
         assertFalse(result.event().audioAvailable());
         assertNull(result.event().audioId());
+        assertEquals("", result.event().text());
         assertNull(result.audioData());
     }
 
@@ -145,6 +147,7 @@ class AvatarServiceTest {
 
         assertNotNull(result);
         assertFalse(result.event().audioAvailable());
+        assertEquals("Great job!", result.event().text());
         assertNull(result.audioData());
     }
 
@@ -163,6 +166,7 @@ class AvatarServiceTest {
 
         assertNotNull(result);
         assertFalse(result.event().audioAvailable());
+        assertEquals("", result.event().text());
         assertNull(result.audioData());
     }
 
@@ -183,6 +187,7 @@ class AvatarServiceTest {
 
         assertNotNull(result);
         assertFalse(result.event().audioAvailable());
+        assertEquals("Great job!", result.event().text());
         assertNull(result.audioData());
     }
 

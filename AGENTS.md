@@ -25,7 +25,6 @@
 ## Layers
 
 - `docs/`                      -> decisiones de arquitectura, features, documentacion, contratos
-- `framework/tts/`             -> minimal api which is consumed for backend, integrate Chatterbox comunication 
 - `framework/agents/`          -> agentes de la aplicación
 - `framework/backend/`         -> Spring Boot API, business logic
 - `framework/frontend/`        -> Vue3 SPS, UI components, API conssumption

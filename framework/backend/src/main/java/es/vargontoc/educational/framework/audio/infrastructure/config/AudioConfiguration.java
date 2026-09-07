@@ -24,8 +24,8 @@ public class AudioConfiguration {
         return RestClient.builder().baseUrl(baseUrl)
             .requestFactory(new SimpleClientHttpRequestFactory(){
                 {
-                    setConnectTimeout(Duration.ofSeconds(90));
-                    setReadTimeout(Duration.ofSeconds(90));
+                    setConnectTimeout(Duration.ofSeconds(20));
+                    setReadTimeout(Duration.ofSeconds(20));
                 }
             })
             .build();

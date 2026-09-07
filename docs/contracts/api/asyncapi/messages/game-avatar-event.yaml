@@ -18,9 +18,9 @@ payload:
     eventType:
       type: string
       enum:
-        - SESSION_CONNECTED
-        - SESSION_DISCONNECTED
-      description: Lifecycle subtype. SESSION_CONNECTED: welcome after auth. SESSION_DISCONNECTED: farewell before backend-initiated close.
+        - WELCOME
+        - FAREWELL
+      description: Lifecycle subtype. WELCOME: welcome after auth. FAREWELL: farewell before backend-initiated close.
     audioAvailable:
       type: boolean
       description: True when audio binary frame will follow.

@@ -40,10 +40,10 @@ components:
     GAME_AVATAR_EVENT:
       direction: server_to_client
       description: Avatar audio event. Sent as JSON text frame, optionally followed by binary audio frame (see BinaryAudioFrame).
-    SESSION_CONNECTED:
+    WELCOME:
       direction: server_to_client
       description: "Lifecycle subtype: welcome avatar sent after successful game WebSocket authentication. Text: 'Hola, vamos a jugar!'"
-    SESSION_DISCONNECTED:
+    FAREWELL:
       direction: server_to_client
       description: "Lifecycle subtype: farewell avatar sent before backend-initiated session close. Text: 'Vaya, parece que es hora de despedirnos. Hasta la proxima.'"
     GAME_ACTION_RESULT:

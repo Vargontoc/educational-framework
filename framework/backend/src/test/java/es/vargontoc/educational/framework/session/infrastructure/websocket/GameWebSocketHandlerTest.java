@@ -222,7 +222,7 @@ class GameWebSocketHandlerTest {
         assertTrue(captor.getAllValues().stream()
             .anyMatch(m -> m.getPayload().contains("GAME_AVATAR_EVENT")));
         assertTrue(captor.getAllValues().stream()
-            .anyMatch(m -> m.getPayload().contains("SESSION_CONNECTED")));
+            .anyMatch(m -> m.getPayload().contains("WELCOME")));
     }
 
     @Test
