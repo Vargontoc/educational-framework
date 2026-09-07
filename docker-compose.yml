@@ -1,25 +1,5 @@
 name: educational-framework
 services:
-
-  tts:
-    build:
-      context: ./framework/tts
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - educational-network
-    ports:
-      - "${TTS_BIND_IP:-127.0.0.1}:${TTS_HOST_PORT:-8081}:8081"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/health', timeout=5)\" || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
   api:
     build:
       context: ./framework/backend
@@ -30,6 +10,8 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - educational-network
+    expose:
+      - "${API_EXPOSE_PORT:-8080}"
     ports:
       - "${API_BIND_IP:-127.0.0.1}:${API_HOST_PORT:-8080}:8080"
     restart: unless-stopped
