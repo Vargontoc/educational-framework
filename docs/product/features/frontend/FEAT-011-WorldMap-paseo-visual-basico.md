@@ -25,7 +25,7 @@ El valor para la familia es ofrecer una entrada serena y autónoma a la experien
 ### Decisiones confirmadas
 
 - WorldMap empieza al concluir correctamente la carga inicial de `GameView`.
-- La interacción infantil sigue el modelo de paseo guiado suavemente: Nubi está presente en el paisaje, pero el niño no tiene que dirigirlo para obtener una respuesta.
+- La interacción infantil sigue el modelo de paseo guiado suavemente: cuando la preferencia parental de NPC está activa, Nubi está presente en el paisaje, pero el niño no tiene que dirigirlo para obtener una respuesta.
 - En esta fase, al tocar un elemento interactuable, la respuesta acordada es una reacción del entorno, no el desplazamiento de Nubi hacia ese elemento.
 - La vista muestra una zona acotada del mundo; el paisaje se desplaza gradualmente mientras el niño explora.
 - La exploración es libre y voluntaria: no hay una secuencia obligatoria, objetivo que completar ni orden correcto de interacción.
@@ -41,7 +41,7 @@ La familia ha indicado interés en que Nubi tenga reacciones visuales en el mapa
 
 Alternativas aún abiertas:
 
-1. **Respetar estrictamente la preferencia de NPC:** con NPC desactivado, Nubi puede estar presente como protagonista visual estático o de movimiento ambiental, pero no muestra reacciones expresivas asociadas a la interacción; el entorno mantiene sus reacciones.
+1. **Respetar estrictamente la preferencia de NPC:** con NPC desactivado, Nubi no está presente ni se anima en WorldMap; el entorno mantiene sus reacciones. La única excepción visual vigente es la despedida por pérdida de conexión definida en FEAT-010.
 2. **Excepción visual limitada:** Nubi conserva reacciones visuales no verbales en WorldMap aunque el NPC esté desactivado, igual que la excepción ya aprobada exclusivamente para la despedida por pérdida de conexión.
 3. **Protagonista alternativo por bioma:** cada mundo cuenta con un personaje visual propio para reacciones; Nubi permanece como hilo conductor general y de minijuegos.
 
@@ -53,7 +53,7 @@ La alternativa 1 protege con mayor claridad el significado de la preferencia par
 
 1. Selecciona un perfil infantil habilitado.
 2. Ve la carga infantil definida en FEAT-010.
-3. Al finalizar, aparece WorldMap con Nubi y una porción comprensible del paisaje.
+3. Al finalizar, aparece WorldMap con una porción comprensible del paisaje y, si el NPC está activado, con Nubi.
 4. Puede observar el paisaje sin necesidad de actuar.
 
 ### Niño que descubre un elemento
@@ -73,7 +73,7 @@ La alternativa 1 protege con mayor claridad el significado de la preferencia par
 
 1. Tras la carga inicial satisfactoria, la experiencia debe mostrar WorldMap en lugar del estado base no interactivo definido como entrega transitoria en FEAT-010.
 2. WorldMap debe presentar inicialmente una zona acotada y comprensible del paisaje.
-3. Nubi debe estar visualmente presente en el mapa.
+3. Cuando la preferencia parental de NPC está activa, Nubi debe estar visualmente presente en el mapa. Con NPC desactivado, WorldMap no debe mostrarlo ni animarlo, salvo la excepción de despedida por pérdida de conexión definida en FEAT-010.
 4. Los elementos interactuables deben producir reacciones ambientales básicas, breves y no evaluativas.
 5. Las reacciones deben ser comprensibles sin requerir lectura, sonido ni identificación exclusiva por color.
 6. El paisaje debe poder desplazarse durante la exploración, sin convertir el desplazamiento en una carrera, un recorrido obligado o una prueba de precisión.
@@ -84,7 +84,7 @@ La alternativa 1 protege con mayor claridad el significado de la preferencia par
 
 ## 5. Criterios de aceptación verificables
 
-1. Después de la carga de un perfil habilitado, el niño ve una vista de WorldMap con Nubi y un paisaje visible acotado.
+1. Después de la carga de un perfil habilitado, el niño ve una vista de WorldMap con un paisaje visible acotado y, si el NPC está activado, con Nubi.
 2. Al tocar un elemento interactuable, se observa una reacción del entorno sin texto obligatorio ni indicación de éxito o fallo.
 3. Un niño puede no tocar ningún elemento y la vista no muestra avisos de inactividad, presión ni consecuencias negativas.
 4. La exploración permite un desplazamiento gradual del paisaje sin mostrar un destino obligatorio, un porcentaje ni una ruta de nivel.
@@ -143,7 +143,7 @@ La alternativa 1 protege con mayor claridad el significado de la preferencia par
 
 ### Decisiones pendientes
 
-- ~~Confirmar una de las tres alternativas sobre la presencia reactiva de Nubi cuando el NPC está desactivado.~~ **RESUELTO 2026-09-07:** Alternativa 1 confirmada — respeto estricto de la preferencia parental. Nubi presente visualmente pero sin reacciones expresivas cuando el NPC está desactivado.
+- ~~Confirmar una de las tres alternativas sobre la presencia reactiva de Nubi cuando el NPC está desactivado.~~ **RESUELTO 2026-09-07:** se aplica el control parental confirmado en FEAT-005: con NPC desactivado, Nubi no está presente ni se anima en WorldMap; la excepción visual se limita a la despedida por pérdida de conexión de FEAT-010.
 - Definir en fase 4A cómo percibe el niño el comienzo, límites y cierre de una zona sin introducir sensación de nivel o meta.
 - Definir en fase 4B el repertorio de reacciones de entorno y sus límites de repetición.
 
