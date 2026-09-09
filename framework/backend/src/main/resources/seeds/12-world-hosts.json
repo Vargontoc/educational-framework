@@ -8,6 +8,7 @@
     "maxAge": 4,
     "status": "ACTIVE",
     "sortOrder": 1,
-    "visualAssetKey": "host_dog_meadow"
+    "visualAssetKey": "host_dog_meadow",
+    "worldWidth": 2560
   }
 ]

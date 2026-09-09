@@ -81,6 +81,10 @@ app:
     element-mastery:
       mastered-success-rate-percent: ${APP_TRACKING_ELEMENT_MASTERY_SUCCESS_RATE:80}
       min-attempts-for-mastery: ${APP_TRACKING_ELEMENT_MASTERY_MIN_ATTEMPTS:3}
+  world:
+    exploration:
+      max-visible-elements: ${APP_WORLD_EXPLORATION_MAX_VISIBLE_ELEMENTS:3}
+      min-separation-normalized: ${APP_WORLD_EXPLORATION_MIN_SEPARATION_NORMALIZED:0.15}
   session:
     default-heartbeat-interval-seconds: 30
     heartbeat-grace-multiplier: 2

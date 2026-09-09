@@ -14,6 +14,7 @@ public class WorldHost {
     private ContentStatus status;
     private Integer sortOrder;
     private String visualAssetKey;
+    private Integer worldWidth;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -112,6 +113,14 @@ public class WorldHost {
 
     public void setVisualAssetKey(String visualAssetKey) {
         this.visualAssetKey = visualAssetKey;
+    }
+
+    public Integer getWorldWidth() {
+        return worldWidth;
+    }
+
+    public void setWorldWidth(Integer worldWidth) {
+        this.worldWidth = worldWidth;
     }
 
     public LocalDateTime getCreatedAt() {

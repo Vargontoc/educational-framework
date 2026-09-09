@@ -23,7 +23,7 @@ describe('Señal de actividad WebSocket y expulsión (SPRINT-045)', () => {
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
       expect(state.wsReadyState).to.eq(WS_OPEN)
     })
   })
@@ -34,7 +34,7 @@ describe('Señal de actividad WebSocket y expulsión (SPRINT-045)', () => {
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
 
     cy.window().then((win) => {

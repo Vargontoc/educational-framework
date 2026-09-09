@@ -443,6 +443,7 @@ public class SeedService {
             worldHost.setStatus(ContentStatus.valueOf(seed.status()));
             worldHost.setSortOrder(seed.sortOrder());
             worldHost.setVisualAssetKey(seed.visualAssetKey());
+            worldHost.setWorldWidth(seed.worldWidth());
             worldHost.setCreatedAt(LocalDateTime.now());
             worldHostRepository.save(worldHost);
             markLoaded(key, file);
@@ -505,6 +506,8 @@ public class SeedService {
                     ? es.vargontoc.educational.framework.content.model.InteractionCueType.valueOf(seed.interactionCueType())
                     : null);
             element.setSortOrder(seed.sortOrder());
+            element.setPositionX(seed.positionX());
+            element.setPositionY(seed.positionY());
             element.setCreatedAt(LocalDateTime.now());
             worldDiscoveryElementRepository.save(element);
             markLoaded(key, file);

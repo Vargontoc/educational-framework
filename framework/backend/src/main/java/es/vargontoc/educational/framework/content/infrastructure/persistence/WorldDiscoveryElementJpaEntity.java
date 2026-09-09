@@ -45,6 +45,12 @@ public class WorldDiscoveryElementJpaEntity extends BaseEntity {
     @Column(name = "sort_order")
     private Integer sortOrder;
 
+    @Column(name = "position_x")
+    private Double positionX;
+
+    @Column(name = "position_y")
+    private Double positionY;
+
     public String getCode() {
         return code;
     }
@@ -139,5 +145,21 @@ public class WorldDiscoveryElementJpaEntity extends BaseEntity {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public Double getPositionX() {
+        return positionX;
+    }
+
+    public void setPositionX(Double positionX) {
+        this.positionX = positionX;
+    }
+
+    public Double getPositionY() {
+        return positionY;
+    }
+
+    public void setPositionY(Double positionY) {
+        this.positionY = positionY;
     }
 }

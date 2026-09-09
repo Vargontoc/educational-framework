@@ -32,7 +32,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -46,6 +48,8 @@ class WorldDiscoveryElementValidatorTest {
                 3,
                 4,
                 ContentStatus.ACTIVE,
+                null,
+                null,
                 null,
                 null,
                 null
@@ -64,6 +68,8 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
+                null,
+                null,
                 null
         ));
     }
@@ -79,6 +85,8 @@ class WorldDiscoveryElementValidatorTest {
                 4,
                 ContentStatus.ACTIVE,
                 1L,
+                null,
+                null,
                 null,
                 null
         ));
@@ -96,7 +104,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -112,7 +122,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -128,7 +140,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -144,7 +158,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -160,7 +176,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -176,7 +194,9 @@ class WorldDiscoveryElementValidatorTest {
                 null,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -192,7 +212,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -208,7 +230,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -224,7 +248,9 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
         ));
     }
 
@@ -240,7 +266,63 @@ class WorldDiscoveryElementValidatorTest {
                 ContentStatus.ACTIVE,
                 1L,
                 null,
-                InteractionCueType.BREATHING_GLOW
+                InteractionCueType.BREATHING_GLOW,
+                null,
+                null
+        ));
+    }
+
+    @Test
+    void positionWithinNormalizedRange_passes() {
+        assertDoesNotThrow(() -> validator.validateForCreate(
+                "MEADOW_SHINY_FLOWER",
+                "Shiny Flower",
+                ElementType.DISCOVERY,
+                Biome.MEADOW,
+                3,
+                4,
+                ContentStatus.ACTIVE,
+                1L,
+                null,
+                InteractionCueType.BREATHING_GLOW,
+                0.0,
+                1.0
+        ));
+    }
+
+    @Test
+    void positionXBelowZero_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForCreate(
+                "MEADOW_SHINY_FLOWER",
+                "Shiny Flower",
+                ElementType.DISCOVERY,
+                Biome.MEADOW,
+                3,
+                4,
+                ContentStatus.ACTIVE,
+                1L,
+                null,
+                InteractionCueType.BREATHING_GLOW,
+                -0.1,
+                0.5
+        ));
+    }
+
+    @Test
+    void positionYAboveOne_throwsValidationException() {
+        assertThrows(ValidationException.class, () -> validator.validateForCreate(
+                "MEADOW_SHINY_FLOWER",
+                "Shiny Flower",
+                ElementType.DISCOVERY,
+                Biome.MEADOW,
+                3,
+                4,
+                ContentStatus.ACTIVE,
+                1L,
+                null,
+                InteractionCueType.BREATHING_GLOW,
+                0.5,
+                1.1
         ));
     }
 }

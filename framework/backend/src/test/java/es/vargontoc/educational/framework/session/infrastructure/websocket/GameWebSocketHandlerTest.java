@@ -180,6 +180,57 @@ class GameWebSocketHandlerTest {
     }
 
     @Test
+    void worldHeartbeat_activeWithDestination_syncPayloadCarriesPositionAndWorldWidth() throws IOException {
+        var childSession = childSession(8L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(8L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        var proposal = new es.vargontoc.educational.framework.world.model.WorldDiscoveryProposal();
+        proposal.setProposalRuntimeId("runtime-1");
+        proposal.setDiscoveryElementId(1L);
+        proposal.setDiscoveryElementCode("MEADOW_SHINY_FLOWER");
+        proposal.setDisplayName("Shiny Flower");
+        proposal.setElementType("DISCOVERY");
+        proposal.setPositionX(0.32);
+        proposal.setPositionY(0.64);
+
+        var destination = new es.vargontoc.educational.framework.world.model.WorldDestination();
+        destination.setDestinationId("dest-1");
+        destination.setHostId(1L);
+        destination.setHostCode("MEADOW_DOG");
+        destination.setHostDisplayName("Dog");
+        destination.setWorldWidth(4000);
+        destination.setBiome("MEADOW");
+        destination.setDiscoveryProposals(List.of(proposal));
+
+        var worldState = new es.vargontoc.educational.framework.world.model.WorldState();
+        worldState.setChildSessionId(8L);
+        worldState.setCurrentDestination(destination);
+
+        when(worldHeartbeatUseCase.recordHeartbeat(8L)).thenReturn(
+            new es.vargontoc.educational.framework.world.model.WorldHeartbeatResult(
+                8L, true, null, true,
+                es.vargontoc.educational.framework.world.model.WorldInactivityStatus.ACTIVE));
+        when(worldStateRegistry.findByChildSessionId(8L)).thenReturn(Optional.of(worldState));
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":8}"));
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"world_heartbeat\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeastOnce()).sendMessage(captor.capture());
+        String syncMessage = captor.getAllValues().stream()
+            .map(TextMessage::getPayload)
+            .filter(payload -> payload.contains("WORLD_STATE_SYNC"))
+            .findFirst()
+            .orElseThrow();
+
+        assertTrue(syncMessage.contains("\"worldWidth\":4000"));
+        assertTrue(syncMessage.contains("\"positionX\":0.32"));
+        assertTrue(syncMessage.contains("\"positionY\":0.64"));
+    }
+
+    @Test
     void afterConnectionClosed_unauthSession_doesNotThrow() {
         handler.afterConnectionEstablished(session);
         handler.afterConnectionClosed(session, CloseStatus.NORMAL);

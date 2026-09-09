@@ -23,7 +23,7 @@ describe('Recuperación de conexión y escena de despedida (SPRINT-046)', () => 
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
 
     cy.window().then((win) => {
@@ -34,7 +34,7 @@ describe('Recuperación de conexión y escena de despedida (SPRINT-046)', () => 
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
   })
 
@@ -44,7 +44,7 @@ describe('Recuperación de conexión y escena de despedida (SPRINT-046)', () => 
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
 
     cy.window().then((win) => {
@@ -69,7 +69,7 @@ describe('Recuperación de conexión y escena de despedida (SPRINT-046)', () => 
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
 
     cy.reload()
@@ -77,7 +77,7 @@ describe('Recuperación de conexión y escena de despedida (SPRINT-046)', () => 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
       expect(state).to.exist
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
   })
 })

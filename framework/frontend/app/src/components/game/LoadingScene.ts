@@ -187,7 +187,7 @@ export class LoadingScene extends Scene {
         audioService.once('audio-completed', () => {
             // Esperar 1 segundo después de que termine el audio
             this.time.delayedCall(1000, () => {
-                this.goToBaseState()
+                this.goToWorldMap()
             })
         })
 
@@ -293,14 +293,14 @@ export class LoadingScene extends Scene {
         // Solo transicionar si los assets están cargados Y el audio de bienvenida ha terminado
         // O si no se recibió evento WELCOME (fallback)
         if (this.assetsLoaded && (this.welcomeAudioCompleted || !this.welcomeEventReceived)) {
-            this.goToBaseState()
+            this.goToWorldMap()
         }
     }
 
-    goToBaseState() {
+    goToWorldMap() {
         if (this.websocket && this.sessionId !== undefined && this.childId !== undefined) {
             this.transferredWebSocket = true
-            this.scene.start('base-state', {
+            this.scene.start('world-map', {
                 websocket: this.websocket,
                 sessionId: this.sessionId,
                 childId: this.childId

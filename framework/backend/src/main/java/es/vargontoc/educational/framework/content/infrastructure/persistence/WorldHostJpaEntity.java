@@ -36,6 +36,9 @@ public class WorldHostJpaEntity extends BaseEntity {
     @Column(name = "visual_asset_key", length = 100)
     private String visualAssetKey;
 
+    @Column(name = "world_width")
+    private Integer worldWidth;
+
     public String getCode() {
         return code;
     }
@@ -106,5 +109,13 @@ public class WorldHostJpaEntity extends BaseEntity {
 
     public void setVisualAssetKey(String visualAssetKey) {
         this.visualAssetKey = visualAssetKey;
+    }
+
+    public Integer getWorldWidth() {
+        return worldWidth;
+    }
+
+    public void setWorldWidth(Integer worldWidth) {
+        this.worldWidth = worldWidth;
     }
 }

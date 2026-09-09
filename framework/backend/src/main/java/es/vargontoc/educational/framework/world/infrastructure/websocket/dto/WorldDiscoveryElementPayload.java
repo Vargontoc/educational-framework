@@ -8,6 +8,8 @@ public record WorldDiscoveryElementPayload(
     String elementType,
     String visualAssetKey,
     String interactionCueType,
-    boolean hasActivity
+    boolean hasActivity,
+    Double positionX,
+    Double positionY
 ) {
 }

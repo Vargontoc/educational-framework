@@ -233,7 +233,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         ws.setChildProfileId(profileId);
         ws.setStatus(WorldRuntimeStatus.ACTIVE);
         var select = worldOrchestrator.selectDestination(childSessionId, profileId, null, 3);
-        ws.setCurrentDestination(select.getDestination());
+        WorldDestination destination = select.getDestination();
+        ws.setCurrentDestination(destination);
+        if (destination != null) {
+            ws.setVisibleDiscoveryElements(destination.getDiscoveryProposals());
+        }
         return ws;
     }
 
@@ -720,7 +724,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             destination.getHostId(),
             destination.getHostCode(),
             destination.getHostDisplayName(),
-            null
+            null,
+            destination.getWorldWidth()
         );
         WorldNarrativeSituationPayload situationPayload = new WorldNarrativeSituationPayload(
             destination.getNarrativeSituationId(),
@@ -751,7 +756,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             proposal.getElementType(),
             proposal.getVisualAssetKey(),
             proposal.getInteractionCueType(),
-            proposal.getActivityId() != null
+            proposal.getActivityId() != null,
+            proposal.getPositionX(),
+            proposal.getPositionY()
         );
     }
 
@@ -784,6 +791,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         if (host.visualAssetKey() != null) {
             result.put("visualAssetKey", host.visualAssetKey());
         }
+        if (host.worldWidth() != null) {
+            result.put("worldWidth", host.worldWidth());
+        }
         return result;
     }
 
@@ -814,6 +824,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             result.put("interactionCueType", element.interactionCueType());
         }
         result.put("hasActivity", element.hasActivity());
+        if (element.positionX() != null) {
+            result.put("positionX", element.positionX());
+        }
+        if (element.positionY() != null) {
+            result.put("positionY", element.positionY());
+        }
         return result;
     }
 

@@ -17,6 +17,8 @@ public class WorldDiscoveryElement {
     private String visualAssetKey;
     private InteractionCueType interactionCueType;
     private Integer sortOrder;
+    private Double positionX;
+    private Double positionY;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -144,6 +146,22 @@ public class WorldDiscoveryElement {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public Double getPositionX() {
+        return positionX;
+    }
+
+    public void setPositionX(Double positionX) {
+        this.positionX = positionX;
+    }
+
+    public Double getPositionY() {
+        return positionY;
+    }
+
+    public void setPositionY(Double positionY) {
+        this.positionY = positionY;
     }
 
     public LocalDateTime getCreatedAt() {

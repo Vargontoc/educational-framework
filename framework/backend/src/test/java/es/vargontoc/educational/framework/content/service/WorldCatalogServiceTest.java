@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -75,6 +76,29 @@ class WorldCatalogServiceTest {
     }
 
     @Test
+    void listActiveHostsForAge_hostWithWorldWidth_isMapped() {
+        WorldHost host = createWorldHost(1L, "MEADOW_DOG", Biome.MEADOW, 3, 4);
+        host.setWorldWidth(4000);
+        when(worldHostRepository.findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+            ContentStatus.ACTIVE, 3)).thenReturn(List.of(host));
+
+        List<WorldHostProjection> result = service.listActiveHostsForAge(3);
+
+        assertEquals(4000, result.get(0).worldWidth());
+    }
+
+    @Test
+    void listActiveHostsForAge_hostWithoutWorldWidth_isMappedAsNull() {
+        WorldHost host = createWorldHost(1L, "MEADOW_DOG", Biome.MEADOW, 3, 4);
+        when(worldHostRepository.findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+            ContentStatus.ACTIVE, 3)).thenReturn(List.of(host));
+
+        List<WorldHostProjection> result = service.listActiveHostsForAge(3);
+
+        assertNull(result.get(0).worldWidth());
+    }
+
+    @Test
     void listActiveHostsForAge_excludesInactive() {
         when(worldHostRepository.findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
             ContentStatus.ACTIVE, 3)).thenReturn(Collections.emptyList());
@@ -108,6 +132,32 @@ class WorldCatalogServiceTest {
         assertEquals("MEADOW_SHINY_FLOWER", result.get(0).code());
         assertEquals(Biome.MEADOW, result.get(0).biome());
         assertEquals(ElementType.DISCOVERY, result.get(0).elementType());
+    }
+
+    @Test
+    void listActiveElementsByBiomeAndAge_elementWithPosition_isMapped() {
+        WorldDiscoveryElement element = createWorldDiscoveryElement(1L, "MEADOW_SHINY_FLOWER", Biome.MEADOW, ElementType.DISCOVERY, 3, 4);
+        element.setPositionX(0.32);
+        element.setPositionY(0.64);
+        when(worldDiscoveryElementRepository.findByStatusAndBiomeAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+            ContentStatus.ACTIVE, Biome.MEADOW, 3)).thenReturn(List.of(element));
+
+        List<WorldDiscoveryElementProjection> result = service.listActiveElementsByBiomeAndAge(Biome.MEADOW, 3);
+
+        assertEquals(0.32, result.get(0).positionX());
+        assertEquals(0.64, result.get(0).positionY());
+    }
+
+    @Test
+    void listActiveElementsByBiomeAndAge_elementWithoutPosition_isMappedAsNull() {
+        WorldDiscoveryElement element = createWorldDiscoveryElement(1L, "MEADOW_SHINY_FLOWER", Biome.MEADOW, ElementType.DISCOVERY, 3, 4);
+        when(worldDiscoveryElementRepository.findByStatusAndBiomeAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+            ContentStatus.ACTIVE, Biome.MEADOW, 3)).thenReturn(List.of(element));
+
+        List<WorldDiscoveryElementProjection> result = service.listActiveElementsByBiomeAndAge(Biome.MEADOW, 3);
+
+        assertNull(result.get(0).positionX());
+        assertNull(result.get(0).positionY());
     }
 
     @Test

@@ -55,6 +55,7 @@ public class WorldHostPersistenceAdapter implements WorldHostRepository {
         target.setStatus(ContentStatus.valueOf(source.getStatus()));
         target.setSortOrder(source.getSortOrder());
         target.setVisualAssetKey(source.getVisualAssetKey());
+        target.setWorldWidth(source.getWorldWidth());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -72,6 +73,7 @@ public class WorldHostPersistenceAdapter implements WorldHostRepository {
         target.setStatus(source.getStatus().name());
         target.setSortOrder(source.getSortOrder());
         target.setVisualAssetKey(source.getVisualAssetKey());
+        target.setWorldWidth(source.getWorldWidth());
         return target;
     }
 }

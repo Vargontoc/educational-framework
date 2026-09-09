@@ -18,14 +18,16 @@ public class WorldDiscoveryElementValidator extends AbstractValidator<WorldDisco
         requireNonNull(target.status(), "status");
         validateAgeRange(target.minAge(), target.maxAge());
         validateActivityIdConstraint(target.elementType(), target.activityId());
+        validateNormalizedPosition(target.positionX(), "positionX");
+        validateNormalizedPosition(target.positionY(), "positionY");
     }
 
     public void validateForCreate(String code, String displayName, ElementType elementType,
                                   Biome biome, Integer minAge, Integer maxAge,
                                   ContentStatus status, Long activityId, Long topicId,
-                                  InteractionCueType interactionCueType) {
+                                  InteractionCueType interactionCueType, Double positionX, Double positionY) {
         validate(new WorldDiscoveryElementValidationInput(code, displayName, elementType, biome,
-                minAge, maxAge, status, activityId, topicId, interactionCueType));
+                minAge, maxAge, status, activityId, topicId, interactionCueType, positionX, positionY));
     }
 
     private void validateAgeRange(Integer minAge, Integer maxAge) {
@@ -45,8 +47,18 @@ public class WorldDiscoveryElementValidator extends AbstractValidator<WorldDisco
         }
     }
 
+    private void validateNormalizedPosition(Double value, String fieldName) {
+        if (value == null) {
+            return;
+        }
+        if (value < 0.0 || value > 1.0) {
+            throw new ValidationException(fieldName + " must be between 0.0 and 1.0");
+        }
+    }
+
     public record WorldDiscoveryElementValidationInput(String code, String displayName, ElementType elementType,
                                                         Biome biome, Integer minAge, Integer maxAge,
                                                         ContentStatus status, Long activityId, Long topicId,
-                                                        InteractionCueType interactionCueType) {}
+                                                        InteractionCueType interactionCueType,
+                                                        Double positionX, Double positionY) {}
 }

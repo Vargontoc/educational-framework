@@ -29,6 +29,7 @@
     "vue-tsc": "^3.3.7"
   },
   "dependencies": {
+    "@esotericsoftware/spine-phaser-v4": "^4.3.13",
     "@lucide/vue": "^1.26.0",
     "@stomp/stompjs": "^7.0.0",
     "@vue/devtools-api": "^8.1.5",

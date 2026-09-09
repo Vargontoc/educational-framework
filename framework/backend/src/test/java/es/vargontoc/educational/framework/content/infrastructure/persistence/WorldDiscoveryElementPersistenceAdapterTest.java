@@ -67,6 +67,46 @@ class WorldDiscoveryElementPersistenceAdapterTest {
     }
 
     @Test
+    void save_persistsPosition() {
+        var element = buildDomain();
+        element.setPositionX(0.25);
+        element.setPositionY(0.75);
+        var captor = ArgumentCaptor.forClass(WorldDiscoveryElementJpaEntity.class);
+        when(jpaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        adapter.save(element);
+
+        verify(jpaRepository).save(captor.capture());
+        assertEquals(0.25, captor.getValue().getPositionX());
+        assertEquals(0.75, captor.getValue().getPositionY());
+    }
+
+    @Test
+    void findByCode_entityWithPosition_returnsPositionUnchanged() {
+        var entity = buildJpaEntity();
+        entity.setPositionX(0.25);
+        entity.setPositionY(0.75);
+        when(jpaRepository.findByCode("MEADOW_SHINY_FLOWER")).thenReturn(Optional.of(entity));
+
+        var result = adapter.findByCode("MEADOW_SHINY_FLOWER");
+
+        assertTrue(result.isPresent());
+        assertEquals(0.25, result.get().getPositionX());
+        assertEquals(0.75, result.get().getPositionY());
+    }
+
+    @Test
+    void findByCode_entityWithoutPosition_returnsNullPosition() {
+        when(jpaRepository.findByCode("MEADOW_SHINY_FLOWER")).thenReturn(Optional.of(buildJpaEntity()));
+
+        var result = adapter.findByCode("MEADOW_SHINY_FLOWER");
+
+        assertTrue(result.isPresent());
+        assertNull(result.get().getPositionX());
+        assertNull(result.get().getPositionY());
+    }
+
+    @Test
     void findByCode_existingCode_returnsWorldDiscoveryElement() {
         when(jpaRepository.findByCode("MEADOW_SHINY_FLOWER")).thenReturn(Optional.of(buildJpaEntity()));
 

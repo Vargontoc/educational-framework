@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="035__add_position_and_world_width_to_world_catalog" author="vargontoc">
+        <addColumn tableName="world_discovery_element">
+            <column name="position_x" type="DOUBLE"/>
+            <column name="position_y" type="DOUBLE"/>
+        </addColumn>
+
+        <addColumn tableName="world_host">
+            <column name="world_width" type="INTEGER"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,18 @@
+export const WORLD_MAP_CONFIG = {
+    viewportWidth: 1280,
+    viewportHeight: 720,
+    worldWidth: 3560,
+    maxScrollOffset: 1280,
+    scrollMaxSpeed: 120,
+    parallaxFactor: 0.4,
+    inertiaDuration: 500,
+    inertiaEase: 'Cubic.out',
+    minHitAreaSize: 80,
+    interactiveMinSeparation: 60,
+    reactionMinDuration: 300,
+    reactionMaxDuration: 600,
+    nubiIdleScaleFrom: 1.0,
+    nubiIdleScaleTo: 1.05,
+    nubiIdleDuration: 2000,
+    nubiIdleEase: 'Sine.easeInOut'
+} as const

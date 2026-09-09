@@ -111,7 +111,8 @@ public final class SeedData {
         Integer maxAge,
         String status,
         Integer sortOrder,
-        String visualAssetKey
+        String visualAssetKey,
+        Integer worldWidth
     ) {}
 
     public record WorldNarrativeSituationSeed(
@@ -137,7 +138,9 @@ public final class SeedData {
         Long topicId,
         String visualAssetKey,
         String interactionCueType,
-        Integer sortOrder
+        Integer sortOrder,
+        Double positionX,
+        Double positionY
     ) {}
 
     public record AccessibleColorPaletteSeed(

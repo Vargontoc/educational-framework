@@ -4,12 +4,14 @@
 </template>
 
 <script setup lang="ts">
-import { Game } from 'phaser';
+import Phaser from 'phaser';
+import { SpinePlugin } from '@esotericsoftware/spine-phaser-v4';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { LoadingScene } from '@/components/game/LoadingScene';
 import { BaseStateScene } from '@/components/game/BaseStateScene';
 import { FarewellScene } from '@/components/game/FarewellScene';
 import { OrientationRequiredScene } from '@/components/game/OrientationRequiredScene';
+import { WorldMapScene } from '@/components/game/WorldMapScene';
 import { useRoute } from 'vue-router';
 import { useGlobalConfig } from '@/composables/useGlobalConfig';
 import { useGameOrientation } from '@/composables/useGameOrientation';
@@ -19,19 +21,29 @@ const route = useRoute()
 const { persisted: globalConfig } = useGlobalConfig()
 const { isPortrait } = useGameOrientation()
 
-let gameInstance = null as unknown as Game;
+let gameInstance = null as unknown as Phaser.Game;
 
-
+// Import estático (no dinámico) de Phaser: @esotericsoftware/spine-phaser-v4 ya
+// importa Phaser de forma estática internamente (y por tanto lo empaqueta de forma
+// eager de todos modos, ver worldmap-extensibility.md), así que el import dinámico
+// aquí ya no aportaba code-splitting real y arriesgaba una doble instancia del
+// módulo "phaser" en el servidor de desarrollo de Vite (una vía este import
+// dinámico, otra vía el import estático de spine-phaser-v4) — eso hacía que
+// SpinePlugin registrara `add.spine`/`load.spineBinary` en una instancia distinta
+// de la que usan las escenas, con el síntoma "this.scene.add.spine is not a function".
 const loadPhaserGame = async () => {
-    const Phaser = await import('phaser')
-    
     const config = {
       type: Phaser.AUTO,
       width: 1280,
       height: 720,
       parent: gameContainer.value,
-      scene: [LoadingScene, BaseStateScene, FarewellScene, OrientationRequiredScene],
+      scene: [LoadingScene, BaseStateScene, WorldMapScene, FarewellScene, OrientationRequiredScene],
       backgroundColor: "#028af8",
+      plugins: {
+        scene: [
+          { key: 'spine.SpinePlugin', plugin: SpinePlugin, mapping: 'spine' }
+        ]
+      },
       callbacks: {
         preBoot: (game: { registry: { set: (arg0: string, arg1: unknown) => void; }; }) => {
           game.registry.set('childId', route.params.childId)

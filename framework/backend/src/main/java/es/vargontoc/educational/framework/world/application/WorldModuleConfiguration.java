@@ -19,16 +19,19 @@ import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.world.service.EngagementThresholdConfigService;
 import es.vargontoc.educational.framework.world.service.WorldEngagementEvaluator;
 import es.vargontoc.educational.framework.world.service.WorldGameCompletionListener;
+import es.vargontoc.educational.framework.world.service.WorldExplorationConfig;
 import es.vargontoc.educational.framework.world.service.WorldGameStartService;
 import es.vargontoc.educational.framework.world.service.WorldHeartbeatService;
 import es.vargontoc.educational.framework.world.service.WorldInactivityConfig;
 import es.vargontoc.educational.framework.world.service.WorldNarrativeCompletionService;
 import es.vargontoc.educational.framework.world.service.WorldOrchestratorService;
 import es.vargontoc.educational.framework.world.service.WorldProposalService;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties(WorldExplorationConfig.class)
 class WorldModuleConfiguration {
 
     @Bean
@@ -50,9 +53,11 @@ class WorldModuleConfiguration {
     WorldOrchestrator worldOrchestrator(SelectTopicsForDifficultyUseCase selectTopicsForDifficultyUseCase,
                                         WorldCatalogUseCase worldCatalogUseCase,
                                         EngagementThresholdConfigUseCase engagementThresholdConfigUseCase,
-                                        WorldEngagementEvaluator worldEngagementEvaluator) {
+                                        WorldEngagementEvaluator worldEngagementEvaluator,
+                                        WorldStateRegistry worldStateRegistry,
+                                        WorldExplorationConfig worldExplorationConfig) {
         return new WorldOrchestratorService(selectTopicsForDifficultyUseCase, worldCatalogUseCase,
-            engagementThresholdConfigUseCase, worldEngagementEvaluator);
+            engagementThresholdConfigUseCase, worldEngagementEvaluator, worldStateRegistry, worldExplorationConfig);
     }
 
     @Bean

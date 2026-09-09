@@ -35,3 +35,11 @@ properties:
   hasActivity:
     type: boolean
     description: True when this discovery element has an associated activity.
+  positionX:
+    type: number
+    description: Normalized horizontal position (0.0-1.0) of the element within the host's world. Null if not authored.
+    nullable: true
+  positionY:
+    type: number
+    description: Normalized vertical position (0.0-1.0) of the element within the host's world. Null if not authored.
+    nullable: true

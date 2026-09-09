@@ -1,16 +1,71 @@
 import { Scene } from "phaser";
-import { AvatarEvent, ServerGameEvent, WorldDiscoveryElementInteractiveEvent, WorldHeartbeatEvent } from "./GameEvent";
+import router from "@/router";
+import { AvatarEvent, ServerGameEvent, WorldHeartbeatEvent, GameErrorPayload } from "./GameEvent";
+import { connectWebSocket, clearWebSocketHeartbeat } from "./websocket";
+import { ConnectionMonitor } from "./ConnectionMonitor";
+import { ErrorClassifier } from "./ErrorClassifier";
+import { MessageRouter } from "@/services/MessageRouter";
+import { AudioService } from "@/services/AudioService";
+import { BackgroundLayer } from "./worldmap/layers/BackgroundLayer";
+import { ParallaxLayer } from "./worldmap/layers/ParallaxLayer";
+import { NubiLayer } from "./worldmap/layers/NubiLayer";
+import { InteractiveLayer } from "./worldmap/layers/InteractiveLayer";
+import { GradualScroller } from "./worldmap/scroll/GradualScroller";
+import { EnvironmentReaction } from "./worldmap/reactions/EnvironmentReaction";
+import { WORLD_MAP_CONFIG } from "./worldmap/config/worldMapConfig";
 
 export class WorldMapScene extends Scene {
     websocket?: WebSocket
+    sessionId?: number
+    childId?: number
+    connectionMonitor?: ConnectionMonitor
+
+    private backgroundLayer?: BackgroundLayer
+    private parallaxLayer?: ParallaxLayer
+    private nubiLayer?: NubiLayer
+    private interactiveLayer?: InteractiveLayer
+    private scroller?: GradualScroller
+    private environmentReaction?: EnvironmentReaction
 
     constructor() { super({ key: 'world-map', active: false}) }
 
-    init(data: { websocket: WebSocket }) {
+    init(data: { websocket: WebSocket; sessionId?: number; childId?: number }) {
         this.websocket = data.websocket
+        this.sessionId = data.sessionId
+        this.childId = data.childId
     }
 
     create() {
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        const npcEnabled = this.registry.get('npcEnabled') as boolean
+
+        this.backgroundLayer = new BackgroundLayer(this)
+        this.backgroundLayer.buildFrom()
+
+        this.parallaxLayer = new ParallaxLayer(this)
+        const parallaxContainer = this.parallaxLayer.create()
+
+        this.nubiLayer?.create(npcEnabled)
+
+        this.interactiveLayer = new InteractiveLayer(this)
+        const interactiveContainer = this.interactiveLayer.create()
+        this.environmentReaction = new EnvironmentReaction(this)
+        this.interactiveLayer.setOnTouch((_element, shape) => {
+            this.environmentReaction?.play(shape)
+        })
+
+        this.scroller = new GradualScroller(this, reducedMotion)
+        this.scroller.attach()
+        if (!reducedMotion) {
+            this.scroller.registerLayer(parallaxContainer, WORLD_MAP_CONFIG.parallaxFactor)
+        }
+        this.scroller.registerLayer(interactiveContainer, 1)
+
+        this.connectionMonitor = new ConnectionMonitor(
+            () => { this.attemptReconnect() },
+            () => { this.goToFarewell() }
+        )
+
         if(this.websocket) {
             this.manageWebsocket(this.websocket)
         }
@@ -20,84 +75,255 @@ export class WorldMapScene extends Scene {
         })
 
         this.events.on('resume', () => {
-            if (this.websocket) {
-                const ws = this.websocket
-                const heartbeatId = setInterval(() => {
-                    if (ws.readyState === WebSocket.OPEN) {
-                        ws.send(JSON.stringify(new WorldHeartbeatEvent()))
-                    }
-                }, 1000)
-                this.registry.set('wsWorldbeat', heartbeatId)
-            }
+            this.startWorldHeartbeat()
         })
+
+        // Nota: Phaser no invoca automáticamente métodos llamados `shutdown()`/`destroy()`
+        // definidos en la subclase de Scene, solo emite los eventos 'shutdown'/'destroy'.
+        // Por eso la limpieza se registra explícitamente aquí (ver worldmap-extensibility.md).
+        this.events.once('shutdown', () => this.handleSceneTeardown())
+        this.events.once('destroy', () => this.handleSceneTeardown())
     }
-    
+
+    update(_time: number, delta: number) {
+        this.scroller?.update(delta)
+    }
+
+    handleSceneTeardown() {
+        this.cleanupLayers()
+
+        const audioService = this.registry.get('audioService') as AudioService | undefined
+        audioService?.stop()
+
+        this.cleanupWebSocket()
+    }
+
+    cleanupLayers() {
+        this.scroller?.destroy()
+        this.nubiLayer?.destroy()
+        this.interactiveLayer?.destroy()
+        this.parallaxLayer?.destroy()
+        this.backgroundLayer?.destroy()
+    }
+
     preload() {
-        
+        // Phaser llama a preload() antes que a create(): NubiLayer debe existir ya
+        // aquí para que sus load.spineBinary/spineAtlas se encolen a tiempo.
+        this.nubiLayer = new NubiLayer(this)
+        this.nubiLayer.preload()
+    }
+
+    startWorldHeartbeat() {
+        if (!this.websocket) return
+
+        clearInterval(this.registry.get('wsWorldbeat'))
+
+        const ws = this.websocket
+        const sendHeartbeat = () => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(new WorldHeartbeatEvent()))
+            }
+        }
+
+        // El backend solo envía WORLD_STATE_SYNC (con los discoveryElements) como
+        // respuesta a un world_heartbeat. Enviar el primero de inmediato, en vez de
+        // esperar al primer tick del intervalo, evita que el mapa se vea vacío
+        // (fondo/Nubi sin elementos) durante ese primer segundo tras entrar a la escena.
+        sendHeartbeat()
+        const heartbeatId = setInterval(sendHeartbeat, 1000)
+        this.registry.set('wsWorldbeat', heartbeatId)
     }
 
     manageWebsocket(ws: WebSocket) {
-        const heartbeatId = setInterval(() => {
-            if(ws.readyState == WebSocket.OPEN){
-                ws.send(JSON.stringify(new WorldHeartbeatEvent()))
-            }
-        }, 1000)
-        this.registry.set('wsWorldbeat', heartbeatId)
+        this.startWorldHeartbeat()
+        this.setupWebSocketHandlers(ws)
+    }
 
+    setupWebSocketHandlers(ws: WebSocket) {
         ws.onmessage = (msg) => {
-            this.readEvent(JSON.parse(msg.data))
+            MessageRouter.route(
+                msg.data,
+                (jsonData) => {
+                    this.readEvent(jsonData as ServerGameEvent | AvatarEvent)
+                },
+                (binaryData) => {
+                    const audioService = this.registry.get('audioService') as AudioService | undefined
+                    void audioService?.handleBinaryFrame(binaryData)
+                }
+            )
         }
 
-        const cleanup = () => {
-            clearInterval(heartbeatId)
-            ws.onmessage = null
+        ws.onclose = () => {
+            clearWebSocketHeartbeat(ws)
+            this.connectionMonitor?.handleWebSocketClose()
         }
-        this.events.once('shutdown', cleanup)
-        this.events.once('destroy', cleanup)
+
+        ws.onerror = () => {
+            clearWebSocketHeartbeat(ws)
+        }
+    }
+
+    async attemptReconnect() {
+        if (this.sessionId === undefined) {
+            this.goToFarewell()
+            return
+        }
+
+        this.cleanupWebSocket()
+
+        try {
+            const ws = await connectWebSocket(this.sessionId)
+            this.websocket = ws
+            this.manageWebsocket(ws)
+            this.connectionMonitor?.notifyReconnectSuccess()
+        } catch {
+            this.connectionMonitor?.notifyReconnectFailure()
+        }
     }
 
     readEvent(event: ServerGameEvent | AvatarEvent) {
         if(!event) return;
         if(event.event === 'GAME_AVATAR_EVENT' ){
-
+            this.handleAvatarEvent(event)
         }else {
             switch(event.event) {
                 case 'WORLD_STATE_SYNC' :
                     if(event.payload?.status && event.payload.status == 'ACTIVE' && event.payload.destination)  {
-                        // TODO: Cargar mapa de bioma (event.payload.destination.biome)
-                        event.payload.destination.discoveryElements.forEach((de)  => {
-                            this.add.image(100, 100, de.visualAssetKey)
-                                .setScale(.2, 0.2)
-                                .setInteractive()
-                                .on('pointerdown', () => {
-                                    if(this.websocket && de.hasActivity == true){
-                                        let ev = new WorldDiscoveryElementInteractiveEvent()
-                                        ev.discoveryElementId = de.discoveryElementId
-                                        ev.proposalRuntimeId = de.proposalRuntimeId
-                                        this.websocket.send(JSON.stringify(ev))
-                                    }
-                                })
-                        })
+                        this.backgroundLayer?.buildFrom(event.payload.destination.biome)
+                        this.interactiveLayer?.render(event.payload.destination.discoveryElements)
+                    } else {
+                        // INACTIVE_CLOSED / NO_WORLD_STATE: el paisaje (fondo, parallax, Nubi)
+                        // se mantiene igual, solo se retiran los elementos interactuables.
+                        this.interactiveLayer?.render([])
                     }
                     break;
                 case 'WORLD_ACTIVITY_STARTED':
-                    if(event.payload) {
-                        switch(event.payload.engine){
-                            case 'RECOGNITION':
-                                this.scene.start('recognition-game', {
-                                    websocket: this.websocket,
-                                    activityId: event.payload.activityId
-                                })
-                                break;
-                            default:
-                                console.log('Aun no esta la escena para este engine: ' + event.payload.engine)
-                                break;
-                        }
-                    }
+                    // Fase 1: los minijuegos no se lanzan desde WorldMap todavía (SPRINT-064).
+                    console.log('WORLD_ACTIVITY_STARTED recibido, sin acción en esta fase')
+                    break;
+                case 'CHILD_AGENT_ACTIVATED':
+                    this.registry.set('npcEnabled', true)
+                    this.events.emit('npc-state-changed', true)
+                    break;
+                case 'CHILD_AGENT_DEACTIVATED':
+                    this.registry.set('npcEnabled', false)
+                    this.events.emit('npc-state-changed', false)
+                    break;
+                case 'CHILD_TTS_ACTIVATED':
+                    this.registry.set('ttsEnabled', true)
+                    this.events.emit('tts-state-changed', true)
+                    break;
+                case 'CHILD_TTS_DEACTIVATED':
+                    this.registry.set('ttsEnabled', false)
+                    this.events.emit('tts-state-changed', false)
+                    break;
+                case 'CHILD_EXPELLED':
+                    this.handleExpulsion()
+                    break;
+                case 'SESSION_EXPIRED':
+                case 'SESSION_INVALIDATED':
+                    this.handleSessionExpired()
+                    break;
+                case 'GAME_ERROR':
+                    this.handleGameError(event.payload)
                     break;
                 default:
                     break;
             }
+        }
+    }
+
+    handleAvatarEvent(event: AvatarEvent) {
+        switch(event.eventType){
+            case 'FAREWELL':
+                this.handleFarewellEvent(event)
+                break
+            default:
+                break
+        }
+    }
+
+    handleFarewellEvent(event: AvatarEvent) {
+        // El backend cierra este socket tras el farewell; evitar que ConnectionMonitor
+        // intente reconectar una sesión que ya va a quedar inactiva/expulsada.
+        this.connectionMonitor?.disable()
+
+        const audioService = this.registry.get('audioService') as AudioService
+
+        audioService.once('audio-completed', () => {
+            this.cleanupWebSocket()
+            setTimeout(() => {
+                router.replace({ name: 'Home' })
+            }, 1000)
+        })
+
+        if (event.audioAvailable && event.audioId) {
+            let fallbackTimeout: ReturnType<typeof setTimeout> | null = null
+
+            const handleAudioReceived = (audioId: string) => {
+                if (audioId === event.audioId) {
+                    if (fallbackTimeout) {
+                        clearTimeout(fallbackTimeout)
+                        fallbackTimeout = null
+                    }
+                    audioService.playDynamic(audioId)
+                    audioService.off('audio-received', handleAudioReceived)
+                }
+            }
+            audioService.on('audio-received', handleAudioReceived)
+
+            fallbackTimeout = setTimeout(() => {
+                if (!audioService.isCurrentlyPlaying()) {
+                    console.warn('Audio dinámico no recibido en 3s, usando fallback estático')
+                    audioService.off('audio-received', handleAudioReceived)
+                    audioService.playStatic('farewell')
+                }
+            }, 3000)
+        } else {
+            audioService.playStatic('farewell')
+        }
+    }
+
+    handleExpulsion() {
+        this.connectionMonitor?.disable()
+        this.cleanupWebSocket()
+        this.goToFarewell()
+    }
+
+    handleSessionExpired() {
+        this.cleanupWebSocket()
+        this.connectionMonitor?.handleSessionExpired()
+    }
+
+    handleGameError(payload: GameErrorPayload | null) {
+        const classified = ErrorClassifier.classifyFromBackendEvent({
+            event: 'GAME_ERROR',
+            payload: payload ?? undefined
+        })
+
+        if (classified.severity === 'RECOVERABLE') {
+            console.log('Recoverable error:', classified.message)
+            return
+        }
+
+        console.log('Critical error:', classified.message)
+        this.handleSessionExpired()
+    }
+
+    goToFarewell() {
+        this.cleanupWebSocket()
+        this.scene.start('farewell')
+    }
+
+    cleanupWebSocket() {
+        if (this.websocket) {
+            clearInterval(this.registry.get('wsWorldbeat'))
+            clearWebSocketHeartbeat(this.websocket)
+            this.websocket.onmessage = null
+            this.websocket.onclose = null
+            this.websocket.onerror = null
+            this.websocket.close()
+            this.websocket = undefined
         }
     }
 

@@ -22,7 +22,7 @@ describe('Cambios dinámicos de preferencias y errores (SPRINT-047)', () => {
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
 
     cy.window().then((win) => {
@@ -45,7 +45,7 @@ describe('Cambios dinámicos de preferencias y errores (SPRINT-047)', () => {
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
 
     cy.window().then((win) => {
@@ -68,7 +68,7 @@ describe('Cambios dinámicos de preferencias y errores (SPRINT-047)', () => {
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
 
     cy.window().then((win) => {
@@ -83,7 +83,7 @@ describe('Cambios dinámicos de preferencias y errores (SPRINT-047)', () => {
 
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
   })
 
@@ -93,7 +93,7 @@ describe('Cambios dinámicos de preferencias y errores (SPRINT-047)', () => {
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
 
     cy.window().then((win) => {
@@ -118,7 +118,7 @@ describe('Cambios dinámicos de preferencias y errores (SPRINT-047)', () => {
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
       expect(state.npcEnabled).to.be.a('boolean')
       expect(state.ttsEnabled).to.be.a('boolean')
     })

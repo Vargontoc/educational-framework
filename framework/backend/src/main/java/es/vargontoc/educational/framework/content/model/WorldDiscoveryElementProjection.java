@@ -12,5 +12,7 @@ public record WorldDiscoveryElementProjection(
     Long topicId,
     String visualAssetKey,
     InteractionCueType interactionCueType,
-    Integer sortOrder
+    Integer sortOrder,
+    Double positionX,
+    Double positionY
 ) {}

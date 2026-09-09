@@ -19,3 +19,7 @@ properties:
     type: string
     description: Visual asset key for the host. Null if no asset is configured.
     nullable: true
+  worldWidth:
+    type: integer
+    description: Logical pixel width of the host's world, used by the frontend to compute layout bounds. Null falls back to an application-level default.
+    nullable: true

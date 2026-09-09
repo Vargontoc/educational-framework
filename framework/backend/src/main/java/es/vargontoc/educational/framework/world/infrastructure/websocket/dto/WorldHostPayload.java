@@ -4,6 +4,7 @@ public record WorldHostPayload(
     Long id,
     String code,
     String displayName,
-    String visualAssetKey
+    String visualAssetKey,
+    Integer worldWidth
 ) {
 }

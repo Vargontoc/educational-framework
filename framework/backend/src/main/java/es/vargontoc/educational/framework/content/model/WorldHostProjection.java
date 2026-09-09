@@ -9,5 +9,6 @@ public record WorldHostProjection(
     Integer minAge,
     Integer maxAge,
     String visualAssetKey,
-    Integer sortOrder
+    Integer sortOrder,
+    Integer worldWidth
 ) {}

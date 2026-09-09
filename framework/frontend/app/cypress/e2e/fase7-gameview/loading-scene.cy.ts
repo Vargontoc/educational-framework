@@ -16,7 +16,7 @@ describe('LoadingScene — placeholder de carga (SPRINT-042)', () => {
     cy.intercept('POST', '**/api/v1/sessions/children').as('openSession')
   })
 
-  it('positivo: LoadingScene se muestra sin porcentaje y transiciona a BaseStateScene', () => {
+  it('positivo: LoadingScene se muestra sin porcentaje y transiciona a WorldMapScene', () => {
     cy.selectChildProfile('Leo')
     cy.visit(`/game/${childId}`)
 
@@ -28,11 +28,11 @@ describe('LoadingScene — placeholder de carga (SPRINT-042)', () => {
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('base-state')
+      expect(state.activeScene).to.eq('world-map')
     })
   })
 
-  it('negativo: si la apertura de sesión falla, no se alcanza BaseStateScene', () => {
+  it('negativo: si la apertura de sesión falla, no se alcanza WorldMapScene', () => {
     cy.intercept('POST', '**/api/v1/sessions/children', {
       statusCode: 200,
       body: { success: false, message: 'Error', errors: [], data: null }

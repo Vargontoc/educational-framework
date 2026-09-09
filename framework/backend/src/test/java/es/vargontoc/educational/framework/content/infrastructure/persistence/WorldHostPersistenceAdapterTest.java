@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -46,6 +47,41 @@ class WorldHostPersistenceAdapterTest {
         assertEquals("Dog", captor.getValue().getDisplayName());
         assertEquals("MEADOW", captor.getValue().getBiome());
         assertEquals("ACTIVE", captor.getValue().getStatus());
+    }
+
+    @Test
+    void save_persistsWorldWidth() {
+        var worldHost = buildDomain();
+        worldHost.setWorldWidth(4000);
+        var captor = ArgumentCaptor.forClass(WorldHostJpaEntity.class);
+        when(jpaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        adapter.save(worldHost);
+
+        verify(jpaRepository).save(captor.capture());
+        assertEquals(4000, captor.getValue().getWorldWidth());
+    }
+
+    @Test
+    void findByCode_entityWithWorldWidth_returnsWorldWidth() {
+        var entity = buildJpaEntity();
+        entity.setWorldWidth(4000);
+        when(jpaRepository.findByCode("MEADOW_DOG")).thenReturn(Optional.of(entity));
+
+        var result = adapter.findByCode("MEADOW_DOG");
+
+        assertTrue(result.isPresent());
+        assertEquals(4000, result.get().getWorldWidth());
+    }
+
+    @Test
+    void findByCode_entityWithoutWorldWidth_returnsNull() {
+        when(jpaRepository.findByCode("MEADOW_DOG")).thenReturn(Optional.of(buildJpaEntity()));
+
+        var result = adapter.findByCode("MEADOW_DOG");
+
+        assertTrue(result.isPresent());
+        assertNull(result.get().getWorldWidth());
     }
 
     @Test

@@ -71,6 +71,8 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
                         ? InteractionCueType.valueOf(source.getInteractionCueType())
                         : null);
         target.setSortOrder(source.getSortOrder());
+        target.setPositionX(source.getPositionX());
+        target.setPositionY(source.getPositionY());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -94,6 +96,8 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
                         ? source.getInteractionCueType().name()
                         : null);
         target.setSortOrder(source.getSortOrder());
+        target.setPositionX(source.getPositionX());
+        target.setPositionY(source.getPositionY());
         return target;
     }
 }

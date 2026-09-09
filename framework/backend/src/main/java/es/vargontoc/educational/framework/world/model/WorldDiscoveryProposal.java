@@ -12,6 +12,8 @@ public class WorldDiscoveryProposal {
     private String visualAssetKey;
     private String interactionCueType;
     private Long trackingProposalId;
+    private Double positionX;
+    private Double positionY;
 
     public String getProposalRuntimeId() {
         return proposalRuntimeId;
@@ -91,5 +93,21 @@ public class WorldDiscoveryProposal {
 
     public void setTrackingProposalId(Long trackingProposalId) {
         this.trackingProposalId = trackingProposalId;
+    }
+
+    public Double getPositionX() {
+        return positionX;
+    }
+
+    public void setPositionX(Double positionX) {
+        this.positionX = positionX;
+    }
+
+    public Double getPositionY() {
+        return positionY;
+    }
+
+    public void setPositionY(Double positionY) {
+        this.positionY = positionY;
     }
 }

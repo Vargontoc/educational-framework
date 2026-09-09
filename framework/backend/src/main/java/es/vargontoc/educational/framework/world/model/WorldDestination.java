@@ -9,6 +9,7 @@ public class WorldDestination {
     private Long hostId;
     private String hostCode;
     private String hostDisplayName;
+    private Integer worldWidth;
     private Long narrativeSituationId;
     private String narrativeSituationCode;
     private String displayText;
@@ -45,6 +46,14 @@ public class WorldDestination {
 
     public void setHostDisplayName(String hostDisplayName) {
         this.hostDisplayName = hostDisplayName;
+    }
+
+    public Integer getWorldWidth() {
+        return worldWidth;
+    }
+
+    public void setWorldWidth(Integer worldWidth) {
+        this.worldWidth = worldWidth;
     }
 
     public Long getNarrativeSituationId() {

@@ -93,7 +93,8 @@ public class WorldCatalogService implements WorldCatalogUseCase {
             source.getMinAge(),
             source.getMaxAge(),
             source.getVisualAssetKey(),
-            source.getSortOrder()
+            source.getSortOrder(),
+            source.getWorldWidth()
         );
     }
 
@@ -123,7 +124,9 @@ public class WorldCatalogService implements WorldCatalogUseCase {
             source.getTopicId(),
             source.getVisualAssetKey(),
             source.getInteractionCueType(),
-            source.getSortOrder()
+            source.getSortOrder(),
+            source.getPositionX(),
+            source.getPositionY()
         );
     }
 
