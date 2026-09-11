@@ -9,13 +9,13 @@
 
 ## 1. Objetivo y valor para la familia
 
-Definir paisajes conectados, reconocibles y apropiados para 3–4 años, para que el niño explore un mundo continuo sin selector, bloqueos ni objetivos. Cada bioma incorpora elementos decorativos propios que sostienen su identidad y preparan coherencia temática futura, sin convertir esta fase en actividad educativa o evaluativa.
+Definir paisajes conectados, reconocibles y apropiados para 3–4 años, para que el niño explore un mundo continuo sin selector en la entrada, bloqueos ni objetivos. Cada bioma incorpora elementos decorativos propios que sostienen su identidad y preparan coherencia temática futura, sin convertir esta fase en actividad educativa o evaluativa.
 
 ## 2. Actores y escenarios de uso
 
 ### Niño que explora un bioma
 
-1. Explora una zona de Granja, Bosque, Mar, Prehistoria o Espacio cuando esté disponible.
+1. Explora una zona de Pradera, Granja, Bosque encantado, Playa, Espacio o Prehistoria cuando esté disponible.
 2. Encuentra elementos decorativos propios del entorno.
 3. Puede tocarlos o ignorarlos; no recibe evaluación ni obligación.
 
@@ -33,8 +33,8 @@ Definir paisajes conectados, reconocibles y apropiados para 3–4 años, para qu
 
 ## 3. Requisitos funcionales y no funcionales
 
-1. El catálogo previsto de biomas es Granja, Bosque, Mar, Prehistoria (dinosaurios) y Espacio.
-2. Los biomas deben formar zonas conectadas de un único paseo, sin selector infantil de bioma.
+1. El catálogo previsto de biomas es Pradera (MEADOW), Granja, Bosque encantado (WOODS), Playa, Espacio y Prehistoria (dinosaurios). Pradera y Bosque encantado deben diferenciarse visualmente de forma clara.
+2. Los biomas deben formar zonas conectadas de un único paseo. No hay selector infantil en la entrada inicial, pero junto al punto de inicio de cada bioma hay un transporte temático que permite elegir libremente un destino.
 3. Todo bioma disponible debe ser accesible sin niveles, desbloqueos, candados, resultados ni requisitos de uso.
 4. Cada bioma debe disponer de elementos decorativos visualmente coherentes y diferenciables de los demás.
 5. Los elementos decorativos permiten reacciones básicas, pero no inician actividades en esta fase.
@@ -42,16 +42,28 @@ Definir paisajes conectados, reconocibles y apropiados para 3–4 años, para qu
 7. La transición entre biomas debe ser tranquila, comprensible sin lectura, color o audio, y no debe transmitir una meta, pantalla superada o ruta obligatoria.
 8. Cualquier intervención de Nubi en transición debe respetar estrictamente las preferencias parentales vigentes de NPC y voz del NPC; no se aprueba una excepción nueva.
 9. La futura asociación temática —por ejemplo, animales y hábitat— es una posibilidad de coherencia de contenido para minijuegos posteriores; no aparece como enseñanza, pregunta ni medición en WorldMap básico.
+10. El gestor de contenido debe proporcionar, cuando proceda, frases breves de transición referidas exclusivamente al siguiente bioma. Solo se presentan si las preferencias parentales vigentes permiten la presencia y voz de Nubi.
+11. Los placeholders confirmados son:
+
+| Momento o transición | Placeholder |
+|---|---|
+| Entrada inicial a Pradera | «Hola, paseemos por la pradera.» |
+| Pradera → Granja | «¡Vamos a visitar mi granja!» |
+| Granja → Bosque encantado | «Ahora vamos al bosque encantado.» |
+| Bosque encantado → Playa | «El camino sigue hasta la playa.» |
+| Playa → Espacio | «¡Vamos a viajar al espacio!» |
+| Espacio → Prehistoria | «¡Vamos a visitar a los dinosaurios!» |
 
 ## 4. Criterios de aceptación verificables
 
-1. El catálogo puede distinguir los cinco biomas previstos y sus elementos decorativos propios.
-2. La experiencia no ofrece selector infantil, candado, insignia, nivel ni condición de acceso.
+1. El catálogo puede distinguir los seis biomas previstos y sus elementos decorativos propios, incluida la diferencia entre Pradera y Bosque encantado.
+2. La experiencia no ofrece selector infantil en la entrada inicial, candado, insignia, nivel ni condición de acceso. El transporte temático situado al inicio de cada bioma permite elegir visualmente cualquiera de los seis destinos disponibles.
 3. Un elemento decorativo no abre minijuego ni muestra acierto, error o progreso.
 4. El paso entre biomas disponibles se entiende visualmente sin texto ni audio y no exige avanzar.
 5. Después de volver a entrar en otra sesión, el niño puede continuar desde el mismo estado de exploración sin ver métricas ni mensajes evaluativos.
 6. Con NPC o voz del NPC desactivados, la transición sigue siendo completa y no incorpora intervención de Nubi no permitida.
 7. Los elementos y transiciones no dependen únicamente del color para comunicar bioma o continuidad.
+8. Cuando la voz de Nubi está permitida, una frase de transición se refiere al siguiente bioma y no contiene preguntas personales, instrucciones obligatorias, promesas de recompensa ni mensajes evaluativos.
 
 ## 5. Ámbitos que deben validar los responsables y dependencias de producto conocidas
 
@@ -87,7 +99,7 @@ Definir paisajes conectados, reconocibles y apropiados para 3–4 años, para qu
 ### Exclusiones
 
 - Minijuegos de asociación, preguntas sobre hábitats, avance, dificultad, tracking, dashboard y recompensas.
-- Aleatoriedad de bioma, selector infantil y configuración parental de biomas.
+- Aleatoriedad de bioma y configuración parental de biomas.
 - Texto concreto, duración y recursos concretos de la intervención de Nubi.
 - Contratos, mecanismos de persistencia, estructuras de datos, integraciones y detalles de implementación.
 
@@ -99,5 +111,4 @@ Definir paisajes conectados, reconocibles y apropiados para 3–4 años, para qu
 
 ### Decisiones pendientes
 
-- Confirmar y validar una frase concreta de Nubi para transiciones o para retomar el paseo, solo cuando todas sus preferencias aplicables estén activas.
-- Definir el orden, incorporación gradual y disponibilidad real de los cinco biomas, sin alterar el acceso completo al contenido disponible.
+- Ninguna de producto para esta fase. Contenido debe validar la adecuación por edad de los placeholders confirmados antes de ponerlos a disposición del niño.

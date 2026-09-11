@@ -7,7 +7,7 @@
 
 ## 1. Contexto y problema
 
-WorldMap debe ampliar el paisaje inicial sin convertirse en un selector infantil, una secuencia de niveles ni una experiencia gamificada. La interrupción de una sesión tampoco debe romper innecesariamente la continuidad percibida por el niño.
+WorldMap debe ampliar el paisaje inicial sin convertir su entrada en un selector infantil, una secuencia de niveles ni una experiencia gamificada. La interrupción de una sesión tampoco debe romper innecesariamente la continuidad percibida por el niño.
 
 ## 2. Necesidad de la familia y usuarios afectados
 
@@ -21,12 +21,18 @@ El niño de 3–4 años necesita explorar paisajes reconocibles con autonomía, 
 
 ## 4. Decisión confirmada y justificación
 
-- WorldMap se compone de biomas conectados dentro de un mismo paseo, sin selector infantil por ahora.
-- El catálogo previsto es: **Granja, Bosque, Mar, Prehistoria (dinosaurios) y Espacio**.
+- WorldMap se compone de biomas conectados dentro de un mismo paseo. No hay selector infantil al entrar inicialmente, pero cada bioma ofrece un transporte temático junto a su punto de inicio que permite al niño elegir libremente un destino.
+- El catálogo previsto es: **Pradera (MEADOW), Granja, Bosque encantado (WOODS), Playa, Espacio y Prehistoria (dinosaurios)**.
+- Pradera y Bosque encantado son biomas distintos: el segundo debe adoptar una identidad visual de bosque encantado que no se confunda con la pradera.
+- En una primera entrada sin estado previo, el paseo empieza siempre en Pradera.
+- El orden de conexión es: **Pradera → Granja → Bosque encantado → Playa → Espacio → Prehistoria**. El niño puede volver libremente por ese recorrido.
 - Todo bioma disponible es accesible sin desbloqueos, candados, resultados ni requisitos de uso.
+- El transporte de cada punto de inicio permite elegir cualquiera de los seis biomas disponibles, sin bloquear ni distinguir destinos por progreso, visitas o resultados.
 - La siguiente sesión retoma el estado de exploración anterior.
 - Cada bioma cuenta con elementos decorativos propios para conservar identidad y coherencia infantil.
 - La futura asociación temática entre elementos y biomas es solo una oportunidad de coherencia para minijuegos posteriores; no implica enseñanza, actividad ni avance en WorldMap básico.
+- Las frases de transición, si están permitidas por las preferencias parentales de NPC y voz, las proporciona el gestor de contenido y se refieren únicamente al siguiente bioma; por ejemplo: «Vamos a visitar mi granja».
+- Los placeholders confirmados para las transiciones son: «Hola, paseemos por la pradera»; «¡Vamos a visitar mi granja!»; «Ahora vamos al bosque encantado»; «El camino sigue hasta la playa»; «¡Vamos a viajar al espacio!»; y «¡Vamos a visitar a los dinosaurios!».
 
 La decisión conserva un paseo narrativo, libre y no evaluativo, evitando mecanismos de gamificación.
 
@@ -57,7 +63,7 @@ La decisión conserva un paseo narrativo, libre y no evaluativo, evitando mecani
 
 ### Límites y exclusiones
 
-- Sin selector infantil, niveles, desbloqueos, recompensas, puntuaciones ni clasificación.
+- Sin selector infantil al entrar inicialmente, niveles, desbloqueos, recompensas, puntuaciones ni clasificación.
 - Sin minijuegos, asociaciones, progreso pedagógico, tracking ni dashboard en esta fase.
 - Esta decisión no define contratos, persistencia, integración, algoritmos ni representación técnica.
 
