@@ -11,7 +11,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.educational.framework.agents.ports.out.ResourceLoaderPort;
+import es.vargontoc.educational.framework.agents.application.ports.out.ResourceLoaderPort;
 
 @Component
 public class ResourceLoaderAdapter implements ResourceLoaderPort {

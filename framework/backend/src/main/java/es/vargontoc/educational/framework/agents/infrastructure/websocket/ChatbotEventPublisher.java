@@ -3,7 +3,7 @@ package es.vargontoc.educational.framework.agents.infrastructure.websocket;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.educational.framework.agents.model.ChatbotStreamEvent;
+import es.vargontoc.educational.framework.agents.domain.ChatbotStreamEvent;
 
 @Component
 public class ChatbotEventPublisher {

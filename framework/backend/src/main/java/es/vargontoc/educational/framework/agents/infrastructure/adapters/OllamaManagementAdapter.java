@@ -8,7 +8,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import es.vargontoc.educational.framework.agents.ports.out.OllamaManagementPort;
+import es.vargontoc.educational.framework.agents.application.ports.out.OllamaManagementPort;
 
 @Component
 public class OllamaManagementAdapter implements OllamaManagementPort {

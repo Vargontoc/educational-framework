@@ -7,8 +7,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Controller;
 
+import es.vargontoc.educational.framework.agents.application.ports.in.ChatbotStreamUseCase;
 import es.vargontoc.educational.framework.agents.infrastructure.dto.AgentRequestDto;
-import es.vargontoc.educational.framework.agents.ports.in.ChatbotStreamUseCase;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 
 @Controller

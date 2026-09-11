@@ -1,5 +1,7 @@
 package es.vargontoc.educational.framework.content.infrastructure.web;
 
+import es.vargontoc.educational.framework.agents.application.ports.in.ContentGenerationUseCase;
+import es.vargontoc.educational.framework.agents.domain.request.GenerateGameAvatarRequest;
 import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
 import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.infrastructure.dto.AvatarEventCatalogResponse;
@@ -28,9 +30,15 @@ import java.util.List;
 public class AvatarEventCatalogController {
 
     private final AvatarEventCatalogUseCase avatarEventCatalogUseCase;
-
-    public AvatarEventCatalogController(AvatarEventCatalogUseCase avatarEventCatalogUseCase) {
+    private final ContentGenerationUseCase generator;
+    public AvatarEventCatalogController(AvatarEventCatalogUseCase avatarEventCatalogUseCase, ContentGenerationUseCase generator) {
         this.avatarEventCatalogUseCase = avatarEventCatalogUseCase;
+        this.generator = generator;
+    }
+
+    @PostMapping("/generate")
+    public ResponseEntity<ApiResponse<List<AvatarEventCatalog>>> generate(@RequestBody GenerateGameAvatarRequest request){
+        return ResponseEntity.ok(ApiResponse.ok(generator.generateAvatarEvents(request)));
     }
 
     @PostMapping

@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import es.vargontoc.educational.framework.agents.application.ports.in.ChatbotHistoryUseCase;
+import es.vargontoc.educational.framework.agents.domain.ChatbotConversation;
 import es.vargontoc.educational.framework.agents.infrastructure.dto.CommandResponse;
 import es.vargontoc.educational.framework.agents.infrastructure.dto.ConversationResponse;
 import es.vargontoc.educational.framework.agents.infrastructure.dto.MessageResponse;
 import es.vargontoc.educational.framework.agents.infrastructure.dto.UpdateConversationTitleDto;
-import es.vargontoc.educational.framework.agents.model.ChatbotConversation;
-import es.vargontoc.educational.framework.agents.ports.in.ChatbotHistoryUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;

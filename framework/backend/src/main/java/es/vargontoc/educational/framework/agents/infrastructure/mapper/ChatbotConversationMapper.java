@@ -2,8 +2,8 @@ package es.vargontoc.educational.framework.agents.infrastructure.mapper;
 
 import org.springframework.stereotype.Component;
 
+import es.vargontoc.educational.framework.agents.domain.ChatbotConversation;
 import es.vargontoc.educational.framework.agents.infrastructure.persistence.ChatbotConversationJpaEntity;
-import es.vargontoc.educational.framework.agents.model.ChatbotConversation;
 import es.vargontoc.educational.framework.shared.mapper.AbstractMapper;
 
 @Component

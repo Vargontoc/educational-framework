@@ -7,15 +7,15 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
+import es.vargontoc.educational.framework.agents.application.ports.out.ChatbotConversationRepository;
+import es.vargontoc.educational.framework.agents.domain.ChatbotConversation;
+import es.vargontoc.educational.framework.agents.domain.ChatbotMessage;
 import es.vargontoc.educational.framework.agents.infrastructure.mapper.ChatbotConversationMapper;
 import es.vargontoc.educational.framework.agents.infrastructure.mapper.ChatbotMessageMapper;
 import es.vargontoc.educational.framework.agents.infrastructure.persistence.ChatbotConversationJpaEntity;
 import es.vargontoc.educational.framework.agents.infrastructure.persistence.ChatbotConversationJpaRepository;
 import es.vargontoc.educational.framework.agents.infrastructure.persistence.ChatbotMessageJpaEntity;
 import es.vargontoc.educational.framework.agents.infrastructure.persistence.ChatbotMessageJpaRepository;
-import es.vargontoc.educational.framework.agents.model.ChatbotConversation;
-import es.vargontoc.educational.framework.agents.model.ChatbotMessage;
-import es.vargontoc.educational.framework.agents.ports.out.ChatbotConversationRepository;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 
 @Repository
