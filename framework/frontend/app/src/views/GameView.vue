@@ -7,11 +7,11 @@
 import Phaser from 'phaser';
 import { SpinePlugin } from '@esotericsoftware/spine-phaser-v4';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { LoadingScene } from '@/components/game/LoadingScene';
-import { BaseStateScene } from '@/components/game/BaseStateScene';
-import { FarewellScene } from '@/components/game/FarewellScene';
-import { OrientationRequiredScene } from '@/components/game/OrientationRequiredScene';
-import { WorldMapScene } from '@/components/game/WorldMapScene';
+import { LoadingScene } from '@/game/LoadingScene';
+import { BaseStateScene } from '@/game/BaseStateScene';
+import { FarewellScene } from '@/game/FarewellScene';
+import { OrientationRequiredScene } from '@/game/OrientationRequiredScene';
+import { WorldMapScene } from '@/game/WorldMapScene';
 import { useRoute } from 'vue-router';
 import { useGlobalConfig } from '@/composables/useGlobalConfig';
 import { useGameOrientation } from '@/composables/useGameOrientation';
@@ -52,7 +52,7 @@ const loadPhaserGame = async () => {
         }
       },
       scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.ENVELOP,
         autoCenter: Phaser.Scale.CENTER_BOTH
     }
   }
@@ -157,8 +157,6 @@ onUnmounted(() => {
 }
 
 .game-view :deep(canvas) {
-  max-width: 100%;
-  max-height: 100%;
   touch-action: none;
 }
 

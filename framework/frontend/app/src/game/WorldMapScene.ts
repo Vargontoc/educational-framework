@@ -8,6 +8,7 @@ import { MessageRouter } from "@/services/MessageRouter";
 import { AudioService } from "@/services/AudioService";
 import { BackgroundLayer } from "./worldmap/layers/BackgroundLayer";
 import { ParallaxLayer } from "./worldmap/layers/ParallaxLayer";
+import { GroundLayer } from "./worldmap/layers/GroundLayer";
 import { NubiLayer } from "./worldmap/layers/NubiLayer";
 import { InteractiveLayer } from "./worldmap/layers/InteractiveLayer";
 import { GradualScroller } from "./worldmap/scroll/GradualScroller";
@@ -22,6 +23,7 @@ export class WorldMapScene extends Scene {
 
     private backgroundLayer?: BackgroundLayer
     private parallaxLayer?: ParallaxLayer
+    private groundLayer?: GroundLayer
     private nubiLayer?: NubiLayer
     private interactiveLayer?: InteractiveLayer
     private scroller?: GradualScroller
@@ -42,8 +44,15 @@ export class WorldMapScene extends Scene {
         this.backgroundLayer = new BackgroundLayer(this)
         this.backgroundLayer.buildFrom()
 
+        // GroundLayer se crea antes que ParallaxLayer: esta última necesita
+        // saber cuánto ocupa la franja de suelo para apoyar las colinas justo
+        // encima, en vez de que ambas se anclen al borde inferior del viewport
+        // y el suelo (depth más alto) tape la parte baja de las colinas.
+        this.groundLayer = new GroundLayer(this)
+        const groundContainer = this.groundLayer.create()
+
         this.parallaxLayer = new ParallaxLayer(this)
-        const parallaxContainer = this.parallaxLayer.create()
+        const parallaxContainer = this.parallaxLayer.create(this.groundLayer.getBandHeight())
 
         this.nubiLayer?.create(npcEnabled)
 
@@ -59,6 +68,7 @@ export class WorldMapScene extends Scene {
         if (!reducedMotion) {
             this.scroller.registerLayer(parallaxContainer, WORLD_MAP_CONFIG.parallaxFactor)
         }
+        this.scroller.registerLayer(groundContainer, WORLD_MAP_CONFIG.groundFactor)
         this.scroller.registerLayer(interactiveContainer, 1)
 
         this.connectionMonitor = new ConnectionMonitor(
@@ -87,6 +97,7 @@ export class WorldMapScene extends Scene {
 
     update(_time: number, delta: number) {
         this.scroller?.update(delta)
+        this.backgroundLayer?.update(delta)
     }
 
     handleSceneTeardown() {
@@ -102,6 +113,7 @@ export class WorldMapScene extends Scene {
         this.scroller?.destroy()
         this.nubiLayer?.destroy()
         this.interactiveLayer?.destroy()
+        this.groundLayer?.destroy()
         this.parallaxLayer?.destroy()
         this.backgroundLayer?.destroy()
     }
@@ -111,6 +123,17 @@ export class WorldMapScene extends Scene {
         // aquí para que sus load.spineBinary/spineAtlas se encolen a tiempo.
         this.nubiLayer = new NubiLayer(this)
         this.nubiLayer.preload()
+        // Sistema de biomas aún no implementado (solo existe el contenido de
+        // meadow): se precarga directamente el bloque "biome-meadow" del
+        // manifest (skybox/background/ground) para BackgroundLayer/ParallaxLayer/GroundLayer.
+        // Usa una URL absoluta en vez de this.load.setBaseURL('/'): NubiLayer.preload()
+        // (arriba) ya encola sus propios spineBinary/spineAtlas con rutas absolutas
+        // ('/assets/...'); fijar baseURL('/') aquí las duplicaría a '//assets/...'
+        // (URL protocol-relative → resuelve a un host "assets" inexistente).
+        this.load.pack('biome-meadow', '/assets-manifest.json', 'biome-meadow')
+        this.load.on('loaderror', (file: Phaser.Loader.File) => { console.error('Failed to load asset', file.key, file.url) })
+        this.load.once('complete', () => { console.log("Llega....")})
+        this.load.start();
     }
 
     startWorldHeartbeat() {
@@ -298,7 +321,7 @@ export class WorldMapScene extends Scene {
     handleGameError(payload: GameErrorPayload | null) {
         const classified = ErrorClassifier.classifyFromBackendEvent({
             event: 'GAME_ERROR',
-            payload: payload ?? undefined
+            payload: payload ?? undefined 
         })
 
         if (classified.severity === 'RECOVERABLE') {

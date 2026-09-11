@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import CatalogLayout from '../../components/catalog/CatalogLayout.vue'
+import CatalogLayout from '../../layouts/CatalogLayout.vue'
 import NubiRadioGroup from '../../components/base/NubiRadioGroup.vue'
 
 const selectedColor = ref<string | number | null>(null)

@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import CatalogLayout from '../../components/catalog/CatalogLayout.vue'
+import CatalogLayout from '../../layouts/CatalogLayout.vue'
 import NubiCheckbox from '../../components/base/NubiCheckbox.vue'
 
 const checked = ref(false)

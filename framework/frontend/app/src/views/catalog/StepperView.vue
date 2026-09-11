@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import CatalogLayout from '../../components/catalog/CatalogLayout.vue'
+import CatalogLayout from '../../layouts/CatalogLayout.vue'
 import NubiStepper from '../../components/base/NubiStepper.vue'
 
 const currentStep = ref(0)

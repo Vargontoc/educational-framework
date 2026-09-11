@@ -2,7 +2,7 @@ import { Scene } from "phaser"
 import { WorldDiscoveryElements } from "../../GameEvent"
 import { WORLD_MAP_CONFIG } from "../config/worldMapConfig"
 
-const INTERACTIVE_DEPTH = 2
+const INTERACTIVE_DEPTH = 3
 const SHAPE_SIZE = 56
 const LAYOUT_MARGIN = 200
 const PASSIVE_CUE_DURATION = 1400

@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import CatalogLayout from '../../components/catalog/CatalogLayout.vue'
+import CatalogLayout from '../../layouts/CatalogLayout.vue'
 import NubiSessionIndicator from '../../components/base/NubiSessionIndicator.vue'
 import NubiButton from '../../components/base/NubiButton.vue'
 

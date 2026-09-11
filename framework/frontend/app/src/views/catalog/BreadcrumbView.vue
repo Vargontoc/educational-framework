@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import CatalogLayout from '../../components/catalog/CatalogLayout.vue'
+import CatalogLayout from '../../layouts/CatalogLayout.vue'
 import NubiBreadcrumb from '../../components/base/NubiBreadcrumb.vue'
 
 const oneLevel = [{ label: 'Inicio' }]

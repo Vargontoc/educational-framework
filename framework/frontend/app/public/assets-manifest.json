@@ -18,6 +18,25 @@
             }
         ]
     },
+    "biome-meadow" : {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "skybox",
+                "url" : "/assets/images/biomes/meadow/skybox.png"
+            },
+            {
+                "key" : "background",
+                "type" :"image",
+                "url" :"/assets/images/biomes/meadow/hill_background.png"
+            },
+            {
+                "type" : "image",
+                "key" : "ground",
+                "url" : "/assets/images/biomes/meadow/ground.png"
+            }
+        ]
+    },
     "recognition-letters" :  {
             "files" : [
                 {

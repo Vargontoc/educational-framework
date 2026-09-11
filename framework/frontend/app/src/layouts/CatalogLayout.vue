@@ -134,7 +134,7 @@
  */
 
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useTheme } from '../../composables/useTheme'
+import { useTheme } from '../composables/useTheme.ts'
 import NubiIcon from '../base/NubiIcon.vue'
 
 const { toggleTheme, getCurrentTheme } = useTheme()

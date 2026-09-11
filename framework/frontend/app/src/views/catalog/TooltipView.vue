@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import CatalogLayout from '../../components/catalog/CatalogLayout.vue'
+import CatalogLayout from '../../layouts/CatalogLayout.vue'
 import NubiTooltip from '../../components/base/NubiTooltip.vue'
 import NubiButton from '../../components/base/NubiButton.vue'
 import NubiIconButton from '../../components/base/NubiIconButton.vue'

@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import CatalogLayout from '../../components/catalog/CatalogLayout.vue'
+import CatalogLayout from '../../layouts/CatalogLayout.vue'
 import NubiEmptyState from '../../components/base/NubiEmptyState.vue'
 </script>
 

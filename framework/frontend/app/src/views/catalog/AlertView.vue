@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import CatalogLayout from '../../components/catalog/CatalogLayout.vue'
+import CatalogLayout from '../../layouts/CatalogLayout.vue'
 import NubiAlert from '../../components/base/NubiAlert.vue'
 import NubiButton from '../../components/base/NubiButton.vue'
 
