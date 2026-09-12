@@ -63,6 +63,31 @@ class WorldHostPersistenceAdapterTest {
     }
 
     @Test
+    void save_persistsSortOrderAsSequenceOrder() {
+        var worldHost = buildDomain();
+        worldHost.setSortOrder(3);
+        var captor = ArgumentCaptor.forClass(WorldHostJpaEntity.class);
+        when(jpaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        adapter.save(worldHost);
+
+        verify(jpaRepository).save(captor.capture());
+        assertEquals(3, captor.getValue().getSortOrder());
+    }
+
+    @Test
+    void findByCode_entityWithSortOrder_mapsToSequenceOrder() {
+        var entity = buildJpaEntity();
+        entity.setSortOrder(5);
+        when(jpaRepository.findByCode("MEADOW_DOG")).thenReturn(Optional.of(entity));
+
+        var result = adapter.findByCode("MEADOW_DOG");
+
+        assertTrue(result.isPresent());
+        assertEquals(5, result.get().getSortOrder());
+    }
+
+    @Test
     void findByCode_entityWithWorldWidth_returnsWorldWidth() {
         var entity = buildJpaEntity();
         entity.setWorldWidth(4000);

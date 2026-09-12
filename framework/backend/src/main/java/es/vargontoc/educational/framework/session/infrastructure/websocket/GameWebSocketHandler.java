@@ -725,7 +725,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             destination.getHostCode(),
             destination.getHostDisplayName(),
             null,
-            destination.getWorldWidth()
+            destination.getWorldWidth(),
+            destination.getHostSequenceOrder()
         );
         WorldNarrativeSituationPayload situationPayload = new WorldNarrativeSituationPayload(
             destination.getNarrativeSituationId(),
@@ -793,6 +794,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
         if (host.worldWidth() != null) {
             result.put("worldWidth", host.worldWidth());
+        }
+        if (host.sequenceOrder() != null) {
+            result.put("sequenceOrder", host.sequenceOrder());
         }
         return result;
     }

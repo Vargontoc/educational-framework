@@ -208,16 +208,16 @@ class WorldOrchestratorServiceTest {
     }
 
     @Test
-    void selectDestination_nonMeadowHost_isNeverSelected() {
+    void selectDestination_anyBiomeHost_canBeSelected() {
         when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(any(), any(), any()))
             .thenReturn(new TopicSelectionResult(List.of(10L)));
         when(worldCatalogUseCase.listCompatibleActivitiesByTopic(any(), anyInt()))
             .thenReturn(Collections.emptyList());
         when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
-            .thenReturn(List.of(createHostWithBiome(1L, Biome.JUNGLE), createHostWithBiome(2L, Biome.MEADOW)));
+            .thenReturn(List.of(createHostWithBiome(1L, Biome.WOODS), createHostWithBiome(2L, Biome.MEADOW)));
         when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
             .thenReturn(Collections.emptyList());
-        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.MEADOW), anyInt()))
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.WOODS), anyInt()))
             .thenReturn(Collections.emptyList());
         when(engagementThresholdConfigUseCase.engagementThresholdConfig(any()))
             .thenReturn(new WorldEngagementThresholdConfig());
@@ -228,18 +228,18 @@ class WorldOrchestratorServiceTest {
 
         WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, 5);
 
-        assertEquals(2L, result.getDestination().getHostId());
-        assertEquals(Biome.MEADOW.name(), result.getDestination().getBiome());
+        assertEquals(1L, result.getDestination().getHostId());
+        assertEquals(Biome.WOODS.name(), result.getDestination().getBiome());
     }
 
     @Test
-    void selectDestination_noMeadowHostAvailable_doesNotFailAndDefaultsToMeadowBiome() {
+    void selectDestination_noHostAvailable_doesNotFailAndDefaultsToMeadowBiome() {
         when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(any(), any(), any()))
             .thenReturn(new TopicSelectionResult(List.of(10L)));
         when(worldCatalogUseCase.listCompatibleActivitiesByTopic(any(), anyInt()))
             .thenReturn(Collections.emptyList());
         when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
-            .thenReturn(List.of(createHostWithBiome(1L, Biome.JUNGLE)));
+            .thenReturn(Collections.emptyList());
         when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
             .thenReturn(Collections.emptyList());
         when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.MEADOW), anyInt()))
@@ -569,6 +569,112 @@ class WorldOrchestratorServiceTest {
             "a badly distributed pool must not block reaching the configured cap");
     }
 
+    @Test
+    void selectDestination_hostWithSequenceOrder_isExposedOnDestination() {
+        when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(any(), any(), any()))
+            .thenReturn(new TopicSelectionResult(List.of(10L)));
+        when(worldCatalogUseCase.listCompatibleActivitiesByTopic(any(), anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
+            .thenReturn(List.of(createHostWithSortOrder(1L, Biome.BEACH, 4)));
+        when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.BEACH), anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(engagementThresholdConfigUseCase.engagementThresholdConfig(any()))
+            .thenReturn(new WorldEngagementThresholdConfig());
+        when(worldEngagementEvaluator.evaluatePatterns(any(), any()))
+            .thenReturn(Collections.emptyList());
+        when(worldEngagementEvaluator.evaluateAdjustments(any()))
+            .thenReturn(Collections.emptyList());
+
+        WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, 5);
+
+        assertEquals(4, result.getDestination().getHostSequenceOrder());
+        assertEquals(Biome.BEACH.name(), result.getDestination().getBiome());
+    }
+
+    @Test
+    void selectDestination_hostWithoutSequenceOrder_exposesNullSequenceOrder() {
+        when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(any(), any(), any()))
+            .thenReturn(new TopicSelectionResult(List.of(10L)));
+        when(worldCatalogUseCase.listCompatibleActivitiesByTopic(any(), anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
+            .thenReturn(List.of(createHostWithSortOrder(1L, Biome.FARM, null)));
+        when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.FARM), anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(engagementThresholdConfigUseCase.engagementThresholdConfig(any()))
+            .thenReturn(new WorldEngagementThresholdConfig());
+        when(worldEngagementEvaluator.evaluatePatterns(any(), any()))
+            .thenReturn(Collections.emptyList());
+        when(worldEngagementEvaluator.evaluateAdjustments(any()))
+            .thenReturn(Collections.emptyList());
+
+        WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, 5);
+
+        assertNull(result.getDestination().getHostSequenceOrder());
+    }
+
+    @Test
+    void selectDestination_multipleBiomeHosts_selectsLowestSortOrder() {
+        when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(any(), any(), any()))
+            .thenReturn(new TopicSelectionResult(List.of(10L)));
+        when(worldCatalogUseCase.listCompatibleActivitiesByTopic(any(), anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
+            .thenReturn(List.of(
+                createHostWithSortOrder(3L, Biome.SPACE, 5),
+                createHostWithSortOrder(1L, Biome.MEADOW, 1),
+                createHostWithSortOrder(2L, Biome.FARM, 2)));
+        when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.MEADOW), anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(engagementThresholdConfigUseCase.engagementThresholdConfig(any()))
+            .thenReturn(new WorldEngagementThresholdConfig());
+        when(worldEngagementEvaluator.evaluatePatterns(any(), any()))
+            .thenReturn(Collections.emptyList());
+        when(worldEngagementEvaluator.evaluateAdjustments(any()))
+            .thenReturn(Collections.emptyList());
+
+        WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, 5);
+
+        assertEquals(1L, result.getDestination().getHostId());
+        assertEquals(1, result.getDestination().getHostSequenceOrder());
+        assertEquals(Biome.MEADOW.name(), result.getDestination().getBiome());
+    }
+
+    @Test
+    void selectDestination_sequenceOrder_doesNotAffectElementSelection() {
+        worldExplorationConfig.setMaxVisibleElements(3);
+
+        when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(any(), any(), any()))
+            .thenReturn(new TopicSelectionResult(List.of(10L)));
+        when(worldCatalogUseCase.listCompatibleActivitiesByTopic(any(), anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
+            .thenReturn(List.of(createHostWithSortOrder(1L, Biome.PREHISTORY, 6)));
+        when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.PREHISTORY), anyInt()))
+            .thenReturn(List.of(createElementWithBiome(1L, 1, Biome.PREHISTORY), createElementWithBiome(2L, 2, Biome.PREHISTORY)));
+        when(engagementThresholdConfigUseCase.engagementThresholdConfig(any()))
+            .thenReturn(new WorldEngagementThresholdConfig());
+        when(worldEngagementEvaluator.evaluatePatterns(any(), any()))
+            .thenReturn(Collections.emptyList());
+        when(worldEngagementEvaluator.evaluateAdjustments(any()))
+            .thenReturn(Collections.emptyList());
+
+        WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, 5);
+
+        assertEquals(2, result.getDestination().getDiscoveryProposals().size());
+        assertEquals(6, result.getDestination().getHostSequenceOrder());
+        assertEquals(Biome.PREHISTORY.name(), result.getDestination().getBiome());
+    }
+
     private Set<Long> idsOf(List<WorldDiscoveryProposal> proposals) {
         return proposals.stream().map(WorldDiscoveryProposal::getDiscoveryElementId).collect(Collectors.toSet());
     }
@@ -595,6 +701,10 @@ class WorldOrchestratorServiceTest {
         return new WorldHostProjection(id, "HOST_" + id, "Host " + id, Biome.MEADOW, "Desc", 3, 10, "asset_key", 1, worldWidth);
     }
 
+    private WorldHostProjection createHostWithSortOrder(Long id, Biome biome, Integer sortOrder) {
+        return new WorldHostProjection(id, "HOST_" + id, "Host " + id, biome, "Desc", 3, 10, "asset_key", sortOrder, null);
+    }
+
     private WorldNarrativeSituationProjection createSituation(Long id) {
         return new WorldNarrativeSituationProjection(id, "SIT_" + id, "Text", null, null, 3, 10, 1);
     }
@@ -607,5 +717,11 @@ class WorldOrchestratorServiceTest {
         return new WorldDiscoveryElementProjection(id, "EL_" + id, "Element " + id, ElementType.DISCOVERY,
             Biome.MEADOW, 3, 10, null, null, "asset", InteractionCueType.BREATHING_GLOW, sortOrder,
             positionX, positionY);
+    }
+
+    private WorldDiscoveryElementProjection createElementWithBiome(Long id, int sortOrder, Biome biome) {
+        return new WorldDiscoveryElementProjection(id, "EL_" + id, "Element " + id, ElementType.DISCOVERY,
+            biome, 3, 10, null, null, "asset", InteractionCueType.BREATHING_GLOW, sortOrder,
+            null, null);
     }
 }

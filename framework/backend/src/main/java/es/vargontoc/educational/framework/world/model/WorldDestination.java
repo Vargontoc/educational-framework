@@ -10,6 +10,7 @@ public class WorldDestination {
     private String hostCode;
     private String hostDisplayName;
     private Integer worldWidth;
+    private Integer hostSequenceOrder;
     private Long narrativeSituationId;
     private String narrativeSituationCode;
     private String displayText;
@@ -54,6 +55,14 @@ public class WorldDestination {
 
     public void setWorldWidth(Integer worldWidth) {
         this.worldWidth = worldWidth;
+    }
+
+    public Integer getHostSequenceOrder() {
+        return hostSequenceOrder;
+    }
+
+    public void setHostSequenceOrder(Integer hostSequenceOrder) {
+        this.hostSequenceOrder = hostSequenceOrder;
     }
 
     public Long getNarrativeSituationId() {

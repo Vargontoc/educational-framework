@@ -10,5 +10,65 @@
     "sortOrder": 1,
     "visualAssetKey": "host_dog_meadow",
     "worldWidth": 2560
+  },
+  {
+    "code": "FARM_HORSE",
+    "displayName": "Horse",
+    "biome": "FARM",
+    "description": "A gentle horse on the farm",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "sortOrder": 2,
+    "visualAssetKey": "host_horse_farm",
+    "worldWidth": 2560
+  },
+  {
+    "code": "WOODS_OWL",
+    "displayName": "Owl",
+    "biome": "WOODS",
+    "description": "A wise owl in the enchanted woods",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "sortOrder": 3,
+    "visualAssetKey": "host_owl_woods",
+    "worldWidth": 2560
+  },
+  {
+    "code": "BEACH_CRAB",
+    "displayName": "Crab",
+    "biome": "BEACH",
+    "description": "A cheerful crab at the beach",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "sortOrder": 4,
+    "visualAssetKey": "host_crab_beach",
+    "worldWidth": 2560
+  },
+  {
+    "code": "SPACE_ROBOT",
+    "displayName": "Robot",
+    "biome": "SPACE",
+    "description": "A friendly robot exploring space",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "sortOrder": 5,
+    "visualAssetKey": "host_robot_space",
+    "worldWidth": 2560
+  },
+  {
+    "code": "PREHISTORY_DINO",
+    "displayName": "Dino",
+    "biome": "PREHISTORY",
+    "description": "A playful dinosaur from prehistoric times",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "sortOrder": 6,
+    "visualAssetKey": "host_dino_prehistory",
+    "worldWidth": 2560
   }
 ]

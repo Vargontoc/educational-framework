@@ -99,6 +99,37 @@ class WorldCatalogServiceTest {
     }
 
     @Test
+    void listActiveHostsForAge_multipleBiomes_allReturned() {
+        WorldHost meadowHost = createWorldHost(1L, "MEADOW_DOG", Biome.MEADOW, 3, 4);
+        meadowHost.setSortOrder(1);
+        WorldHost farmHost = createWorldHost(2L, "FARM_HORSE", Biome.FARM, 3, 4);
+        farmHost.setSortOrder(2);
+        WorldHost woodsHost = createWorldHost(3L, "WOODS_OWL", Biome.WOODS, 3, 4);
+        woodsHost.setSortOrder(3);
+        when(worldHostRepository.findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+            ContentStatus.ACTIVE, 3)).thenReturn(List.of(meadowHost, farmHost, woodsHost));
+
+        List<WorldHostProjection> result = service.listActiveHostsForAge(3);
+
+        assertEquals(3, result.size());
+        assertEquals(Biome.MEADOW, result.get(0).biome());
+        assertEquals(Biome.FARM, result.get(1).biome());
+        assertEquals(Biome.WOODS, result.get(2).biome());
+    }
+
+    @Test
+    void listActiveHostsForAge_sortOrderIsMapped() {
+        WorldHost host = createWorldHost(1L, "BEACH_CRAB", Biome.BEACH, 3, 4);
+        host.setSortOrder(4);
+        when(worldHostRepository.findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
+            ContentStatus.ACTIVE, 3)).thenReturn(List.of(host));
+
+        List<WorldHostProjection> result = service.listActiveHostsForAge(3);
+
+        assertEquals(4, result.get(0).sortOrder());
+    }
+
+    @Test
     void listActiveHostsForAge_excludesInactive() {
         when(worldHostRepository.findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
             ContentStatus.ACTIVE, 3)).thenReturn(Collections.emptyList());

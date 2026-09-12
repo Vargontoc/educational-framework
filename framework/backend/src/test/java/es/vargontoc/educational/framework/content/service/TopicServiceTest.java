@@ -123,10 +123,10 @@ class TopicServiceTest {
 
     @Test
     void listTopicsByRecognitionTypeAndHabitat_returnsEmptyWhenNoMatch() {
-        when(topicRepository.findByRecognitionTypeAndHabitatTag(RecognitionType.ANIMAL, Biome.JUNGLE))
+        when(topicRepository.findByRecognitionTypeAndHabitatTag(RecognitionType.ANIMAL, Biome.WOODS))
             .thenReturn(List.of());
 
-        var result = topicService.listTopicsByRecognitionTypeAndHabitat(RecognitionType.ANIMAL, Biome.JUNGLE);
+        var result = topicService.listTopicsByRecognitionTypeAndHabitat(RecognitionType.ANIMAL, Biome.WOODS);
 
         assertEquals(0, result.size());
     }

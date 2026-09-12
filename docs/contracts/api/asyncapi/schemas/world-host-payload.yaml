@@ -23,3 +23,7 @@ properties:
     type: integer
     description: Logical pixel width of the host's world, used by the frontend to compute layout bounds. Null falls back to an application-level default.
     nullable: true
+  sequenceOrder:
+    type: integer
+    description: Linear position of this host's biome in the configurable walkthrough order (ADR-026). Null if no order is configured.
+    nullable: true

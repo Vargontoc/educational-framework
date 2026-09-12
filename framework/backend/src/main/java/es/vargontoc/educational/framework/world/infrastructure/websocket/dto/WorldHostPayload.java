@@ -5,6 +5,7 @@ public record WorldHostPayload(
     String code,
     String displayName,
     String visualAssetKey,
-    Integer worldWidth
+    Integer worldWidth,
+    Integer sequenceOrder
 ) {
 }

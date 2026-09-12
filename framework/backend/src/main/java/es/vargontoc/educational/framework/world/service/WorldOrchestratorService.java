@@ -148,25 +148,27 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         WorldDestination destination = new WorldDestination();
         destination.setDestinationId(UUID.randomUUID().toString());
 
-        // Fase 2 de FEAT-010: el único mapa confirmado es MEADOW. Se filtra explícitamente
-        // en vez de depender del fallback (que solo actuaba cuando no había ningún host).
         List<WorldHostProjection> hosts = worldCatalogUseCase.listActiveHostsForAge(childAge);
-        List<WorldHostProjection> meadowHosts = (hosts == null) ? Collections.emptyList() :
-            hosts.stream().filter(host -> host.biome() == Biome.MEADOW).collect(Collectors.toList());
+        List<WorldHostProjection> sortedHosts = (hosts == null) ? Collections.emptyList() :
+            hosts.stream()
+                .sorted(Comparator.comparing(
+                    WorldHostProjection::sortOrder,
+                    Comparator.nullsLast(Comparator.naturalOrder())))
+                .collect(Collectors.toList());
 
-        if (!meadowHosts.isEmpty()) {
-            WorldHostProjection host = meadowHosts.get(0);
+        Biome resolvedBiome = Biome.MEADOW;
+        if (!sortedHosts.isEmpty()) {
+            WorldHostProjection host = sortedHosts.get(0);
             destination.setHostId(host.id());
             destination.setHostCode(host.code());
             destination.setHostDisplayName(host.displayName());
             destination.setWorldWidth(host.worldWidth() != null ? host.worldWidth() : DEFAULT_WORLD_WIDTH);
+            destination.setHostSequenceOrder(host.sortOrder());
+            resolvedBiome = host.biome();
         } else {
-            // No active MEADOW host: keep the existing behavior of not blocking nor throwing a
-            // technical error, just leaving host* unset and biome fixed to MEADOW. worldWidth
-            // still gets the default so the contract field is always populated.
             destination.setWorldWidth(DEFAULT_WORLD_WIDTH);
         }
-        destination.setBiome(Biome.MEADOW.name());
+        destination.setBiome(resolvedBiome.name());
 
         List<WorldNarrativeSituationProjection> situations = worldCatalogUseCase.listActiveSituationsForAge(childAge);
         if (situations != null && !situations.isEmpty()) {
@@ -176,7 +178,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
             destination.setDisplayText(situation.displayText());
         }
 
-        List<WorldDiscoveryElementProjection> elements = worldCatalogUseCase.listActiveElementsByBiomeAndAge(Biome.MEADOW, childAge);
+        List<WorldDiscoveryElementProjection> elements = worldCatalogUseCase.listActiveElementsByBiomeAndAge(resolvedBiome, childAge);
         destination.setDiscoveryProposals(selectVisibleProposals(childSessionId, elements));
         return destination;
     }
