@@ -2,7 +2,7 @@ asyncapi: 2.6.0
 info:
   title: Educational Framework WebSocket Contract
   description: Baseline real-time contract for FEAT-002 session events.
-  version: 1.8.0
+  version: 1.9.0
 
 channels:
   /ws/parent:
@@ -73,6 +73,9 @@ components:
     WORLD_ACTIVITY_STARTED:
       direction: server_to_client
       description: Child started an activity from the world map. Contains gameId, activityId, and transition type.
+    WORLD_TRAVEL_REQUEST:
+      direction: client_to_server
+      description: Child requests to travel to a specific biome. Payload contains biome (one of MEADOW, FARM, WOODS, BEACH, SPACE, PREHISTORY). All biomes are always accessible. Server responds with WORLD_STATE_SYNC or GAME_ERROR (INVALID_BIOME).
     CHATBOT_TOKEN:
       direction: server_to_client
       description: Token de respuesta del chatbot en streaming.

@@ -104,3 +104,22 @@ payload:
         - type
         - proposalRuntimeId
         - discoveryElementId
+    - title: WorldTravelMessage
+      description: Child requests to travel to a specific biome from the transport. All 6 biomes are always accessible.
+      properties:
+        type:
+          type: string
+          const: world_travel
+        biome:
+          type: string
+          enum:
+            - MEADOW
+            - FARM
+            - WOODS
+            - BEACH
+            - SPACE
+            - PREHISTORY
+          description: Target biome to travel to.
+      required:
+        - type
+        - biome

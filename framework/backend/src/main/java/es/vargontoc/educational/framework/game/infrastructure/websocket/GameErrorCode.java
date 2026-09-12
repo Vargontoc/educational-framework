@@ -7,5 +7,6 @@ public enum GameErrorCode {
     INVALID_STATE_TRANSITION,
     NO_ACTIVE_GAME,
     ENGINE_ERROR,
-    PARSING_ERROR
+    PARSING_ERROR,
+    INVALID_BIOME
 }

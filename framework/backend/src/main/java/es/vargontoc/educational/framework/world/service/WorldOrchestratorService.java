@@ -80,6 +80,12 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         return new WorldDestinationSelectionResult(childSessionId, topicId, destination, selectedActivity, priorityAdjustmentApplied);
     }
 
+    @Override
+    public WorldDestination buildDestinationForBiome(Long childSessionId, String biome, Integer childAge) {
+        Biome targetBiome = Biome.valueOf(biome);
+        return buildDestinationForHost(childSessionId, targetBiome, childAge);
+    }
+
     private Long selectTopic(Long childProfileId) {
         TopicSelectionResult result = selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(
             childProfileId, DifficultyLevel.EASY, 1);
@@ -145,9 +151,6 @@ public class WorldOrchestratorService implements WorldOrchestrator {
     }
 
     private WorldDestination buildDestination(Long childSessionId, SelectedWorldActivity selectedActivity, Integer childAge) {
-        WorldDestination destination = new WorldDestination();
-        destination.setDestinationId(UUID.randomUUID().toString());
-
         List<WorldHostProjection> hosts = worldCatalogUseCase.listActiveHostsForAge(childAge);
         List<WorldHostProjection> sortedHosts = (hosts == null) ? Collections.emptyList() :
             hosts.stream()
@@ -158,17 +161,35 @@ public class WorldOrchestratorService implements WorldOrchestrator {
 
         Biome resolvedBiome = Biome.MEADOW;
         if (!sortedHosts.isEmpty()) {
-            WorldHostProjection host = sortedHosts.get(0);
-            destination.setHostId(host.id());
-            destination.setHostCode(host.code());
-            destination.setHostDisplayName(host.displayName());
-            destination.setWorldWidth(host.worldWidth() != null ? host.worldWidth() : DEFAULT_WORLD_WIDTH);
-            destination.setHostSequenceOrder(host.sortOrder());
-            resolvedBiome = host.biome();
+            resolvedBiome = sortedHosts.get(0).biome();
+        }
+        return buildDestinationForHost(childSessionId, resolvedBiome, childAge);
+    }
+
+    private WorldDestination buildDestinationForHost(Long childSessionId, Biome targetBiome, Integer childAge) {
+        WorldDestination destination = new WorldDestination();
+        destination.setDestinationId(UUID.randomUUID().toString());
+
+        List<WorldHostProjection> hosts = worldCatalogUseCase.listActiveHostsForAge(childAge);
+        WorldHostProjection matchedHost = (hosts == null) ? null :
+            hosts.stream()
+                .filter(h -> h.biome() == targetBiome)
+                .sorted(Comparator.comparing(
+                    WorldHostProjection::sortOrder,
+                    Comparator.nullsLast(Comparator.naturalOrder())))
+                .findFirst()
+                .orElse(null);
+
+        if (matchedHost != null) {
+            destination.setHostId(matchedHost.id());
+            destination.setHostCode(matchedHost.code());
+            destination.setHostDisplayName(matchedHost.displayName());
+            destination.setWorldWidth(matchedHost.worldWidth() != null ? matchedHost.worldWidth() : DEFAULT_WORLD_WIDTH);
+            destination.setHostSequenceOrder(matchedHost.sortOrder());
         } else {
             destination.setWorldWidth(DEFAULT_WORLD_WIDTH);
         }
-        destination.setBiome(resolvedBiome.name());
+        destination.setBiome(targetBiome.name());
 
         List<WorldNarrativeSituationProjection> situations = worldCatalogUseCase.listActiveSituationsForAge(childAge);
         if (situations != null && !situations.isEmpty()) {
@@ -178,7 +199,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
             destination.setDisplayText(situation.displayText());
         }
 
-        List<WorldDiscoveryElementProjection> elements = worldCatalogUseCase.listActiveElementsByBiomeAndAge(resolvedBiome, childAge);
+        List<WorldDiscoveryElementProjection> elements = worldCatalogUseCase.listActiveElementsByBiomeAndAge(targetBiome, childAge);
         destination.setDiscoveryProposals(selectVisibleProposals(childSessionId, elements));
         return destination;
     }

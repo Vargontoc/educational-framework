@@ -5,6 +5,7 @@ import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.avatar.domain.AvatarEventRequest;
 import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
+import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
@@ -180,6 +181,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         return;
                     }
                     handleWorldDiscoveryInteracted(session, getChildSessionId(session), root);
+                }
+                case "world_travel" -> {
+                    if (!isAuthenticated(session)) {
+                        LOGGER.warn("world_travel received before auth from session {}", session.getId());
+                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+                        return;
+                    }
+                    handleWorldTravel(session, getChildSessionId(session), root);
                 }
                 default -> LOGGER.warn("Unknown game message type: {} from session={}", type, session.getId());
             }
@@ -704,6 +713,53 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         } catch (Exception exception) {
             LOGGER.error("World discovery interaction failed for childSessionId={}: {}", childSessionId, exception.getMessage());
             sendWorldError(childSessionId, "INTERNAL_ERROR", null);
+        }
+    }
+
+    private void handleWorldTravel(WebSocketSession session, Long childSessionId, JsonNode root) {
+        try {
+            String biomeValue = root.has("biome") && !root.get("biome").isNull()
+                ? root.get("biome").asString() : null;
+
+            if (biomeValue == null || biomeValue.isBlank()) {
+                sendGameError(childSessionId, GameErrorCode.INVALID_BIOME, null);
+                return;
+            }
+
+            Biome targetBiome;
+            try {
+                targetBiome = Biome.valueOf(biomeValue.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                sendGameError(childSessionId, GameErrorCode.INVALID_BIOME, null);
+                return;
+            }
+
+            var childSession = childSessionUseCase.getSession(childSessionId);
+            Integer childAge = 3;
+
+            WorldDestination destination = worldOrchestrator.buildDestinationForBiome(childSessionId, targetBiome.name(), childAge);
+
+            var worldState = worldStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+            if (worldState == null) {
+                worldState = new WorldState();
+                worldState.setChildSessionId(childSessionId);
+                worldState.setChildProfileId(childSession.getChildProfileId());
+                worldState.setStatus(WorldRuntimeStatus.ACTIVE);
+            }
+            worldState.setCurrentDestination(destination);
+            if (destination.getDiscoveryProposals() != null) {
+                worldState.setVisibleDiscoveryElements(destination.getDiscoveryProposals());
+            }
+            worldStateRegistry.save(worldState);
+
+            WorldDestinationPayload destinationPayload = toDestinationPayload(destination);
+            WorldStateSyncPayload syncPayload = new WorldStateSyncPayload(
+                WorldRuntimeStatus.ACTIVE.name(), destinationPayload);
+            SessionEvent event = SessionEvent.of(SessionEventType.WORLD_STATE_SYNC, childSessionId, toPayload(syncPayload));
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+        } catch (Exception exception) {
+            LOGGER.error("World travel failed for childSessionId={}: {}", childSessionId, exception.getMessage());
+            sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, null);
         }
     }
 

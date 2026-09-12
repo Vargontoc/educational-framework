@@ -659,6 +659,154 @@ class GameWebSocketHandlerTest {
             .anyMatch(m -> m.getPayload().contains("ABANDONED")));
     }
 
+    @Test
+    void worldTravel_validBiome_buildsDestinationForThatBiome() throws IOException {
+        var childSession = childSession(20L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(20L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        var destination = new es.vargontoc.educational.framework.world.model.WorldDestination();
+        destination.setDestinationId("dest-travel-1");
+        destination.setHostId(5L);
+        destination.setHostCode("BEACH_HOST");
+        destination.setHostDisplayName("Beach Host");
+        destination.setWorldWidth(3000);
+        destination.setBiome("BEACH");
+        destination.setDiscoveryProposals(List.of());
+
+        when(worldOrchestrator.buildDestinationForBiome(eq(20L), eq("BEACH"), eq(3)))
+            .thenReturn(destination);
+
+        var existingWorldState = new es.vargontoc.educational.framework.world.model.WorldState();
+        existingWorldState.setChildSessionId(20L);
+        existingWorldState.setChildProfileId(100L);
+        existingWorldState.setCurrentDestination(new es.vargontoc.educational.framework.world.model.WorldDestination());
+        when(worldStateRegistry.findByChildSessionId(20L)).thenReturn(Optional.of(existingWorldState));
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":20}"));
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"world_travel\",\"biome\":\"BEACH\"}"));
+
+        verify(worldOrchestrator).buildDestinationForBiome(eq(20L), eq("BEACH"), eq(3));
+        verify(worldStateRegistry).save(argThat(state ->
+            state.getCurrentDestination() != null && "BEACH".equals(state.getCurrentDestination().getBiome())));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("WORLD_STATE_SYNC") && m.getPayload().contains("BEACH")));
+    }
+
+    @Test
+    void worldTravel_invalidBiome_returnsGameErrorWithoutBreakingSession() throws IOException {
+        var childSession = childSession(21L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(21L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":21}"));
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"world_travel\",\"biome\":\"ATLANTIS\"}"));
+
+        verify(worldOrchestrator, never()).buildDestinationForBiome(any(), any(), any());
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_ERROR") && m.getPayload().contains("INVALID_BIOME")));
+
+        assertTrue(handler.hasActiveSession(21L));
+    }
+
+    @Test
+    void worldTravel_afterSuccessfulTravel_heartbeatMaintainsNewBiome() throws IOException {
+        var childSession = childSession(22L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(22L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        var spaceDestination = new es.vargontoc.educational.framework.world.model.WorldDestination();
+        spaceDestination.setDestinationId("dest-space");
+        spaceDestination.setHostId(10L);
+        spaceDestination.setHostCode("SPACE_host");
+        spaceDestination.setHostDisplayName("Space Host");
+        spaceDestination.setWorldWidth(2560);
+        spaceDestination.setBiome("SPACE");
+        spaceDestination.setDiscoveryProposals(List.of());
+
+        when(worldOrchestrator.buildDestinationForBiome(eq(22L), eq("SPACE"), eq(3)))
+            .thenReturn(spaceDestination);
+
+        var worldState = new es.vargontoc.educational.framework.world.model.WorldState();
+        worldState.setChildSessionId(22L);
+        worldState.setChildProfileId(100L);
+        var meadowDest = new es.vargontoc.educational.framework.world.model.WorldDestination();
+        meadowDest.setBiome("MEADOW");
+        worldState.setCurrentDestination(meadowDest);
+        when(worldStateRegistry.findByChildSessionId(22L)).thenReturn(Optional.of(worldState));
+
+        when(worldHeartbeatUseCase.recordHeartbeat(22L)).thenReturn(
+            new es.vargontoc.educational.framework.world.model.WorldHeartbeatResult(
+                22L, true, null, true,
+                es.vargontoc.educational.framework.world.model.WorldInactivityStatus.ACTIVE));
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":22}"));
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"world_travel\",\"biome\":\"SPACE\"}"));
+
+        when(worldStateRegistry.findByChildSessionId(22L)).thenReturn(
+            Optional.of(worldState));
+
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"world_heartbeat\"}"));
+
+        assertEquals("SPACE", worldState.getCurrentDestination().getBiome());
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        var syncMessages = captor.getAllValues().stream()
+            .filter(m -> m.getPayload().contains("WORLD_STATE_SYNC"))
+            .toList();
+        assertFalse(syncMessages.isEmpty());
+        var lastSync = syncMessages.get(syncMessages.size() - 1).getPayload();
+        assertTrue(lastSync.contains("SPACE"));
+    }
+
+    @Test
+    void worldTravel_sameBiomeAsCurrent_succeedsNormally() throws IOException {
+        var childSession = childSession(23L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(23L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        var meadowDestination = new es.vargontoc.educational.framework.world.model.WorldDestination();
+        meadowDestination.setDestinationId("dest-meadow-2");
+        meadowDestination.setHostId(1L);
+        meadowDestination.setHostCode("MEADOW_host");
+        meadowDestination.setHostDisplayName("Meadow Host");
+        meadowDestination.setWorldWidth(2560);
+        meadowDestination.setBiome("MEADOW");
+        meadowDestination.setDiscoveryProposals(List.of());
+
+        when(worldOrchestrator.buildDestinationForBiome(eq(23L), eq("MEADOW"), eq(3)))
+            .thenReturn(meadowDestination);
+
+        var worldState = new es.vargontoc.educational.framework.world.model.WorldState();
+        worldState.setChildSessionId(23L);
+        worldState.setChildProfileId(100L);
+        var currentMeadow = new es.vargontoc.educational.framework.world.model.WorldDestination();
+        currentMeadow.setBiome("MEADOW");
+        worldState.setCurrentDestination(currentMeadow);
+        when(worldStateRegistry.findByChildSessionId(23L)).thenReturn(Optional.of(worldState));
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":23}"));
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"world_travel\",\"biome\":\"MEADOW\"}"));
+
+        verify(worldOrchestrator).buildDestinationForBiome(eq(23L), eq("MEADOW"), eq(3));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("WORLD_STATE_SYNC") && m.getPayload().contains("MEADOW")));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void gameStateToPayload_recognitionEngine_includesRecognitionStateFields() {

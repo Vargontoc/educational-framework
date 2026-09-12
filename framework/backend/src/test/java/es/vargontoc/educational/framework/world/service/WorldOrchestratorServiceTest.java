@@ -675,6 +675,47 @@ class WorldOrchestratorServiceTest {
         assertEquals(Biome.PREHISTORY.name(), result.getDestination().getBiome());
     }
 
+    @Test
+    void buildDestinationForBiome_validBiome_buildsDestinationForRequestedBiome() {
+        when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
+            .thenReturn(List.of(
+                createHostWithBiome(1L, Biome.MEADOW),
+                createHostWithBiome(2L, Biome.BEACH)));
+        when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
+            .thenReturn(List.of(createSituation(1L)));
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.BEACH), anyInt()))
+            .thenReturn(List.of(createElementWithBiome(10L, 1, Biome.BEACH)));
+
+        WorldDestination destination = orchestrator.buildDestinationForBiome(100L, "BEACH", 4);
+
+        assertNotNull(destination);
+        assertEquals("BEACH", destination.getBiome());
+        assertEquals(2L, destination.getHostId());
+        assertEquals(1, destination.getDiscoveryProposals().size());
+    }
+
+    @Test
+    void buildDestinationForBiome_invalidBiome_throwsIllegalArgumentException() {
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () ->
+            orchestrator.buildDestinationForBiome(100L, "ATLANTIS", 4));
+    }
+
+    @Test
+    void buildDestinationForBiome_noMatchingHost_stillBuildsDestinationWithBiome() {
+        when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
+            .thenReturn(List.of(createHostWithBiome(1L, Biome.MEADOW)));
+        when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.SPACE), anyInt()))
+            .thenReturn(Collections.emptyList());
+
+        WorldDestination destination = orchestrator.buildDestinationForBiome(100L, "SPACE", 4);
+
+        assertNotNull(destination);
+        assertEquals("SPACE", destination.getBiome());
+        assertNull(destination.getHostId());
+    }
+
     private Set<Long> idsOf(List<WorldDiscoveryProposal> proposals) {
         return proposals.stream().map(WorldDiscoveryProposal::getDiscoveryElementId).collect(Collectors.toSet());
     }
