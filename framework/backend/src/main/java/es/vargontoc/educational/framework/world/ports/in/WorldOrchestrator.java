@@ -10,4 +10,8 @@ public interface WorldOrchestrator {
                                                      WorldEngagementWindow engagementWindow, Integer childAge);
 
     WorldDestination buildDestinationForBiome(Long childSessionId, String biome, Integer childAge);
+
+    WorldDestination buildDestinationForBiomeOrDefault(Long childSessionId, String biome, Integer childAge);
+
+    boolean isBiomeAvailable(String biome, Integer childAge);
 }

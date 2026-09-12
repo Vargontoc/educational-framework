@@ -86,6 +86,32 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         return buildDestinationForHost(childSessionId, targetBiome, childAge);
     }
 
+    @Override
+    public WorldDestination buildDestinationForBiomeOrDefault(Long childSessionId, String biome, Integer childAge) {
+        if (biome != null && isBiomeAvailable(biome, childAge)) {
+            try {
+                return buildDestinationForBiome(childSessionId, biome, childAge);
+            } catch (IllegalArgumentException e) {
+                return buildDestinationForHost(childSessionId, Biome.MEADOW, childAge);
+            }
+        }
+        return buildDestinationForHost(childSessionId, Biome.MEADOW, childAge);
+    }
+
+    @Override
+    public boolean isBiomeAvailable(String biome, Integer childAge) {
+        try {
+            Biome targetBiome = Biome.valueOf(biome);
+            List<WorldHostProjection> hosts = worldCatalogUseCase.listActiveHostsForAge(childAge);
+            if (hosts == null || hosts.isEmpty()) {
+                return false;
+            }
+            return hosts.stream().anyMatch(h -> h.biome() == targetBiome);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     private Long selectTopic(Long childProfileId) {
         TopicSelectionResult result = selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(
             childProfileId, DifficultyLevel.EASY, 1);

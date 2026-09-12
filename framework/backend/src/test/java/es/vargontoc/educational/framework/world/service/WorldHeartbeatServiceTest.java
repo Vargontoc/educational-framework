@@ -5,6 +5,7 @@ import es.vargontoc.educational.framework.world.model.WorldHeartbeatResult;
 import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
 import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
 import es.vargontoc.educational.framework.world.model.WorldState;
+import es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class WorldHeartbeatServiceTest {
     @Mock
     private ChildSessionUseCase childSessionUseCase;
 
+    @Mock
+    private WorldExplorationStateRepository worldExplorationStateRepository;
+
     private WorldInactivityConfig inactivityConfig;
 
     private WorldHeartbeatService service;
@@ -43,7 +47,7 @@ class WorldHeartbeatServiceTest {
     void setUp() {
         inactivityConfig = new WorldInactivityConfig();
         inactivityConfig.setInactivityThresholdSeconds(180);
-        service = new WorldHeartbeatService(worldStateRegistry, worldProposalService, childSessionUseCase, inactivityConfig);
+        service = new WorldHeartbeatService(worldStateRegistry, worldProposalService, childSessionUseCase, inactivityConfig, worldExplorationStateRepository);
     }
 
     private WorldState createWorldState(Long childSessionId) {

@@ -26,12 +26,14 @@ import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.Wor
 import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldStateSyncPayload;
 import es.vargontoc.educational.framework.world.model.WorldDestination;
 import es.vargontoc.educational.framework.world.model.WorldDiscoveryProposal;
+import es.vargontoc.educational.framework.world.model.WorldExplorationState;
 import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
 import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
 import es.vargontoc.educational.framework.world.model.WorldState;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
+import es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
@@ -76,6 +78,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final WorldStateRegistry worldStateRegistry;
     private final WorldOrchestrator worldOrchestrator;
     private final RecognitionElementRepository recognitionElementRepository;
+    private final WorldExplorationStateRepository worldExplorationStateRepository;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -93,7 +96,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                              WorldGameStartUseCase worldGameStartUseCase,
                              WorldStateRegistry worldStateRegistry,
                              WorldOrchestrator worldOrchestrator,
-                             RecognitionElementRepository recognitionElementRepository) {
+                             RecognitionElementRepository recognitionElementRepository,
+                             WorldExplorationStateRepository worldExplorationStateRepository) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarservice = avatarService;
@@ -104,6 +108,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         this.worldStateRegistry = worldStateRegistry;
         this.worldOrchestrator = worldOrchestrator;
         this.recognitionElementRepository = recognitionElementRepository;
+        this.worldExplorationStateRepository = worldExplorationStateRepository;
     }
 
     @Override
@@ -172,7 +177,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                         closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
                         return;
                     }
-                    handleWorldHeartbeat(session, getChildSessionId(session));
+                    handleWorldHeartbeat(session, getChildSessionId(session), root);
                 }
                 case "world_discovery_interacted" -> {
                     if (!isAuthenticated(session)) {
@@ -241,8 +246,21 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         ws.setChildSessionId(childSessionId);
         ws.setChildProfileId(profileId);
         ws.setStatus(WorldRuntimeStatus.ACTIVE);
-        var select = worldOrchestrator.selectDestination(childSessionId, profileId, null, 3);
-        WorldDestination destination = select.getDestination();
+
+        WorldDestination destination;
+        var persistedState = worldExplorationStateRepository.findByChildProfileId(profileId);
+        if (persistedState.isPresent() && persistedState.get().getBiome() != null) {
+            String persistedBiome = persistedState.get().getBiome();
+            if (worldOrchestrator.isBiomeAvailable(persistedBiome, 3)) {
+                destination = worldOrchestrator.buildDestinationForBiome(childSessionId, persistedBiome, 3);
+            } else {
+                destination = worldOrchestrator.buildDestinationForBiomeOrDefault(childSessionId, Biome.MEADOW.name(), 3);
+            }
+        } else {
+            var select = worldOrchestrator.selectDestination(childSessionId, profileId, null, 3);
+            destination = select.getDestination();
+        }
+
         ws.setCurrentDestination(destination);
         if (destination != null) {
             ws.setVisibleDiscoveryElements(destination.getDiscoveryProposals());
@@ -643,9 +661,16 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void handleWorldHeartbeat(WebSocketSession session, Long childSessionId) {
+    private void handleWorldHeartbeat(WebSocketSession session, Long childSessionId, JsonNode root) {
         try {
-            var heartbeatResult = worldHeartbeatUseCase.recordHeartbeat(childSessionId);
+            Double positionX = root.has("positionX") && !root.get("positionX").isNull()
+                ? root.get("positionX").asDouble() : null;
+            Double positionY = root.has("positionY") && !root.get("positionY").isNull()
+                ? root.get("positionY").asDouble() : null;
+            String biome = root.has("biome") && !root.get("biome").isNull()
+                ? root.get("biome").asString() : null;
+
+            var heartbeatResult = worldHeartbeatUseCase.recordHeartbeat(childSessionId, positionX, positionY, biome);
             String status = heartbeatResult.getStatus().name();
             WorldDestinationPayload destinationPayload = null;
             if (heartbeatResult.getStatus() == WorldInactivityStatus.ACTIVE) {
@@ -752,6 +777,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
             worldStateRegistry.save(worldState);
 
+            persistExplorationStateOnTravel(childSession.getChildProfileId(), targetBiome.name());
+
             WorldDestinationPayload destinationPayload = toDestinationPayload(destination);
             WorldStateSyncPayload syncPayload = new WorldStateSyncPayload(
                 WorldRuntimeStatus.ACTIVE.name(), destinationPayload);
@@ -825,6 +852,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         if (payload.destination() != null) {
             result.put("destination", toPayload(payload.destination()));
         }
+        if (payload.positionX() != null) {
+            result.put("positionX", payload.positionX());
+        }
+        if (payload.positionY() != null) {
+            result.put("positionY", payload.positionY());
+        }
         return result;
     }
 
@@ -891,6 +924,21 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             result.put("positionY", element.positionY());
         }
         return result;
+    }
+
+    private void persistExplorationStateOnTravel(Long childProfileId, String biome) {
+        if (childProfileId == null) {
+            return;
+        }
+        WorldExplorationState explorationState = worldExplorationStateRepository.findByChildProfileId(childProfileId)
+            .orElseGet(() -> {
+                WorldExplorationState newState = new WorldExplorationState();
+                newState.setChildProfileId(childProfileId);
+                return newState;
+            });
+        explorationState.setBiome(biome);
+        explorationState.setUpdatedAt(java.time.LocalDateTime.now());
+        worldExplorationStateRepository.save(explorationState);
     }
 
     private void sendWorldError(Long childSessionId, String code, String message) {

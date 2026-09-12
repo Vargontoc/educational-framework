@@ -14,3 +14,17 @@ properties:
     $ref: "./world-destination-payload.yaml"
     description: Current world destination. Null when status is CLOSED or NO_STATE.
     nullable: true
+  positionX:
+    type: number
+    format: double
+    minimum: 0.0
+    maximum: 1.0
+    description: Optional normalized horizontal position of the child in the current biome (0.0-1.0).
+    nullable: true
+  positionY:
+    type: number
+    format: double
+    minimum: 0.0
+    maximum: 1.0
+    description: Optional normalized vertical position of the child in the current biome (0.0-1.0).
+    nullable: true

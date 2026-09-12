@@ -76,7 +76,7 @@ payload:
         - type
         - action
     - title: WorldHeartbeatMessage
-      description: Sent periodically to keep the world state alive while child explores the map. Only valid after successful auth.
+      description: Sent periodically to keep the world state alive while child explores the map. Acts as autoguardado when position/biome are included. Only valid after successful auth.
       properties:
         type:
           type: string
@@ -85,6 +85,28 @@ payload:
           type: string
           format: date-time
           description: Optional client timestamp.
+        positionX:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: Optional normalized horizontal position of the child in the current biome (0.0-1.0).
+        positionY:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: Optional normalized vertical position of the child in the current biome (0.0-1.0).
+        biome:
+          type: string
+          enum:
+            - MEADOW
+            - FARM
+            - WOODS
+            - BEACH
+            - SPACE
+            - PREHISTORY
+          description: Optional current biome of the child.
       required:
         - type
     - title: WorldDiscoveryInteractedMessage

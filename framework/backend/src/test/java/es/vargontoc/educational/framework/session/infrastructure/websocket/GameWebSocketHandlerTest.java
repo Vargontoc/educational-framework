@@ -91,6 +91,9 @@ class GameWebSocketHandlerTest {
     private RecognitionElementRepository recognitionElementRepository;
 
     @Mock
+    private es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository worldExplorationStateRepository;
+
+    @Mock
     private WebSocketSession session;
 
     private GameWebSocketHandler handler;
@@ -100,7 +103,7 @@ class GameWebSocketHandlerTest {
         handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarService,
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
-            recognitionElementRepository);
+            recognitionElementRepository, worldExplorationStateRepository);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))
@@ -207,7 +210,7 @@ class GameWebSocketHandlerTest {
         worldState.setChildSessionId(8L);
         worldState.setCurrentDestination(destination);
 
-        when(worldHeartbeatUseCase.recordHeartbeat(8L)).thenReturn(
+        when(worldHeartbeatUseCase.recordHeartbeat(eq(8L), isNull(), isNull(), isNull())).thenReturn(
             new es.vargontoc.educational.framework.world.model.WorldHeartbeatResult(
                 8L, true, null, true,
                 es.vargontoc.educational.framework.world.model.WorldInactivityStatus.ACTIVE));
@@ -743,7 +746,7 @@ class GameWebSocketHandlerTest {
         worldState.setCurrentDestination(meadowDest);
         when(worldStateRegistry.findByChildSessionId(22L)).thenReturn(Optional.of(worldState));
 
-        when(worldHeartbeatUseCase.recordHeartbeat(22L)).thenReturn(
+        when(worldHeartbeatUseCase.recordHeartbeat(eq(22L), isNull(), isNull(), isNull())).thenReturn(
             new es.vargontoc.educational.framework.world.model.WorldHeartbeatResult(
                 22L, true, null, true,
                 es.vargontoc.educational.framework.world.model.WorldInactivityStatus.ACTIVE));

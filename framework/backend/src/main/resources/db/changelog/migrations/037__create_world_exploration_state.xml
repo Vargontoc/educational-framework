@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="037__create_world_exploration_state" author="vargontoc">
+        <createTable tableName="world_exploration_state">
+            <column name="child_profile_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="biome" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="position_x" type="DOUBLE PRECISION">
+                <constraints nullable="true"/>
+            </column>
+            <column name="position_y" type="DOUBLE PRECISION">
+                <constraints nullable="true"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="world_exploration_state"
+            baseColumnNames="child_profile_id"
+            constraintName="fk_world_exploration_state_child_profile"
+            referencedTableName="child_profile"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+
+        <sql>ALTER TABLE world_exploration_state ADD CONSTRAINT chk_world_exploration_position_x CHECK (position_x &gt;= 0.0 AND position_x &lt;= 1.0);</sql>
+        <sql>ALTER TABLE world_exploration_state ADD CONSTRAINT chk_world_exploration_position_y CHECK (position_y &gt;= 0.0 AND position_y &lt;= 1.0);</sql>
+    </changeSet>
+
+</databaseChangeLog>
