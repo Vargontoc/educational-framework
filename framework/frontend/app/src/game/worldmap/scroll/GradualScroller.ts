@@ -11,9 +11,14 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 // Nombre del evento de escena que anuncia si el paisaje se está desplazando
-// ahora mismo (arrastre activo o inercia tras soltar). NubiLayer lo escucha
-// para activar la animación 'run' solo mientras el jugador aplica desplazamiento.
+// ahora mismo (arrastre activo o inercia tras soltar).
 export const WORLDMAP_SCROLL_MOVE_EVENT = 'worldmap-scroll-move'
+
+// Emitido en pointerup cuando el gesto fue un toque (desplazamiento total por
+// debajo de WORLD_MAP_CONFIG.tapMaxDistance), no un arrastre. Payload: la
+// coordenada X de pantalla del toque. WorldMapScene lo usa para dirigir a Nubi
+// hacia ese punto.
+export const WORLDMAP_TAP_EVENT = 'worldmap-tap'
 
 export class GradualScroller {
     private scene: Scene
@@ -25,6 +30,7 @@ export class GradualScroller {
     private dragging = false
     private pointerStartX = 0
     private offsetStartDrag = 0
+    private pointerDownX = 0
 
     private layers: ScrollLayer[] = []
     private inertiaTween?: Phaser.Tweens.Tween
@@ -32,7 +38,7 @@ export class GradualScroller {
 
     private onPointerDownHandler = (pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => this.onPointerDown(pointer, currentlyOver)
     private onPointerMoveHandler = (pointer: Phaser.Input.Pointer) => this.onPointerMove(pointer)
-    private onPointerUpHandler = () => this.onPointerUp()
+    private onPointerUpHandler = (pointer: Phaser.Input.Pointer) => this.onPointerUp(pointer)
 
     constructor(scene: Scene, reducedMotion: boolean) {
         this.scene = scene
@@ -53,6 +59,16 @@ export class GradualScroller {
 
     getOffset(): number {
         return this.offset
+    }
+
+    // Avanza el offset por `delta` (mismo signo/magnitud que el paso mundial que
+    // acaba de dar Nubi), respetando el mismo límite [0, maxScrollOffset] que el
+    // arrastre. No hace nada mientras el jugador está arrastrando manualmente:
+    // el gesto manual tiene prioridad sobre el seguimiento automático de Nubi.
+    followStep(delta: number) {
+        if (this.dragging || delta === 0) return
+        this.offset = clamp(this.offset + delta, 0, WORLD_MAP_CONFIG.maxScrollOffset)
+        this.applyOffset()
     }
 
     update(deltaMs: number) {
@@ -79,6 +95,7 @@ export class GradualScroller {
 
         this.dragging = true
         this.pointerStartX = pointer.x
+        this.pointerDownX = pointer.x
         this.offsetStartDrag = this.offset
         this.targetOffset = this.offset
         this.velocity = 0
@@ -91,9 +108,18 @@ export class GradualScroller {
         this.targetOffset = clamp(this.offsetStartDrag - delta, 0, WORLD_MAP_CONFIG.maxScrollOffset)
     }
 
-    private onPointerUp() {
+    private onPointerUp(pointer: Phaser.Input.Pointer) {
         if (!this.dragging) return
         this.dragging = false
+
+        // Un toque (desplazamiento total mínimo) no es un arrastre: se trata como
+        // petición de "ir aquí" para Nubi, no como scroll del paisaje ni inercia.
+        if (Math.abs(pointer.x - this.pointerDownX) < WORLD_MAP_CONFIG.tapMaxDistance) {
+            this.velocity = 0
+            this.setMoving(false)
+            this.scene.events.emit(WORLDMAP_TAP_EVENT, pointer.x)
+            return
+        }
 
         if (this.reducedMotion || Math.abs(this.velocity) < 1) {
             this.velocity = 0

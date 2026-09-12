@@ -29,7 +29,7 @@ function colorForType(elementType: string): number {
 }
 
 export type InteractiveVisual = Phaser.GameObjects.Shape | Phaser.GameObjects.Image
-export type ElementTouchHandler = (element: WorldDiscoveryElements, visual: InteractiveVisual) => void
+export type ElementTouchHandler = (element: WorldDiscoveryElements, visual: InteractiveVisual, pointer: Phaser.Input.Pointer) => void
 
 export class InteractiveLayer {
     private scene: Scene
@@ -86,7 +86,7 @@ export class InteractiveLayer {
             this.applyPassiveCue(visual)
         }
 
-        zone.on('pointerdown', () => this.onTouch?.(element, visual))
+        zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTouch?.(element, visual, pointer))
 
         this.container.add(elementContainer)
     }

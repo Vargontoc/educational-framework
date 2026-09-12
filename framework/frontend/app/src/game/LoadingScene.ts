@@ -1,5 +1,5 @@
 import { openSession } from "@/services/sessionService";
-import { Scene } from "phaser";
+import Phaser, { Scene } from "phaser";
 import router from "@/router";
 import { ServerGameEvent, AvatarEvent } from "./GameEvent";
 import { connectWebSocket, clearWebSocketHeartbeat } from "./websocket";
@@ -7,15 +7,18 @@ import { AudioService } from "@/services/AudioService";
 import { AudioCache } from "@/services/AudioCache";
 import { AudioDecoder } from "@/services/AudioDecoder";
 import { MessageRouter } from "@/services/MessageRouter";
+import { NubiLayer } from "./worldmap/layers/NubiLayer";
 
 export class LoadingScene extends Scene {
     websocket?: WebSocket
     sessionId?: number
     childId?: number
+
     private assetsLoaded = false
     private welcomeAudioCompleted = false
     private welcomeEventReceived = false
     private transferredWebSocket = false
+    private nubiLayer?: NubiLayer
 
     constructor() {
         super({ key: 'loading', active: true })
@@ -91,6 +94,11 @@ export class LoadingScene extends Scene {
         ws.onclose = () => {
             clearWebSocketHeartbeat(ws)
         }
+    }
+
+    preload() {
+        this.nubiLayer = new NubiLayer(this)
+        this.nubiLayer.preload()
     }
 
     readEvent(event: ServerGameEvent | AvatarEvent) {
@@ -240,27 +248,44 @@ export class LoadingScene extends Scene {
     }
 
     showLoadingPlaceholder() {
+
         const cx = 640
         const cy = 360
 
-        this.add.rectangle(cx, cy, 1280, 720, 0xf0f4f8)
+        
+        if(this.nubiLayer)  {
 
-        const icon = this.add.circle(cx, cy - 48, 40, 0x4a90e2)
-        this.tweens.add({
-            targets: icon,
-            alpha: 0.3,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1
-        })
+            this.add.circle(cx, cy - 48, 210,0x00000,.5)
 
-        const loadingText = this.add.text(cx, cy + 48, 'Preparando...', {
-            fontSize: '24px',
-            color: '#111827',
-            fontFamily: 'Nunito, sans-serif',
-            fontStyle: '600'
-        })
-        loadingText.setOrigin(0.5, 0.5)
+            const spinner = this.add.graphics({ x: cx, y: cy - 48 })
+            spinner.lineStyle(8, 0xffffff, 0.9)
+            spinner.beginPath()
+            spinner.arc(0, 0, 225, Phaser.Math.DegToRad(0), Phaser.Math.DegToRad(270))
+            spinner.strokePath()
+            this.tweens.add({
+                targets: spinner,
+                angle: 360,
+                duration: 1200,
+                repeat: -1,
+                ease: 'Linear'
+            })
+
+            this.nubiLayer.create(true)
+            this.nubiLayer.setPosition(cx, cy - 48)
+            this.nubiLayer.runAnimation('greetings')
+
+
+
+            const loadingText = this.add.text(cx, cy + 48, 'Preparando...', {
+                fontSize: '24px',
+                color: '#111827',
+                fontFamily: 'Nunito, sans-serif',
+                fontStyle: '600'
+            })
+            loadingText.setOrigin(0.5, 0.5)
+
+        }
+
     }
 
     loadAssetsSilently() {
@@ -338,5 +363,8 @@ export class LoadingScene extends Scene {
         if (audioCache) {
             audioCache.clear()
         }
+
+        if(this.nubiLayer)
+            this.nubiLayer.destroy()
     }
 }

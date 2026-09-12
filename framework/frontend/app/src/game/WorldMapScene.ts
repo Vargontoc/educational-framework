@@ -11,7 +11,7 @@ import { ParallaxLayer } from "./worldmap/layers/ParallaxLayer";
 import { GroundLayer } from "./worldmap/layers/GroundLayer";
 import { NubiLayer } from "./worldmap/layers/NubiLayer";
 import { InteractiveLayer } from "./worldmap/layers/InteractiveLayer";
-import { GradualScroller } from "./worldmap/scroll/GradualScroller";
+import { GradualScroller, WORLDMAP_TAP_EVENT } from "./worldmap/scroll/GradualScroller";
 import { EnvironmentReaction } from "./worldmap/reactions/EnvironmentReaction";
 import { WORLD_MAP_CONFIG } from "./worldmap/config/worldMapConfig";
 
@@ -54,13 +54,15 @@ export class WorldMapScene extends Scene {
         this.parallaxLayer = new ParallaxLayer(this)
         const parallaxContainer = this.parallaxLayer.create(this.groundLayer.getBandHeight())
 
-        this.nubiLayer?.create(npcEnabled)
+        const groundTopY = WORLD_MAP_CONFIG.viewportHeight - this.groundLayer.getBandHeight()
+        this.nubiLayer?.create(npcEnabled, groundTopY)
 
         this.interactiveLayer = new InteractiveLayer(this)
         const interactiveContainer = this.interactiveLayer.create()
         this.environmentReaction = new EnvironmentReaction(this)
-        this.interactiveLayer.setOnTouch((_element, shape) => {
+        this.interactiveLayer.setOnTouch((_element, shape, pointer) => {
             this.environmentReaction?.play(shape)
+            this.nubiLayer?.walkTo(pointer.x + (this.scroller?.getOffset() ?? 0))
         })
 
         this.scroller = new GradualScroller(this, reducedMotion)
@@ -70,6 +72,13 @@ export class WorldMapScene extends Scene {
         }
         this.scroller.registerLayer(groundContainer, WORLD_MAP_CONFIG.groundFactor)
         this.scroller.registerLayer(interactiveContainer, 1)
+
+        // Nubi ya no se mueve por el scroll del paisaje (efecto "cinta de correr"):
+        // ahora camina por sí mismo hacia el punto tocado, tanto en suelo vacío
+        // (este evento) como sobre un elemento interactivo (arriba, setOnTouch).
+        // pointer.x/x llegan en coordenadas de pantalla; se suman al offset actual
+        // para obtener la coordenada de mundo que espera NubiLayer.walkTo.
+        this.events.on(WORLDMAP_TAP_EVENT, (x: number) => this.nubiLayer?.walkTo(x + (this.scroller?.getOffset() ?? 0)))
 
         this.connectionMonitor = new ConnectionMonitor(
             () => { this.attemptReconnect() },
@@ -98,6 +107,15 @@ export class WorldMapScene extends Scene {
     update(_time: number, delta: number) {
         this.scroller?.update(delta)
         this.backgroundLayer?.update(delta)
+
+        // La cámara sigue a Nubi mientras camina, hasta que el scroll llega a su
+        // límite (GradualScroller.followStep se clampa igual que el arrastre) —
+        // a partir de ahí, Nubi sigue avanzando visualmente hasta el borde real.
+        const nubiStep = this.nubiLayer?.update(delta) ?? 0
+        if (nubiStep !== 0) {
+            this.scroller?.followStep(nubiStep)
+        }
+        this.nubiLayer?.syncScreenPosition(this.scroller?.getOffset() ?? 0)
     }
 
     handleSceneTeardown() {

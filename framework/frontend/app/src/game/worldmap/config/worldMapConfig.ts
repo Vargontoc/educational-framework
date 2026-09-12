@@ -5,6 +5,8 @@ export const WORLD_MAP_CONFIG = {
     maxScrollOffset: 1280,
     scrollMaxSpeed: 120,
     skyboxAutoScrollSpeed: 15,
+    tapMaxDistance: 10,
+    nubiWalkSpeed: 220,
     parallaxFactor: 0.4,
     groundFactor: 1,
     inertiaDuration: 500,
