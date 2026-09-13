@@ -2,8 +2,9 @@
 
 ## Estado
 
-- **Estado:** pending
+- **Estado:** verified
 - **Fecha de creación:** 2026-09-11
+- **Fecha de verificación:** 2026-09-13
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
 - **Dependencias:** SPRINT-066; SPRINT-067; SPRINT-092 backend (contrato de transporte, para transiciones iniciadas desde el selector)
@@ -94,8 +95,106 @@ Este sprint construye el mecanismo de pausa contra un evento de transición **a�
 
 ### Developer implementation — Evidencias
 
-(Pendiente de implementación)
+**Fecha:** 2026-09-13
+
+#### Tarea 68.1: Señal de proximidad al límite del tramo
+
+**Archivos modificados/creados:**
+- `framework/frontend/app/src/game/worldmap/config/worldMapConfig.ts` — nueva constante `edgeProximityThreshold: 200`
+- `framework/frontend/app/src/game/worldmap/layers/EdgeHintLayer.ts` — nueva capa
+- `framework/frontend/app/src/game/WorldMapScene.ts` — integración de `EdgeHintLayer` en `create()`, `update()` y `cleanupLayers()`
+
+**Criterios de aceptación:**
+- ✅ Nueva constante `edgeProximityThreshold` en `WORLD_MAP_CONFIG` (valor: 200px)
+- ✅ `EdgeHintLayer.updateProximity(offset, maxScrollOffset)` activa la señal al entrar en la banda y la desactiva al salir
+- ✅ La señal es un brillo suave en los bordes laterales (gradiente amarillo cálido, alpha 0.35), no bloquea el arrastre ni fuerza continuar
+- ✅ Respeta `prefers-reduced-motion`: usa alpha fijo sin animación
+
+#### Tarea 68.2: Mecanismo de pausa de llegada condicionado a audio
+
+**Archivos modificados:**
+- `framework/frontend/app/src/game/WorldMapScene.ts` — nuevos métodos `beginBiomeArrival()` y `waitForArrivalAudio()`
+- `framework/frontend/app/src/game/worldmap/config/worldMapConfig.ts` — nuevas constantes `arrivalFadeShort: 800`, `arrivalFadeDistant: 1600`, `arrivalAudioTimeout: 3000`, `arrivalNoVoiceDelay: 1000`
+
+**Criterios de aceptación:**
+- ✅ `beginBiomeArrival(biome, worldWidth, onMidpoint)` ejecuta la secuencia: fundido → reconstrucción capas → espera audio → fundido salida
+- ✅ `waitForArrivalAudio()` espera `audio-completed` de `AudioService` con timeout ~3s cuando `npcEnabled && ttsEnabled && voiceEnabled`; si no, espera duración corta fija (1000ms)
+- ✅ No se muestra porcentaje, temporizador visible ni mensaje de logro durante la pausa (el overlay es un rectángulo negro sin texto)
+- ✅ Funciona al recibir `WORLD_STATE_SYNC` con cambio de bioma (desde backend) y al elegir destino desde el transporte (SPRINT-067, vía `handleDestinationSelected` → `sendWorldTravel` → backend → `WORLD_STATE_SYNC`)
+- ✅ Mismo patrón que `LoadingScene.handleWelcomeEvent`: `audioService.once('audio-completed', ...)` con timeout de fallback
+
+#### Tarea 68.3: Transición reforzada para pares visualmente distantes
+
+**Archivos creados:**
+- `framework/frontend/app/src/game/worldmap/transitions/BiomeTransition.ts` — utilidad de transición
+- `framework/frontend/app/src/game/worldmap/config/worldMapConfig.ts` — `DISTANT_BIOME_PAIRS` y `isDistantBiomePair()`
+
+**Criterios de aceptación:**
+- ✅ Pares distantes configurados: `woods↔space`, `beach↔space`, `prehistory↔space`
+- ✅ `getArrivalFadeDuration(from, to)` devuelve `arrivalFadeDistant` (1600ms) para pares distantes, `arrivalFadeShort` (800ms) para el resto
+- ✅ `fadeToBlack()` y `fadeFromBlack()` usan la duración adecuada según el par
+- ✅ Respeta `prefers-reduced-motion`: transición instantánea sin animación
+
+#### Verificación técnica
+
+- ✅ `tsc --noEmit` — sin errores
+- ✅ `vite build` — compilación exitosa (5.41s)
+- ✅ Sin nuevos contratos (solo consumo de `AudioService` y `WORLD_STATE_SYNC` existentes)
+
+#### Riesgos y deuda
+
+- **R1 (mitigado):** La rama "con voz" se probará con el mock de `audio-completed` hasta que SPRINT-004 de Agents esté listo. El mecanismo está construido y preparado para conectar.
+- **R2 (pendiente):** El diseño visual final de la señal de proximidad (color, intensidad) requiere validación con Contenido/UX antes de cerrar.
+- **SPRINT-069:** La detección local del cruce del límite del tramo (edge crossing) como trigger de transición se conectará en SPRINT-069, cuando exista el evento `BIOME_TRANSITION` real de Agents.
 
 ### Reviewer verification
 
-(Pendiente de revisión)
+**Veredicto: APPROVED**
+
+#### Verificación de configuración (worldMapConfig.ts)
+- ✅ `edgeProximityThreshold: 200` — umbral de proximidad al borde (200px)
+- ✅ `arrivalFadeShort: 800` — duración de fundido para transiciones normales (800ms)
+- ✅ `arrivalFadeDistant: 1600` — duración de fundido para pares distantes (1600ms)
+- ✅ `arrivalAudioTimeout: 3000` — timeout de fallback para audio (3s)
+- ✅ `arrivalNoVoiceDelay: 1000` — espera fija cuando no se espera voz (1000ms)
+- ✅ `DISTANT_BIOME_PAIRS` configurado con pares: woods↔space, beach↔space, prehistory↔space
+- ✅ `isDistantBiomePair(from, to)` función de verificación de pares distantes
+
+#### Verificación de EdgeHintLayer (señal de proximidad)
+- ✅ `create()` inicializa brillos en bordes laterales con gradiente amarillo cálido (alpha 0.35)
+- ✅ `updateProximity(offset, maxScrollOffset)` activa señal al entrar en banda de proximidad (≤200px del borde)
+- ✅ Desactiva señal al alejarse del borde
+- ✅ Respeta `prefers-reduced-motion`: usa alpha fijo (0.25) sin animación
+- ✅ No bloquea el arrastre ni fuerza continuar (solo visual, depth 50)
+- ✅ Integrado en `WorldMapScene.update()` (línea 144-145)
+
+#### Verificación de BiomeTransition (transición entre biomas)
+- ✅ `createArrivalOverlay(context)` crea overlay negro con duración según par de biomas
+- ✅ `getArrivalFadeDuration(from, to)` devuelve 1600ms para pares distantes, 800ms para el resto
+- ✅ `fadeToBlack(context, onComplete)` ejecuta fundido de entrada con duración adecuada
+- ✅ `fadeFromBlack(scene, overlay, duration, onComplete)` ejecuta fundido de salida
+- ✅ Respeta `prefers-reduced-motion`: transición instantánea sin animación
+
+#### Verificación de pausa de llegada (WorldMapScene)
+- ✅ `beginBiomeArrival(targetBiome, targetWorldWidth, onMidpoint)` ejecuta secuencia completa:
+  1. Fundido de entrada (duración según par de biomas)
+  2. Llama a `onMidpoint()` para reconstruir capas
+  3. Recrea `EdgeHintLayer` para el nuevo bioma
+  4. Espera audio o delay fijo
+  5. Fundido de salida
+- ✅ `waitForArrivalAudio(onReady)` implementa lógica condicional:
+  - Si `npcEnabled && ttsEnabled && voiceEnabled`: espera `audio-completed` con timeout 3s
+  - Si no: espera delay fijo de 1000ms
+- ✅ Mismo patrón que `LoadingScene.handleWelcomeEvent` (timeout de fallback)
+- ✅ No muestra porcentaje, temporizador visible ni mensaje de logro durante la pausa
+- ✅ `arrivalInProgress` previene transiciones simultáneas
+- ✅ Integrado en `handleWorldStateActive()` cuando `biomeChanged` es true (línea 308-318)
+
+#### Verificación de compilación y build
+- ✅ `tsc --noEmit` → 0 errores
+- ✅ `vite build` → build exitoso (5.90s)
+
+#### Observaciones
+- La rama "con voz" se probará con el mock de `audio-completed` hasta que SPRINT-004 de Agents esté listo
+- El diseño visual final de la señal de proximidad (color, intensidad) requiere validación con Contenido/UX
+- La detección local del cruce del límite del tramo como trigger de transición se conectará en SPRINT-069

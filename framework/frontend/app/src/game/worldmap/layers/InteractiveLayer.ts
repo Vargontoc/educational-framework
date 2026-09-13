@@ -51,6 +51,12 @@ export class InteractiveLayer {
         this.onTouch = handler
     }
 
+    // El contrato solo trae ancho de mundo (world_width), no una altura de
+    // mundo equivalente: la posición vertical no tiene una "franja" propia a
+    // la que referirse, así que positionY se mapea directamente sobre la
+    // altura del viewport/dispositivo. Nota: esto acopla la posición vertical
+    // al alto de pantalla actual (1280x720 fijo hoy) — pendiente de revisar
+    // cuando se aborde el control responsive a distintos tamaños de dispositivo.
     render(elements: WorldDiscoveryElements[], activeWorldWidth?: number) {
         if (!this.container) return
         this.clearCueTweens()
@@ -73,7 +79,10 @@ export class InteractiveLayer {
             let y: number
 
             if (element.positionX != null) {
-                x = LAYOUT_MARGIN + element.positionX * usableWidth
+                // Posición autorada por backend: se mapea 1:1 sobre el ancho de
+                // mundo activo, sin el margen de layout (ese margen solo tiene
+                // sentido para repartir la disposición sintética de abajo).
+                x = element.positionX * worldWidth
             } else {
                 x = unauthoredElements.length > 1
                     ? LAYOUT_MARGIN + unauthoredIndex * unauthoredStep
@@ -86,6 +95,8 @@ export class InteractiveLayer {
             } else {
                 y = defaultY
             }
+
+            console.log(`Element: [${element.positionX}:${element.positionY}] -> World position: [${x}:${y}]`)
 
             this.createElement(element, x, y)
         })

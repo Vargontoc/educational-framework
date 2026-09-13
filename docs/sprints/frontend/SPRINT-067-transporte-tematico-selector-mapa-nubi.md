@@ -2,8 +2,9 @@
 
 ## Estado
 
-- **Estado:** pending
+- **Estado:** verified
 - **Fecha de creación:** 2026-09-11
+- **Fecha de verificación:** 2026-09-13
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
 - **Dependencias:** SPRINT-066 (consumo de `worldWidth`/posición real); SPRINT-092 backend (contrato de selección de destino); Contenido (ilustración de Nubi+mapa y stickers por bioma)
@@ -97,8 +98,119 @@ Requisitos de FEAT-012/ADR-026 que este sprint debe respetar estrictamente:
 
 ### Developer implementation — Evidencias
 
-(Pendiente de implementación)
+**Fecha:** 2026-09-13
+
+#### Tareas implementadas
+
+| Tarea | Archivo | Estado |
+|-------|---------|--------|
+| 67.1 — `TransportLayer` | `framework/frontend/app/src/game/worldmap/layers/TransportLayer.ts` | ✅ Implementada |
+| 67.2 — Overlay de selección | `framework/frontend/app/src/game/worldmap/layers/BiomeSelectorLayer.ts` | ✅ Implementada |
+| 67.3 — Integración en `WorldMapScene` | `framework/frontend/app/src/game/WorldMapScene.ts` | ✅ Implementada |
+
+#### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `framework/frontend/app/src/game/GameEvent.ts` | Añadido `'world_travel'` a `TYPE_SEND_EVENT` y clase `WorldTravelEvent` |
+| `framework/frontend/app/src/game/WorldMapScene.ts` | Integración de `TransportLayer` y `BiomeSelectorLayer`, listeners para `transport-touched` y `destination-selected`, envío de `world_travel` vía WebSocket |
+
+#### Criterios de aceptación verificados
+
+**Tarea 67.1 — `TransportLayer`:**
+- ✅ Elemento de transporte visible junto al punto de inicio de Nubi en el bioma activo (posición `nubiStartX + 120`, sobre el ground)
+- ✅ Objetivo táctil ≥ 80px (`Math.max(WORLD_MAP_CONFIG.minHitAreaSize, TRANSPORT_ICON_SIZE + 16)` = 80px)
+- ✅ Reconocible sin depender solo de color: cada bioma tiene forma única (balloon/tractor/mushroom/boat/rocket/dino) + icono + color
+- ✅ Emite evento `'transport-touched'` al tocarlo
+- ✅ Se reconstruye al cambiar de bioma (destruido y recreado en `rebuildLayersForBiome`)
+- ✅ Placeholder geométrico cuando el asset de Contenido no existe (`transport-{biome}`)
+
+**Tarea 67.2 — Overlay de selección:**
+- ✅ Overlay a pantalla completa (depth 100, backdrop oscuro semi-transparente)
+- ✅ Nubi placeholder + mapa + 6 stickers, todos visualmente equivalentes y disponibles
+- ✅ Tocar sticker cierra overlay y emite `'destination-selected'` con id de bioma
+- ✅ Se puede cerrar sin elegir: tocar fuera del mapa (backdrop zone) o botón de cierre (✕)
+- ✅ Stickers diferenciados por icono + forma + color (nunca solo color): circle/roundedRect/hexagon/diamond/star/triangle
+- ✅ Orden por `sequenceOrder` (dato de `world-host-payload.yaml`), sin implicar desbloqueo
+- ✅ Navegable en `prefers-reduced-motion` (sin fade de apertura/cierre si está activo)
+- ✅ Objetivos táctiles ≥ 80px (`Math.max(WORLD_MAP_CONFIG.minHitAreaSize, STICKER_SIZE)`)
+- ✅ Sin candados, requisitos, insignias de progreso ni indicación de visitas previas
+
+**Tarea 67.3 — Integración:**
+- ✅ `TransportLayer` se crea/destruye junto al resto de capas del bioma activo
+- ✅ Al recibir `'destination-selected'`, se envía `world_travel { biome }` vía WebSocket (conexión con SPRINT-092 backend)
+- ✅ Flujo de transición de SPRINT-068 preparado (disparo del evento, implementación completa pendiente de ese sprint)
+
+#### Comandos ejecutados
+
+| Comando | Resultado |
+|---------|-----------|
+| `npx tsc --noEmit` | ✅ Sin errores |
+| `npx vite build` | ✅ Build exitoso (6.32s) |
+
+#### Contratos consumidos
+
+| Contrato | Uso |
+|----------|-----|
+| `game-client-message.yaml` → `WorldTravelMessage` | `WorldTravelEvent` envía `{ type: 'world_travel', biome: string }` vía WebSocket |
+| `world-host-payload.yaml` → `sequenceOrder` | Orden lineal de biomas para disposición visual de stickers (estático: MEADOW=1..PREHISTORY=6) |
+
+#### Riesgos y deuda técnica
+
+| # | Descripción | Severidad |
+|---|-------------|-----------|
+| R1 | Placeholders geométricos para transporte y stickers — pendientes assets reales de Contenido | MEDIA |
+| R2 | Lista de biomas estática en `ALL_BIOME_HOSTS` — si el backend añade biomas dinámicamente, habrá que consumirla del `WORLD_STATE_SYNC` | BAJA |
+| R3 | La transición real entre biomas (fundido, reconstrucción de capas, pausa de llegada) no está implementada — corresponde a SPRINT-068 | EXPECTED |
 
 ### Reviewer verification
 
-(Pendiente de revisión)
+**Veredicto: APPROVED**
+
+#### Verificación de tipos (GameEvent.ts)
+- ✅ `'world_travel'` añadido a `TYPE_SEND_EVENT` — coincide con `game-client-message.yaml` → `WorldTravelMessage`
+- ✅ `WorldTravelEvent` clase con `biome: string` — coincide con contrato backend
+
+#### Verificación de TransportLayer
+- ✅ Elemento de transporte visible junto al punto de inicio de Nubi (posición `nubiStartX + 120`, sobre el ground)
+- ✅ Objetivo táctil ≥ 80px (`Math.max(WORLD_MAP_CONFIG.minHitAreaSize, TRANSPORT_ICON_SIZE + 16)` = 80px)
+- ✅ Reconocible sin depender solo de color: cada bioma tiene forma única (balloon/tractor/mushroom/boat/rocket/dino) + icono + color
+- ✅ Emite evento `'transport-touched'` al tocarlo
+- ✅ Se reconstruye al cambiar de bioma (destruido y recreado en `rebuildLayersForBiome`)
+- ✅ Placeholder geométrico cuando el asset de Contenido no existe (`transport-{biome}`)
+- ✅ Registrado en el scroller con factor 1 (se mueve con el mundo)
+
+#### Verificación de BiomeSelectorLayer
+- ✅ Overlay a pantalla completa (depth 100, backdrop oscuro semi-transparente)
+- ✅ Nubi placeholder + mapa + 6 stickers, todos visualmente equivalentes y disponibles
+- ✅ Tocar sticker cierra overlay y emite `'destination-selected'` con id de bioma
+- ✅ Se puede cerrar sin elegir: tocar fuera del mapa (backdrop zone) o botón de cierre (✕)
+- ✅ Stickers diferenciados por icono + forma + color (nunca solo color): circle/roundedRect/hexagon/diamond/star/triangle
+- ✅ Orden por `sequenceOrder` (dato de `world-host-payload.yaml`), sin implicar desbloqueo
+- ✅ Navegable en `prefers-reduced-motion` (sin fade de apertura/cierre si está activo)
+- ✅ Objetivos táctiles ≥ 80px (`Math.max(WORLD_MAP_CONFIG.minHitAreaSize, STICKER_SIZE)`)
+- ✅ Sin candados, requisitos, insignias de progreso ni indicación de visitas previas
+- ✅ `stopPropagation()` en eventos de sticker y botón de cierre para evitar cierre accidental por backdrop
+
+#### Verificación de integración en WorldMapScene
+- ✅ `TransportLayer` se crea en `create()` y se reconstruye en `rebuildLayersForBiome()`
+- ✅ `BiomeSelectorLayer` se crea en `create()` y se destruye en `cleanupLayers()`
+- ✅ Listener para `TRANSPORT_TOUCHED_EVENT` → abre selector con `ALL_BIOME_HOSTS`
+- ✅ Listener para `DESTINATION_SELECTED_EVENT` → envía `world_travel` vía WebSocket
+- ✅ Listener para `'nubi-double-tap'` → cierra selector (gesto alternativo)
+- ✅ `ALL_BIOME_HOSTS` definido con los 6 biomas y `sequenceOrder` 1-6 (coincide con ADR-026)
+
+#### Verificación de compilación y build
+- ✅ `npx tsc --noEmit` → 0 errores
+- ✅ `npx vite build` → build exitoso
+
+#### Conformidad con ADR-026 / FEAT-012
+- ✅ Los 6 destinos se presentan siempre disponibles, sin candados ni insignias de progreso
+- ✅ El transporte es reconocible como elemento de viaje sin depender exclusivamente de texto, color o sonido
+- ✅ Elegir un destino no se presenta como salto de nivel ni premio (sin confirmación intermedia)
+- ✅ Orden lineal de biomas usado solo como disposición visual, no como bloqueo
+
+#### Observaciones
+- `ALL_BIOME_HOSTS` es estático en frontend — si el backend añade biomas dinámicamente, habrá que consumirla del `WORLD_STATE_SYNC` (deuda técnica documentada como R2)
+- Placeholders geométricos para transporte y stickers — pendientes assets reales de Contenido (R1)
+- La transición real entre biomas (fundido, reconstrucción de capas, pausa de llegada) corresponde a SPRINT-068 (R3 esperado)

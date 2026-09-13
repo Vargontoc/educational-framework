@@ -75,6 +75,18 @@ export class NubiLayer {
         this.nubi.y = groundTopY - this.nubi.displayHeight / 2
         this.nubi.play(IDLE_ANIMATION_KEY)
 
+        this.nubi.setInteractive({ useHandCursor: false })
+        let lastTapTime = 0
+        this.nubi.on('pointerdown', () => {
+            const now = Date.now()
+            if (now - lastTapTime < 2000) {
+                this.scene.events.emit('nubi-double-tap')
+                lastTapTime = 0
+            } else {
+                lastTapTime = now
+            }
+        })
+
         this.setNpcEnabled(npcEnabled)
 
         this.scene.events.on('npc-state-changed', this.onNpcStateChanged)
@@ -91,6 +103,7 @@ export class NubiLayer {
 
         const wasWalking = this.targetWorldX !== undefined
         this.targetWorldX = targetWorldX
+        console.log(this.targetWorldX)
         this.nubi.setFlipX(targetWorldX < this.worldX)
 
         if (!wasWalking) {

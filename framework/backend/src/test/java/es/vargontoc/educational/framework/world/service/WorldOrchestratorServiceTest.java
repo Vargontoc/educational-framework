@@ -288,6 +288,44 @@ class WorldOrchestratorServiceTest {
     }
 
     @Test
+    void selectDestination_decorativeElementsWithoutActivity_areAlwaysVisibleUncapped() {
+        worldExplorationConfig.setMaxVisibleElements(2);
+
+        when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(any(), any(), any()))
+            .thenReturn(new TopicSelectionResult(List.of(10L)));
+        when(worldCatalogUseCase.listCompatibleActivitiesByTopic(any(), anyInt()))
+            .thenReturn(Collections.emptyList());
+        when(worldCatalogUseCase.listActiveHostsForAge(anyInt()))
+            .thenReturn(List.of(createHost(1L)));
+        when(worldCatalogUseCase.listActiveSituationsForAge(anyInt()))
+            .thenReturn(Collections.emptyList());
+        // 4 decorative elements (no activityId) plus 3 activity elements: the cap (2) applies
+        // only to the activity ones, the decorative ones must all come through regardless.
+        List<WorldDiscoveryElementProjection> pool = List.of(
+            createDecorativeElement(1L, 1, 0.10, 0.10),
+            createDecorativeElement(2L, 2, 0.90, 0.10),
+            createDecorativeElement(3L, 3, 0.10, 0.90),
+            createDecorativeElement(4L, 4, 0.90, 0.90),
+            createElement(5L, 5), createElement(6L, 6), createElement(7L, 7));
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.MEADOW), anyInt()))
+            .thenReturn(pool);
+        when(engagementThresholdConfigUseCase.engagementThresholdConfig(any()))
+            .thenReturn(new WorldEngagementThresholdConfig());
+        when(worldEngagementEvaluator.evaluatePatterns(any(), any()))
+            .thenReturn(Collections.emptyList());
+        when(worldEngagementEvaluator.evaluateAdjustments(any()))
+            .thenReturn(Collections.emptyList());
+        when(worldStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.empty());
+
+        WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, 5);
+        Set<Long> ids = idsOf(result.getDestination().getDiscoveryProposals());
+
+        assertEquals(6, ids.size(), "4 decorative + capped 2 activity elements");
+        assertTrue(ids.containsAll(Set.of(1L, 2L, 3L, 4L)), "all decorative elements must always be visible");
+        assertEquals(2, ids.stream().filter(id -> id >= 5L).count(), "activity elements must respect the cap");
+    }
+
+    @Test
     void selectDestination_poolSmallerThanMax_showsAllElements() {
         worldExplorationConfig.setMaxVisibleElements(3);
 
@@ -750,19 +788,28 @@ class WorldOrchestratorServiceTest {
         return new WorldNarrativeSituationProjection(id, "SIT_" + id, "Text", null, null, 3, 10, 1);
     }
 
+    // These build elements WITH an activityId: that's what the visibility cap/rotation now
+    // applies to (see selectVisibleProposals). Decorative elements (no activity) are exercised
+    // separately via createDecorativeElement, since they're always shown uncapped.
     private WorldDiscoveryElementProjection createElement(Long id, int sortOrder) {
         return createElement(id, sortOrder, null, null);
     }
 
     private WorldDiscoveryElementProjection createElement(Long id, int sortOrder, Double positionX, Double positionY) {
         return new WorldDiscoveryElementProjection(id, "EL_" + id, "Element " + id, ElementType.DISCOVERY,
-            Biome.MEADOW, 3, 10, null, null, "asset", InteractionCueType.BREATHING_GLOW, sortOrder,
+            Biome.MEADOW, 3, 10, id, null, "asset", InteractionCueType.BREATHING_GLOW, sortOrder,
             positionX, positionY);
     }
 
     private WorldDiscoveryElementProjection createElementWithBiome(Long id, int sortOrder, Biome biome) {
         return new WorldDiscoveryElementProjection(id, "EL_" + id, "Element " + id, ElementType.DISCOVERY,
-            biome, 3, 10, null, null, "asset", InteractionCueType.BREATHING_GLOW, sortOrder,
+            biome, 3, 10, id, null, "asset", InteractionCueType.BREATHING_GLOW, sortOrder,
             null, null);
+    }
+
+    private WorldDiscoveryElementProjection createDecorativeElement(Long id, int sortOrder, Double positionX, Double positionY) {
+        return new WorldDiscoveryElementProjection(id, "EL_" + id, "Element " + id, ElementType.DECORATIVE,
+            Biome.MEADOW, 3, 10, null, null, "asset", InteractionCueType.BREATHING_GLOW, sortOrder,
+            positionX, positionY);
     }
 }

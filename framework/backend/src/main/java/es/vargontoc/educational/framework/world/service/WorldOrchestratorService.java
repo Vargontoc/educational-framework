@@ -235,16 +235,42 @@ public class WorldOrchestratorService implements WorldOrchestrator {
             return new ArrayList<>();
         }
 
-        List<WorldDiscoveryElementProjection> eligible = elements.stream()
+        // The visibility cap (FEAT-010 AC3) only makes sense for elements that open an actual
+        // activity: those are the ones that can overwhelm the child if too many show at once.
+        // Purely decorative elements (activityId == null) carry no such risk and are always
+        // shown in full, uncapped and unrotated.
+        List<WorldDiscoveryElementProjection> alwaysVisible = elements.stream()
+            .filter(element -> element.activityId() == null)
             .sorted(Comparator.comparing(
                 WorldDiscoveryElementProjection::sortOrder,
                 Comparator.nullsLast(Comparator.naturalOrder())))
             .collect(Collectors.toList());
 
+        List<WorldDiscoveryElementProjection> eligible = elements.stream()
+            .filter(element -> element.activityId() != null)
+            .sorted(Comparator.comparing(
+                WorldDiscoveryElementProjection::sortOrder,
+                Comparator.nullsLast(Comparator.naturalOrder())))
+            .collect(Collectors.toList());
+
+        List<WorldDiscoveryElementProjection> selected = new ArrayList<>(alwaysVisible);
+        selected.addAll(selectCappedActivityElements(childSessionId, eligible, alwaysVisible));
+
+        return selected.stream().map(this::toProposal).collect(Collectors.toList());
+    }
+
+    private List<WorldDiscoveryElementProjection> selectCappedActivityElements(
+            Long childSessionId,
+            List<WorldDiscoveryElementProjection> eligible,
+            List<WorldDiscoveryElementProjection> alwaysVisible) {
+        if (eligible.isEmpty()) {
+            return eligible;
+        }
+
         int maxVisible = Math.max(1, worldExplorationConfig.getMaxVisibleElements());
 
         if (eligible.size() <= maxVisible) {
-            return eligible.stream().map(this::toProposal).collect(Collectors.toList());
+            return eligible;
         }
 
         Set<Long> previouslyVisibleIds = previouslyVisibleElementIds(childSessionId);
@@ -264,18 +290,22 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         List<WorldDiscoveryElementProjection> candidateOrder = new ArrayList<>(notRecentlyShown);
         candidateOrder.addAll(recentlyShown);
 
-        List<WorldDiscoveryElementProjection> selected = new ArrayList<>();
+        // Separation is checked against the always-visible decorative elements too, so a rotated
+        // activity element never lands too close to a decorative one that's already on screen.
+        List<WorldDiscoveryElementProjection> separationBaseline = new ArrayList<>(alwaysVisible);
+        List<WorldDiscoveryElementProjection> accepted = new ArrayList<>();
         List<WorldDiscoveryElementProjection> skippedForSeparation = new ArrayList<>();
 
         // Pass 1: a candidate is only admitted if it respects the minimum separation against
         // what's already selected in this build. This lets an already-shown element (second
         // half of candidateOrder) get picked before accepting two elements that are too close.
         for (WorldDiscoveryElementProjection element : candidateOrder) {
-            if (selected.size() >= maxVisible) {
+            if (accepted.size() >= maxVisible) {
                 break;
             }
-            if (satisfiesMinimumSeparation(element, selected)) {
-                selected.add(element);
+            if (satisfiesMinimumSeparation(element, separationBaseline)) {
+                separationBaseline.add(element);
+                accepted.add(element);
             } else {
                 skippedForSeparation.add(element);
             }
@@ -285,13 +315,13 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         // fill the configured cap anyway (separation is a content-quality goal, not a
         // functional blocking condition).
         for (WorldDiscoveryElementProjection element : skippedForSeparation) {
-            if (selected.size() >= maxVisible) {
+            if (accepted.size() >= maxVisible) {
                 break;
             }
-            selected.add(element);
+            accepted.add(element);
         }
 
-        return selected.stream().map(this::toProposal).collect(Collectors.toList());
+        return accepted;
     }
 
     private boolean satisfiesMinimumSeparation(WorldDiscoveryElementProjection candidate,

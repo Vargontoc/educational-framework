@@ -18,5 +18,23 @@ export const WORLD_MAP_CONFIG = {
     nubiIdleScaleFrom: 1.0,
     nubiIdleScaleTo: 1.05,
     nubiIdleDuration: 2000,
-    nubiIdleEase: 'Sine.easeInOut'
+    nubiIdleEase: 'Sine.easeInOut',
+    edgeProximityThreshold: 200,
+    arrivalFadeShort: 800,
+    arrivalFadeDistant: 1600,
+    arrivalAudioTimeout: 3000,
+    arrivalNoVoiceDelay: 1000
 } as const
+
+export const DISTANT_BIOME_PAIRS: ReadonlyArray<readonly [string, string]> = [
+    ['woods', 'space'],
+    ['space', 'woods'],
+    ['beach', 'space'],
+    ['space', 'beach'],
+    ['prehistory', 'space'],
+    ['space', 'prehistory']
+]
+
+export function isDistantBiomePair(from: string, to: string): boolean {
+    return DISTANT_BIOME_PAIRS.some(([a, b]) => a === from && b === to)
+}

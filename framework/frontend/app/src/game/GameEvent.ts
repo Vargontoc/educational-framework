@@ -1,4 +1,4 @@
-export type TYPE_SEND_EVENT = 'auth' | 'heartbeat' | 'world_discovery_interacted' |  'game_start' | 'game_ready' |  'game_action' | 'world_heartbeat'
+export type TYPE_SEND_EVENT = 'auth' | 'heartbeat' | 'world_discovery_interacted' |  'game_start' | 'game_ready' |  'game_action' | 'world_heartbeat' | 'world_travel'
 export type SERVER_EVENT =
     'AUTH_ACK' |
     'HEARTBEAT_ACK' |
@@ -91,6 +91,14 @@ export class HeartbeatEvent extends GameEvent {
 
 export class WorldHeartbeatEvent extends GameEvent {
     constructor() { super('world_heartbeat') }
+}
+
+export class WorldTravelEvent extends GameEvent {
+    constructor(biome: string) {
+        super('world_travel')
+        this.biome = biome
+    }
+    biome: string
 }
 
 export class AuthGameEvent extends GameEvent {
