@@ -21,6 +21,9 @@ public class AvatarEventCatalogJpaEntity extends BaseEntity {
     @Column(name = "message_text", nullable = false, length = 300)
     private String messageText;
 
+    @Column(name = "biome", nullable = true, length = 50)
+    private String biome;
+
     @Column(nullable = false, length = 20)
     private String status;
 
@@ -54,6 +57,14 @@ public class AvatarEventCatalogJpaEntity extends BaseEntity {
 
     public void setMessageText(String messageText) {
         this.messageText = messageText;
+    }
+
+    public String getBiome() {
+        return biome;
+    }
+
+    public void setBiome(String biome) {
+        this.biome = biome;
     }
 
     public String getStatus() {

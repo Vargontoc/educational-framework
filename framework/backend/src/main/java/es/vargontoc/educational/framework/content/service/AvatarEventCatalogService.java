@@ -25,7 +25,7 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
     }
 
     @Override
-    public AvatarEventCatalog createAvatarEvent(AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status) {
+    public AvatarEventCatalog createAvatarEvent(AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status, String biome) {
         avatarEventCatalogValidator.validateForCreate(eventType, tone, messageText, locale, status);
 
         var event = new AvatarEventCatalog();
@@ -34,6 +34,7 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
         event.setLocale(locale);
         event.setMessageText(messageText);
         event.setStatus(status);
+        event.setBiome(biome);
         event.setCreatedAt(LocalDateTime.now());
 
         return avatarEventCatalogRepository.save(event);
@@ -65,7 +66,7 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
     }
 
     @Override
-    public AvatarEventCatalog updateAvatarEvent(Long id, AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status) {
+    public AvatarEventCatalog updateAvatarEvent(Long id, AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status, String biome) {
         avatarEventCatalogValidator.validateForUpdate(eventType, tone, messageText, locale, status);
 
         var existing = avatarEventCatalogRepository.findById(id)
@@ -76,6 +77,7 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
         existing.setLocale(locale);
         existing.setMessageText(messageText);
         existing.setStatus(status);
+        existing.setBiome(biome);
         existing.setUpdatedAt(LocalDateTime.now());
 
         return avatarEventCatalogRepository.save(existing);

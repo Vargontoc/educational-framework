@@ -20,7 +20,8 @@ payload:
       enum:
         - WELCOME
         - FAREWELL
-      description: Lifecycle subtype. WELCOME: welcome after auth. FAREWELL: farewell before backend-initiated close.
+        - BIOME_TRANSITION
+      description: Lifecycle subtype. WELCOME: welcome after auth. FAREWELL: farewell before backend-initiated close. BIOME_TRANSITION: avatar narration when the child travels to a new biome.
     audioAvailable:
       type: boolean
       description: True when audio binary frame will follow.

@@ -49,7 +49,7 @@ public class ContentGenerationAdapter implements ContentGenerationUseCase {
         ).call().entity(GenerateAvatarEventResponse.class);
 
         res.phrases().forEach(p -> {
-            events.add(eventService.createAvatarEvent(request.type(), TonePreset.NEUTRAL, "es-ES", p, ContentStatus.ACTIVE));
+            events.add(eventService.createAvatarEvent(request.type(), TonePreset.NEUTRAL, "es-ES", p, ContentStatus.ACTIVE, null));
         });
 
         return events;

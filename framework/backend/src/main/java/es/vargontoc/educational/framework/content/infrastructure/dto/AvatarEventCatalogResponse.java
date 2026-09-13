@@ -9,6 +9,7 @@ public record AvatarEventCatalogResponse(
     String locale,
     String messageText,
     String status,
+    String biome,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {}

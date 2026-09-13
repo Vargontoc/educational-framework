@@ -5,5 +5,6 @@ public record UpdateAvatarEventCatalogRequest(
     String tone,
     String locale,
     String messageText,
-    String status
+    String status,
+    String biome
 ) {}

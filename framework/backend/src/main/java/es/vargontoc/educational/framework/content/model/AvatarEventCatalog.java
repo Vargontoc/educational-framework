@@ -12,6 +12,7 @@ public class AvatarEventCatalog {
     private TonePreset tone;
     private String locale;
     private String messageText;
+    private String biome;
     private ContentStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -54,6 +55,14 @@ public class AvatarEventCatalog {
 
     public void setMessageText(String messageText) {
         this.messageText = messageText;
+    }
+
+    public String getBiome() {
+        return biome;
+    }
+
+    public void setBiome(String biome) {
+        this.biome = biome;
     }
 
     public ContentStatus getStatus() {

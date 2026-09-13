@@ -48,7 +48,8 @@ public class AvatarEventCatalogController {
             TonePreset.valueOf(request.tone()),
             request.locale(),
             request.messageText(),
-            ContentStatus.valueOf(request.status())
+            ContentStatus.valueOf(request.status()),
+            request.biome()
         );
         return ResponseEntity.status(201).body(ApiResponse.created(toResponse(event)));
     }
@@ -95,7 +96,8 @@ public class AvatarEventCatalogController {
             TonePreset.valueOf(request.tone()),
             request.locale(),
             request.messageText(),
-            ContentStatus.valueOf(request.status())
+            ContentStatus.valueOf(request.status()),
+            request.biome()
         );
         return ResponseEntity.ok(ApiResponse.ok(toResponse(event)));
     }
@@ -108,6 +110,7 @@ public class AvatarEventCatalogController {
             event.getLocale(),
             event.getMessageText(),
             event.getStatus().name(),
+            event.getBiome(),
             event.getCreatedAt(),
             event.getUpdatedAt()
         );

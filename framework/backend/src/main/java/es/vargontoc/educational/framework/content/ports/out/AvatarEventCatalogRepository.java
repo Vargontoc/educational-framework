@@ -15,6 +15,8 @@ public interface AvatarEventCatalogRepository {
 
     List<AvatarEventCatalog> findByEventType(AvatarEventType eventType);
 
+    List<AvatarEventCatalog> findActiveByEventTypeAndBiome(AvatarEventType eventType, String biome);
+
     List<AvatarEventCatalog> findActiveByFilters(AvatarEventType eventType, TonePreset tone, String locale);
 
     AvatarEventCatalog save(AvatarEventCatalog event);

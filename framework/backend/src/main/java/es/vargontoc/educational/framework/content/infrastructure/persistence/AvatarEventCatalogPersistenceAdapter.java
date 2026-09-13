@@ -35,7 +35,25 @@ public class AvatarEventCatalogPersistenceAdapter implements AvatarEventCatalogR
 
     @Override
     public List<AvatarEventCatalog> findByEventType(AvatarEventType eventType) {
-        return jpaRepository.findByEventType(eventType.name()).stream()
+        return jpaRepository.findByStatusAndEventTypeAndBiomeIsNull(
+                ContentStatus.ACTIVE.name(), eventType.name()).stream()
+            .map(AvatarEventCatalogPersistenceAdapter::toDomain)
+            .toList();
+    }
+
+    @Override
+    public List<AvatarEventCatalog> findActiveByEventTypeAndBiome(AvatarEventType eventType, String biome) {
+        if (eventType == null) {
+            return Collections.emptyList();
+        }
+        if (biome == null || biome.isBlank()) {
+            return jpaRepository.findByStatusAndEventTypeAndBiomeIsNull(
+                    ContentStatus.ACTIVE.name(), eventType.name()).stream()
+                .map(AvatarEventCatalogPersistenceAdapter::toDomain)
+                .toList();
+        }
+        return jpaRepository.findByStatusAndEventTypeAndBiome(
+                ContentStatus.ACTIVE.name(), eventType.name(), biome).stream()
             .map(AvatarEventCatalogPersistenceAdapter::toDomain)
             .toList();
     }
@@ -64,6 +82,7 @@ public class AvatarEventCatalogPersistenceAdapter implements AvatarEventCatalogR
         target.setTone(TonePreset.valueOf(source.getTone()));
         target.setLocale(source.getLocale());
         target.setMessageText(source.getMessageText());
+        target.setBiome(source.getBiome());
         target.setStatus(ContentStatus.valueOf(source.getStatus()));
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
@@ -77,6 +96,7 @@ public class AvatarEventCatalogPersistenceAdapter implements AvatarEventCatalogR
         target.setTone(source.getTone().name());
         target.setLocale(source.getLocale());
         target.setMessageText(source.getMessageText());
+        target.setBiome(source.getBiome());
         target.setStatus(source.getStatus().name());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());

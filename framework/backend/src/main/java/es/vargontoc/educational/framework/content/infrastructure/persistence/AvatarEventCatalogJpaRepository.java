@@ -10,4 +10,10 @@ public interface AvatarEventCatalogJpaRepository extends JpaRepository<AvatarEve
 
     List<AvatarEventCatalogJpaEntity> findByStatusAndEventTypeAndToneAndLocale(
         String status, String eventType, String tone, String locale);
+
+    List<AvatarEventCatalogJpaEntity> findByStatusAndEventTypeAndBiomeIsNull(
+        String status, String eventType);
+
+    List<AvatarEventCatalogJpaEntity> findByStatusAndEventTypeAndBiome(
+        String status, String eventType, String biome);
 }

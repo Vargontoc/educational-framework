@@ -1,9 +1,9 @@
 package es.vargontoc.educational.framework.avatar.infrastructure.service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
@@ -40,7 +40,14 @@ public class AvatarService implements AvatarUseCase {
 
     private final AudioUseCase audio;
 
-    private final Map<String, Long> lastShownCatalogIdByChild = new ConcurrentHashMap<>();
+    private static final int MAX_LAST_SHOWN_ENTRIES = 512;
+
+    private final Map<String, Long> lastShownCatalogIdByChild = new LinkedHashMap<>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Long> eldest) {
+            return size() > MAX_LAST_SHOWN_ENTRIES;
+        }
+    };
 
     public AvatarService(
             ChildSessionRepository childSessionRepository,
@@ -64,11 +71,19 @@ public class AvatarService implements AvatarUseCase {
             : findActiveSession(request.childSessionId());
         ChildProfile childProfile = findChildProfile(session.getChildProfileId());
 
+        String biome = null;
+        if (request.eventType() == AvatarEventType.BIOME_TRANSITION && request.context() != null) {
+            Object biomeValue = request.context().get("biome");
+            if (biomeValue != null) {
+                biome = biomeValue.toString();
+            }
+        }
+
         if(!childProfile.isNpcEnabled()) {
             return createFallbackResult(session.getId(), request.eventType(), "");
         }
 
-        AvatarEventCatalog event = resolveCatalog(request.eventType(), childProfile);
+        AvatarEventCatalog event = resolveCatalog(request.eventType(), childProfile, biome);
         String messageText = (event != null && event.getMessageText() != null) ? event.getMessageText() : "";
 
         if(childProfile.isNpcVoiceEnabled() && event != null && event.getMessageText() != null && !event.getMessageText().trim().isBlank()) {
@@ -86,13 +101,21 @@ public class AvatarService implements AvatarUseCase {
         return createFallbackResult(session.getId(), request.eventType(), messageText);
     }
 
-    AvatarEventCatalog resolveCatalog(AvatarEventType type, ChildProfile profile) {
-        List<AvatarEventCatalog> catalog = avatarEventCatalogRepository.findByEventType(type);
+    AvatarEventCatalog resolveCatalog(AvatarEventType type, ChildProfile profile, String biome) {
+        List<AvatarEventCatalog> catalog;
+        if (type == AvatarEventType.BIOME_TRANSITION) {
+            catalog = avatarEventCatalogRepository.findActiveByEventTypeAndBiome(type, biome);
+        } else {
+            catalog = avatarEventCatalogRepository.findByEventType(type);
+        }
         if(catalog.isEmpty())
             return null;
 
-        String key = profile.getId() + ":" + type.name();
-        Long lastShownId = lastShownCatalogIdByChild.get(key);
+        String key = profile.getId() + ":" + type.name() + (biome != null ? ":" + biome : "");
+        Long lastShownId;
+        synchronized (lastShownCatalogIdByChild) {
+            lastShownId = lastShownCatalogIdByChild.get(key);
+        }
 
         List<AvatarEventCatalog> candidates = catalog;
         if(catalog.size() > 1 && lastShownId != null) {
@@ -102,7 +125,9 @@ public class AvatarService implements AvatarUseCase {
         }
 
         AvatarEventCatalog selected = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
-        lastShownCatalogIdByChild.put(key, selected.getId());
+        synchronized (lastShownCatalogIdByChild) {
+            lastShownCatalogIdByChild.put(key, selected.getId());
+        }
         return selected;
     }
 

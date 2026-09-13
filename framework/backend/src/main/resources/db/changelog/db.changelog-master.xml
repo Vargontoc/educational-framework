@@ -42,4 +42,5 @@
     <include file="db/changelog/migrations/035__add_position_and_world_width_to_world_catalog.xml"/>
     <include file="db/changelog/migrations/036__add_sequence_order_index_to_world_host.xml"/>
     <include file="db/changelog/migrations/037__create_world_exploration_state.xml"/>
+    <include file="db/changelog/migrations/038__add_biome_to_avatar_event_catalog.xml"/>
 </databaseChangeLog>

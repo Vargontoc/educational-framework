@@ -6,5 +6,6 @@ public enum AvatarEventType {
     ACTIVITY_FAILED,
     HELP_REQUESTED,
     WELCOME,
-    FAREWELL
+    FAREWELL,
+    BIOME_TRANSITION
 }

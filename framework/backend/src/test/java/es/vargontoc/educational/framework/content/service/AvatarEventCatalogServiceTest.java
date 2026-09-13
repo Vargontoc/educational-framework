@@ -40,7 +40,7 @@ class AvatarEventCatalogServiceTest {
         when(avatarEventCatalogRepository.save(any(AvatarEventCatalog.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = avatarEventCatalogService.createAvatarEvent(
-            AvatarEventType.ACTIVITY_COMPLETED, TonePreset.ADVENTURE, "es-ES", "Has completado la actividad!", ContentStatus.ACTIVE);
+            AvatarEventType.ACTIVITY_COMPLETED, TonePreset.ADVENTURE, "es-ES", "Has completado la actividad!", ContentStatus.ACTIVE, null);
 
         assertEquals(AvatarEventType.ACTIVITY_COMPLETED, result.getEventType());
         assertEquals(TonePreset.ADVENTURE, result.getTone());
@@ -50,13 +50,13 @@ class AvatarEventCatalogServiceTest {
     @Test
     void createAvatarEvent_nullEventType_throwsValidation() {
         assertThrows(ValidationException.class, () ->
-            avatarEventCatalogService.createAvatarEvent(null, TonePreset.ADVENTURE, "es-ES", "Some message", ContentStatus.ACTIVE));
+            avatarEventCatalogService.createAvatarEvent(null, TonePreset.ADVENTURE, "es-ES", "Some message", ContentStatus.ACTIVE, null));
     }
 
     @Test
     void createAvatarEvent_blankMessage_throwsValidation() {
         assertThrows(ValidationException.class, () ->
-            avatarEventCatalogService.createAvatarEvent(AvatarEventType.ACTIVITY_COMPLETED, TonePreset.ADVENTURE, "es-ES", " ", ContentStatus.ACTIVE));
+            avatarEventCatalogService.createAvatarEvent(AvatarEventType.ACTIVITY_COMPLETED, TonePreset.ADVENTURE, "es-ES", " ", ContentStatus.ACTIVE, null));
     }
 
     @Test

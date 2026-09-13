@@ -311,6 +311,24 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    private void sendBiomeTransitionAvatar(Long childSessionId, String biome) {
+        try {
+            var result = avatarservice.processEvent(
+                new AvatarEventRequest(childSessionId, AvatarEventType.BIOME_TRANSITION, Map.of("biome", biome)));
+            if (result.isPresent()) {
+                sendToSession(childSessionId, objectMapper.writeValueAsString(result.event()));
+                if (result.audioData() != null && result.event().audioId() != null) {
+                    WebSocketSession wsSession = sessionsByChildSessionId.get(childSessionId);
+                    if (wsSession != null && wsSession.isOpen()) {
+                        sendBinaryFrame(wsSession, result.event().audioId(), result.audioData());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Could not send biome transition avatar to childSessionId={}: {}", childSessionId, e.getMessage());
+        }
+    }
+
     public boolean sendBinaryFrame(WebSocketSession session, String audioId, byte[] audioData) {
         try {
             byte[] audioIdBytes = audioId.getBytes(StandardCharsets.UTF_8);
@@ -784,6 +802,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 WorldRuntimeStatus.ACTIVE.name(), destinationPayload);
             SessionEvent event = SessionEvent.of(SessionEventType.WORLD_STATE_SYNC, childSessionId, toPayload(syncPayload));
             sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+
+            sendBiomeTransitionAvatar(childSessionId, targetBiome.name());
         } catch (Exception exception) {
             LOGGER.error("World travel failed for childSessionId={}: {}", childSessionId, exception.getMessage());
             sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, null);

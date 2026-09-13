@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface AvatarEventCatalogUseCase {
 
-    AvatarEventCatalog createAvatarEvent(AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status);
+    AvatarEventCatalog createAvatarEvent(AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status, String biome);
 
     AvatarEventCatalog getAvatarEvent(Long id);
 
@@ -19,5 +19,5 @@ public interface AvatarEventCatalogUseCase {
 
     List<AvatarEventCatalog> listActiveAvatarEventsByFilters(AvatarEventType eventType, TonePreset tone, String locale);
 
-    AvatarEventCatalog updateAvatarEvent(Long id, AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status);
+    AvatarEventCatalog updateAvatarEvent(Long id, AvatarEventType eventType, TonePreset tone, String locale, String messageText, ContentStatus status, String biome);
 }

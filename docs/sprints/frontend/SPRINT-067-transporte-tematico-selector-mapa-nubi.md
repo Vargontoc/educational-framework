@@ -214,3 +214,11 @@ Requisitos de FEAT-012/ADR-026 que este sprint debe respetar estrictamente:
 - `ALL_BIOME_HOSTS` es estático en frontend — si el backend añade biomas dinámicamente, habrá que consumirla del `WORLD_STATE_SYNC` (deuda técnica documentada como R2)
 - Placeholders geométricos para transporte y stickers — pendientes assets reales de Contenido (R1)
 - La transición real entre biomas (fundido, reconstrucción de capas, pausa de llegada) corresponde a SPRINT-068 (R3 esperado)
+
+### Addendum (2026-09-13)
+
+Decisión de producto confirmada durante el análisis de SPRINT-094 (backend, evento `BIOME_TRANSITION`): el selector no debe ofrecer el bioma en el que el niño ya está — hasta ahora los 6 stickers se mostraban siempre, incluido el actual (`handleDestinationSelected` ya lo trataba como no-op silencioso si se tocaba, pero seguía apareciendo en la lista).
+
+- `WorldMapScene.handleTransportTouched` ahora filtra `ALL_BIOME_HOSTS` excluyendo `this.currentBiome` antes de llamar a `biomeSelectorLayer.open(hosts)`.
+- No cambia ningún criterio de aceptación ya verificado arriba (los 6 destinos siguen sin candados/orden/insignias entre sí); solo se retira de la lista el que ya no es un destino válido de viaje.
+- `npx tsc --noEmit` sin errores tras el cambio.
