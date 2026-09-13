@@ -131,6 +131,8 @@ export class WorldDiscoveryElementInteractiveEvent extends GameEvent {
 export class WorldSync {
     status?: string
     destination?: WorldDestination
+    positionX?: number
+    positionY?: number
 }
 
 export class WorldDestination {
@@ -145,6 +147,8 @@ export class WorldHost {
     code: string = ''
     displayName: string = ''
     visualAssetKey: string = ''
+    worldWidth?: number
+    sequenceOrder?: number
 }
 
 export class WorldDiscoveryElements {
@@ -154,6 +158,8 @@ export class WorldDiscoveryElements {
     visualAssetKey: string = ''
     interactionCueType: string = ''
     hasActivity: boolean = false
+    positionX?: number
+    positionY?: number
 }
 
 export class GameState {

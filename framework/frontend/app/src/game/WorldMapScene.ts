@@ -1,6 +1,6 @@
 import { Scene } from "phaser";
 import router from "@/router";
-import { AvatarEvent, ServerGameEvent, WorldHeartbeatEvent, GameErrorPayload } from "./GameEvent";
+import { AvatarEvent, ServerGameEvent, WorldHeartbeatEvent, GameErrorPayload, WorldDiscoveryElements } from "./GameEvent";
 import { connectWebSocket, clearWebSocketHeartbeat } from "./websocket";
 import { ConnectionMonitor } from "./ConnectionMonitor";
 import { ErrorClassifier } from "./ErrorClassifier";
@@ -15,6 +15,8 @@ import { GradualScroller, WORLDMAP_TAP_EVENT } from "./worldmap/scroll/GradualSc
 import { EnvironmentReaction } from "./worldmap/reactions/EnvironmentReaction";
 import { WORLD_MAP_CONFIG } from "./worldmap/config/worldMapConfig";
 
+const INITIAL_BIOME = 'meadow'
+
 export class WorldMapScene extends Scene {
     websocket?: WebSocket
     sessionId?: number
@@ -28,6 +30,9 @@ export class WorldMapScene extends Scene {
     private interactiveLayer?: InteractiveLayer
     private scroller?: GradualScroller
     private environmentReaction?: EnvironmentReaction
+    private currentBiome?: string
+    private activeWorldWidth: number = WORLD_MAP_CONFIG.worldWidth
+    private pendingBiomeLoad?: string
 
     constructor() { super({ key: 'world-map', active: false}) }
 
@@ -41,18 +46,17 @@ export class WorldMapScene extends Scene {
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         const npcEnabled = this.registry.get('npcEnabled') as boolean
 
-        this.backgroundLayer = new BackgroundLayer(this)
-        this.backgroundLayer.buildFrom()
+        this.currentBiome = INITIAL_BIOME
+        this.activeWorldWidth = WORLD_MAP_CONFIG.worldWidth
 
-        // GroundLayer se crea antes que ParallaxLayer: esta última necesita
-        // saber cuánto ocupa la franja de suelo para apoyar las colinas justo
-        // encima, en vez de que ambas se anclen al borde inferior del viewport
-        // y el suelo (depth más alto) tape la parte baja de las colinas.
+        this.backgroundLayer = new BackgroundLayer(this)
+        this.backgroundLayer.buildFrom(INITIAL_BIOME)
+
         this.groundLayer = new GroundLayer(this)
-        const groundContainer = this.groundLayer.create()
+        const groundContainer = this.groundLayer.create(INITIAL_BIOME, this.activeWorldWidth)
 
         this.parallaxLayer = new ParallaxLayer(this)
-        const parallaxContainer = this.parallaxLayer.create(this.groundLayer.getBandHeight())
+        const parallaxContainer = this.parallaxLayer.create(this.groundLayer.getBandHeight(), INITIAL_BIOME, this.activeWorldWidth)
 
         const groundTopY = WORLD_MAP_CONFIG.viewportHeight - this.groundLayer.getBandHeight()
         this.nubiLayer?.create(npcEnabled, groundTopY)
@@ -67,17 +71,13 @@ export class WorldMapScene extends Scene {
 
         this.scroller = new GradualScroller(this, reducedMotion)
         this.scroller.attach()
+        this.scroller.setMaxScrollOffset(this.activeWorldWidth)
         if (!reducedMotion) {
             this.scroller.registerLayer(parallaxContainer, WORLD_MAP_CONFIG.parallaxFactor)
         }
         this.scroller.registerLayer(groundContainer, WORLD_MAP_CONFIG.groundFactor)
         this.scroller.registerLayer(interactiveContainer, 1)
 
-        // Nubi ya no se mueve por el scroll del paisaje (efecto "cinta de correr"):
-        // ahora camina por sí mismo hacia el punto tocado, tanto en suelo vacío
-        // (este evento) como sobre un elemento interactivo (arriba, setOnTouch).
-        // pointer.x/x llegan en coordenadas de pantalla; se suman al offset actual
-        // para obtener la coordenada de mundo que espera NubiLayer.walkTo.
         this.events.on(WORLDMAP_TAP_EVENT, (x: number) => this.nubiLayer?.walkTo(x + (this.scroller?.getOffset() ?? 0)))
 
         this.connectionMonitor = new ConnectionMonitor(
@@ -97,9 +97,6 @@ export class WorldMapScene extends Scene {
             this.startWorldHeartbeat()
         })
 
-        // Nota: Phaser no invoca automáticamente métodos llamados `shutdown()`/`destroy()`
-        // definidos en la subclase de Scene, solo emite los eventos 'shutdown'/'destroy'.
-        // Por eso la limpieza se registra explícitamente aquí (ver worldmap-extensibility.md).
         this.events.once('shutdown', () => this.handleSceneTeardown())
         this.events.once('destroy', () => this.handleSceneTeardown())
     }
@@ -108,9 +105,6 @@ export class WorldMapScene extends Scene {
         this.scroller?.update(delta)
         this.backgroundLayer?.update(delta)
 
-        // La cámara sigue a Nubi mientras camina, hasta que el scroll llega a su
-        // límite (GradualScroller.followStep se clampa igual que el arrastre) —
-        // a partir de ahí, Nubi sigue avanzando visualmente hasta el borde real.
         const nubiStep = this.nubiLayer?.update(delta) ?? 0
         if (nubiStep !== 0) {
             this.scroller?.followStep(nubiStep)
@@ -137,20 +131,11 @@ export class WorldMapScene extends Scene {
     }
 
     preload() {
-        // Phaser llama a preload() antes que a create(): NubiLayer debe existir ya
-        // aquí para que sus load.spineBinary/spineAtlas se encolen a tiempo.
         this.nubiLayer = new NubiLayer(this)
         this.nubiLayer.preload()
-        // Sistema de biomas aún no implementado (solo existe el contenido de
-        // meadow): se precarga directamente el bloque "biome-meadow" del
-        // manifest (skybox/background/ground) para BackgroundLayer/ParallaxLayer/GroundLayer.
-        // Usa una URL absoluta en vez de this.load.setBaseURL('/'): NubiLayer.preload()
-        // (arriba) ya encola sus propios spineBinary/spineAtlas con rutas absolutas
-        // ('/assets/...'); fijar baseURL('/') aquí las duplicaría a '//assets/...'
-        // (URL protocol-relative → resuelve a un host "assets" inexistente).
-        this.load.pack('biome-meadow', '/assets-manifest.json', 'biome-meadow')
+        this.load.pack(`biome-${INITIAL_BIOME}`, '/assets-manifest.json', `biome-${INITIAL_BIOME}`)
         this.load.on('loaderror', (file: Phaser.Loader.File) => { console.error('Failed to load asset', file.key, file.url) })
-        this.load.once('complete', () => { console.log("Llega....")})
+        this.load.once('complete', () => { console.log("Larga....")})
         this.load.start();
     }
 
@@ -166,10 +151,6 @@ export class WorldMapScene extends Scene {
             }
         }
 
-        // El backend solo envía WORLD_STATE_SYNC (con los discoveryElements) como
-        // respuesta a un world_heartbeat. Enviar el primero de inmediato, en vez de
-        // esperar al primer tick del intervalo, evita que el mapa se vea vacío
-        // (fondo/Nubi sin elementos) durante ese primer segundo tras entrar a la escena.
         sendHeartbeat()
         const heartbeatId = setInterval(sendHeartbeat, 1000)
         this.registry.set('wsWorldbeat', heartbeatId)
@@ -230,16 +211,16 @@ export class WorldMapScene extends Scene {
             switch(event.event) {
                 case 'WORLD_STATE_SYNC' :
                     if(event.payload?.status && event.payload.status == 'ACTIVE' && event.payload.destination)  {
-                        this.backgroundLayer?.buildFrom(event.payload.destination.biome)
-                        this.interactiveLayer?.render(event.payload.destination.discoveryElements)
+                        this.handleWorldStateActive(
+                            event.payload.destination.biome,
+                            event.payload.destination.host?.worldWidth,
+                            event.payload.destination.discoveryElements
+                        )
                     } else {
-                        // INACTIVE_CLOSED / NO_WORLD_STATE: el paisaje (fondo, parallax, Nubi)
-                        // se mantiene igual, solo se retiran los elementos interactuables.
                         this.interactiveLayer?.render([])
                     }
                     break;
                 case 'WORLD_ACTIVITY_STARTED':
-                    // Fase 1: los minijuegos no se lanzan desde WorldMap todavía (SPRINT-064).
                     console.log('WORLD_ACTIVITY_STARTED recibido, sin acción en esta fase')
                     break;
                 case 'CHILD_AGENT_ACTIVATED':
@@ -274,6 +255,78 @@ export class WorldMapScene extends Scene {
         }
     }
 
+    private handleWorldStateActive(
+        biome: string,
+        hostWorldWidth: number | undefined,
+        discoveryElements: WorldDiscoveryElements[]
+    ) {
+        const effectiveWorldWidth = hostWorldWidth ?? WORLD_MAP_CONFIG.worldWidth
+        const biomeChanged = biome !== this.currentBiome
+        const worldWidthChanged = effectiveWorldWidth !== this.activeWorldWidth
+
+        this.activeWorldWidth = effectiveWorldWidth
+        this.scroller?.setMaxScrollOffset(this.activeWorldWidth)
+
+        if (biomeChanged) {
+            this.pendingBiomeLoad = biome
+            this.ensureBiomeAssetsLoaded(biome, () => {
+                if (this.pendingBiomeLoad !== biome) return
+                this.pendingBiomeLoad = undefined
+                this.currentBiome = biome
+                this.rebuildLayersForBiome(biome, effectiveWorldWidth)
+                this.interactiveLayer?.render(discoveryElements, effectiveWorldWidth)
+            })
+        } else if (worldWidthChanged) {
+            this.currentBiome = biome
+            this.rebuildLayersForBiome(biome, effectiveWorldWidth)
+            this.interactiveLayer?.render(discoveryElements, effectiveWorldWidth)
+        } else {
+            this.interactiveLayer?.render(discoveryElements, effectiveWorldWidth)
+        }
+    }
+
+    private ensureBiomeAssetsLoaded(biome: string, onComplete: () => void) {
+        const skyboxKey = `skybox-${biome}`
+        if (this.textures.exists(skyboxKey)) {
+            onComplete()
+            return
+        }
+
+        this.load.pack(`biome-${biome}`, '/assets-manifest.json', `biome-${biome}`)
+        this.load.once('complete', () => {
+            onComplete()
+        })
+        this.load.start()
+    }
+
+    private rebuildLayersForBiome(biome: string, worldWidth: number) {
+        this.groundLayer?.destroy()
+        this.parallaxLayer?.destroy()
+
+        const groundContainer = this.groundLayer?.create(biome, worldWidth)
+        const parallaxContainer = this.parallaxLayer?.create(this.groundLayer?.getBandHeight() ?? 0, biome, worldWidth)
+
+        this.backgroundLayer?.buildFrom(biome)
+
+        this.scroller?.clearLayers()
+        if (groundContainer) {
+            this.scroller?.registerLayer(groundContainer, WORLD_MAP_CONFIG.groundFactor)
+        }
+        if (parallaxContainer) {
+            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            if (!reducedMotion) {
+                this.scroller?.registerLayer(parallaxContainer, WORLD_MAP_CONFIG.parallaxFactor)
+            }
+        }
+        const interactiveContainer = this.interactiveLayer?.create()
+        if (interactiveContainer) {
+            this.scroller?.registerLayer(interactiveContainer, 1)
+        }
+
+        const groundTopY = WORLD_MAP_CONFIG.viewportHeight - (this.groundLayer?.getBandHeight() ?? 0)
+        this.nubiLayer?.adjustToGroundTopY(groundTopY)
+    }
+
     handleAvatarEvent(event: AvatarEvent) {
         switch(event.eventType){
             case 'FAREWELL':
@@ -285,8 +338,6 @@ export class WorldMapScene extends Scene {
     }
 
     handleFarewellEvent(event: AvatarEvent) {
-        // El backend cierra este socket tras el farewell; evitar que ConnectionMonitor
-        // intente reconectar una sesión que ya va a quedar inactiva/expulsada.
         this.connectionMonitor?.disable()
 
         const audioService = this.registry.get('audioService') as AudioService

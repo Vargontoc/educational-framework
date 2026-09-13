@@ -2,8 +2,9 @@
 
 ## Estado
 
-- **Estado:** pending
+- **Estado:** verified
 - **Fecha de creación:** 2026-09-11
+- **Fecha de verificación:** 2026-09-12
 - **Responsable principal:** frontend
 - **Prioridad:** ALTA
 - **Dependencias:** FEAT-012; ADR-026; SPRINT-090 backend (contrato `worldWidth`/`positionX`/`positionY` ya implementado); SPRINT-091 backend (catálogo de biomas conectados)
@@ -107,8 +108,108 @@ Verificado directamente sobre el código en esta sesión de análisis:
 
 ### Developer implementation — Evidencias
 
-(Pendiente de implementación)
+**Tarea 66.1 — Ampliar tipos del contrato en `GameEvent.ts`** ✅
+- `WorldHost.worldWidth?: number` y `WorldHost.sequenceOrder?: number` añadidos (línea 148-149).
+- `WorldDiscoveryElements.positionX?: number` / `positionY?: number` añadidos (línea 158-159).
+- `WorldSync.positionX?: number` / `positionY?: number` añadidos (línea 135-136) — consumo del contrato `world-state-sync-payload.yaml`.
+- Cambio 100% aditivo, ningún campo existente eliminado ni renombrado.
+
+**Tarea 66.2 — Consumir `worldWidth`/posición real en las capas** ✅
+- `GroundLayer.create(biome?, worldWidth?)` usa `worldWidth` para dimensionar la capa (`GroundLayer.ts:33`).
+- `ParallaxLayer.create(groundBandHeight, biome?, worldWidth?)` usa `worldWidth` para dimensionar la capa (`ParallaxLayer.ts:35`).
+- `InteractiveLayer.render(elements, activeWorldWidth?)` posiciona elementos con `positionX`/`positionY` autorados escalados al `worldWidth`/`viewportHeight` activos; sintetiza por índice si son `null` (`InteractiveLayer.ts:60-86`).
+- `GradualScroller.maxScrollOffset` es ahora dinámico: `setMaxScrollOffset(value)` actualiza el límite en tiempo real, derivado del `worldWidth` activo (`GradualScroller.ts:47`, `WorldMapScene.ts:195`).
+- `WorldMapScene.handleWorldStateActive()` extrae `host.worldWidth` con fallback a `WORLD_MAP_CONFIG.worldWidth` y lo propaga a capas y scroller (`WorldMapScene.ts:185-213`).
+
+**Tarea 66.3 — Reconstrucción de capas por cambio real de bioma** ✅
+- `WorldMapScene` guarda `currentBiome` y solo reconstruye capas si el bioma cambia (`WorldMapScene.ts:190`, `WorldMapScene.ts:197-203`).
+- `BackgroundLayer.buildFrom(biome)` compara `lastBiome` con el bioma efectivo; solo destruye y reconstruye el skybox si difiere (`BackgroundLayer.ts:24-30`). La deriva continua (`skyboxScrollX`) NO se reinicia en cada `WORLD_STATE_SYNC` si el bioma no cambia.
+- `GroundLayer.create()` y `ParallaxLayer.create()` aceptan `biome` y solo reconstruyen si difiere del último usado (`GroundLayer.ts:28-30`, `ParallaxLayer.ts:30-32`).
+- Claves de textura derivadas del bioma: `skybox-${biome}`, `background-${biome}`, `ground-${biome}`.
+- `NubiLayer.adjustToGroundTopY()` reposiciona a Nubi verticalmente cuando la altura del suelo cambia tras un cambio de bioma (`NubiLayer.ts:35-38`).
+
+**Tarea 66.4 — Manifest multi-bioma y carga perezosa** ✅
+- `assets-manifest.json` contiene 6 bloques: `biome-meadow`, `biome-farm`, `biome-woods`, `biome-beach`, `biome-space`, `biome-dinosaurs`, cada uno con claves `skybox-<bioma>`/`background-<bioma>`/`ground-<bioma>`.
+- Arranque inicial (MEADOW) solo carga `biome-meadow` (`WorldMapScene.ts:144`).
+- Carga perezosa: `ensureBiomeAssetsLoaded(biome)` verifica `this.textures.exists(skyboxKey)`; si no existe, encarga `load.pack` y espera `load.complete` antes de reconstruir capas (`WorldMapScene.ts:215-225`).
+- Los 5 biomas sin assets reales usan placeholders (referencias a assets de meadow) para validar el mecanismo sin depender de contenido final.
+- `pendingBiomeLoad` protege contra reconstrucciones obsoletas si llegan múltiples biomas en rápida sucesión (`WorldMapScene.ts:198-200`).
+
+**Archivos modificados:**
+1. `framework/frontend/app/src/game/GameEvent.ts` — tipos ampliados
+2. `framework/frontend/app/public/assets-manifest.json` — 6 bloques de bioma
+3. `framework/frontend/app/src/game/worldmap/layers/BackgroundLayer.ts` — reconstrucción condicional por bioma
+4. `framework/frontend/app/src/game/worldmap/layers/GroundLayer.ts` — bioma + worldWidth
+5. `framework/frontend/app/src/game/worldmap/layers/ParallaxLayer.ts` — bioma + worldWidth
+6. `framework/frontend/app/src/game/worldmap/layers/InteractiveLayer.ts` — positionX/positionY + worldWidth
+7. `framework/frontend/app/src/game/worldmap/layers/NubiLayer.ts` — adjustToGroundTopY()
+8. `framework/frontend/app/src/game/worldmap/scroll/GradualScroller.ts` — maxScrollOffset dinámico + clearLayers()
+9. `framework/frontend/app/src/game/WorldMapScene.ts` — orquestación completa
+
+**Comandos ejecutados:**
+- `npx tsc --noEmit` → 0 errores
+- `npx vite build` → build exitoso (6.24s)
+
+**Contratos afectados:** Ninguno nuevo. Solo consumo de contratos existentes (`world-host-payload.yaml`, `world-discovery-element-payload.yaml`, `world-state-sync-payload.yaml`).
+
+**Pruebas:** No existen tests unitarios configurados en el proyecto (sin vitest/jest). Verificación por compilación TypeScript y build Vite. Test manual recomendado: permanecer 10s en el mismo bioma sin que se reinicie la deriva del skybox.
+
+**Riesgos y deuda:**
+- R1 (deriva del skybox): Mitigado — `BackgroundLayer` solo reconstruye si el bioma cambia.
+- R2 (sin biomas reales): Mitigado — placeholders con assets de meadow para los 5 biomas nuevos.
+- R3 (carga de 6 sets): Mitigado — carga perezosa por bioma, solo MEADOW en arranque.
+- Los 5 biomas nuevos usan assets placeholder (meadow) hasta que contenido real esté disponible.
+- `sequenceOrder` de `WorldHost` se añade al tipo pero aún no se consume en la lógica de frontend (preparado para SPRINT-067/068/069).
+- `positionX`/`positionY` de `WorldSync` (posición del niño) se añaden al tipo pero aún no se consumen (preparado para SPRINT-067/068/069).
 
 ### Reviewer verification
 
-(Pendiente de revisión)
+**Veredicto: APPROVED**
+
+#### Verificación de tipos (GameEvent.ts)
+- ✅ `WorldHost.worldWidth?: number` — coincide con `world-host-payload.yaml` (integer, nullable)
+- ✅ `WorldHost.sequenceOrder?: number` — coincide con `world-host-payload.yaml` (integer, nullable)
+- ✅ `WorldDiscoveryElements.positionX?: number` / `positionY?: number` — coinciden con `world-discovery-element-payload.yaml` (number, nullable)
+- ✅ `WorldSync.positionX?: number` / `positionY?: number` — coinciden con `world-state-sync-payload.yaml` (number/double, nullable)
+
+#### Verificación de consumo de worldWidth
+- ✅ `GroundLayer.create(biome?, worldWidth?)` — usa `effectiveWorldWidth` para dimensionar la capa (línea 34)
+- ✅ `ParallaxLayer.create(groundBandHeight, biome?, worldWidth?)` — usa `effectiveWorldWidth` para dimensionar (línea 36)
+- ✅ `InteractiveLayer.render(elements, activeWorldWidth?)` — calcula `usableWidth` basado en worldWidth activo (línea 60)
+- ✅ `GradualScroller.setMaxScrollOffset(value)` — actualiza `maxScrollOffset` dinámicamente (línea 63-68)
+- ✅ `WorldMapScene.handleWorldStateActive()` — extrae `host.worldWidth` con fallback a `WORLD_MAP_CONFIG.worldWidth` (línea 263)
+
+#### Verificación de consumo de positionX/positionY
+- ✅ `InteractiveLayer.render()` — posiciona elementos con `positionX`/`positionY` autorados escalados al worldWidth/viewportHeight activos (líneas 75-88)
+- ✅ Síntesis por índice cuando `positionX`/`positionY` son null (fallback correcto)
+
+#### Verificación de reconstrucción condicional por bioma
+- ✅ `WorldMapScene.currentBiome` — guarda bioma activo (línea 33)
+- ✅ `WorldMapScene.handleWorldStateActive()` — compara `biome !== this.currentBiome` antes de reconstruir (línea 264)
+- ✅ `BackgroundLayer.buildFrom(biome)` — compara `lastBiome === effectiveBiome`, solo reconstruye si difiere (líneas 27-29)
+- ✅ `GroundLayer.create()` — compara `lastBiome` y `activeWorldWidth`, solo reconstruye si difieren (líneas 24-26)
+- ✅ `ParallaxLayer.create()` — mismo patrón que GroundLayer (líneas 26-28)
+- ✅ Claves de textura derivadas del bioma: `skybox-${biome}`, `background-${biome}`, `ground-${biome}`
+- ✅ `NubiLayer.adjustToGroundTopY()` — reposiciona verticalmente cuando cambia la altura del suelo (líneas 34-37)
+
+#### Verificación de manifest multi-bioma y carga perezosa
+- ✅ `assets-manifest.json` — 6 bloques: `biome-meadow`, `biome-farm`, `biome-woods`, `biome-beach`, `biome-space`, `biome-dinosaurs`
+- ✅ Arranque inicial solo carga `biome-meadow` (línea 136: `this.load.pack('biome-${INITIAL_BIOME}', ...)`)
+- ✅ `ensureBiomeAssetsLoaded(biome)` — verifica `this.textures.exists(skyboxKey)`, carga bajo demanda si no existe (líneas 288-300)
+- ✅ `pendingBiomeLoad` — protege contra reconstrucciones obsoletas (líneas 271-274)
+- ✅ Placeholders con assets de meadow para los 5 biomas nuevos (valida mecanismo sin contenido final)
+
+#### Verificación de compilación y build
+- ✅ `npx tsc --noEmit` → 0 errores
+- ✅ `npx vite build` → build exitoso (5.46s)
+
+#### Mitigación de riesgos
+- ✅ R1 (deriva del skybox): `BackgroundLayer` solo reconstruye si el bioma cambia. La deriva continua (`skyboxScrollX`) NO se reinicia.
+- ✅ R2 (sin biomas reales): Placeholders con assets de meadow para los 5 biomas nuevos.
+- ✅ R3 (carga de 6 sets): Carga perezosa por bioma, solo MEADOW en arranque.
+
+#### Observaciones
+- `sequenceOrder` de `WorldHost` se añade al tipo pero aún no se consume (preparado para SPRINT-067/068/069).
+- `positionX`/`positionY` de `WorldSync` (posición del niño) se añaden al tipo pero aún no se consumen (preparado para SPRINT-067/068/069).
+- Los 5 biomas nuevos usan assets placeholder (meadow) hasta que contenido real esté disponible — esto es intencional y documentado.
+- No existen tests unitarios configurados en el proyecto (sin vitest/jest). Verificación por compilación TypeScript y build Vite.

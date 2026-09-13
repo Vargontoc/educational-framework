@@ -22,17 +22,112 @@
         "files" : [
             {
                 "type" : "image",
-                "key" : "skybox",
+                "key" : "skybox-meadow",
                 "url" : "/assets/images/biomes/meadow/skybox.png"
             },
             {
-                "key" : "background",
+                "key" : "background-meadow",
                 "type" :"image",
                 "url" :"/assets/images/biomes/meadow/hill_background.png"
             },
             {
                 "type" : "image",
-                "key" : "ground",
+                "key" : "ground-meadow",
+                "url" : "/assets/images/biomes/meadow/ground.png"
+            }
+        ]
+    },
+    "biome-farm" : {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "skybox-farm",
+                "url" : "/assets/images/biomes/meadow/skybox.png"
+            },
+            {
+                "key" : "background-farm",
+                "type" :"image",
+                "url" :"/assets/images/biomes/meadow/hill_background.png"
+            },
+            {
+                "type" : "image",
+                "key" : "ground-farm",
+                "url" : "/assets/images/biomes/meadow/ground.png"
+            }
+        ]
+    },
+    "biome-woods" : {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "skybox-woods",
+                "url" : "/assets/images/biomes/meadow/skybox.png"
+            },
+            {
+                "key" : "background-woods",
+                "type" :"image",
+                "url" :"/assets/images/biomes/meadow/hill_background.png"
+            },
+            {
+                "type" : "image",
+                "key" : "ground-woods",
+                "url" : "/assets/images/biomes/meadow/ground.png"
+            }
+        ]
+    },
+    "biome-beach" : {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "skybox-beach",
+                "url" : "/assets/images/biomes/meadow/skybox.png"
+            },
+            {
+                "key" : "background-beach",
+                "type" :"image",
+                "url" :"/assets/images/biomes/meadow/hill_background.png"
+            },
+            {
+                "type" : "image",
+                "key" : "ground-beach",
+                "url" : "/assets/images/biomes/meadow/ground.png"
+            }
+        ]
+    },
+    "biome-space" : {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "skybox-space",
+                "url" : "/assets/images/biomes/meadow/skybox.png"
+            },
+            {
+                "key" : "background-space",
+                "type" :"image",
+                "url" :"/assets/images/biomes/meadow/hill_background.png"
+            },
+            {
+                "type" : "image",
+                "key" : "ground-space",
+                "url" : "/assets/images/biomes/meadow/ground.png"
+            }
+        ]
+    },
+    "biome-dinosaurs" : {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "skybox-dinosaurs",
+                "url" : "/assets/images/biomes/meadow/skybox.png"
+            },
+            {
+                "key" : "background-dinosaurs",
+                "type" :"image",
+                "url" :"/assets/images/biomes/meadow/hill_background.png"
+            },
+            {
+                "type" : "image",
+                "key" : "ground-dinosaurs",
                 "url" : "/assets/images/biomes/meadow/ground.png"
             }
         ]

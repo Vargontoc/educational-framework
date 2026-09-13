@@ -51,20 +51,41 @@ export class InteractiveLayer {
         this.onTouch = handler
     }
 
-    render(elements: WorldDiscoveryElements[]) {
+    render(elements: WorldDiscoveryElements[], activeWorldWidth?: number) {
         if (!this.container) return
         this.clearCueTweens()
         this.container.removeAll(true)
 
-        const usableWidth = WORLD_MAP_CONFIG.worldWidth - LAYOUT_MARGIN * 2
+        const worldWidth = activeWorldWidth ?? WORLD_MAP_CONFIG.worldWidth
+        const usableWidth = worldWidth - LAYOUT_MARGIN * 2
         const minStep = WORLD_MAP_CONFIG.minHitAreaSize + WORLD_MAP_CONFIG.interactiveMinSeparation
-        const step = elements.length > 1 ? Math.max(minStep, usableWidth / (elements.length - 1)) : 0
-        const y = WORLD_MAP_CONFIG.viewportHeight - 160
 
-        elements.forEach((element, index) => {
-            const x = elements.length > 1
-                ? LAYOUT_MARGIN + index * step
-                : LAYOUT_MARGIN + usableWidth / 2
+        const unauthoredElements = elements.filter(e => e.positionX == null)
+        const unauthoredStep = unauthoredElements.length > 1
+            ? Math.max(minStep, usableWidth / (unauthoredElements.length - 1))
+            : 0
+        let unauthoredIndex = 0
+
+        const defaultY = WORLD_MAP_CONFIG.viewportHeight - 160
+
+        elements.forEach((element) => {
+            let x: number
+            let y: number
+
+            if (element.positionX != null) {
+                x = LAYOUT_MARGIN + element.positionX * usableWidth
+            } else {
+                x = unauthoredElements.length > 1
+                    ? LAYOUT_MARGIN + unauthoredIndex * unauthoredStep
+                    : LAYOUT_MARGIN + usableWidth / 2
+                unauthoredIndex++
+            }
+
+            if (element.positionY != null) {
+                y = element.positionY * WORLD_MAP_CONFIG.viewportHeight
+            } else {
+                y = defaultY
+            }
 
             this.createElement(element, x, y)
         })

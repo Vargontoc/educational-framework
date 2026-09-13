@@ -31,6 +31,11 @@ export class NubiLayer {
         this.nubi?.setPosition(x, y)
     }
 
+    adjustToGroundTopY(groundTopY: number) {
+        if (!this.nubi) return
+        this.nubi.y = groundTopY - this.nubi.displayHeight / 2
+    }
+
     runAnimation(animation: string) {
         this.nubi?.play(animation)
     }
