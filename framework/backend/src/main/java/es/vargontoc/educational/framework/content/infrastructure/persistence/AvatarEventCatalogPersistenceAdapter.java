@@ -1,15 +1,16 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Repository;
+
 import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
 import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
-import org.springframework.stereotype.Repository;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public class AvatarEventCatalogPersistenceAdapter implements AvatarEventCatalogRepository {
@@ -101,5 +102,10 @@ public class AvatarEventCatalogPersistenceAdapter implements AvatarEventCatalogR
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
+    }
+
+    @Override
+    public List<AvatarEventCatalog> findEventsWithNamePlaceholder() {
+        return jpaRepository.getEventsWithNamePlaceholder().stream(). map(AvatarEventCatalogPersistenceAdapter::toDomain).toList();
     }
 }

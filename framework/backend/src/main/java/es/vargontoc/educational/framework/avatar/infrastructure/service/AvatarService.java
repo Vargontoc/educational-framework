@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.springframework.scheduling.annotation.Async;
+
 import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.audio.domain.AudioRequest;
 import es.vargontoc.educational.framework.avatar.application.ports.in.AvatarUseCase;
@@ -25,7 +27,6 @@ import es.vargontoc.educational.framework.session.ports.out.ChildSessionReposito
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import es.vargontoc.educational.framework.shared.exception.SessionException;
 import jakarta.transaction.Transactional;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -161,6 +162,32 @@ public class AvatarService implements AvatarUseCase {
 
     private AvatarLifecycleResult createFallbackResult(Long sessionId, AvatarEventType type, String text) {
         return new AvatarLifecycleResult(new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, type != null ? type.name() : null, false, null, text), null);
+    }
+
+    @Async
+    @Override
+    public void generateEventWithName(String name, String oldName) {
+        var events = avatarEventCatalogRepository.findEventsWithNamePlaceholder();
+        if(!events.isEmpty())
+        {
+            log.info("Generando audios para: {}", name);
+            events.forEach(e -> {
+                if(oldName != null && !oldName.trim().isBlank()){
+                    audio.cleanAudioByName(e.getMessageText().replace("<name>", oldName), e.getTone().toParams());
+                }
+                String txt = e.getMessageText().replace("<name>", name);
+                log.info("Generando audio texto: {}", txt);
+                try {
+                    audio.getAudio(AudioRequest.withPreset(e.getMessageText().replace("<name>", name), e.getTone()));
+                    log.info("Audio generado");
+                }catch(Exception ex) {
+                    log.error("No se pudo generar audio para: '{}'", txt, ex.getMessage(), ex);
+                }
+            });
+
+
+        }
+
     }
     
     

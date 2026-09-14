@@ -7,4 +7,6 @@ import es.vargontoc.educational.framework.avatar.domain.AvatarLifecycleResult;
 public interface AvatarUseCase {
     
     AvatarLifecycleResult  processEvent(AvatarEventRequest request);
+
+    void generateEventWithName(String name, String oldName);
 }

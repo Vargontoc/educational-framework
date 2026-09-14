@@ -43,6 +43,17 @@ public class AudioAdapter implements AudioUseCase {
         return new AudioCache(toneParams, textHash);
     }
 
+    @Override
+    public void cleanAudioByName(String text, ToneParams params) {
+
+        AudioCache key = build(text, params);
+        if(cache.get(key) != null) {
+            cache.remove(key);
+        }
+    }
+
+  
+
     
 
 

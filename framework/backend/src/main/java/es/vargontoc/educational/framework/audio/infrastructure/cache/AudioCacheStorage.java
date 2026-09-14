@@ -73,6 +73,20 @@ public class AudioCacheStorage {
         log.info("Cached {} byte: {}", data.length, key);
     }
 
+    public void remove(AudioCache key) {
+        if(internalCache.getIfPresent(key) != null) 
+            internalCache.invalidate(key);
+
+        Path file = resolveDiskPath(key);
+        if(Files.exists(file)) {
+            try {
+                Files.deleteIfExists(file);
+            }catch(IOException e) {
+                log.error("Could not delete file: '{}'", file.toFile().toString(), e.getMessage(), e);
+            }
+        }
+    }
+
 
     private void saveToDisk(AudioCache key, byte[] audio){
         Path file = resolveDiskPath(key);

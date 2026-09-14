@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import es.vargontoc.educational.framework.avatar.application.ports.in.AvatarUseCase;
 import es.vargontoc.educational.framework.family.infrastructure.dto.UpdateChildProfileRequest;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
@@ -36,14 +37,16 @@ public class ChildProfileService implements ChildProfileUseCase {
     private final ChildProfileValidator childProfileValidator;
 
     private final ChildSessionUseCase sessions;
+    private final AvatarUseCase avatarUseCase;
 
-    public ChildProfileService(FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildSessionRepository childSessionRepository, SessionEventPublisher sessionEventPublisher, ChildProfileRepository childProfileRepository) {
+    public ChildProfileService(AvatarUseCase avatar, FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildSessionRepository childSessionRepository, SessionEventPublisher sessionEventPublisher, ChildProfileRepository childProfileRepository) {
         this.familyRepository = familyRepository;
         this.childProfileRepository = childProfileRepository;
         this.childSessionRepository = childSessionRepository;
         this.sessionEventPublisher = sessionEventPublisher;
         this.childProfileValidator = new ChildProfileValidator();
         this.sessions = sessions;
+        this.avatarUseCase = avatar;
     }
 
     @Override
@@ -74,7 +77,9 @@ public class ChildProfileService implements ChildProfileUseCase {
         child.setColorVisionMode(colorVisionMode != null ? colorVisionMode : ColorVisionMode.NONE);
         child.setCreatedAt(LocalDateTime.now());
 
-        return childProfileRepository.save(child);
+        var profile =childProfileRepository.save(child);
+        avatarUseCase.generateEventWithName(name, null);
+        return profile;
     }
 
     @Override
@@ -107,9 +112,12 @@ public class ChildProfileService implements ChildProfileUseCase {
         // Get global settings for npc - agent
         boolean npcState = family.isNpcEnabled();
         boolean npcVoiceState = family.isNpcVoiceEnabled();
+        String oldName = null;
 
-        if(request.name() != null)
+        if(request.name() != null){
+            oldName = child.getName();
             child.setName(request.name());
+        }
         if(request.birthday() != null)
             child.setBirthday(request.birthday());
         if(request.avatar() != null)
@@ -148,8 +156,12 @@ public class ChildProfileService implements ChildProfileUseCase {
         }
         child.setUpdatedAt(LocalDateTime.now());
 
-        try {
+        try { 
             var stored = childProfileRepository.save(child);
+
+            if(oldName != null && !oldName.trim().isBlank())
+                avatarUseCase.generateEventWithName(child.getName(), oldName);
+
             boolean npcVoiceChanges = currentNpc != forwardNpc;
             boolean agentChanges = currentVoiceNpc != forwardVoiceNpc;
             boolean volumeChanges = stored.getNpcVoiceVolume() != currentVolumeNpc;
