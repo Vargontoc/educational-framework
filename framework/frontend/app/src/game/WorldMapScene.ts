@@ -398,7 +398,7 @@ export class WorldMapScene extends Scene {
         const hosts: BiomeHostInfo[] = ALL_BIOME_HOSTS.filter(
             host => host.biome.toLowerCase() !== this.currentBiome
         )
-        this.biomeSelectorLayer?.open(hosts)
+        this.biomeSelectorLayer?.open(hosts, ALL_BIOME_HOSTS.length)
     }
 
     private handleDestinationSelected(biome: string) {

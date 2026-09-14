@@ -15,6 +15,71 @@
                 "type" : "audio",
                 "key" : "farewell",
                 "url" : "audio/farewell.wav"
+            },
+            {
+                "type" : "image",
+                "key" : "sticker-meadow",
+                "url" : "assets/icons/sticker-pradera.png"
+            },
+            {
+                "type" : "image",
+                "key" : "sticker-farm",
+                "url" : "assets/icons/sticker-granja.png"
+            },
+            {
+                "type" : "image",
+                "key" : "sticker-woods",
+                "url" : "assets/icons/sticker-bosque.png"
+            },
+            {
+                "type" : "image",
+                "key" : "sticker-beach",
+                "url" : "assets/icons/sticker-playa.png"
+            },
+            {
+                "type" : "image",
+                "key" : "sticker-space",
+                "url" : "assets/icons/sticker-espacio.png"
+            },
+            {
+                "type" : "image",
+                "key" : "sticker-prehistory",
+                "url" : "assets/icons/sticker-dinosaurio.png"
+            },
+            {
+                "type" : "image",
+                "key" : "biome-selector-map",
+                "url" : "assets/icons/mapa.png"
+            },
+            {
+                "type" : "image",
+                "key" : "transport-meadow",
+                "url" : "assets/icons/travel-balloon.png"
+            },
+            {
+                "type" : "image",
+                "key" : "transport-farm",
+                "url" : "assets/icons/travel-farm.png"
+            },
+            {
+                "type" : "image",
+                "key" : "transport-woods",
+                "url" : "assets/icons/travel-escoba.png"
+            },
+            {
+                "type" : "image",
+                "key" : "transport-beach",
+                "url" : "assets/icons/travel-playa.png"
+            },
+            {
+                "type" : "image",
+                "key" : "transport-space",
+                "url" : "assets/icons/travel-rocket.png"
+            },
+            {
+                "type" : "image",
+                "key" : "transport-prehistory",
+                "url" : "assets/icons/travel-dinosaurio.png"
             }
         ]
     },

@@ -39,7 +39,7 @@ export const TRANSPORT_TOUCHED_EVENT = 'transport-touched'
 export class TransportLayer {
     private scene: Scene
     private container?: Phaser.GameObjects.Container
-    private cueTween?: Phaser.Tweens.Tween
+    private cueTweens: Phaser.Tweens.Tween[] = []
 
     constructor(scene: Scene) {
         this.scene = scene
@@ -62,7 +62,7 @@ export class TransportLayer {
         })
 
         const visual = this.createTransportVisual(biome, x, y)
-        this.applyPassiveCue(visual)
+        this.applyPassiveCue(biome, visual)
 
         this.container.add([zone, visual])
 
@@ -75,6 +75,8 @@ export class TransportLayer {
         const assetKey = `transport-${biome}`
         if (this.scene.textures.exists(assetKey)) {
             const img = this.scene.add.image(0, 0, assetKey)
+            const scale = Math.min(1, TRANSPORT_ICON_SIZE / Math.max(img.width, img.height))
+            img.setDisplaySize(img.width * scale, img.height * scale)
             elementContainer.add(img)
             return elementContainer
         }
@@ -185,22 +187,207 @@ export class TransportLayer {
         }
     }
 
-    private applyPassiveCue(visual: Phaser.GameObjects.Container) {
+    // Cada transporte tiene su propio "carácter" de reposo en vez de un
+    // único cue genérico compartido — ver funciones apply*Cue más abajo.
+    // Bajo prefers-reduced-motion todos degradan al mismo pulso de alpha
+    // simple, sin excepción por bioma.
+    private applyPassiveCue(biome: string, visual: Phaser.GameObjects.Container) {
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
         if (reducedMotion) {
-            this.cueTween = this.scene.tweens.add({
+            this.cueTweens.push(this.scene.tweens.add({
                 targets: visual,
                 alpha: 0.8,
                 duration: REDUCED_MOTION_CUE_DURATION,
                 yoyo: true,
                 repeat: -1,
                 ease: 'Sine.easeInOut'
-            })
+            }))
             return
         }
 
-        this.cueTween = this.scene.tweens.add({
+        switch (biome) {
+            case 'meadow':
+                this.applyMeadowCue(visual)
+                break
+            case 'beach':
+                this.applyBeachCue(visual)
+                break
+            case 'farm':
+                this.applyFarmCue(visual)
+                break
+            case 'space':
+                this.applySpaceCue(visual)
+                break
+            case 'woods':
+                this.applyWoodsCue(visual)
+                break
+            case 'prehistory':
+                this.applyPrehistoryCue(visual)
+                break
+            default:
+                this.applyGenericCue(visual)
+        }
+    }
+
+    // Pradera (globo): flota suspendido, sube y baja muy lento, con un
+    // balanceo sutil de rotación en un período distinto al de la subida
+    // para que no se vea como un movimiento único y mecánico.
+    private applyMeadowCue(visual: Phaser.GameObjects.Container) {
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            y: visual.y - 10,
+            duration: 2600,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+
+        visual.setAngle(-3)
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            angle: 3,
+            duration: 3400,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+    }
+
+    // Playa (barco): balanceo rítmico de lado a lado (rotación), como
+    // mecido por las olas, con un pequeño vaivén vertical desfasado en
+    // cuarto de ciclo para reforzar la sensación de oleaje.
+    private applyBeachCue(visual: Phaser.GameObjects.Container) {
+        visual.setAngle(-6)
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            angle: 6,
+            duration: 1400,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            y: visual.y + 4,
+            duration: 1400,
+            delay: 350,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+    }
+
+    // Granja (tractor): sacudidas cortas y rápidas de ángulo + una micro
+    // vibración vertical en un período ligeramente distinto, como un motor
+    // al ralentí — amplitud pequeña, ciclo muy corto.
+    private applyFarmCue(visual: Phaser.GameObjects.Container) {
+        visual.setAngle(-1.5)
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            angle: 1.5,
+            duration: 90,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            y: visual.y + 1.5,
+            duration: 110,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+    }
+
+    // Espacio (cohete): el cuerpo queda casi quieto (solo una deriva
+    // vertical mínima para no verse muerto); el movimiento real está en la
+    // pequeña llama de propulsión añadida en la base, que parpadea rápido
+    // en alpha y escala.
+    private applySpaceCue(visual: Phaser.GameObjects.Container) {
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            y: visual.y + 1,
+            duration: 3000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+
+        const flame = this.scene.add.triangle(
+            0, TRANSPORT_ICON_SIZE / 2 + 2,
+            -6, 0,
+            6, 0,
+            0, 14,
+            0xffa726
+        )
+        flame.setOrigin(0.5, 0)
+        visual.add(flame)
+
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: flame,
+            alpha: 0.4,
+            scaleY: 0.6,
+            duration: 180,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+    }
+
+    // Bosque (seta/escoba): flota como la pradera, pero con un balanceo más
+    // errático/mágico — tres tweens independientes (ángulo, x, y) con
+    // períodos distintos que se desfasan entre sí en vez de moverse en un
+    // único eje sincronizado.
+    private applyWoodsCue(visual: Phaser.GameObjects.Container) {
+        visual.setAngle(-5)
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            angle: 5,
+            duration: 900,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            x: visual.x + 6,
+            duration: 1300,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            y: visual.y - 8,
+            duration: 1700,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+    }
+
+    // Prehistoria (dino): pequeño pulso de escala, como si respirara.
+    private applyPrehistoryCue(visual: Phaser.GameObjects.Container) {
+        this.cueTweens.push(this.scene.tweens.add({
+            targets: visual,
+            scaleX: 1.06,
+            scaleY: 1.06,
+            duration: 1400,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        }))
+    }
+
+    // Respaldo genérico si en el futuro se añade un bioma sin cue propio.
+    private applyGenericCue(visual: Phaser.GameObjects.Container) {
+        this.cueTweens.push(this.scene.tweens.add({
             targets: visual,
             y: visual.y - 6,
             scaleX: 1.05,
@@ -209,12 +396,12 @@ export class TransportLayer {
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
-        })
+        }))
     }
 
     destroy() {
-        this.cueTween?.stop()
-        this.cueTween = undefined
+        this.cueTweens.forEach(tween => tween.stop())
+        this.cueTweens = []
         this.container?.destroy()
         this.container = undefined
     }
