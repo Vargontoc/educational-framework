@@ -3,6 +3,12 @@ import { WORLD_MAP_CONFIG, isDistantBiomePair } from "../config/worldMapConfig"
 
 const TRANSITION_OVERLAY_DEPTH = 200
 const TRANSITION_COLOR = 0x000000
+// Bajo prefers-reduced-motion se acorta el fundido, pero nunca se elimina:
+// un salto instantáneo a negro sólido (y de vuelta) sin ninguna animación
+// se percibe como que la app se ha quedado colgada, no como una transición
+// intencional — un fundido de opacidad corto no es el tipo de movimiento
+// (parallax, zoom, giro) que reduced-motion pretende evitar.
+const REDUCED_MOTION_FADE_DURATION = 200
 
 export interface BiomeTransitionContext {
     scene: Scene
@@ -55,22 +61,17 @@ export function fadeToBlack(
     const { scene } = context
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const result = createArrivalOverlay(context)
-
-    if (reducedMotion) {
-        result.fadeOverlay.setAlpha(1)
-        onComplete()
-        return { overlay: result.fadeOverlay, duration: 0 }
-    }
+    const duration = reducedMotion ? REDUCED_MOTION_FADE_DURATION : result.duration
 
     scene.tweens.add({
         targets: result.fadeOverlay,
         alpha: 1,
-        duration: result.duration,
+        duration,
         ease: 'Sine.easeIn',
         onComplete
     })
 
-    return { overlay: result.fadeOverlay, duration: result.duration }
+    return { overlay: result.fadeOverlay, duration }
 }
 
 export function fadeFromBlack(
@@ -79,14 +80,6 @@ export function fadeFromBlack(
     duration: number,
     onComplete?: () => void
 ): void {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-    if (reducedMotion) {
-        overlay.destroy()
-        onComplete?.()
-        return
-    }
-
     scene.tweens.add({
         targets: overlay,
         alpha: 0,

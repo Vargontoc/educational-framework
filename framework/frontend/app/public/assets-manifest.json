@@ -80,6 +80,11 @@
                 "type" : "image",
                 "key" : "transport-prehistory",
                 "url" : "assets/icons/travel-dinosaurio.png"
+            },
+            {
+                "type" : "image",
+                "key" : "exit-portal",
+                "url" : "assets/icons/exit.png"
             }
         ]
     },

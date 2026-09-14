@@ -71,6 +71,13 @@ export class GradualScroller {
         return this.maxScrollOffset
     }
 
+    setOffset(value: number) {
+        this.offset = clamp(value, 0, this.maxScrollOffset)
+        this.targetOffset = this.offset
+        this.velocity = 0
+        this.applyOffset()
+    }
+
     followStep(delta: number) {
         if (this.dragging || delta === 0) return
         this.offset = clamp(this.offset + delta, 0, this.maxScrollOffset)

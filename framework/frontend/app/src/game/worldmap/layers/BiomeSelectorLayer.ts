@@ -54,7 +54,6 @@ const MAP_ASSET_KEY = 'biome-selector-map'
  */
 const RING_RADIUS_RATIO = 0.62
 const RING_START_ANGLE_DEG = -90
-const DEFAULT_RING_SLOT_COUNT = 1
 
 // Animación idónea de reposo (mismo patrón que InteractiveLayer.applyPassiveCue):
 // un balanceo sutil de rotación más un pulso de escala, en bucle, para que los
@@ -88,7 +87,7 @@ export class BiomeSelectorLayer {
     private container?: Phaser.GameObjects.Container
     private backdropZone?: Phaser.GameObjects.Zone
     private visible = false
-    private  ringSlotCount = DEFAULT_RING_SLOT_COUNT
+    
     private stickerTweens: Phaser.Tweens.Tween[] = []
 
     constructor(scene: Scene) {
@@ -101,7 +100,6 @@ export class BiomeSelectorLayer {
     open(hosts: BiomeHostInfo[], totalSlots: number) {
         if (this.visible) return
         this.visible = true
-        this.ringSlotCount = Math.max(1, totalSlots)
 
         this.container = this.scene.add.container(0, 0)
         this.container.setDepth(SELECTOR_DEPTH)
@@ -126,7 +124,7 @@ export class BiomeSelectorLayer {
 
         this.container.add([backdrop, this.backdropZone])
 
-        this.buildMapArea(hosts)
+        this.buildMapArea(hosts, totalSlots)
         // this.buildNubiPlaceholder()
 
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -172,22 +170,11 @@ export class BiomeSelectorLayer {
         this.visible = false
     }
 
-    private buildNubiPlaceholder() {
+
+    private buildMapArea(hosts: BiomeHostInfo[], totalSlots: number) {
         if (!this.container) return
 
-        const { viewportWidth, viewportHeight } = WORLD_MAP_CONFIG
-        const nubiX = viewportWidth / 2
-        const nubiY = viewportHeight * 0.15
 
-        const nubiCircle = this.scene.add.circle(nubiX, nubiY, 36, 0xb3e5fc, 0.9)
-
-        this.container.add([nubiCircle])
-    }
-
-    private buildMapArea(hosts: BiomeHostInfo[]) {
-        if (!this.container) return
-
-        const { viewportWidth } = WORLD_MAP_CONFIG
         const layout = this.computeMapLayout()
 
         if (this.scene.textures.exists(MAP_ASSET_KEY)) {
@@ -207,7 +194,7 @@ export class BiomeSelectorLayer {
             this.container.add(mapBg)
         }
 
-        this.layoutStickers(hosts, layout)
+        this.layoutStickers(hosts, layout, totalSlots)
     }
 
     // Encaja mapa.png (o el rectángulo placeholder si el asset no cargó)
@@ -247,16 +234,16 @@ export class BiomeSelectorLayer {
     // `hosts` ni de su longitud. Un host sin `sequenceOrder` (no debería
     // ocurrir con los 6 biomas del catálogo, todos lo traen) cae en el hueco
     // 1 como fallback defensivo.
-    private layoutStickers(hosts: BiomeHostInfo[], layout: MapLayout) {
+    private layoutStickers(hosts: BiomeHostInfo[], layout: MapLayout, totalSlots: number) {
         if (!this.container) return
         if (hosts.length === 0) return
-        console.log(hosts.length)
         const centerX = layout.x + layout.width / 2
         const centerY = layout.y + layout.height / 2
         const radius = Math.min(layout.width, layout.height) / 2 * RING_RADIUS_RATIO
 
-        const placements = hosts.map((host, i) => {
-            const angleDeg = RING_START_ANGLE_DEG + (i * (360 / hosts.length))
+        const placements = hosts.map((host) => {
+            const sequenceOrder = host.sequenceOrder ?? 1
+            const angleDeg = RING_START_ANGLE_DEG + ((sequenceOrder - 1) * (360 / totalSlots))
             const angleRad = angleDeg * (Math.PI / 180)
             const cx = centerX + Math.cos(angleRad) * radius
             const cy = centerY + Math.sin(angleRad) * radius

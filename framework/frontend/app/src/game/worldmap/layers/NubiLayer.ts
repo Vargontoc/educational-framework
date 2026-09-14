@@ -14,6 +14,11 @@ export class NubiLayer {
     private scene: Scene
     private nubi?: Phaser.GameObjects.Sprite
     private npcEnabled = false
+    // Oculta a Nubi mientras el selector de biomas (overlay a pantalla
+    // completa) está abierto, independientemente de npcEnabled — se compone
+    // con él en applyVisibility() en vez de pisarlo, para que reabrir el
+    // selector con el NPC desactivado no "reactive" a Nubi por error.
+    private selectorOpen = false
     // Posición de Nubi en coordenadas de mundo (mismo espacio que el ground/
     // interactive layer, factor 1), no de pantalla. La posición de pantalla se
     // deriva cada frame como worldX - offset (ver syncScreenPosition), igual
@@ -21,6 +26,11 @@ export class NubiLayer {
     // el mundo manualmente, Nubi se desplaza en pantalla con él.
     private worldX = 0
     private targetWorldX?: number
+    // Invocado cuando Nubi llega al target actual (ver update()). Lo usa
+    // WorldMapScene para encadenar "camina hasta el portal, luego transiciona"
+    // (bug de naturalidad al pulsar el portal) sin acoplar NubiLayer a la
+    // lógica de transición de biomas.
+    private pendingArriveCallback?: () => void
     private onNpcStateChanged = (enabled: boolean) => this.setNpcEnabled(enabled)
 
     constructor(scene: Scene) {
@@ -98,12 +108,24 @@ export class NubiLayer {
     // en vez del antiguo desplazamiento por arrastre del paisaje. Se llama al
     // tocar el fondo o un elemento interactivo (ver WorldMapScene), que convierte
     // la coordenada de pantalla tocada a mundo sumándole el offset actual.
-    walkTo(targetWorldX: number) {
-        if (!this.nubi || !this.npcEnabled) return
+    // No aplica ningún clamp de rango — quien llama decide si el target debe
+    // recortarse al ancho de mundo activo (paseo normal) o puede superarlo a
+    // propósito (p. ej. caminar hasta el portal de salida, que vive fuera de
+    // ese rango — ver WorldMapScene.handlePortalTouched).
+    //
+    // onArrive: callback opcional invocado cuando Nubi llega al target (ver
+    // update()). Si el NPC está desactivado, Nubi no camina visualmente pero
+    // el callback se invoca igualmente de inmediato — quien llama no debe
+    // depender de ver a Nubi moverse para que su transición ocurra.
+    walkTo(targetWorldX: number, onArrive?: () => void) {
+        if (!this.nubi || !this.npcEnabled) {
+            onArrive?.()
+            return
+        }
 
         const wasWalking = this.targetWorldX !== undefined
         this.targetWorldX = targetWorldX
-        console.log(this.targetWorldX)
+        this.pendingArriveCallback = onArrive
         this.nubi.setFlipX(targetWorldX < this.worldX)
 
         if (!wasWalking) {
@@ -127,12 +149,47 @@ export class NubiLayer {
             this.worldX = this.targetWorldX
             this.targetWorldX = undefined
             this.runAnimation(IDLE_ANIMATION_KEY)
+            const onArrive = this.pendingArriveCallback
+            this.pendingArriveCallback = undefined
+            onArrive?.()
             return step
         }
 
         const step = Math.sign(diff) * maxStep
         this.worldX += step
         return step
+    }
+
+    // Reposiciona a Nubi en el punto de inicio del bioma activo, sin
+    // animación de caminata — usado al completar una transición real de
+    // bioma (bajo el fundido a negro, invisible para el niño), para que no
+    // aparezca en el sitio donde estaba en el bioma anterior (p. ej. junto
+    // al portal de salida, fuera del ancho del nuevo mundo).
+    resetToStart() {
+        this.setWorldX(WORLD_MAP_CONFIG.viewportWidth / 6)
+    }
+
+    // Coloca a Nubi en una coordenada de mundo concreta sin caminar — usado
+    // también al reanudar una sesión persistida, para alinear a Nubi con el
+    // offset de cámara restaurado en vez de dejarlo en el spawn point fijo.
+    setWorldX(worldX: number) {
+        this.worldX = worldX
+        this.targetWorldX = undefined
+        this.pendingArriveCallback = undefined
+        this.nubi?.setFlipX(false)
+        this.runAnimation(IDLE_ANIMATION_KEY)
+    }
+
+    // Oculta/muestra a Nubi mientras el selector de biomas está abierto (ver
+    // comentario de `selectorOpen`). Se compone con npcEnabled en
+    // applyVisibility() en vez de forzar la visibilidad directamente.
+    setSelectorOpen(open: boolean) {
+        this.selectorOpen = open
+        this.applyVisibility()
+    }
+
+    private applyVisibility() {
+        this.nubi?.setVisible(this.npcEnabled && !this.selectorOpen)
     }
 
     // Sincroniza la posición de pantalla con worldX y el offset de cámara
@@ -151,7 +208,7 @@ export class NubiLayer {
 
     setNpcEnabled(enabled: boolean) {
         this.npcEnabled = enabled
-        this.nubi?.setVisible(enabled)
+        this.applyVisibility()
     }
 
     destroy() {

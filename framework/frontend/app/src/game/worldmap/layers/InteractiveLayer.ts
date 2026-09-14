@@ -42,6 +42,13 @@ export class InteractiveLayer {
     }
 
     create(): Phaser.GameObjects.Container {
+        // Sin este destroy(), cada rebuildLayersForBiome() (una vez por
+        // transición) dejaba el contenedor anterior huérfano en pantalla
+        // —seguía visible e interactivo con los elementos del bioma
+        // anterior— en vez de eliminarlo al crear el nuevo. Mismo patrón que
+        // ya usan GroundLayer/ParallaxLayer/TransportLayer/ExitPortalLayer.
+        this.destroy()
+
         this.container = this.scene.add.container(0, 0)
         this.container.setDepth(INTERACTIVE_DEPTH)
         return this.container

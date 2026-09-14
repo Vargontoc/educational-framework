@@ -3,7 +3,19 @@ import { WORLD_MAP_CONFIG } from "../config/worldMapConfig"
 
 const TRANSPORT_DEPTH = 5
 const TRANSPORT_ICON_SIZE = 64
+// A la IZQUIERDA del spawn de Nubi (más cerca de x=0), no a la derecha como
+// antes: los elementos de descubrimiento pueden autorarse con positionX
+// arbitrariamente bajo, así que colocar el transporte hacia el interior del
+// mundo (como estaba) aumentaba el riesgo de solaparse con uno de ellos.
+// Nota: esto NO saca al transporte del rango [0, worldWidth] por el que
+// Nubi puede caminar normalmente (a diferencia del portal de salida, que sí
+// vive fuera de ese rango — ver ExitPortalLayer/WorldMapScene) — hacerlo
+// requeriría que GradualScroller admita offsets negativos y extender hacia
+// atrás el tile de Ground/ParallaxLayer, un cambio bastante más grande que
+// no se ha aplicado aquí; si el solape sigue siendo un problema real con
+// contenido autorado cerca de positionX=0, ese es el siguiente paso.
 const TRANSPORT_OFFSET_FROM_NUBI = 120
+const TRANSPORT_MIN_X = 40
 const REDUCED_MOTION_CUE_DURATION = 600
 const CUE_DURATION = 1200
 
@@ -51,7 +63,7 @@ export class TransportLayer {
         this.container = this.scene.add.container(0, 0)
         this.container.setDepth(TRANSPORT_DEPTH)
 
-        const x = nubiStartX + TRANSPORT_OFFSET_FROM_NUBI
+        const x = Math.max(TRANSPORT_MIN_X, nubiStartX - TRANSPORT_OFFSET_FROM_NUBI)
         const y = groundTopY - TRANSPORT_ICON_SIZE
 
         const hitAreaSize = Math.max(WORLD_MAP_CONFIG.minHitAreaSize, TRANSPORT_ICON_SIZE + 16)

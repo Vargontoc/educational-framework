@@ -12,8 +12,9 @@ import { GroundLayer } from "./worldmap/layers/GroundLayer";
 import { NubiLayer } from "./worldmap/layers/NubiLayer";
 import { InteractiveLayer } from "./worldmap/layers/InteractiveLayer";
 import { TransportLayer, TRANSPORT_TOUCHED_EVENT } from "./worldmap/layers/TransportLayer";
-import { BiomeSelectorLayer, DESTINATION_SELECTED_EVENT, BiomeHostInfo } from "./worldmap/layers/BiomeSelectorLayer";
+import { BiomeSelectorLayer, DESTINATION_SELECTED_EVENT, SELECTOR_CLOSED_EVENT, BiomeHostInfo } from "./worldmap/layers/BiomeSelectorLayer";
 import { EdgeHintLayer } from "./worldmap/layers/EdgeHintLayer";
+import { ExitPortalLayer, PORTAL_TOUCHED_EVENT, PORTAL_MARGIN, PORTAL_SIZE } from "./worldmap/layers/ExitPortalLayer";
 import { GradualScroller, WORLDMAP_TAP_EVENT } from "./worldmap/scroll/GradualScroller";
 import { EnvironmentReaction } from "./worldmap/reactions/EnvironmentReaction";
 import { WORLD_MAP_CONFIG } from "./worldmap/config/worldMapConfig";
@@ -31,6 +32,8 @@ const ALL_BIOME_HOSTS: BiomeHostInfo[] = [
     { biome: 'PREHISTORY', sequenceOrder: 6 }
 ]
 
+const BIOME_ORDER = ['meadow', 'farm', 'woods', 'beach', 'space', 'prehistory']
+
 export class WorldMapScene extends Scene {
     websocket?: WebSocket
     sessionId?: number
@@ -45,12 +48,14 @@ export class WorldMapScene extends Scene {
     private transportLayer?: TransportLayer
     private biomeSelectorLayer?: BiomeSelectorLayer
     private edgeHintLayer?: EdgeHintLayer
+    private exitPortalLayer?: ExitPortalLayer
     private scroller?: GradualScroller
     private environmentReaction?: EnvironmentReaction
     private currentBiome?: string
     private activeWorldWidth: number = WORLD_MAP_CONFIG.worldWidth
     private pendingBiomeLoad?: string
     private arrivalInProgress = false
+    private sessionResumed = false
 
     constructor() { super({ key: 'world-map', active: false}) }
 
@@ -94,20 +99,28 @@ export class WorldMapScene extends Scene {
         this.edgeHintLayer = new EdgeHintLayer(this)
         this.edgeHintLayer.create()
 
+        this.exitPortalLayer = new ExitPortalLayer(this)
+        const exitPortalContainer = this.exitPortalLayer.create(INITIAL_BIOME, this.activeWorldWidth, this.getGroundTopY())
+
         this.scroller = new GradualScroller(this, reducedMotion)
         this.scroller.attach()
-        this.scroller.setMaxScrollOffset(this.computeMaxScrollOffset(this.activeWorldWidth))
+        this.scroller.setMaxScrollOffset(this.computeMaxScrollOffset(this.activeWorldWidth, INITIAL_BIOME))
         if (!reducedMotion) {
             this.scroller.registerLayer(parallaxContainer, WORLD_MAP_CONFIG.parallaxFactor)
         }
         this.scroller.registerLayer(groundContainer, WORLD_MAP_CONFIG.groundFactor)
         this.scroller.registerLayer(interactiveContainer, 1)
         this.scroller.registerLayer(transportContainer, 1)
+        if (exitPortalContainer) {
+            this.scroller.registerLayer(exitPortalContainer, 1)
+        }
 
         this.events.on(WORLDMAP_TAP_EVENT, (x: number) => this.nubiLayer?.walkTo(this.clampToWorldWidth(x + (this.scroller?.getOffset() ?? 0))))
 
         this.events.on(TRANSPORT_TOUCHED_EVENT, () => this.handleTransportTouched())
         this.events.on(DESTINATION_SELECTED_EVENT, (biome: string) => this.handleDestinationSelected(biome))
+        this.events.on(PORTAL_TOUCHED_EVENT, () => this.handlePortalTouched())
+        this.events.on(SELECTOR_CLOSED_EVENT, () => this.nubiLayer?.setSelectorOpen(false))
         this.events.on('nubi-double-tap', () => this.biomeSelectorLayer?.close())
 
         this.connectionMonitor = new ConnectionMonitor(
@@ -164,6 +177,7 @@ export class WorldMapScene extends Scene {
         this.parallaxLayer?.destroy()
         this.backgroundLayer?.destroy()
         this.edgeHintLayer?.destroy()
+        this.exitPortalLayer?.destroy()
     }
 
     preload() {
@@ -250,7 +264,9 @@ export class WorldMapScene extends Scene {
                         this.handleWorldStateActive(
                             event.payload.destination.biome,
                             event.payload.destination.host?.worldWidth,
-                            event.payload.destination.discoveryElements
+                            event.payload.destination.discoveryElements,
+                            event.payload.positionX,
+                            event.payload.positionY
                         )
                     } else {
                         this.interactiveLayer?.render([])
@@ -294,29 +310,74 @@ export class WorldMapScene extends Scene {
     private handleWorldStateActive(
         biome: string,
         hostWorldWidth: number | undefined,
-        discoveryElements: WorldDiscoveryElements[]
+        discoveryElements: WorldDiscoveryElements[],
+        positionX?: number,
+        _positionY?: number
     ) {
         const normalizedBiome = biome.toLowerCase()
         const effectiveWorldWidth = hostWorldWidth ?? WORLD_MAP_CONFIG.worldWidth
         const biomeChanged = normalizedBiome !== this.currentBiome
         const worldWidthChanged = effectiveWorldWidth !== this.activeWorldWidth
+        const isResume = !this.sessionResumed && positionX != null
+        this.sessionResumed = true
 
-        this.activeWorldWidth = effectiveWorldWidth
-
-        this.scroller?.setMaxScrollOffset(this.computeMaxScrollOffset(this.activeWorldWidth))
+        if (isResume) {
+            // No hay "mundo viejo" visible que proteger todavía (es la primera
+            // sincronización de la sesión) — aplicar de inmediato es seguro.
+            this.activeWorldWidth = effectiveWorldWidth
+            this.scroller?.setMaxScrollOffset(this.computeMaxScrollOffset(effectiveWorldWidth, normalizedBiome))
+            const resumeOffset = positionX! * this.computeMaxScrollOffset(effectiveWorldWidth, normalizedBiome)
+            if (biomeChanged) {
+                this.pendingBiomeLoad = normalizedBiome
+                this.ensureBiomeAssetsLoaded(normalizedBiome, () => {
+                    if (this.pendingBiomeLoad !== normalizedBiome) return
+                    this.pendingBiomeLoad = undefined
+                    this.currentBiome = normalizedBiome
+                    this.rebuildLayersForBiome(normalizedBiome, effectiveWorldWidth)
+                    this.interactiveLayer?.render(discoveryElements, effectiveWorldWidth)
+                    this.scroller?.setOffset(resumeOffset)
+                    this.nubiLayer?.setWorldX(resumeOffset + WORLD_MAP_CONFIG.viewportWidth / 6)
+                })
+            } else if (worldWidthChanged) {
+                this.currentBiome = normalizedBiome
+                this.rebuildLayersForBiome(normalizedBiome, effectiveWorldWidth)
+                this.interactiveLayer?.render(discoveryElements, effectiveWorldWidth)
+                this.scroller?.setOffset(resumeOffset)
+                this.nubiLayer?.setWorldX(resumeOffset + WORLD_MAP_CONFIG.viewportWidth / 6)
+            } else {
+                this.interactiveLayer?.render(discoveryElements, effectiveWorldWidth)
+                this.scroller?.setOffset(resumeOffset)
+                this.nubiLayer?.setWorldX(resumeOffset + WORLD_MAP_CONFIG.viewportWidth / 6)
+            }
+            return
+        }
 
         if (biomeChanged) {
+            // A propósito NO se toca activeWorldWidth/maxScrollOffset todavía:
+            // hacerlo aquí reclamparía el offset actual contra el ancho del
+            // NUEVO bioma mientras el bioma VIEJO sigue visible en pantalla —
+            // un salto de cámara instantáneo antes de que el fundido a negro
+            // lo cubra (bug: "se muestra el mundo antes de que se coloquen
+            // los elementos"). Se aplica dentro de beginBiomeArrival, ya bajo
+            // el fundido, junto con el reseteo de cámara/Nubi al punto de
+            // inicio del nuevo bioma.
             this.pendingBiomeLoad = normalizedBiome
             this.ensureBiomeAssetsLoaded(normalizedBiome, () => {
                 if (this.pendingBiomeLoad !== normalizedBiome) return
                 this.pendingBiomeLoad = undefined
                 this.beginBiomeArrival(normalizedBiome, effectiveWorldWidth, () => {
+                    this.activeWorldWidth = effectiveWorldWidth
+                    this.scroller?.setMaxScrollOffset(this.computeMaxScrollOffset(effectiveWorldWidth, normalizedBiome))
                     this.currentBiome = normalizedBiome
                     this.rebuildLayersForBiome(normalizedBiome, effectiveWorldWidth)
                     this.interactiveLayer?.render(discoveryElements, effectiveWorldWidth)
+                    this.scroller?.setOffset(0)
+                    this.nubiLayer?.resetToStart()
                 })
             })
         } else if (worldWidthChanged) {
+            this.activeWorldWidth = effectiveWorldWidth
+            this.scroller?.setMaxScrollOffset(this.computeMaxScrollOffset(effectiveWorldWidth, normalizedBiome))
             this.currentBiome = normalizedBiome
             this.rebuildLayersForBiome(normalizedBiome, effectiveWorldWidth)
             this.interactiveLayer?.render(discoveryElements, effectiveWorldWidth)
@@ -339,9 +400,17 @@ export class WorldMapScene extends Scene {
     // derecho del mapa (worldWidth) queda a ras del borde derecho de pantalla,
     // no cuando offset == worldWidth (eso dejaría ver hasta worldWidth +
     // viewportWidth: una franja de suelo repetido sin ningún elemento, ya que
-    // los elementos interactivos nunca superan worldWidth).
-    private computeMaxScrollOffset(worldWidth: number): number {
-        return Math.max(0, worldWidth - WORLD_MAP_CONFIG.viewportWidth)
+    // los elementos interactivos nunca superan worldWidth) — SALVO en los
+    // biomas con portal de salida (todos menos 'prehistory'), donde ese
+    // margen extra sí contiene algo: el propio portal, colocado en
+    // worldWidth + PORTAL_MARGIN (ver ExitPortalLayer). Ahí ampliamos el
+    // límite justo lo necesario para revelarlo entero, reutilizando el mismo
+    // colchón de Ground/ParallaxLayer (ya construidas con ancho
+    // worldWidth + viewportWidth) sin tocar esas capas.
+    private computeMaxScrollOffset(worldWidth: number, biome: string): number {
+        const hasExitPortal = biome !== 'prehistory'
+        const exitZoneMargin = hasExitPortal ? PORTAL_MARGIN + PORTAL_SIZE : 0
+        return Math.max(0, worldWidth + exitZoneMargin - WORLD_MAP_CONFIG.viewportWidth)
     }
 
     private getGroundTopY(): number {
@@ -366,11 +435,14 @@ export class WorldMapScene extends Scene {
         this.groundLayer?.destroy()
         this.parallaxLayer?.destroy()
         this.transportLayer?.destroy()
+        this.exitPortalLayer?.destroy()
 
         const groundContainer = this.groundLayer?.create(biome, worldWidth)
         const parallaxContainer = this.parallaxLayer?.create(this.groundLayer?.getBandHeight() ?? 0, biome, worldWidth)
 
         this.backgroundLayer?.buildFrom(biome)
+
+        this.edgeHintLayer?.setRightEdgeSuppressed(biome === 'prehistory')
 
         this.scroller?.clearLayers()
         if (groundContainer) {
@@ -391,6 +463,12 @@ export class WorldMapScene extends Scene {
         const transportContainer = this.transportLayer.create(biome, this.getGroundTopY(), WORLD_MAP_CONFIG.viewportWidth / 6)
         this.scroller?.registerLayer(transportContainer, 1)
 
+        this.exitPortalLayer = new ExitPortalLayer(this)
+        const exitPortalContainer = this.exitPortalLayer.create(biome, worldWidth, this.getGroundTopY())
+        if (exitPortalContainer) {
+            this.scroller?.registerLayer(exitPortalContainer, 1)
+        }
+
         this.nubiLayer?.adjustToGroundTopY(this.getGroundTopY())
     }
 
@@ -399,6 +477,7 @@ export class WorldMapScene extends Scene {
             host => host.biome.toLowerCase() !== this.currentBiome
         )
         this.biomeSelectorLayer?.open(hosts, ALL_BIOME_HOSTS.length)
+        this.nubiLayer?.setSelectorOpen(true)
     }
 
     private handleDestinationSelected(biome: string) {
@@ -407,6 +486,28 @@ export class WorldMapScene extends Scene {
         if (this.arrivalInProgress) return
 
         this.sendWorldTravel(biome)
+    }
+
+    private handlePortalTouched() {
+        if (this.arrivalInProgress) return
+        if (!this.currentBiome) return
+
+        const currentIndex = BIOME_ORDER.indexOf(this.currentBiome)
+        if (currentIndex === -1) return
+
+        const nextIndex = (currentIndex + 1) % BIOME_ORDER.length
+        const nextBiome = BIOME_ORDER[nextIndex]
+
+        // Nubi camina hasta el portal (fuera de [0, activeWorldWidth] a
+        // propósito, sin pasar por clampToWorldWidth) y solo al llegar se
+        // dispara el viaje — antes se transicionaba al instante, sin que
+        // Nubi se moviera hacia el portal primero. El offset/posición de
+        // Nubi para el bioma nuevo se resetean ya dentro de
+        // beginBiomeArrival (bajo el fundido), no aquí.
+        const portalWorldX = this.activeWorldWidth + PORTAL_MARGIN
+        this.nubiLayer?.walkTo(portalWorldX, () => {
+            this.sendWorldTravel(nextBiome)
+        })
     }
 
     beginBiomeArrival(targetBiome: string, _targetWorldWidth: number, onMidpoint: () => void): void {
@@ -422,6 +523,7 @@ export class WorldMapScene extends Scene {
                 this.edgeHintLayer?.destroy()
                 this.edgeHintLayer = new EdgeHintLayer(this)
                 this.edgeHintLayer.create()
+                this.edgeHintLayer.setRightEdgeSuppressed(targetBiome === 'prehistory')
                 this.waitForArrivalAudio(() => {
                     fadeFromBlack(this, overlay, duration, () => {
                         this.arrivalInProgress = false
@@ -471,6 +573,9 @@ export class WorldMapScene extends Scene {
             case 'FAREWELL':
                 this.handleFarewellEvent(event)
                 break
+            case 'BIOME_TRANSITION':
+                this.handleBiomeTransitionEvent(event)
+                break
             default:
                 break
         }
@@ -512,6 +617,38 @@ export class WorldMapScene extends Scene {
             }, 3000)
         } else {
             audioService.playStatic('farewell')
+        }
+    }
+
+    handleBiomeTransitionEvent(event: AvatarEvent) {
+        if (!this.arrivalInProgress) return
+
+        const npcEnabled = this.registry.get('npcEnabled') as boolean ?? false
+        const ttsEnabled = this.registry.get('ttsEnabled') as boolean ?? false
+        const voiceEnabled = this.registry.get('voiceEnabled') as boolean ?? false
+        const expectsVoice = npcEnabled && ttsEnabled && voiceEnabled
+
+        if (!expectsVoice) return
+
+        const audioService = this.registry.get('audioService') as AudioService | undefined
+        if (!audioService) return
+
+        if (event.audioAvailable && event.audioId) {
+            const audioId = event.audioId
+
+            const handleAudioReceived = (receivedId: string) => {
+                if (receivedId === audioId) {
+                    audioService.playDynamic(audioId)
+                    audioService.off('audio-received', handleAudioReceived)
+                }
+            }
+            audioService.on('audio-received', handleAudioReceived)
+
+            this.time.delayedCall(WORLD_MAP_CONFIG.arrivalAudioTimeout, () => {
+                if (!audioService.isCurrentlyPlaying()) {
+                    audioService.off('audio-received', handleAudioReceived)
+                }
+            })
         }
     }
 

@@ -16,10 +16,18 @@ export class EdgeHintLayer {
     private glowRight?: Phaser.GameObjects.Graphics
     private active = false
     private reducedMotion: boolean
+    private rightEdgeSuppressed = false
 
     constructor(scene: Scene) {
         this.scene = scene
         this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    }
+
+    setRightEdgeSuppressed(suppressed: boolean): void {
+        this.rightEdgeSuppressed = suppressed
+        if (suppressed && this.glowRight) {
+            this.glowRight.setAlpha(EDGE_GLOW_ALPHA_IDLE)
+        }
     }
 
     create(): void {
@@ -43,7 +51,7 @@ export class EdgeHintLayer {
 
         const threshold = WORLD_MAP_CONFIG.edgeProximityThreshold
         const remainingRight = maxScrollOffset - offset
-        const nearRightEdge = remainingRight <= threshold && maxScrollOffset > 0
+        const nearRightEdge = !this.rightEdgeSuppressed && remainingRight <= threshold && maxScrollOffset > 0
         const nearLeftEdge = offset <= threshold && maxScrollOffset > 0
 
         const shouldActivate = nearLeftEdge || nearRightEdge
