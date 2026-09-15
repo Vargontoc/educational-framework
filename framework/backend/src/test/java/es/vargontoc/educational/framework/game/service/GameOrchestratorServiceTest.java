@@ -150,7 +150,7 @@ class GameOrchestratorServiceTest {
     }
 
     private String buildTestEnginePayload() {
-        return "{\"roundIndex\":0,\"totalRounds\":3,\"currentDifficultyLevel\":1," +
+        return "{\"roundIndex\":0,\"totalRounds\":3," +
                "\"candidateElementIds\":[\"elem-1\"]," +
                "\"targetElementId\":\"elem-1\",\"optionIds\":[\"elem-1\"]," +
                "\"roundsShownElementIds\":[],\"currentRoundAttemptCount\":0," +
@@ -201,20 +201,40 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void processAction_correctAction_calls_tracking() {
+    void processAction_correctAction_buffersAttemptWithoutImmediateTracking() {
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
-            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
         ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertEquals(es.vargontoc.educational.framework.game.model.ActionResultType.CORRECT, result.resultType());
         assertNotNull(result.updatedState());
-        verify(registerActivityAttemptUseCase).register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any());
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(eventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void processAction_intermediateRounds_doNotTriggerAttemptRegistration() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
+            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
+        when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
+            .thenReturn(List.of());
+
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
+
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
+
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        verify(registerActivityAttemptUseCase, times(3)).register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any());
     }
 
     @Test
@@ -234,6 +254,7 @@ class GameOrchestratorServiceTest {
         ActionProcessingResult finalResult = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertTrue(finalResult.gameCompleted());
+        verify(registerActivityAttemptUseCase, times(3)).register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any());
         verify(evaluateGameCompletionAchievementsUseCase).evaluate(anyLong(), anyLong(), isNull());
         verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
             anyLong(), anyLong(), anyLong(), anyLong(), anyLong(),
@@ -266,6 +287,20 @@ class GameOrchestratorServiceTest {
             eq(200L), eq(100L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
             any(), any(), eq(es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus.ABANDONED)
         );
+    }
+
+    @Test
+    void abandonGame_beforeCompletion_discardsBufferedAttemptsWithoutRegistering() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+
+        orchestratorService.abandonGame(1L);
+
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -310,31 +345,42 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void processAction_unlocked_achievements_returned() {
+    void processAction_unlockedAchievements_areReturnedOnCompletion() {
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         UnlockedAchievement achievement = new UnlockedAchievement("FIRST_CORRECT_STREAK", 1L, null);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
         when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(achievement)));
+        when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
+            .thenReturn(List.of());
 
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
         ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
+        assertTrue(result.gameCompleted());
         assertFalse(result.unlockedAchievements().isEmpty());
         assertEquals("FIRST_CORRECT_STREAK", result.unlockedAchievements().get(0).achievementCode());
     }
 
     @Test
-    void processAction_difficulty_change_updates_state() {
+    void processAction_difficultyChange_appliedOnCompletion() {
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
         when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
             .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(), true, 10L));
+        when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
+            .thenReturn(List.of());
 
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
         ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
         assertTrue(result.difficultyChanged());
@@ -390,17 +436,20 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void processAction_trackingFails_continuesWithoutTracking() {
+    void processAction_flushTrackingFails_continuesWithoutTracking() {
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
         when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
             .thenThrow(new RuntimeException("Tracking service unavailable"));
 
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
         ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
 
-        assertEquals(ActionResultType.CORRECT, result.resultType());
+        assertTrue(result.gameCompleted());
         assertTrue(result.unlockedAchievements().isEmpty());
     }
 
@@ -478,5 +527,109 @@ class GameOrchestratorServiceTest {
         orchestratorService.abandonGameForSession(100L);
 
         verify(eventPublisher).publishEvent(any(GameSessionCompletedEvent.class));
+    }
+
+    @Test
+    void readyGame_repeatedActivityInSameSession_marksStateAsRepetition() {
+        GameState firstGame = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(firstGame));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
+            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
+        when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
+            .thenReturn(List.of());
+
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+
+        GameState secondGame = createRealGameState(2L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
+        when(gameStateRegistry.findByGameId(2L)).thenReturn(Optional.of(secondGame));
+
+        GameState result = orchestratorService.readyGame(2L);
+
+        assertTrue(result.isRepetition());
+    }
+
+    @Test
+    void processAction_repetitionGame_neverRegistersAttemptsOrSummary() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
+        storedState.setRepetition(true);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
+
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        ActionProcessingResult result = orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+
+        assertTrue(result.gameCompleted());
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
+        );
+        verify(evaluateGameCompletionAchievementsUseCase, never()).evaluate(any(), any(), any());
+    }
+
+    @Test
+    void abandonGame_repetitionGame_doesNotRegisterSummary() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
+        storedState.setRepetition(true);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+
+        GameState result = orchestratorService.abandonGame(1L);
+
+        assertEquals(GameStatus.ABANDONED, result.getStatus());
+        verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
+        );
+    }
+
+    @Test
+    void abandonGameForSession_repetitionGame_doesNotRegisterSummary() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
+        storedState.setRepetition(true);
+
+        when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+
+        orchestratorService.abandonGameForSession(100L);
+
+        assertEquals(GameStatus.ABANDONED, storedState.getStatus());
+        verify(gameStateRegistry).remove(1L);
+        verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
+        );
+    }
+
+    @Test
+    void clearSessionData_clearsCompletedActivitiesForSession() {
+        GameState firstGame = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(firstGame));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        doAnswer(invocation -> null).when(gameStateRegistry).remove(anyLong());
+        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), isNull(), isNull(), anyLong(), any(), any(), any()))
+            .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
+        when(evaluateGameCompletionAchievementsUseCase.evaluate(anyLong(), anyLong(), isNull()))
+            .thenReturn(List.of());
+
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+        orchestratorService.processAction(1L, "{\"selectedOptionId\":\"elem-1\",\"responseTimeMs\":2000}", null, 2000);
+
+        orchestratorService.clearSessionData(100L);
+
+        GameState secondGame = createRealGameState(2L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
+        when(gameStateRegistry.findByGameId(2L)).thenReturn(Optional.of(secondGame));
+
+        GameState result = orchestratorService.readyGame(2L);
+
+        assertFalse(result.isRepetition());
+        verify(sessionAntiRepetitionRegistry).clearSession(100L);
     }
 }

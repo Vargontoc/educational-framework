@@ -19,7 +19,6 @@ import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
-import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.RecognitionCategory;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
@@ -43,7 +42,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -154,8 +152,7 @@ class GameOrchestratorServiceSprint070Test {
     }
 
     private String buildRecognitionPayload(String targetId, List<String> optionIds,
-                                            List<String> candidateIds, int roundIndex,
-                                            int currentDifficultyLevel, Integer pendingDifficultyLevel) {
+                                            List<String> candidateIds, int roundIndex) {
         try {
             RecognitionState rs = new RecognitionState();
             rs.setRoundIndex(roundIndex);
@@ -163,8 +160,6 @@ class GameOrchestratorServiceSprint070Test {
             rs.setTargetElementId(targetId);
             rs.setOptionIds(optionIds);
             rs.setCandidateElementIds(candidateIds);
-            rs.setCurrentDifficultyLevel(currentDifficultyLevel);
-            rs.setPendingDifficultyLevel(pendingDifficultyLevel);
             rs.setRoundsShownElementIds(new java.util.ArrayList<>());
             rs.setCurrentRoundAttemptCount(0);
             rs.setCurrentRoundConsecutiveFailures(0);
@@ -264,13 +259,11 @@ class GameOrchestratorServiceSprint070Test {
     @Test
     void processAction_correctAnswer_registersTargetAsRecent() {
         String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
-                List.of("10", "11", "12", "13"), 0, 1, null);
+                List.of("10", "11", "12", "13"), 0);
         GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
         ActionProcessingResult result = orchestratorService.processAction(
                 1L, "{\"selectedOptionId\":\"10\",\"responseTimeMs\":2000}", 10L, 2000);
@@ -282,13 +275,11 @@ class GameOrchestratorServiceSprint070Test {
     @Test
     void processAction_incorrectAnswer_doesNotRegisterTarget() {
         String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
-                List.of("10", "11", "12", "13"), 0, 1, null);
+                List.of("10", "11", "12", "13"), 0);
         GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
         ActionProcessingResult result = orchestratorService.processAction(
                 1L, "{\"selectedOptionId\":\"11\",\"responseTimeMs\":2000}", 10L, 2000);
@@ -298,108 +289,10 @@ class GameOrchestratorServiceSprint070Test {
     }
 
     @Test
-    void processAction_difficultyChangeDuringRetry_doesNotApplyImmediately() {
-        String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
-                List.of("10", "11", "12", "13"), 0, 1, null);
-        GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
-
-        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
-        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(), true, 10L));
-
-        ActionProcessingResult result = orchestratorService.processAction(
-                1L, "{\"selectedOptionId\":\"11\",\"responseTimeMs\":2000}", 10L, 2000);
-
-        assertEquals(ActionResultType.INCORRECT, result.resultType());
-        assertTrue(result.difficultyChanged());
-        assertEquals(5L, result.updatedState().getDifficultyLevelId());
-
-        RecognitionState recState = deserializeRecognitionState(result.updatedState().getEnginePayload());
-        assertEquals(10, recState.getPendingDifficultyLevel());
-        assertEquals(1, recState.getCurrentDifficultyLevel());
-    }
-
-    @Test
-    void processAction_pendingDifficulty_promotedAfterCorrectAnswer() {
-        String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
-                List.of("10", "11", "12", "13"), 0, 1, 10);
-        GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
-
-        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
-        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
-
-        ActionProcessingResult result = orchestratorService.processAction(
-                1L, "{\"selectedOptionId\":\"10\",\"responseTimeMs\":2000}", 10L, 2000);
-
-        assertEquals(ActionResultType.CORRECT, result.resultType());
-        assertEquals(10L, result.updatedState().getDifficultyLevelId());
-
-        RecognitionState recState = deserializeRecognitionState(result.updatedState().getEnginePayload());
-        assertEquals(10, recState.getCurrentDifficultyLevel());
-        assertNull(recState.getPendingDifficultyLevel());
-    }
-
-    @Test
-    void processAction_noPendingDifficulty_correctAnswer_doesNotChangeDifficulty() {
-        String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
-                List.of("10", "11", "12", "13"), 0, 1, null);
-        GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
-
-        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
-        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
-
-        ActionProcessingResult result = orchestratorService.processAction(
-                1L, "{\"selectedOptionId\":\"10\",\"responseTimeMs\":2000}", 10L, 2000);
-
-        assertEquals(ActionResultType.CORRECT, result.resultType());
-        assertEquals(5L, result.updatedState().getDifficultyLevelId());
-
-        RecognitionState recState = deserializeRecognitionState(result.updatedState().getEnginePayload());
-        assertEquals(1, recState.getCurrentDifficultyLevel());
-        assertNull(recState.getPendingDifficultyLevel());
-    }
-
-    @Test
-    void processAction_difficultyChangeAndCorrect_promotesImmediately() {
-        String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
-                List.of("10", "11", "12", "13"), 0, 1, null);
-        GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
-
-        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
-        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of(), true, 10L));
-
-        ActionProcessingResult result = orchestratorService.processAction(
-                1L, "{\"selectedOptionId\":\"10\",\"responseTimeMs\":2000}", 10L, 2000);
-
-        assertEquals(ActionResultType.CORRECT, result.resultType());
-        assertTrue(result.difficultyChanged());
-        assertEquals(10L, result.updatedState().getDifficultyLevelId());
-
-        RecognitionState recState = deserializeRecognitionState(result.updatedState().getEnginePayload());
-        assertEquals(10, recState.getCurrentDifficultyLevel());
-        assertNull(recState.getPendingDifficultyLevel());
-    }
-
-    @Test
     void clearSessionData_clearsAntiRepetitionRegistry() {
         orchestratorService.clearSessionData(100L);
 
         verify(sessionAntiRepetitionRegistry).clearSession(100L);
-    }
-
-    private RecognitionState deserializeRecognitionState(String payload) {
-        try {
-            return OBJECT_MAPPER.readValue(payload, RecognitionState.class);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private RecognitionElement createElement(Long id, Long topicId) {

@@ -26,6 +26,7 @@ import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
+import es.vargontoc.educational.framework.game.model.recognition.RoundAttemptRecord;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
@@ -49,6 +50,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -70,6 +72,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final RecognitionElementRepository recognitionElementRepository;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
+    private final Map<Long, Set<Long>> completedActivitiesBySession = new ConcurrentHashMap<>();
 
     public GameOrchestratorService(
             GameCatalogUseCase gameCatalogUseCase,
@@ -149,6 +152,12 @@ public class GameOrchestratorService implements GameOrchestrator {
             throw new InvalidStateTransitionException(state.getStatus(), GameStatus.STARTING);
         }
 
+        Long childSessionId = state.getChildSessionId();
+        Long activityId = state.getActivityId();
+        boolean repetition = childSessionId != null && activityId != null
+                && completedActivitiesBySession.getOrDefault(childSessionId, Set.of()).contains(activityId);
+        state.setRepetition(repetition);
+
         state.setStatus(GameStatus.STARTING);
         state.setLastActivityAt(LocalDateTime.now());
         gameStateRegistry.save(state);
@@ -225,37 +234,12 @@ public class GameOrchestratorService implements GameOrchestrator {
             boolean difficultyChanged = false;
             Long newDifficultyLevelId = null;
 
-            try {
-                AttemptRegistrationResult attemptResult = registerActivityAttemptUseCase.register(
-                    state.getChildProfileId(),
-                    state.getActivityId(),
-                    state.getChildSessionId(),
-                    topicId,
-                    elementId,
-                    state.getDifficultyLevelId(),
-                    trackingResult,
-                    responseTimeMs,
-                    engineResult.getAttemptContext()
-                );
-
-                if (attemptResult != null && attemptResult.unlockedAchievements() != null) {
-                    allUnlockedAchievements.addAll(attemptResult.unlockedAchievements());
+            if (!state.isRepetition()) {
+                try {
+                    bufferAttempt(state, topicId, elementId, trackingResult, responseTimeMs, engineResult.getAttemptContext());
+                } catch (Exception e) {
+                    log.warn("Tracking operation failed, continuing without tracking update: {}", e.getMessage());
                 }
-
-                if (attemptResult != null && attemptResult.difficultyChanged()
-                        && attemptResult.newDifficultyLevelId() != null
-                        && !attemptResult.newDifficultyLevelId().equals(state.getDifficultyLevelId())) {
-                    difficultyChanged = true;
-                    newDifficultyLevelId = attemptResult.newDifficultyLevelId();
-
-                    if (state.getEngine() == EngineType.RECOGNITION) {
-                        applyDeferredDifficulty(state, newDifficultyLevelId);
-                    } else {
-                        state.setDifficultyLevelId(newDifficultyLevelId);
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("Tracking operation failed, continuing without tracking update: {}", e.getMessage());
             }
 
             if (engineResult.getResultType() == ActionResultType.CORRECT
@@ -264,7 +248,6 @@ public class GameOrchestratorService implements GameOrchestrator {
                     sessionAntiRepetitionRegistry.registerRecentElement(
                             state.getChildSessionId(), topicId, targetBeforeAction);
                 }
-                promotePendingDifficulty(state);
             }
 
             boolean gameCompleted = engineResult.isCompleted();
@@ -273,32 +256,48 @@ public class GameOrchestratorService implements GameOrchestrator {
                 state.setStatus(GameStatus.COMPLETED);
                 state.setCompletedAt(LocalDateTime.now());
 
-                try {
-                    List<UnlockedAchievement> completionAchievements = evaluateGameCompletionAchievementsUseCase.evaluate(
-                        state.getChildProfileId(),
-                        state.getActivityId(),
-                        topicId
-                    );
-                    if (completionAchievements != null) {
-                        allUnlockedAchievements.addAll(completionAchievements);
-                    }
+                if (!state.isRepetition()) {
+                    try {
+                        FlushResult flushResult = flushBufferedAttempts(state);
+                        if (!flushResult.unlockedAchievements().isEmpty()) {
+                            allUnlockedAchievements.addAll(flushResult.unlockedAchievements());
+                        }
+                        if (flushResult.difficultyChanged()) {
+                            difficultyChanged = true;
+                            newDifficultyLevelId = flushResult.newDifficultyLevelId();
+                            state.setDifficultyLevelId(newDifficultyLevelId);
+                        }
 
-                    registerGameSessionSummaryUseCase.registerGameSessionSummary(
-                        state.getChildProfileId(),
-                        state.getChildSessionId(),
-                        state.getActivityId(),
-                        state.getDifficultyLevelId(),
-                        newDifficultyLevelId != null ? newDifficultyLevelId : state.getDifficultyLevelId(),
-                        state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
-                        state.getAttempts() != null ? state.getAttempts() : 0,
-                        state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
-                        state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
-                        state.getStartedAt(),
-                        LocalDateTime.now(),
-                        GameSessionFinalStatus.COMPLETED
-                    );
-                } catch (Exception e) {
-                    log.warn("Game completion tracking failed: {}", e.getMessage());
+                        List<UnlockedAchievement> completionAchievements = evaluateGameCompletionAchievementsUseCase.evaluate(
+                            state.getChildProfileId(),
+                            state.getActivityId(),
+                            topicId
+                        );
+                        if (completionAchievements != null) {
+                            allUnlockedAchievements.addAll(completionAchievements);
+                        }
+
+                        registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                            state.getChildProfileId(),
+                            state.getChildSessionId(),
+                            state.getActivityId(),
+                            state.getDifficultyLevelId(),
+                            newDifficultyLevelId != null ? newDifficultyLevelId : state.getDifficultyLevelId(),
+                            state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
+                            state.getAttempts() != null ? state.getAttempts() : 0,
+                            state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
+                            state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
+                            state.getStartedAt(),
+                            LocalDateTime.now(),
+                            GameSessionFinalStatus.COMPLETED
+                        );
+
+                        completedActivitiesBySession
+                            .computeIfAbsent(state.getChildSessionId(), k -> ConcurrentHashMap.newKeySet())
+                            .add(state.getActivityId());
+                    } catch (Exception e) {
+                        log.warn("Game completion tracking failed: {}", e.getMessage());
+                    }
                 }
 
                 gameStateRegistry.remove(gameId);
@@ -338,23 +337,25 @@ public class GameOrchestratorService implements GameOrchestrator {
             state.setStatus(GameStatus.ABANDONED);
             state.setLastActivityAt(LocalDateTime.now());
 
-            try {
-                registerGameSessionSummaryUseCase.registerGameSessionSummary(
-                    state.getChildProfileId(),
-                    state.getChildSessionId(),
-                    state.getActivityId(),
-                    state.getDifficultyLevelId(),
-                    state.getDifficultyLevelId(),
-                    state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
-                    state.getAttempts() != null ? state.getAttempts() : 0,
-                    state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
-                    state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
-                    state.getStartedAt(),
-                    LocalDateTime.now(),
-                    GameSessionFinalStatus.ABANDONED
-                );
-            } catch (Exception e) {
-                log.warn("Failed to register game session summary for client-abandoned game: {}", e.getMessage());
+            if (!state.isRepetition()) {
+                try {
+                    registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                        state.getChildProfileId(),
+                        state.getChildSessionId(),
+                        state.getActivityId(),
+                        state.getDifficultyLevelId(),
+                        state.getDifficultyLevelId(),
+                        state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
+                        state.getAttempts() != null ? state.getAttempts() : 0,
+                        state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
+                        state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
+                        state.getStartedAt(),
+                        LocalDateTime.now(),
+                        GameSessionFinalStatus.ABANDONED
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to register game session summary for client-abandoned game: {}", e.getMessage());
+                }
             }
 
             gameStateRegistry.remove(gameId);
@@ -388,23 +389,25 @@ public class GameOrchestratorService implements GameOrchestrator {
             state.setStatus(GameStatus.ABANDONED);
             state.setLastActivityAt(LocalDateTime.now());
 
-            try {
-                registerGameSessionSummaryUseCase.registerGameSessionSummary(
-                    state.getChildProfileId(),
-                    state.getChildSessionId(),
-                    state.getActivityId(),
-                    state.getDifficultyLevelId(),
-                    state.getDifficultyLevelId(),
-                    state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
-                    state.getAttempts() != null ? state.getAttempts() : 0,
-                    state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
-                    state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
-                    state.getStartedAt(),
-                    LocalDateTime.now(),
-                    GameSessionFinalStatus.ABANDONED
-                );
-            } catch (Exception e) {
-                log.warn("Failed to register game session summary for abandoned game: {}", e.getMessage());
+            if (!state.isRepetition()) {
+                try {
+                    registerGameSessionSummaryUseCase.registerGameSessionSummary(
+                        state.getChildProfileId(),
+                        state.getChildSessionId(),
+                        state.getActivityId(),
+                        state.getDifficultyLevelId(),
+                        state.getDifficultyLevelId(),
+                        state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
+                        state.getAttempts() != null ? state.getAttempts() : 0,
+                        state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
+                        state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
+                        state.getStartedAt(),
+                        LocalDateTime.now(),
+                        GameSessionFinalStatus.ABANDONED
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to register game session summary for abandoned game: {}", e.getMessage());
+                }
             }
 
             gameStateRegistry.remove(gameId);
@@ -420,6 +423,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     @Override
     public void clearSessionData(Long childSessionId) {
         sessionAntiRepetitionRegistry.clearSession(childSessionId);
+        completedActivitiesBySession.remove(childSessionId);
     }
 
     private ReentrantLock getLock(Long gameId) {
@@ -596,29 +600,56 @@ public class GameOrchestratorService implements GameOrchestrator {
         }
     }
 
-    private void applyDeferredDifficulty(GameState state, Long newDifficultyLevelId) {
-        try {
-            RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
-            recState.setPendingDifficultyLevel(newDifficultyLevelId.intValue());
-            state.setEnginePayload(serializeRecognitionState(recState));
-        } catch (Exception e) {
-            log.warn("Failed to apply deferred difficulty: {}", e.getMessage());
-            state.setDifficultyLevelId(newDifficultyLevelId);
+    private void bufferAttempt(GameState state, Long topicId, Long elementId, AttemptResult result,
+            Integer responseTimeMs, String attemptContext) {
+        if (state.getEngine() != EngineType.RECOGNITION) {
+            return;
         }
+        RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
+        recState.getRoundAttempts().add(new RoundAttemptRecord(
+                topicId, elementId, state.getDifficultyLevelId(), result, responseTimeMs, attemptContext));
+        state.setEnginePayload(serializeRecognitionState(recState));
     }
 
-    private void promotePendingDifficulty(GameState state) {
-        try {
-            RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
-            if (recState.getPendingDifficultyLevel() != null) {
-                recState.setCurrentDifficultyLevel(recState.getPendingDifficultyLevel());
-                state.setDifficultyLevelId(recState.getPendingDifficultyLevel().longValue());
-                recState.setPendingDifficultyLevel(null);
-                state.setEnginePayload(serializeRecognitionState(recState));
+    private record FlushResult(
+            List<UnlockedAchievement> unlockedAchievements,
+            boolean difficultyChanged,
+            Long newDifficultyLevelId) {
+    }
+
+    private FlushResult flushBufferedAttempts(GameState state) {
+        List<UnlockedAchievement> achievements = new ArrayList<>();
+        boolean difficultyChanged = false;
+        Long newDifficultyLevelId = null;
+
+        RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
+        for (RoundAttemptRecord attempt : recState.getRoundAttempts()) {
+            try {
+                AttemptRegistrationResult result = registerActivityAttemptUseCase.register(
+                        state.getChildProfileId(),
+                        state.getActivityId(),
+                        state.getChildSessionId(),
+                        attempt.topicId(),
+                        attempt.elementId(),
+                        attempt.difficultyLevelId(),
+                        attempt.result(),
+                        attempt.responseTimeMs(),
+                        attempt.attemptContext()
+                );
+
+                if (result != null && result.unlockedAchievements() != null) {
+                    achievements.addAll(result.unlockedAchievements());
+                }
+                if (result != null && result.difficultyChanged() && result.newDifficultyLevelId() != null) {
+                    difficultyChanged = true;
+                    newDifficultyLevelId = result.newDifficultyLevelId();
+                }
+            } catch (Exception e) {
+                log.warn("Failed to flush buffered attempt for gameId={}: {}", state.getGameId(), e.getMessage());
             }
-        } catch (Exception e) {
-            log.warn("Failed to promote pending difficulty: {}", e.getMessage());
         }
+
+        return new FlushResult(achievements, difficultyChanged, newDifficultyLevelId);
     }
 
     private RecognitionState deserializeRecognitionState(String payload) {

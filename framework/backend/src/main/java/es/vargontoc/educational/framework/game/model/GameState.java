@@ -32,6 +32,7 @@ public class GameState {
     private EngineType engine;
     private List<String> candidates;
     private RecognitionCategory recognitionCategory;
+    private boolean repetition;
 
     public Long getGameId() {
         return gameId;
@@ -215,6 +216,14 @@ public class GameState {
 
     public void setRecognitionCategory(RecognitionCategory recognitionCategory) {
         this.recognitionCategory = recognitionCategory;
+    }
+
+    public boolean isRepetition() {
+        return repetition;
+    }
+
+    public void setRepetition(boolean repetition) {
+        this.repetition = repetition;
     }
 
 }

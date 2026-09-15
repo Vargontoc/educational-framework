@@ -43,6 +43,7 @@ public class GameSessionSummaryPersistenceAdapter implements GameSessionSummaryR
         target.setStartedAt(source.getStartedAt());
         target.setEndedAt(source.getEndedAt());
         target.setFinalStatus(GameSessionFinalStatus.valueOf(source.getFinalStatus()));
+        target.setRepetition(source.isRepetition());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -63,6 +64,7 @@ public class GameSessionSummaryPersistenceAdapter implements GameSessionSummaryR
         target.setStartedAt(source.getStartedAt());
         target.setEndedAt(source.getEndedAt());
         target.setFinalStatus(source.getFinalStatus().name());
+        target.setRepetition(source.isRepetition());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;

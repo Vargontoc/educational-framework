@@ -918,7 +918,6 @@ class GameWebSocketHandlerTest {
         recognitionState.setTotalIncorrectAttempts(2);
         recognitionState.setTotalCorrectFirstTry(0);
         recognitionState.setTotalResponseTimeMs(3000L);
-        recognitionState.setPendingDifficultyLevel(2);
 
         ObjectMapper mapper = new ObjectMapper();
         try {
@@ -936,11 +935,9 @@ class GameWebSocketHandlerTest {
         assertFalse(recPayload.containsKey("totalIncorrectAttempts"));
         assertFalse(recPayload.containsKey("totalCorrectFirstTry"));
         assertFalse(recPayload.containsKey("totalResponseTimeMs"));
-        assertFalse(recPayload.containsKey("pendingDifficultyLevel"));
         assertFalse(recPayload.containsKey("roundsShownElementIds"));
         assertFalse(recPayload.containsKey("selectedOptionId"));
         assertFalse(recPayload.containsKey("hintTriggeredAtAttempt"));
-        assertFalse(recPayload.containsKey("currentDifficultyLevel"));
         assertFalse(payload.containsKey("candidates"));
     }
 

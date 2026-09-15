@@ -8,6 +8,7 @@ import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
+import es.vargontoc.educational.framework.game.model.recognition.RoundAttemptRecord;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
@@ -38,6 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -130,8 +132,6 @@ class GameOrchestratorServiceTrackingIntegrationTest {
             rs.setTargetElementId(targetId);
             rs.setOptionIds(optionIds);
             rs.setCandidateElementIds(candidateIds);
-            rs.setCurrentDifficultyLevel(1);
-            rs.setPendingDifficultyLevel(null);
             rs.setRoundsShownElementIds(new java.util.ArrayList<>());
             rs.setCurrentRoundAttemptCount(currentRoundAttemptCount);
             rs.setCurrentRoundConsecutiveFailures(currentRoundConsecutiveFailures);
@@ -147,33 +147,41 @@ class GameOrchestratorServiceTrackingIntegrationTest {
         }
     }
 
+    private RoundAttemptRecord lastBufferedAttempt(GameState state) {
+        try {
+            RecognitionState recState = OBJECT_MAPPER.readValue(state.getEnginePayload(), RecognitionState.class);
+            List<RoundAttemptRecord> attempts = recState.getRoundAttempts();
+            assertFalse(attempts.isEmpty(), "Expected at least one buffered attempt");
+            return attempts.get(attempts.size() - 1);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Test
-    void incorrectAttempt_trackingReceivesContextWithAllFields() {
+    void incorrectAttempt_bufferedContextContainsAllFields() {
         String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
                 List.of("10", "11", "12", "13"), 0, 0, 0, false, null);
         GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
         ActionProcessingResult result = orchestratorService.processAction(
                 1L, "{\"selectedOptionId\":\"11\",\"responseTimeMs\":2000}", 10L, 2000);
 
         assertEquals(ActionResultType.INCORRECT, result.resultType());
         assertNotNull(result.attemptContext());
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
 
-        ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
-        verify(registerActivityAttemptUseCase).register(
-                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
-                any(), eq(2000), contextCaptor.capture());
-
-        String capturedContext = contextCaptor.getValue();
-        assertNotNull(capturedContext);
+        RoundAttemptRecord buffered = lastBufferedAttempt(result.updatedState());
+        assertEquals(10L, buffered.topicId());
+        assertEquals(10L, buffered.elementId());
+        assertEquals(5L, buffered.difficultyLevelId());
+        assertEquals(2000, buffered.responseTimeMs());
 
         try {
-            JsonNode ctx = OBJECT_MAPPER.readTree(capturedContext);
+            JsonNode ctx = OBJECT_MAPPER.readTree(buffered.attemptContext());
             assertEquals("RECOGNITION", ctx.get("engineType").asString());
             assertEquals(0, ctx.get("roundIndex").asInt());
             assertEquals("10", ctx.get("targetElementId").asString());
@@ -191,28 +199,23 @@ class GameOrchestratorServiceTrackingIntegrationTest {
     }
 
     @Test
-    void firstCorrectAttempt_trackingReceivesIsFirstTryTrue() {
+    void firstCorrectAttempt_bufferedContextHasIsFirstTryTrue() {
         String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
                 List.of("10", "11", "12", "13"), 0, 0, 0, false, null);
         GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
         ActionProcessingResult result = orchestratorService.processAction(
                 1L, "{\"selectedOptionId\":\"10\",\"responseTimeMs\":1500}", 10L, 1500);
 
         assertEquals(ActionResultType.CORRECT, result.resultType());
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
 
-        ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
-        verify(registerActivityAttemptUseCase).register(
-                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
-                any(), eq(1500), contextCaptor.capture());
-
+        RoundAttemptRecord buffered = lastBufferedAttempt(result.updatedState());
         try {
-            JsonNode ctx = OBJECT_MAPPER.readTree(contextCaptor.getValue());
+            JsonNode ctx = OBJECT_MAPPER.readTree(buffered.attemptContext());
             assertTrue(ctx.get("firstTry").asBoolean());
             assertEquals(1, ctx.get("attemptNumberInRound").asInt());
             assertEquals(0, ctx.get("roundIndex").asInt());
@@ -222,28 +225,23 @@ class GameOrchestratorServiceTrackingIntegrationTest {
     }
 
     @Test
-    void retryCorrectAttempt_trackingReceivesIsFirstTryFalse() {
+    void retryCorrectAttempt_bufferedContextHasIsFirstTryFalse() {
         String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
                 List.of("10", "11", "12", "13"), 0, 1, 1, false, null);
         GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
         ActionProcessingResult result = orchestratorService.processAction(
                 1L, "{\"selectedOptionId\":\"10\",\"responseTimeMs\":3000}", 10L, 3000);
 
         assertEquals(ActionResultType.CORRECT, result.resultType());
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
 
-        ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
-        verify(registerActivityAttemptUseCase).register(
-                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
-                any(), eq(3000), contextCaptor.capture());
-
+        RoundAttemptRecord buffered = lastBufferedAttempt(result.updatedState());
         try {
-            JsonNode ctx = OBJECT_MAPPER.readTree(contextCaptor.getValue());
+            JsonNode ctx = OBJECT_MAPPER.readTree(buffered.attemptContext());
             assertFalse(ctx.get("firstTry").asBoolean());
             assertEquals(2, ctx.get("attemptNumberInRound").asInt());
         } catch (Exception e) {
@@ -252,28 +250,23 @@ class GameOrchestratorServiceTrackingIntegrationTest {
     }
 
     @Test
-    void afterHintActivation_trackingReceivesCorrectHintFlags() {
+    void afterHintActivation_bufferedContextHasCorrectHintFlags() {
         String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
                 List.of("10", "11", "12", "13"), 0, 2, 2, true, 2);
         GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
         ActionProcessingResult result = orchestratorService.processAction(
                 1L, "{\"selectedOptionId\":\"11\",\"responseTimeMs\":2000}", 10L, 2000);
 
         assertEquals(ActionResultType.INCORRECT, result.resultType());
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
 
-        ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
-        verify(registerActivityAttemptUseCase).register(
-                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
-                any(), eq(2000), contextCaptor.capture());
-
+        RoundAttemptRecord buffered = lastBufferedAttempt(result.updatedState());
         try {
-            JsonNode ctx = OBJECT_MAPPER.readTree(contextCaptor.getValue());
+            JsonNode ctx = OBJECT_MAPPER.readTree(buffered.attemptContext());
             assertTrue(ctx.get("hintActive").asBoolean());
             assertTrue(ctx.get("hintTriggeredBeforeAnswer").asBoolean());
             assertEquals(3, ctx.get("attemptNumberInRound").asInt());
@@ -318,21 +311,25 @@ class GameOrchestratorServiceTrackingIntegrationTest {
     }
 
     @Test
-    void trackingContext_attemptContextIsPassedThrough() {
+    void trackingContext_attemptContextIsBufferedForLaterFlush() {
         String payload = buildRecognitionPayload("10", List.of("10", "11", "12"),
                 List.of("10", "11", "12", "13"), 0, 0, 0, false, null);
         GameState storedState = createInProgressState(1L, 100L, 1L, 5L, payload);
 
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        when(registerActivityAttemptUseCase.register(anyLong(), anyLong(), anyLong(), any(), any(), anyLong(), any(), any(), any()))
-                .thenReturn(new AttemptRegistrationResult(1L, LocalDateTime.now(), List.of()));
 
-        orchestratorService.processAction(
+        ActionProcessingResult result = orchestratorService.processAction(
                 1L, "{\"selectedOptionId\":\"11\",\"responseTimeMs\":2000}", 10L, 2000);
 
-        verify(registerActivityAttemptUseCase).register(
-                eq(200L), eq(1L), eq(100L), eq(10L), any(), eq(5L),
-                any(), eq(2000), any(String.class));
+        verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
+
+        RoundAttemptRecord buffered = lastBufferedAttempt(result.updatedState());
+        assertEquals(200L, storedState.getChildProfileId());
+        assertEquals(10L, buffered.topicId());
+        assertEquals(10L, buffered.elementId());
+        assertEquals(5L, buffered.difficultyLevelId());
+        assertEquals(2000, buffered.responseTimeMs());
+        assertNotNull(buffered.attemptContext());
     }
 }

@@ -72,7 +72,6 @@ class RecognitionEngineTest {
         RecognitionState state = deserializeState(gs.getEnginePayload());
         assertEquals(0, state.getRoundIndex());
         assertEquals(RecognitionDefaults.DEFAULT_TOTAL_ROUNDS, state.getTotalRounds());
-        assertEquals(RecognitionDefaults.DEFAULT_DIFFICULTY_LEVEL, state.getCurrentDifficultyLevel());
         assertNotNull(state.getTargetElementId());
         assertNotNull(state.getOptionIds());
         assertFalse(state.getOptionIds().isEmpty());

@@ -47,6 +47,9 @@ public class GameSessionSummaryJpaEntity extends BaseEntity {
     @Column(name = "final_status", nullable = false, length = 20)
     private String finalStatus;
 
+    @Column(name = "is_repetition", nullable = false)
+    private boolean repetition;
+
     public Long getChildProfileId() {
         return childProfileId;
     }
@@ -141,5 +144,13 @@ public class GameSessionSummaryJpaEntity extends BaseEntity {
 
     public void setFinalStatus(String finalStatus) {
         this.finalStatus = finalStatus;
+    }
+
+    public boolean isRepetition() {
+        return repetition;
+    }
+
+    public void setRepetition(boolean repetition) {
+        this.repetition = repetition;
     }
 }

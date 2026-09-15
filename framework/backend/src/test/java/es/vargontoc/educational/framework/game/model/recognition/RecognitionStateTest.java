@@ -36,7 +36,6 @@ class RecognitionStateTest {
         assertFalse(state.isHintActive());
         assertNull(state.getSelectedOptionId());
         assertNull(state.getHintTriggeredAtAttempt());
-        assertNull(state.getPendingDifficultyLevel());
         assertNotNull(state.getRoundsShownElementIds());
         assertTrue(state.getRoundsShownElementIds().isEmpty());
     }
@@ -64,7 +63,6 @@ class RecognitionStateTest {
         var state = new RecognitionState();
 
         assertEquals(RecognitionDefaults.DEFAULT_TOTAL_ROUNDS, state.getTotalRounds());
-        assertEquals(RecognitionDefaults.DEFAULT_DIFFICULTY_LEVEL, state.getCurrentDifficultyLevel());
         assertNotNull(state.getOptionIds());
         assertNotNull(state.getRoundsShownElementIds());
     }
@@ -87,12 +85,21 @@ class RecognitionStateTest {
     }
 
     @Test
-    void recognitionState_pendingDifficultyLevelIsOptional() {
+    void recognitionState_roundAttemptsDefaultsToEmptyAndIsConfigurable() {
         var state = new RecognitionState();
-        assertNull(state.getPendingDifficultyLevel());
 
-        state.setPendingDifficultyLevel(3);
-        assertEquals(3, state.getPendingDifficultyLevel());
+        assertNotNull(state.getRoundAttempts());
+        assertTrue(state.getRoundAttempts().isEmpty());
+
+        var attempt = new RoundAttemptRecord(10L, 20L, 5L,
+                es.vargontoc.educational.framework.tracking.model.AttemptResult.CORRECT, 1500, "{}");
+        state.getRoundAttempts().add(attempt);
+
+        assertEquals(1, state.getRoundAttempts().size());
+        assertEquals(attempt, state.getRoundAttempts().get(0));
+
+        state.setRoundAttempts(List.of());
+        assertTrue(state.getRoundAttempts().isEmpty());
     }
 
     @Test

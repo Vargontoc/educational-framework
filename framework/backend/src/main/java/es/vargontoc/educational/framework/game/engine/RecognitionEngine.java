@@ -243,7 +243,6 @@ public class RecognitionEngine implements GameEnginePort {
         RecognitionState state = new RecognitionState();
         state.setRoundIndex(0);
         state.setTotalRounds(RecognitionDefaults.DEFAULT_TOTAL_ROUNDS);
-        state.setCurrentDifficultyLevel(RecognitionDefaults.DEFAULT_DIFFICULTY_LEVEL);
         state.setRoundStartedAt(LocalDateTime.now());
         state.setRoundsShownElementIds(new ArrayList<>());
         state.setCurrentRoundAttemptCount(0);

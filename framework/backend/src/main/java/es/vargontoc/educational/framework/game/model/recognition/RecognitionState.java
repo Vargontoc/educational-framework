@@ -23,16 +23,15 @@ public class RecognitionState {
     private Integer hintTriggeredAtAttempt;
     private LocalDateTime roundStartedAt;
     private LocalDateTime lastActionAt;
-    private int currentDifficultyLevel;
-    private Integer pendingDifficultyLevel;
     private long totalResponseTimeMs;
     private List<String> candidateElementIds;
+    private List<RoundAttemptRecord> roundAttempts;
 
     public RecognitionState() {
         this.totalRounds = RecognitionDefaults.DEFAULT_TOTAL_ROUNDS;
         this.optionIds = new ArrayList<>();
         this.roundsShownElementIds = new ArrayList<>();
-        this.currentDifficultyLevel = RecognitionDefaults.DEFAULT_DIFFICULTY_LEVEL;
+        this.roundAttempts = new ArrayList<>();
     }
 
     public RecognitionCategory getRecognitionCategory() {
@@ -155,22 +154,6 @@ public class RecognitionState {
         this.lastActionAt = lastActionAt;
     }
 
-    public int getCurrentDifficultyLevel() {
-        return currentDifficultyLevel;
-    }
-
-    public void setCurrentDifficultyLevel(int currentDifficultyLevel) {
-        this.currentDifficultyLevel = currentDifficultyLevel;
-    }
-
-    public Integer getPendingDifficultyLevel() {
-        return pendingDifficultyLevel;
-    }
-
-    public void setPendingDifficultyLevel(Integer pendingDifficultyLevel) {
-        this.pendingDifficultyLevel = pendingDifficultyLevel;
-    }
-
     public long getTotalResponseTimeMs() {
         return totalResponseTimeMs;
     }
@@ -185,5 +168,13 @@ public class RecognitionState {
 
     public void setCandidateElementIds(List<String> candidateElementIds) {
         this.candidateElementIds = candidateElementIds;
+    }
+
+    public List<RoundAttemptRecord> getRoundAttempts() {
+        return roundAttempts;
+    }
+
+    public void setRoundAttempts(List<RoundAttemptRecord> roundAttempts) {
+        this.roundAttempts = roundAttempts;
     }
 }

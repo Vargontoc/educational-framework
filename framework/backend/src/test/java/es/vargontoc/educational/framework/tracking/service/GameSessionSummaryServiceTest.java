@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,6 +62,7 @@ class GameSessionSummaryServiceTest {
         assertEquals(7, saved.getTotalCorrect());
         assertEquals(2, saved.getTotalTimeouts());
         assertEquals(GameSessionFinalStatus.COMPLETED, saved.getFinalStatus());
+        assertFalse(saved.isRepetition());
     }
 
     @Test

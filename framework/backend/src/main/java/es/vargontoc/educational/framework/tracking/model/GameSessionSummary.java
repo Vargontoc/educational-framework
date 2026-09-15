@@ -17,6 +17,7 @@ public class GameSessionSummary {
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private GameSessionFinalStatus finalStatus;
+    private boolean repetition;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -125,6 +126,14 @@ public class GameSessionSummary {
 
     public void setFinalStatus(GameSessionFinalStatus finalStatus) {
         this.finalStatus = finalStatus;
+    }
+
+    public boolean isRepetition() {
+        return repetition;
+    }
+
+    public void setRepetition(boolean repetition) {
+        this.repetition = repetition;
     }
 
     public LocalDateTime getCreatedAt() {
