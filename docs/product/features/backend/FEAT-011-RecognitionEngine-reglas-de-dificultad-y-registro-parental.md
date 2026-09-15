@@ -102,6 +102,14 @@ Esta especificación complementa FEAT-009. No modifica ni sustituye sus decision
 2. Confirmar el tamaño táctil estándar común después de validarlo en dispositivos reales.
 3. Confirmar el tratamiento de FORMAS, incluida en documentación anterior pero no concretada en ADR-028.
 
+## 8. Handoff técnico
+
+Contratos y coordinación resultantes de la implementación técnica de esta feature (Sprints 097-102), para los equipos consumidores:
+
+- **Frontend:** debe consumir el evento `GAME_READY` (payload `recognitionState`) según `docs/contracts/schemas/round-ready-event.v1.yaml`. `docs/contracts/schemas/round-parameters.v1.yaml` documenta los parámetros de dificultad que determinan ese payload (no se transmiten tal cual al cliente, solo su resultado ya aplicado).
+- **Agentes:** Nubi no condiciona la resolución de ronda — sin cambios de contrato respecto a lo ya fijado en ADR-028 §4 regla 5 y en §5 de esta feature.
+- **Contenido:** catálogo de FORMAS y COLOR adaptado a la ladder de dificultad, completado en Sprint 100 (seeds con `similarityGroup` y cobertura de `AccessibleColorPalette` para las 9 variantes de `colorVisionMode`).
+
 ## Referencias
 
 - README.md.

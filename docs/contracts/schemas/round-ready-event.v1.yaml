@@ -1,0 +1,64 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: round-ready-event.v1
+title: Round ready event v1
+description: >-
+  Evento WebSocket que informa al cliente de que una ronda de
+  RecognitionEngine está lista para jugarse. Corresponde al evento
+  GAME_READY del sobre SessionEvent (también emitido por GAME_STARTED,
+  GAME_ABANDONED, y dentro de GAME_ACTION_RESULT.updatedState con la
+  misma forma de payload.recognitionState). Ver también
+  docs/contracts/api/asyncapi/schemas/game-state-payload.yaml para el
+  payload completo del estado de partida, del que este contrato documenta
+  únicamente el subconjunto relevante para el inicio de ronda.
+type: object
+additionalProperties: false
+required:
+  - event
+  - sessionId
+  - payload
+properties:
+  event:
+    const: GAME_READY
+  sessionId:
+    type: integer
+    format: int64
+    description: Identificador de la ChildSession destinataria del evento.
+  payload:
+    type: object
+    required:
+      - recognitionState
+    properties:
+      recognitionState:
+        type: object
+        required:
+          - targetElementId
+          - optionIds
+          - roundIndex
+          - guideChromEnabled
+          - touchEnableDelayMs
+          - nonChromaticKeyRequired
+        properties:
+          targetElementId:
+            type: string
+            description: Identificador del elemento objetivo que el niño debe reconocer.
+          optionIds:
+            type: array
+            items:
+              type: string
+            description: Identificadores de las opciones mostradas en la ronda (incluye el objetivo).
+          roundIndex:
+            type: integer
+            description: Índice de ronda (base 0) dentro de la partida.
+          guideChromEnabled:
+            type: boolean
+            description: Si se muestra el cromo guía visual permanente para esta ronda.
+          touchEnableDelayMs:
+            type: integer
+            description: Milisegundos de espera antes de habilitar el toque sobre las opciones.
+          nonChromaticKeyRequired:
+            type: boolean
+            description: >-
+              Si las opciones deben incluir una clave no cromática adicional
+              al matiz, porque la categoría es COLOR y el perfil infantil
+              tiene configurada una preferencia de colorVisionMode distinta
+              de NONE.

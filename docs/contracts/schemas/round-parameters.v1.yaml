@@ -1,0 +1,45 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: round-parameters.v1
+title: Round parameters v1
+description: >-
+  Parámetros de dificultad resueltos para una ronda de RecognitionEngine
+  (ladder EASY/MEDIUM/HARD, ver ADR-028). No es un evento de transporte;
+  describe el resultado de resolver la dificultad vigente, consumido
+  internamente para construir el estado de ronda entregado al cliente
+  vía el evento GAME_READY (ver round-ready-event.v1.yaml).
+type: object
+additionalProperties: false
+required:
+  - optionCount
+  - distractorStrategy
+  - guideChromEnabled
+  - touchEnableDelayMs
+  - nonChromaticKeyRequired
+properties:
+  optionCount:
+    type: integer
+    minimum: 1
+    description: Número de opciones mostradas en la ronda (2 en EASY, 3 en MEDIUM, 3-4 en HARD).
+  distractorStrategy:
+    type: string
+    enum:
+      - SEMANTICALLY_FAR
+      - SAME_CATEGORY
+      - SIMILAR_OUTLINE
+    description: >-
+      Estrategia de selección de distractores: semánticamente lejanos (EASY),
+      misma categoría temática (MEDIUM), o contorno/grafía similar (HARD).
+  guideChromEnabled:
+    type: boolean
+    description: Si se muestra el cromo guía visual permanente (solo EASY).
+  touchEnableDelayMs:
+    type: integer
+    minimum: 0
+    description: >-
+      Milisegundos de espera antes de habilitar el toque sobre las opciones.
+      No es un límite de tiempo funcional; nunca provoca fallo.
+  nonChromaticKeyRequired:
+    type: boolean
+    description: >-
+      true solo cuando la categoría es COLOR y el perfil infantil tiene
+      configurada una preferencia de colorVisionMode distinta de NONE.

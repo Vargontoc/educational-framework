@@ -240,6 +240,12 @@ Sin `topicId` propio, por el mismo criterio que en `RecognitionState`.
 - El dashboard adulto puede combinar ambos modelos si necesita detalle y resumen a la vez.
 - El niño solo ve el resultado en estrellas, nunca el detalle fino.
 
+### Modelo de consolidación diferida
+
+Cada intento no se persiste de inmediato: se acumula primero en un buffer en memoria dentro del propio `RecognitionState` (`roundAttempts`, lista de registros con `topicId`, `elementId`, `difficultyLevelId`, resultado, tiempo de respuesta y contexto de intento) durante `processAction()`. Al completar la partida (transición a estado `COMPLETED`), el orquestador recorre ese buffer y registra cada intento acumulado como `ActivityAttempt`, consolidando el progreso de una sola vez. Si la partida se abandona en su lugar, el buffer nunca se vuelca a persistencia — los intentos parciales se descartan junto con el estado en memoria de la partida al cerrarse la `ChildSession`, sin dejar rastro de progreso parcial.
+
+Este modelo es la traducción técnica de FEAT-011 §3 (Requisitos funcionales, punto 8) y §4 (Criterios de aceptación, punto 8), y de ADR-028 §4 "Reglas transversales" (regla 7): los aciertos y selecciones no acertadas se registran solo al completar el minijuego, nunca de forma parcial ante un abandono.
+
 ## Fin de partida, reintentos y puntuación
 
 - **Comportamiento ante error**: `processAction()` devuelve `CORRECT` o `INCORRECT` — no existe `TIMEOUT` como resultado del motor. Ante `INCORRECT`, la ronda permanece abierta con el mismo `targetElementId`/`optionIds`; el intento se registra igualmente vía `tracking.registerAttempt(...)`.
