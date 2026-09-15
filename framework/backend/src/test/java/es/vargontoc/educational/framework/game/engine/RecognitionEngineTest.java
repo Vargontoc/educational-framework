@@ -12,6 +12,7 @@ import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
+import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 
@@ -774,5 +775,54 @@ class RecognitionEngineTest {
         assertEquals(GameStatus.COMPLETED, gs.getStatus());
         assertEquals(5, gs.getAttempts());
         assertEquals(0, gs.getIncorrectAttempts());
+    }
+
+    @Test
+    void buildOptions_optionCountTwo_returnsTargetPlusOneDistractor() {
+        RecognitionEngine engine = new RecognitionEngine(new Random(1));
+        List<String> candidates = List.of("target", "a", "b", "c", "d");
+
+        List<String> options = engine.buildOptions(
+                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 2, id -> null);
+
+        assertEquals(2, options.size());
+        assertTrue(options.contains("target"));
+    }
+
+    @Test
+    void buildOptions_optionCountThree_returnsTargetPlusTwoDistractors() {
+        RecognitionEngine engine = new RecognitionEngine(new Random(2));
+        List<String> candidates = List.of("target", "a", "b", "c", "d");
+
+        List<String> options = engine.buildOptions(
+                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 3, id -> null);
+
+        assertEquals(3, options.size());
+        assertTrue(options.contains("target"));
+    }
+
+    @Test
+    void buildOptions_optionCountFour_returnsTargetPlusThreeDistractors() {
+        RecognitionEngine engine = new RecognitionEngine(new Random(3));
+        List<String> candidates = List.of("target", "a", "b", "c", "d");
+
+        List<String> options = engine.buildOptions(
+                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 4, id -> null);
+
+        assertEquals(4, options.size());
+        assertTrue(options.contains("target"));
+    }
+
+    @Test
+    void buildOptions_twoArgOverload_stillProducesSameBehaviorAsBefore() {
+        RecognitionEngine engine = new RecognitionEngine(new Random(4));
+        List<String> candidates = List.of("target", "a", "b", "c", "d");
+
+        List<String> options = engine.buildOptions(candidates, "target");
+
+        assertTrue(options.size() >= RecognitionDefaults.MIN_OPTIONS_PER_ROUND);
+        assertTrue(options.size() <= RecognitionDefaults.MAX_OPTIONS_PER_ROUND);
+        assertTrue(options.contains("target"));
+        assertTrue(candidates.containsAll(options));
     }
 }

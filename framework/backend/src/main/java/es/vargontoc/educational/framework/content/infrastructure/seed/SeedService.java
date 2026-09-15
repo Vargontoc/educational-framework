@@ -623,6 +623,7 @@ public class SeedService {
             element.setResourceRefs(seed.resourceRefs());
             element.setSortOrder(seed.sortOrder());
             element.setStatus(ContentStatus.valueOf(seed.status()));
+            element.setSimilarityGroup(seed.similarityGroup());
             element.setCreatedAt(LocalDateTime.now());
             recognitionElementRepository.save(element);
             markLoaded(key, file);

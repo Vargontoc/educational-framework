@@ -5,7 +5,8 @@
     "displayValue": "A",
     "resourceRefs": "{\"audio\":\"tts://letter_a\",\"image\":\"img://letter_a\"}",
     "sortOrder": 1,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "similarityGroup": "angular_peak"
   },
   {
     "topicName": "Letras",
@@ -13,7 +14,8 @@
     "displayValue": "B",
     "resourceRefs": "{\"audio\":\"tts://letter_b\",\"image\":\"img://letter_b\"}",
     "sortOrder": 2,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "similarityGroup": "vertical_bump"
   },
   {
     "topicName": "Letras",
@@ -21,7 +23,8 @@
     "displayValue": "C",
     "resourceRefs": "{\"audio\":\"tts://letter_c\",\"image\":\"img://letter_c\"}",
     "sortOrder": 3,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "similarityGroup": "curve_round"
   },
   {
     "topicName": "Letras",
@@ -29,7 +32,8 @@
     "displayValue": "D",
     "resourceRefs": "{\"audio\":\"tts://letter_d\",\"image\":\"img://letter_d\"}",
     "sortOrder": 4,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "similarityGroup": "vertical_bump"
   },
   {
     "topicName": "Letras",
@@ -37,7 +41,8 @@
     "displayValue": "E",
     "resourceRefs": "{\"audio\":\"tts://letter_e\",\"image\":\"img://letter_e\"}",
     "sortOrder": 5,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "similarityGroup": "angular_peak"
   },
   {
     "topicName": "Letras",
@@ -45,7 +50,8 @@
     "displayValue": "M",
     "resourceRefs": "{\"audio\":\"tts://letter_m\",\"image\":\"img://letter_m\"}",
     "sortOrder": 6,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "similarityGroup": "angular_peak"
   },
   {
     "topicName": "Letras",
@@ -53,7 +59,8 @@
     "displayValue": "O",
     "resourceRefs": "{\"audio\":\"tts://letter_o\",\"image\":\"img://letter_o\"}",
     "sortOrder": 7,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "similarityGroup": "curve_round"
   },
   {
     "topicName": "Letras",
@@ -61,6 +68,7 @@
     "displayValue": "S",
     "resourceRefs": "{\"audio\":\"tts://letter_s\",\"image\":\"img://letter_s\"}",
     "sortOrder": 8,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "similarityGroup": "curve_round"
   }
 ]

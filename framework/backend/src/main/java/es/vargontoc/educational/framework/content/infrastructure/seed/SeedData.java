@@ -165,6 +165,7 @@ public final class SeedData {
         String displayValue,
         String resourceRefs,
         Integer sortOrder,
-        String status
+        String status,
+        String similarityGroup
     ) {}
 }

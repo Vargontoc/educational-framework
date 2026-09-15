@@ -11,6 +11,7 @@ public class RecognitionElement {
     private String resourceRefs;
     private Integer sortOrder;
     private ContentStatus status;
+    private String similarityGroup;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -68,6 +69,14 @@ public class RecognitionElement {
 
     public void setStatus(ContentStatus status) {
         this.status = status;
+    }
+
+    public String getSimilarityGroup() {
+        return similarityGroup;
+    }
+
+    public void setSimilarityGroup(String similarityGroup) {
+        this.similarityGroup = similarityGroup;
     }
 
     public LocalDateTime getCreatedAt() {

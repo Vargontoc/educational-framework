@@ -6,27 +6,32 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
+import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.game.model.ActionResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
+import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionAttemptContext;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
+import es.vargontoc.educational.framework.game.service.DistractorSelector;
 
 public class RecognitionEngine implements GameEnginePort {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final Random random;
+    private final DistractorSelector distractorSelector;
 
     public RecognitionEngine() {
         this(new Random());
@@ -34,6 +39,7 @@ public class RecognitionEngine implements GameEnginePort {
 
     public RecognitionEngine(Random random) {
         this.random = random;
+        this.distractorSelector = new DistractorSelector(random);
     }
 
     @Override
@@ -279,30 +285,42 @@ public class RecognitionEngine implements GameEnginePort {
     }
 
     List<String> buildOptions(List<String> candidates, String target) {
+        return buildOptions(candidates, target, DistractorStrategy.SEMANTICALLY_FAR, null, id -> null);
+    }
+
+    List<String> buildOptions(
+            List<String> candidates,
+            String target,
+            DistractorStrategy strategy,
+            Integer optionCount,
+            Function<String, RecognitionElement> elementResolver) {
         if (target == null || candidates.isEmpty()) {
             return new ArrayList<>();
         }
 
-        int optionCount = Math.min(RecognitionDefaults.MAX_OPTIONS_PER_ROUND, candidates.size());
-        optionCount = Math.max(optionCount, RecognitionDefaults.MIN_OPTIONS_PER_ROUND);
-        optionCount = Math.min(optionCount, candidates.size());
+        int resolvedOptionCount = optionCount != null
+                ? Math.min(optionCount, candidates.size())
+                : clampToDefaultRange(candidates.size());
+        int distractorCount = Math.max(0, resolvedOptionCount - 1);
 
-        List<String> distractors = new ArrayList<>();
-        for (String c : candidates) {
-            if (!c.equals(target)) {
-                distractors.add(c);
-            }
-        }
-        Collections.shuffle(distractors, random);
+        List<String> distractors = distractorSelector.select(
+                target,
+                candidates,
+                strategy != null ? strategy : DistractorStrategy.SEMANTICALLY_FAR,
+                distractorCount,
+                elementResolver);
 
-        int distractorCount = Math.min(optionCount - 1, distractors.size());
         List<String> options = new ArrayList<>();
         options.add(target);
-        for (int i = 0; i < distractorCount; i++) {
-            options.add(distractors.get(i));
-        }
+        options.addAll(distractors);
         Collections.shuffle(options, random);
         return options;
+    }
+
+    private int clampToDefaultRange(int candidatesSize) {
+        int optionCount = Math.min(RecognitionDefaults.MAX_OPTIONS_PER_ROUND, candidatesSize);
+        optionCount = Math.max(optionCount, RecognitionDefaults.MIN_OPTIONS_PER_ROUND);
+        return Math.min(optionCount, candidatesSize);
     }
 
     private String serializeState(RecognitionState state) {

@@ -27,6 +27,9 @@ public class RecognitionElementJpaEntity extends BaseEntity {
     @Column(nullable = false, length = 20)
     private String status;
 
+    @Column(name = "similarity_group", length = 50)
+    private String similarityGroup;
+
     public Long getTopicId() {
         return topicId;
     }
@@ -73,5 +76,13 @@ public class RecognitionElementJpaEntity extends BaseEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getSimilarityGroup() {
+        return similarityGroup;
+    }
+
+    public void setSimilarityGroup(String similarityGroup) {
+        this.similarityGroup = similarityGroup;
     }
 }
