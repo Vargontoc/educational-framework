@@ -50,6 +50,9 @@ public class GameSessionSummaryJpaEntity extends BaseEntity {
     @Column(name = "is_repetition", nullable = false)
     private boolean repetition;
 
+    @Column(name = "abandon_reason", length = 30)
+    private String abandonReason;
+
     public Long getChildProfileId() {
         return childProfileId;
     }
@@ -152,5 +155,13 @@ public class GameSessionSummaryJpaEntity extends BaseEntity {
 
     public void setRepetition(boolean repetition) {
         this.repetition = repetition;
+    }
+
+    public String getAbandonReason() {
+        return abandonReason;
+    }
+
+    public void setAbandonReason(String abandonReason) {
+        this.abandonReason = abandonReason;
     }
 }

@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.world.service;
 
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
+import es.vargontoc.educational.framework.game.model.event.GameSessionDiscardedEvent;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.world.model.WorldNarrativeCompletionStatus;
 import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
@@ -77,6 +78,26 @@ class WorldGameCompletionListenerTest {
         );
 
         listener.onGameSessionCompleted(event);
+
+        assertEquals(WorldNarrativeCompletionStatus.NO_PENDING, worldState.getNarrativeCompletionStatus());
+        verify(worldStateRegistry).save(worldState);
+    }
+
+    @Test
+    void listener_discardedClearsStatus() {
+        Long childSessionId = 100L;
+        Long gameId = 1L;
+        Long activityId = 10L;
+        WorldState worldState = createWorldState(childSessionId);
+        worldState.setNarrativeCompletionStatus(WorldNarrativeCompletionStatus.AWAITING_NARRATIVE);
+
+        when(worldStateRegistry.findByChildSessionId(childSessionId)).thenReturn(Optional.of(worldState));
+
+        GameSessionDiscardedEvent event = new GameSessionDiscardedEvent(
+            gameId, childSessionId, activityId, LocalDateTime.now()
+        );
+
+        listener.onGameSessionDiscarded(event);
 
         assertEquals(WorldNarrativeCompletionStatus.NO_PENDING, worldState.getNarrativeCompletionStatus());
         verify(worldStateRegistry).save(worldState);

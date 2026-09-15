@@ -24,6 +24,7 @@ import es.vargontoc.educational.framework.game.model.LaunchContext;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
+import es.vargontoc.educational.framework.game.model.event.GameSessionDiscardedEvent;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.model.recognition.RoundAttemptRecord;
@@ -33,6 +34,7 @@ import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
+import es.vargontoc.educational.framework.tracking.model.GameSessionAbandonReason;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
@@ -289,7 +291,8 @@ public class GameOrchestratorService implements GameOrchestrator {
                             state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
                             state.getStartedAt(),
                             LocalDateTime.now(),
-                            GameSessionFinalStatus.COMPLETED
+                            GameSessionFinalStatus.COMPLETED,
+                            null
                         );
 
                         completedActivitiesBySession
@@ -351,7 +354,8 @@ public class GameOrchestratorService implements GameOrchestrator {
                         state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
                         state.getStartedAt(),
                         LocalDateTime.now(),
-                        GameSessionFinalStatus.ABANDONED
+                        GameSessionFinalStatus.ABANDONED,
+                        GameSessionAbandonReason.CLIENT_REQUESTED
                     );
                 } catch (Exception e) {
                     log.warn("Failed to register game session summary for client-abandoned game: {}", e.getMessage());
@@ -369,7 +373,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     }
 
     @Override
-    public void abandonGameForSession(Long childSessionId) {
+    public void discardGameForSession(Long childSessionId) {
         var gameState = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);
         if (gameState == null) {
             log.debug("No active game found for childSessionId={}", childSessionId);
@@ -389,31 +393,10 @@ public class GameOrchestratorService implements GameOrchestrator {
             state.setStatus(GameStatus.ABANDONED);
             state.setLastActivityAt(LocalDateTime.now());
 
-            if (!state.isRepetition()) {
-                try {
-                    registerGameSessionSummaryUseCase.registerGameSessionSummary(
-                        state.getChildProfileId(),
-                        state.getChildSessionId(),
-                        state.getActivityId(),
-                        state.getDifficultyLevelId(),
-                        state.getDifficultyLevelId(),
-                        state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
-                        state.getAttempts() != null ? state.getAttempts() : 0,
-                        state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
-                        state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
-                        state.getStartedAt(),
-                        LocalDateTime.now(),
-                        GameSessionFinalStatus.ABANDONED
-                    );
-                } catch (Exception e) {
-                    log.warn("Failed to register game session summary for abandoned game: {}", e.getMessage());
-                }
-            }
-
             gameStateRegistry.remove(gameId);
 
-            publishGameCompletedEvent(gameId, state.getChildSessionId(), state.getActivityId(), GameSessionFinalStatus.ABANDONED);
-            log.info("Game {} abandoned due to system event for childSessionId={}", gameId, childSessionId);
+            publishGameDiscardedEvent(gameId, state.getChildSessionId(), state.getActivityId());
+            log.info("Game {} discarded due to system event for childSessionId={} (no tracking)", gameId, childSessionId);
 
         } finally {
             lock.unlock();
@@ -597,6 +580,21 @@ public class GameOrchestratorService implements GameOrchestrator {
             log.debug("Published GameSessionCompletedEvent: gameId={}, status={}", gameId, status);
         } catch (Exception e) {
             log.warn("Failed to publish GameSessionCompletedEvent: {}", e.getMessage());
+        }
+    }
+
+    private void publishGameDiscardedEvent(Long gameId, Long childSessionId, Long activityId) {
+        try {
+            GameSessionDiscardedEvent event = new GameSessionDiscardedEvent(
+                gameId,
+                childSessionId,
+                activityId,
+                LocalDateTime.now()
+            );
+            eventPublisher.publishEvent(event);
+            log.debug("Published GameSessionDiscardedEvent: gameId={}", gameId);
+        } catch (Exception e) {
+            log.warn("Failed to publish GameSessionDiscardedEvent: {}", e.getMessage());
         }
     }
 

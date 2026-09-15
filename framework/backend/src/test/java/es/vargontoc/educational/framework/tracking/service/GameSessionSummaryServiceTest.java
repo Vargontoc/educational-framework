@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.tracking.service;
 
+import es.vargontoc.educational.framework.tracking.model.GameSessionAbandonReason;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.model.GameSessionSummary;
 import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
@@ -44,7 +45,7 @@ class GameSessionSummaryServiceTest {
         LocalDateTime endedAt = LocalDateTime.now();
 
         var result = service.registerGameSessionSummary(
-                10L, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.COMPLETED);
+                10L, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.COMPLETED, null);
 
         assertNotNull(result);
         assertEquals(1L, result.summaryId());
@@ -63,6 +64,7 @@ class GameSessionSummaryServiceTest {
         assertEquals(2, saved.getTotalTimeouts());
         assertEquals(GameSessionFinalStatus.COMPLETED, saved.getFinalStatus());
         assertFalse(saved.isRepetition());
+        assertEquals(null, saved.getAbandonReason());
     }
 
     @Test
@@ -79,13 +81,15 @@ class GameSessionSummaryServiceTest {
         LocalDateTime endedAt = LocalDateTime.now();
 
         var result = service.registerGameSessionSummary(
-                10L, 20L, 30L, 40L, 40L, 50, 8, 5, 3, startedAt, endedAt, GameSessionFinalStatus.ABANDONED);
+                10L, 20L, 30L, 40L, 40L, 50, 8, 5, 3, startedAt, endedAt,
+                GameSessionFinalStatus.ABANDONED, GameSessionAbandonReason.CLIENT_REQUESTED);
 
         assertNotNull(result);
         verify(repository).save(captor.capture());
 
         var saved = captor.getValue();
         assertEquals(GameSessionFinalStatus.ABANDONED, saved.getFinalStatus());
+        assertEquals(GameSessionAbandonReason.CLIENT_REQUESTED, saved.getAbandonReason());
     }
 
     @Test
@@ -95,7 +99,7 @@ class GameSessionSummaryServiceTest {
 
         assertThrows(ValidationException.class, () ->
             service.registerGameSessionSummary(
-                null, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.COMPLETED));
+                null, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.COMPLETED, null));
     }
 
     @Test
@@ -105,7 +109,7 @@ class GameSessionSummaryServiceTest {
 
         assertThrows(ValidationException.class, () ->
             service.registerGameSessionSummary(
-                10L, null, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.COMPLETED));
+                10L, null, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.COMPLETED, null));
     }
 
     @Test
@@ -115,7 +119,7 @@ class GameSessionSummaryServiceTest {
 
         assertThrows(ValidationException.class, () ->
             service.registerGameSessionSummary(
-                10L, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, null));
+                10L, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, null, null));
     }
 
     @Test
@@ -125,6 +129,27 @@ class GameSessionSummaryServiceTest {
 
         assertThrows(ValidationException.class, () ->
             service.registerGameSessionSummary(
-                10L, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.COMPLETED));
+                10L, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.COMPLETED, null));
+    }
+
+    @Test
+    void registerGameSessionSummary_abandonedWithoutAbandonReason_throwsValidationException() {
+        LocalDateTime startedAt = LocalDateTime.now().minusMinutes(10);
+        LocalDateTime endedAt = LocalDateTime.now();
+
+        assertThrows(ValidationException.class, () ->
+            service.registerGameSessionSummary(
+                10L, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt, GameSessionFinalStatus.ABANDONED, null));
+    }
+
+    @Test
+    void registerGameSessionSummary_completedWithAbandonReason_throwsValidationException() {
+        LocalDateTime startedAt = LocalDateTime.now().minusMinutes(10);
+        LocalDateTime endedAt = LocalDateTime.now();
+
+        assertThrows(ValidationException.class, () ->
+            service.registerGameSessionSummary(
+                10L, 20L, 30L, 40L, 41L, 150, 10, 7, 2, startedAt, endedAt,
+                GameSessionFinalStatus.COMPLETED, GameSessionAbandonReason.CLIENT_REQUESTED));
     }
 }

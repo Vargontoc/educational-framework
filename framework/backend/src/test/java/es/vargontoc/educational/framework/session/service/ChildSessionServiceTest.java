@@ -116,7 +116,7 @@ class ChildSessionServiceTest {
     }
 
     @Test
-    void expelChild_setsStatusExpelledAndAbandonsGame() {
+    void expelChild_setsStatusExpelledAndDiscardsGame() {
         var session = activeSession();
         session.setStartedAt(LocalDateTime.now().minusSeconds(5));
 
@@ -128,17 +128,17 @@ class ChildSessionServiceTest {
         assertEquals(ChildSessionStatus.EXPELLED, result.getStatus());
         assertNotNull(result.getEndedAt());
         assertTrue(result.getDurationSeconds() > 0);
-        verify(gameOrchestrator).abandonGameForSession(1L);
+        verify(gameOrchestrator).discardGameForSession(1L);
     }
 
     @Test
-    void expelChild_ignoresAbandonmentError() {
+    void expelChild_ignoresDiscardError() {
         var session = activeSession();
         session.setStartedAt(LocalDateTime.now().minusSeconds(5));
 
         when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
         when(childSessionRepository.save(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        doThrow(new RuntimeException("Game abandon failed")).when(gameOrchestrator).abandonGameForSession(1L);
+        doThrow(new RuntimeException("Game discard failed")).when(gameOrchestrator).discardGameForSession(1L);
 
         var result = childSessionService.expelChild(1L);
 
@@ -189,7 +189,7 @@ class ChildSessionServiceTest {
     }
 
     @Test
-    void expireInactiveSessions_callsAbandonGameForSession() {
+    void expireInactiveSessions_callsDiscardGameForSession() {
         var session = activeSession();
         session.setId(55L);
         var cutoff = LocalDateTime.now().minusMinutes(1);
@@ -198,7 +198,7 @@ class ChildSessionServiceTest {
 
         childSessionService.expireInactiveSessions(cutoff);
 
-        verify(gameOrchestrator).abandonGameForSession(55L);
+        verify(gameOrchestrator).discardGameForSession(55L);
     }
 
     @Test

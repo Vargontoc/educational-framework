@@ -15,9 +15,11 @@ import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
+import es.vargontoc.educational.framework.game.model.event.GameSessionDiscardedEvent;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
+import es.vargontoc.educational.framework.tracking.model.GameSessionAbandonReason;
 import es.vargontoc.educational.framework.tracking.model.UnlockedAchievement;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
@@ -47,7 +49,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -258,7 +259,7 @@ class GameOrchestratorServiceTest {
         verify(evaluateGameCompletionAchievementsUseCase).evaluate(anyLong(), anyLong(), isNull());
         verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
             anyLong(), anyLong(), anyLong(), anyLong(), anyLong(),
-            any(), any(), any(), any(), any(), any(), any()
+            any(), any(), any(), any(), any(), any(), any(), isNull()
         );
         verify(gameStateRegistry).remove(anyLong());
     }
@@ -285,7 +286,8 @@ class GameOrchestratorServiceTest {
         verify(gameStateRegistry).remove(1L);
         verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
             eq(200L), eq(100L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
-            any(), any(), eq(es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus.ABANDONED)
+            any(), any(), eq(es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus.ABANDONED),
+            eq(GameSessionAbandonReason.CLIENT_REQUESTED)
         );
     }
 
@@ -389,33 +391,33 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void abandonGameForSession_withActiveGame_abandonsAndRegistersSummary() {
+    void discardGameForSession_withActiveGame_discardsWithoutRegisteringSummary() {
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
-        orchestratorService.abandonGameForSession(100L);
+        orchestratorService.discardGameForSession(100L);
 
         assertTrue(storedState.isSystemEventPending());
         assertEquals(GameStatus.ABANDONED, storedState.getStatus());
         verify(gameStateRegistry).remove(1L);
-        verify(registerGameSessionSummaryUseCase).registerGameSessionSummary(
-            eq(200L), eq(100L), eq(1L), eq(5L), eq(5L), anyInt(), anyInt(), anyInt(), anyInt(),
-            any(), any(), eq(es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus.ABANDONED)
+        verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
         );
+        verify(eventPublisher).publishEvent(any(GameSessionDiscardedEvent.class));
+        verify(eventPublisher, never()).publishEvent(any(GameSessionCompletedEvent.class));
     }
 
     @Test
-    void abandonGameForSession_withoutActiveGame_doesNothing() {
+    void discardGameForSession_withoutActiveGame_doesNothing() {
         when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.empty());
 
-        orchestratorService.abandonGameForSession(100L);
+        orchestratorService.discardGameForSession(100L);
 
         verify(gameStateRegistry, never()).remove(anyLong());
         verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
-            anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), anyInt(), anyInt(), anyInt(), anyInt(),
-            any(), any(), any()
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
         );
     }
 
@@ -451,24 +453,6 @@ class GameOrchestratorServiceTest {
 
         assertTrue(result.gameCompleted());
         assertTrue(result.unlockedAchievements().isEmpty());
-    }
-
-    @Test
-    void abandonGameForSession_trackingFails_stillAbandonsGame() {
-        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
-
-        when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
-        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
-        doThrow(new RuntimeException("Tracking unavailable"))
-            .when(registerGameSessionSummaryUseCase).registerGameSessionSummary(
-                anyLong(), anyLong(), anyLong(), anyLong(), anyLong(), anyInt(), anyInt(), anyInt(), anyInt(),
-                any(), any(), any()
-            );
-
-        orchestratorService.abandonGameForSession(100L);
-
-        assertEquals(GameStatus.ABANDONED, storedState.getStatus());
-        verify(gameStateRegistry).remove(1L);
     }
 
     @Test
@@ -518,15 +502,16 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void abandonGameForSession_publishesGameSessionCompletedEvent() {
+    void discardGameForSession_publishesGameSessionDiscardedEvent() {
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
 
         when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
         when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
 
-        orchestratorService.abandonGameForSession(100L);
+        orchestratorService.discardGameForSession(100L);
 
-        verify(eventPublisher).publishEvent(any(GameSessionCompletedEvent.class));
+        verify(eventPublisher).publishEvent(any(GameSessionDiscardedEvent.class));
+        verify(eventPublisher, never()).publishEvent(any(GameSessionCompletedEvent.class));
     }
 
     @Test
@@ -569,7 +554,7 @@ class GameOrchestratorServiceTest {
         assertTrue(result.gameCompleted());
         verify(registerActivityAttemptUseCase, never()).register(any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
-            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
         );
         verify(evaluateGameCompletionAchievementsUseCase, never()).evaluate(any(), any(), any());
     }
@@ -585,24 +570,7 @@ class GameOrchestratorServiceTest {
 
         assertEquals(GameStatus.ABANDONED, result.getStatus());
         verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
-            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
-        );
-    }
-
-    @Test
-    void abandonGameForSession_repetitionGame_doesNotRegisterSummary() {
-        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.IN_PROGRESS);
-        storedState.setRepetition(true);
-
-        when(gameStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.of(storedState));
-        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
-
-        orchestratorService.abandonGameForSession(100L);
-
-        assertEquals(GameStatus.ABANDONED, storedState.getStatus());
-        verify(gameStateRegistry).remove(1L);
-        verify(registerGameSessionSummaryUseCase, never()).registerGameSessionSummary(
-            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()
         );
     }
 

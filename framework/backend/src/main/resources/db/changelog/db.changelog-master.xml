@@ -44,4 +44,5 @@
     <include file="db/changelog/migrations/037__create_world_exploration_state.xml"/>
     <include file="db/changelog/migrations/038__add_biome_to_avatar_event_catalog.xml"/>
     <include file="db/changelog/migrations/039__add_is_repetition_to_game_session_summary.xml"/>
+    <include file="db/changelog/migrations/040__add_abandon_reason_to_game_session_summary.xml"/>
 </databaseChangeLog>

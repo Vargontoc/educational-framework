@@ -96,7 +96,7 @@ public class ChildSessionService implements ChildSessionUseCase {
         );
 
         try {
-            gameOrchestrator.abandonGameForSession(childSessionId);
+            gameOrchestrator.discardGameForSession(childSessionId);
         } catch (Exception e) {
             // Log but don't fail the session close
         }
@@ -174,7 +174,7 @@ public class ChildSessionService implements ChildSessionUseCase {
             );
 
             try {
-                gameOrchestrator.abandonGameForSession(childSessionId);
+                gameOrchestrator.discardGameForSession(childSessionId);
             } catch (Exception e) {
                 // Log but don't fail the batch
             }

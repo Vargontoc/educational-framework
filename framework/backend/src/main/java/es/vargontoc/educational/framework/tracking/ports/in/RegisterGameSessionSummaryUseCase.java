@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.tracking.ports.in;
 
+import es.vargontoc.educational.framework.tracking.model.GameSessionAbandonReason;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.model.GameSessionSummaryResult;
 
@@ -19,5 +20,6 @@ public interface RegisterGameSessionSummaryUseCase {
             Integer totalTimeouts,
             LocalDateTime startedAt,
             LocalDateTime endedAt,
-            GameSessionFinalStatus finalStatus);
+            GameSessionFinalStatus finalStatus,
+            GameSessionAbandonReason abandonReason);
 }

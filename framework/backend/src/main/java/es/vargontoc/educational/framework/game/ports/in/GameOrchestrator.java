@@ -16,7 +16,7 @@ public interface GameOrchestrator {
 
     GameState abandonGame(Long gameId);
 
-    void abandonGameForSession(Long childSessionId);
+    void discardGameForSession(Long childSessionId);
 
     void clearSessionData(Long childSessionId);
 }

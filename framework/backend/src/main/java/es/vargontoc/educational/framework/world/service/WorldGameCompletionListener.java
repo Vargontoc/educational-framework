@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.world.service;
 
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
+import es.vargontoc.educational.framework.game.model.event.GameSessionDiscardedEvent;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.world.model.WorldNarrativeCompletionStatus;
 import es.vargontoc.educational.framework.world.model.WorldState;
@@ -43,5 +44,22 @@ public class WorldGameCompletionListener {
             worldStateRegistry.save(worldState);
             log.info("Game abandoned for childSessionId={}, no narrative pending", event.childSessionId());
         }
+    }
+
+    @EventListener
+    public void onGameSessionDiscarded(GameSessionDiscardedEvent event) {
+        log.debug("Received GameSessionDiscardedEvent: gameId={}", event.gameId());
+
+        Optional<WorldState> worldStateOpt = worldStateRegistry.findByChildSessionId(event.childSessionId());
+
+        if (worldStateOpt.isEmpty()) {
+            log.debug("No WorldState found for childSessionId={}, ignoring event", event.childSessionId());
+            return;
+        }
+
+        WorldState worldState = worldStateOpt.get();
+        worldState.setNarrativeCompletionStatus(WorldNarrativeCompletionStatus.NO_PENDING);
+        worldStateRegistry.save(worldState);
+        log.info("Game discarded for childSessionId={}, no narrative pending", event.childSessionId());
     }
 }

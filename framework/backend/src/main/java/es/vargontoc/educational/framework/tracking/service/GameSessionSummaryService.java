@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.tracking.service;
 
+import es.vargontoc.educational.framework.tracking.model.GameSessionAbandonReason;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.model.GameSessionSummary;
 import es.vargontoc.educational.framework.tracking.model.GameSessionSummaryResult;
@@ -34,7 +35,8 @@ public class GameSessionSummaryService implements RegisterGameSessionSummaryUseC
             Integer totalTimeouts,
             LocalDateTime startedAt,
             LocalDateTime endedAt,
-            GameSessionFinalStatus finalStatus) {
+            GameSessionFinalStatus finalStatus,
+            GameSessionAbandonReason abandonReason) {
 
         validator.validate(
                 childProfileId,
@@ -48,7 +50,8 @@ public class GameSessionSummaryService implements RegisterGameSessionSummaryUseC
                 totalTimeouts,
                 startedAt,
                 endedAt,
-                finalStatus);
+                finalStatus,
+                abandonReason);
 
         var summary = new GameSessionSummary();
         summary.setChildProfileId(childProfileId);
@@ -63,6 +66,7 @@ public class GameSessionSummaryService implements RegisterGameSessionSummaryUseC
         summary.setStartedAt(startedAt);
         summary.setEndedAt(endedAt);
         summary.setFinalStatus(finalStatus);
+        summary.setAbandonReason(abandonReason);
 
         var saved = repository.save(summary);
 

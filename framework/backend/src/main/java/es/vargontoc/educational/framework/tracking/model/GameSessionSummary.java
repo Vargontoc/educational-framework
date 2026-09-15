@@ -18,6 +18,7 @@ public class GameSessionSummary {
     private LocalDateTime endedAt;
     private GameSessionFinalStatus finalStatus;
     private boolean repetition;
+    private GameSessionAbandonReason abandonReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -134,6 +135,14 @@ public class GameSessionSummary {
 
     public void setRepetition(boolean repetition) {
         this.repetition = repetition;
+    }
+
+    public GameSessionAbandonReason getAbandonReason() {
+        return abandonReason;
+    }
+
+    public void setAbandonReason(GameSessionAbandonReason abandonReason) {
+        this.abandonReason = abandonReason;
     }
 
     public LocalDateTime getCreatedAt() {

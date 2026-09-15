@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.tracking.infrastructure.persistence;
 
 import es.vargontoc.educational.framework.tracking.model.GameSessionSummary;
+import es.vargontoc.educational.framework.tracking.model.GameSessionAbandonReason;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
 import org.springframework.stereotype.Repository;
@@ -44,6 +45,9 @@ public class GameSessionSummaryPersistenceAdapter implements GameSessionSummaryR
         target.setEndedAt(source.getEndedAt());
         target.setFinalStatus(GameSessionFinalStatus.valueOf(source.getFinalStatus()));
         target.setRepetition(source.isRepetition());
+        target.setAbandonReason(source.getAbandonReason() != null
+                ? GameSessionAbandonReason.valueOf(source.getAbandonReason())
+                : null);
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -65,6 +69,7 @@ public class GameSessionSummaryPersistenceAdapter implements GameSessionSummaryR
         target.setEndedAt(source.getEndedAt());
         target.setFinalStatus(source.getFinalStatus().name());
         target.setRepetition(source.isRepetition());
+        target.setAbandonReason(source.getAbandonReason() != null ? source.getAbandonReason().name() : null);
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;

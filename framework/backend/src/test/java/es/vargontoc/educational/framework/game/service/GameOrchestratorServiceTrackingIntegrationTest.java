@@ -38,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -302,7 +303,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
                 eq(200L), eq(100L), eq(1L), eq(5L), eq(5L),
                 scoreCaptor.capture(), attemptsCaptor.capture(),
                 correctCaptor.capture(), timeoutCaptor.capture(),
-                any(), any(), any());
+                any(), any(), any(), isNull());
 
         assertEquals(0, scoreCaptor.getValue());
         assertEquals(0, attemptsCaptor.getValue());

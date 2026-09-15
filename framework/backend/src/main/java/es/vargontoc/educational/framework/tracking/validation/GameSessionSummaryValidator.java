@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.tracking.validation;
 
+import es.vargontoc.educational.framework.tracking.model.GameSessionAbandonReason;
 import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
 
@@ -19,7 +20,8 @@ public class GameSessionSummaryValidator {
             Integer totalTimeouts,
             LocalDateTime startedAt,
             LocalDateTime endedAt,
-            GameSessionFinalStatus finalStatus) {
+            GameSessionFinalStatus finalStatus,
+            GameSessionAbandonReason abandonReason) {
 
         if (childProfileId == null) {
             throw new ValidationException("childProfileId is required");
@@ -62,6 +64,12 @@ public class GameSessionSummaryValidator {
         }
         if (endedAt.isBefore(startedAt)) {
             throw new ValidationException("endedAt cannot be before startedAt");
+        }
+        if (finalStatus == GameSessionFinalStatus.ABANDONED && abandonReason == null) {
+            throw new ValidationException("abandonReason is required when finalStatus is ABANDONED");
+        }
+        if (finalStatus == GameSessionFinalStatus.COMPLETED && abandonReason != null) {
+            throw new ValidationException("abandonReason must be null when finalStatus is COMPLETED");
         }
     }
 }
