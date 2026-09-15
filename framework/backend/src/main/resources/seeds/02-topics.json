@@ -48,5 +48,15 @@
     "maxAge": 6,
     "recognitionType": "LETTER",
     "habitatTag": null
+  },
+  {
+    "name": "Colores",
+    "categoryName": "Matemáticas",
+    "description": "Colores básicos",
+    "status": "ACTIVE",
+    "minAge": 3,
+    "maxAge": 6,
+    "recognitionType": "COLOR",
+    "habitatTag": null
   }
 ]

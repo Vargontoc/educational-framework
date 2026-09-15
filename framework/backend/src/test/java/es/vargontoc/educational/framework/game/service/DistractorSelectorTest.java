@@ -143,4 +143,37 @@ class DistractorSelectorTest {
         assertEquals(2, result.size());
         assertTrue(candidates.containsAll(result));
     }
+
+    @Test
+    void select_similarOutline_colorWarmCoolGrouping() {
+        Map<String, CandidateMetadata> elements = new HashMap<>();
+        elements.put("color_red", element(1L, "warm"));
+        elements.put("color_yellow", element(1L, "warm"));
+        elements.put("color_blue", element(1L, "cool"));
+        elements.put("color_green", element(1L, "cool"));
+        List<String> candidates = List.of("color_red", "color_yellow", "color_blue", "color_green");
+
+        List<String> result = selector.select(
+                "color_red", candidates, DistractorStrategy.SIMILAR_OUTLINE, 1, resolverOf(elements));
+
+        assertEquals(List.of("color_yellow"), result);
+    }
+
+    @Test
+    void select_similarOutline_shapeGroups() {
+        Map<String, CandidateMetadata> elements = new HashMap<>();
+        elements.put("shape_circle", element(1L, "round"));
+        elements.put("shape_oval", element(1L, "round"));
+        elements.put("shape_square", element(1L, "angular_quad"));
+        elements.put("shape_rectangle", element(1L, "angular_quad"));
+        elements.put("shape_triangle", element(1L, "pointed"));
+        elements.put("shape_star", element(1L, "pointed"));
+        List<String> candidates = List.of(
+                "shape_circle", "shape_oval", "shape_square", "shape_rectangle", "shape_triangle", "shape_star");
+
+        List<String> result = selector.select(
+                "shape_square", candidates, DistractorStrategy.SIMILAR_OUTLINE, 1, resolverOf(elements));
+
+        assertEquals(List.of("shape_rectangle"), result);
+    }
 }

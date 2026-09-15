@@ -344,4 +344,125 @@ class GameOrchestratorServiceCandidateFilteringTest {
         assertTrue(readyResult.getEnginePayload().contains("500"));
         assertTrue(readyResult.getEnginePayload().contains("510"));
     }
+
+    @Test
+    void startGame_colorCategory_returnsColorElements() {
+        Activity activity = createActivity(1L, List.of(70L));
+        DifficultyLevel difficultyLevel = createDifficultyLevel(5L);
+        GameCatalogReadiness readiness = new GameCatalogReadiness(activity, difficultyLevel, true);
+
+        Topic colorTopic = createTopic(70L, RecognitionType.COLOR);
+        RecognitionElement red = createElement(700L, 70L);
+        RecognitionElement blue = createElement(710L, 70L);
+
+        when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
+        when(topicUseCase.getTopic(70L)).thenReturn(colorTopic);
+        when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
+                .thenReturn(List.of(RecognitionCategory.COLOR));
+        when(topicUseCase.listTopicsByRecognitionType(RecognitionType.COLOR))
+                .thenReturn(List.of(colorTopic));
+        when(recognitionElementRepository.findByTopicIdAndStatus(70L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(red, blue));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+
+        GameState result = orchestratorService.startGame(100L, 1L);
+
+        assertNotNull(result);
+        assertNotNull(result.getCandidates());
+        assertEquals(2, result.getCandidates().size());
+        assertTrue(result.getCandidates().contains("700"));
+        assertTrue(result.getCandidates().contains("710"));
+        verify(topicUseCase).listTopicsByRecognitionType(RecognitionType.COLOR);
+    }
+
+    @Test
+    void startGame_shapeCategory_returnsShapeElementsWithSimilarityGroup() {
+        Activity activity = createActivity(1L, List.of(80L));
+        DifficultyLevel difficultyLevel = createDifficultyLevel(5L);
+        GameCatalogReadiness readiness = new GameCatalogReadiness(activity, difficultyLevel, true);
+
+        Topic shapeTopic = createTopic(80L, RecognitionType.SHAPE);
+        RecognitionElement circle = createElement(800L, 80L);
+        circle.setSimilarityGroup("round");
+        RecognitionElement oval = createElement(810L, 80L);
+        oval.setSimilarityGroup("round");
+
+        when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
+        when(topicUseCase.getTopic(80L)).thenReturn(shapeTopic);
+        when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
+                .thenReturn(List.of(RecognitionCategory.SHAPE));
+        when(topicUseCase.listTopicsByRecognitionType(RecognitionType.SHAPE))
+                .thenReturn(List.of(shapeTopic));
+        when(recognitionElementRepository.findByTopicIdAndStatus(80L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(circle, oval));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+
+        GameState result = orchestratorService.startGame(100L, 1L);
+
+        assertNotNull(result);
+        assertEquals(2, result.getCandidates().size());
+        assertTrue(result.getCandidates().contains("800"));
+        assertTrue(result.getCandidates().contains("810"));
+        assertEquals("round", circle.getSimilarityGroup());
+        assertEquals("round", oval.getSimilarityGroup());
+    }
+
+    @Test
+    void readyGame_colorCategoryWithRealContent_resolvesWithoutError() {
+        Activity activity = createActivity(1L, List.of(90L));
+        DifficultyLevel difficultyLevel = createDifficultyLevel(5L);
+        GameCatalogReadiness readiness = new GameCatalogReadiness(activity, difficultyLevel, true);
+
+        Topic colorTopic = createTopic(90L, RecognitionType.COLOR);
+        RecognitionElement red = createElement(900L, 90L);
+        RecognitionElement blue = createElement(910L, 90L);
+
+        when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
+        when(topicUseCase.getTopic(90L)).thenReturn(colorTopic);
+        when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
+                .thenReturn(List.of(RecognitionCategory.COLOR));
+        when(topicUseCase.listTopicsByRecognitionType(RecognitionType.COLOR))
+                .thenReturn(List.of(colorTopic));
+        when(recognitionElementRepository.findByTopicIdAndStatus(90L, ContentStatus.ACTIVE))
+                .thenReturn(List.of(red, blue));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+
+        GameState startResult = orchestratorService.startGame(100L, 1L);
+        assertEquals(List.of("900", "910"), startResult.getCandidates());
+
+        GameState savedState = new GameState();
+        savedState.setGameId(startResult.getGameId());
+        savedState.setStatus(GameStatus.WAITING);
+        savedState.setEngine(EngineType.RECOGNITION);
+        savedState.setCandidates(List.of("900", "910"));
+        savedState.setChildProfileId(100L);
+        savedState.setDifficultyLevelId(5L);
+        savedState.setRecognitionCategory(es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.COLOR);
+        when(gameStateRegistry.findByGameId(startResult.getGameId())).thenReturn(java.util.Optional.of(savedState));
+
+        DifficultyLevel gameReadyLevel = createDifficultyLevel(5L);
+        gameReadyLevel.setDifficultyCode(DifficultyCode.MEDIUM);
+        when(difficultyLevelUseCase.getGameReadyDifficultyLevel(5L)).thenReturn(gameReadyLevel);
+
+        es.vargontoc.educational.framework.family.model.ChildProfile childProfile =
+                new es.vargontoc.educational.framework.family.model.ChildProfile();
+        childProfile.setColorVisionMode(es.vargontoc.educational.framework.family.model.ColorVisionMode.DEUTERANOPIA);
+        when(childProfileUseCase.getChild(100L)).thenReturn(childProfile);
+
+        when(recognitionDifficultyService.resolveRoundParameters(
+                DifficultyCode.MEDIUM,
+                es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.COLOR,
+                es.vargontoc.educational.framework.family.model.ColorVisionMode.DEUTERANOPIA))
+            .thenReturn(new es.vargontoc.educational.framework.game.model.recognition.RoundParameters(
+                    3, es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy.SIMILAR_OUTLINE,
+                    false, 800, true));
+
+        GameState readyResult = orchestratorService.readyGame(startResult.getGameId());
+
+        assertEquals(GameStatus.IN_PROGRESS, readyResult.getStatus());
+        assertNotNull(readyResult.getEnginePayload());
+    }
 }

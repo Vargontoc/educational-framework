@@ -70,5 +70,95 @@
     "sortOrder": 8,
     "status": "ACTIVE",
     "similarityGroup": "curve_round"
+  },
+  {
+    "topicName": "Colores",
+    "code": "color_red",
+    "displayValue": "Rojo",
+    "resourceRefs": "{\"image\":\"img://color_red\"}",
+    "sortOrder": 1,
+    "status": "ACTIVE",
+    "similarityGroup": "warm"
+  },
+  {
+    "topicName": "Colores",
+    "code": "color_yellow",
+    "displayValue": "Amarillo",
+    "resourceRefs": "{\"image\":\"img://color_yellow\"}",
+    "sortOrder": 2,
+    "status": "ACTIVE",
+    "similarityGroup": "warm"
+  },
+  {
+    "topicName": "Colores",
+    "code": "color_blue",
+    "displayValue": "Azul",
+    "resourceRefs": "{\"image\":\"img://color_blue\"}",
+    "sortOrder": 3,
+    "status": "ACTIVE",
+    "similarityGroup": "cool"
+  },
+  {
+    "topicName": "Colores",
+    "code": "color_green",
+    "displayValue": "Verde",
+    "resourceRefs": "{\"image\":\"img://color_green\"}",
+    "sortOrder": 4,
+    "status": "ACTIVE",
+    "similarityGroup": "cool"
+  },
+  {
+    "topicName": "Formas",
+    "code": "shape_circle",
+    "displayValue": "Círculo",
+    "resourceRefs": "{\"audio\":\"tts://shape_circle\",\"image\":\"img://shape_circle\"}",
+    "sortOrder": 1,
+    "status": "ACTIVE",
+    "similarityGroup": "round"
+  },
+  {
+    "topicName": "Formas",
+    "code": "shape_oval",
+    "displayValue": "Óvalo",
+    "resourceRefs": "{\"audio\":\"tts://shape_oval\",\"image\":\"img://shape_oval\"}",
+    "sortOrder": 2,
+    "status": "ACTIVE",
+    "similarityGroup": "round"
+  },
+  {
+    "topicName": "Formas",
+    "code": "shape_square",
+    "displayValue": "Cuadrado",
+    "resourceRefs": "{\"audio\":\"tts://shape_square\",\"image\":\"img://shape_square\"}",
+    "sortOrder": 3,
+    "status": "ACTIVE",
+    "similarityGroup": "angular_quad"
+  },
+  {
+    "topicName": "Formas",
+    "code": "shape_rectangle",
+    "displayValue": "Rectángulo",
+    "resourceRefs": "{\"audio\":\"tts://shape_rectangle\",\"image\":\"img://shape_rectangle\"}",
+    "sortOrder": 4,
+    "status": "ACTIVE",
+    "similarityGroup": "angular_quad"
+  },
+  {
+    "topicName": "Formas",
+    "code": "shape_triangle",
+    "displayValue": "Triángulo",
+    "resourceRefs": "{\"audio\":\"tts://shape_triangle\",\"image\":\"img://shape_triangle\"}",
+    "sortOrder": 5,
+    "status": "ACTIVE",
+    "similarityGroup": "pointed"
+  },
+  {
+    "topicName": "Formas",
+    "code": "shape_star",
+    "displayValue": "Estrella",
+    "resourceRefs": "{\"audio\":\"tts://shape_star\",\"image\":\"img://shape_star\"}",
+    "sortOrder": 6,
+    "status": "ACTIVE",
+    "similarityGroup": "pointed"
   }
 ]
