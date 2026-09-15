@@ -90,6 +90,15 @@ class GameOrchestratorServiceTest {
     @Mock
     private es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository recognitionElementRepository;
 
+    @Mock
+    private es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase difficultyLevelUseCase;
+
+    @Mock
+    private es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase childProfileUseCase;
+
+    @Mock
+    private RecognitionDifficultyService recognitionDifficultyService;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -105,7 +114,10 @@ class GameOrchestratorServiceTest {
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
             elementProgressPort,
-            recognitionElementRepository
+            recognitionElementRepository,
+            difficultyLevelUseCase,
+            childProfileUseCase,
+            recognitionDifficultyService
         );
     }
 
@@ -328,7 +340,10 @@ class GameOrchestratorServiceTest {
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
             elementProgressPort,
-            recognitionElementRepository
+            recognitionElementRepository,
+            difficultyLevelUseCase,
+            childProfileUseCase,
+            recognitionDifficultyService
         );
 
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
@@ -599,5 +614,114 @@ class GameOrchestratorServiceTest {
 
         assertFalse(result.isRepetition());
         verify(sessionAntiRepetitionRegistry).clearSession(100L);
+    }
+
+    @Test
+    void readyGame_resolvesRoundParametersFromDifficultyLevelAndColorVisionMode() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
+        storedState.setRecognitionCategory(es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.LETTER);
+        storedState.setCandidates(List.of("500"));
+
+        DifficultyLevel difficultyLevel = createDifficultyLevel(5L);
+        difficultyLevel.setDifficultyCode(DifficultyCode.MEDIUM);
+
+        es.vargontoc.educational.framework.family.model.ChildProfile childProfile =
+                new es.vargontoc.educational.framework.family.model.ChildProfile();
+        childProfile.setColorVisionMode(es.vargontoc.educational.framework.family.model.ColorVisionMode.NONE);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        when(difficultyLevelUseCase.getGameReadyDifficultyLevel(5L)).thenReturn(difficultyLevel);
+        when(childProfileUseCase.getChild(200L)).thenReturn(childProfile);
+        when(recognitionDifficultyService.resolveRoundParameters(
+                DifficultyCode.MEDIUM,
+                es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.LETTER,
+                es.vargontoc.educational.framework.family.model.ColorVisionMode.NONE))
+            .thenReturn(new es.vargontoc.educational.framework.game.model.recognition.RoundParameters(
+                    3, es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy.SAME_CATEGORY,
+                    false, 800, false));
+
+        GameState result = orchestratorService.readyGame(1L);
+
+        assertEquals(GameStatus.IN_PROGRESS, result.getStatus());
+        verify(recognitionDifficultyService).resolveRoundParameters(
+                DifficultyCode.MEDIUM,
+                es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.LETTER,
+                es.vargontoc.educational.framework.family.model.ColorVisionMode.NONE);
+    }
+
+    @Test
+    void readyGame_colorCategoryWithDeuteranopia_marksNonChromaticKeyRequired() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
+        storedState.setRecognitionCategory(es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.COLOR);
+        storedState.setCandidates(List.of("500"));
+
+        DifficultyLevel difficultyLevel = createDifficultyLevel(5L);
+        difficultyLevel.setDifficultyCode(DifficultyCode.EASY);
+
+        es.vargontoc.educational.framework.family.model.ChildProfile childProfile =
+                new es.vargontoc.educational.framework.family.model.ChildProfile();
+        childProfile.setColorVisionMode(es.vargontoc.educational.framework.family.model.ColorVisionMode.DEUTERANOPIA);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        when(difficultyLevelUseCase.getGameReadyDifficultyLevel(5L)).thenReturn(difficultyLevel);
+        when(childProfileUseCase.getChild(200L)).thenReturn(childProfile);
+
+        orchestratorService.readyGame(1L);
+
+        verify(recognitionDifficultyService).resolveRoundParameters(
+                DifficultyCode.EASY,
+                es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.COLOR,
+                es.vargontoc.educational.framework.family.model.ColorVisionMode.DEUTERANOPIA);
+    }
+
+    @Test
+    void readyGame_missingDifficultyLevel_defaultsToEasy() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
+        storedState.setRecognitionCategory(es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.LETTER);
+        storedState.setCandidates(List.of("500"));
+
+        es.vargontoc.educational.framework.family.model.ChildProfile childProfile =
+                new es.vargontoc.educational.framework.family.model.ChildProfile();
+        childProfile.setColorVisionMode(es.vargontoc.educational.framework.family.model.ColorVisionMode.NONE);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        when(difficultyLevelUseCase.getGameReadyDifficultyLevel(5L))
+                .thenThrow(new es.vargontoc.educational.framework.shared.exception.ContentNotReadyException("not ready"));
+        when(childProfileUseCase.getChild(200L)).thenReturn(childProfile);
+
+        GameState result = orchestratorService.readyGame(1L);
+
+        assertEquals(GameStatus.IN_PROGRESS, result.getStatus());
+        verify(recognitionDifficultyService).resolveRoundParameters(
+                eq(DifficultyCode.EASY),
+                eq(es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.LETTER),
+                any());
+    }
+
+    @Test
+    void readyGame_missingChildProfile_defaultsToColorVisionModeNone() {
+        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
+        storedState.setRecognitionCategory(es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.LETTER);
+        storedState.setCandidates(List.of("500"));
+
+        DifficultyLevel difficultyLevel = createDifficultyLevel(5L);
+        difficultyLevel.setDifficultyCode(DifficultyCode.EASY);
+
+        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+        when(difficultyLevelUseCase.getGameReadyDifficultyLevel(5L)).thenReturn(difficultyLevel);
+        when(childProfileUseCase.getChild(200L))
+                .thenThrow(new es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException("not found"));
+
+        GameState result = orchestratorService.readyGame(1L);
+
+        assertEquals(GameStatus.IN_PROGRESS, result.getStatus());
+        verify(recognitionDifficultyService).resolveRoundParameters(
+                eq(DifficultyCode.EASY),
+                eq(es.vargontoc.educational.framework.game.model.enums.RecognitionCategory.LETTER),
+                eq(es.vargontoc.educational.framework.family.model.ColorVisionMode.NONE));
     }
 }

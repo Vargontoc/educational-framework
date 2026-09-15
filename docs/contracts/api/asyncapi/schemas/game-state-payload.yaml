@@ -71,6 +71,17 @@ properties:
       hintActive:
         type: boolean
         description: Whether the hint is currently active for the round.
+      guideChromEnabled:
+        type: boolean
+        description: Whether the permanent visual guide chrome should be shown for this round's difficulty tier.
+      touchEnableDelayMs:
+        type: integer
+        description: Milliseconds to wait before enabling touch input on the options, per the round's difficulty tier.
+      nonChromaticKeyRequired:
+        type: boolean
+        description: >-
+          Whether options must render a non-hue cue (pattern/texture) in addition to colour, because the category
+          is COLOR and the child profile has a configured colour vision preference other than NONE.
       elements:
         type: array
         description: >-
@@ -100,3 +111,6 @@ properties:
       - roundIndex
       - totalRounds
       - hintActive
+      - guideChromEnabled
+      - touchEnableDelayMs
+      - nonChromaticKeyRequired

@@ -3,14 +3,19 @@ package es.vargontoc.educational.framework.game.service;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
+import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.GameCatalogReadiness;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.model.RecognitionType;
 import es.vargontoc.educational.framework.content.model.Topic;
+import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
+import es.vargontoc.educational.framework.family.model.ChildProfile;
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
+import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.game.engine.RecognitionEngine;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
@@ -25,13 +30,17 @@ import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.model.event.GameSessionDiscardedEvent;
+import es.vargontoc.educational.framework.game.model.recognition.CandidateMetadata;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.model.recognition.RoundAttemptRecord;
+import es.vargontoc.educational.framework.game.model.recognition.RoundParameters;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
+import es.vargontoc.educational.framework.shared.exception.ContentNotReadyException;
+import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import es.vargontoc.educational.framework.tracking.model.AttemptRegistrationResult;
 import es.vargontoc.educational.framework.tracking.model.AttemptResult;
 import es.vargontoc.educational.framework.tracking.model.GameSessionAbandonReason;
@@ -72,6 +81,9 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase;
     private final ElementProgressPort elementProgressPort;
     private final RecognitionElementRepository recognitionElementRepository;
+    private final DifficultyLevelUseCase difficultyLevelUseCase;
+    private final ChildProfileUseCase childProfileUseCase;
+    private final RecognitionDifficultyService recognitionDifficultyService;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
     private final Map<Long, Set<Long>> completedActivitiesBySession = new ConcurrentHashMap<>();
@@ -87,7 +99,10 @@ public class GameOrchestratorService implements GameOrchestrator {
             TopicUseCase topicUseCase,
             FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase,
             ElementProgressPort elementProgressPort,
-            RecognitionElementRepository recognitionElementRepository) {
+            RecognitionElementRepository recognitionElementRepository,
+            DifficultyLevelUseCase difficultyLevelUseCase,
+            ChildProfileUseCase childProfileUseCase,
+            RecognitionDifficultyService recognitionDifficultyService) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.sessionAntiRepetitionRegistry = sessionAntiRepetitionRegistry;
@@ -99,6 +114,9 @@ public class GameOrchestratorService implements GameOrchestrator {
         this.filterAllowedRecognitionCategoriesUseCase = filterAllowedRecognitionCategoriesUseCase;
         this.elementProgressPort = elementProgressPort;
         this.recognitionElementRepository = recognitionElementRepository;
+        this.difficultyLevelUseCase = difficultyLevelUseCase;
+        this.childProfileUseCase = childProfileUseCase;
+        this.recognitionDifficultyService = recognitionDifficultyService;
 
         this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine());
     }
@@ -429,19 +447,83 @@ public class GameOrchestratorService implements GameOrchestrator {
 
     private String getEngineParams(GameState state) {
         List<String> candidates = state.getCandidates() != null ? state.getCandidates() : List.of();
-        StringBuilder sb = new StringBuilder("{\"candidates\":[");
-        for (int i = 0; i < candidates.size(); i++) {
-            if (i > 0) {
-                sb.append(",");
-            }
-            sb.append("\"").append(candidates.get(i)).append("\"");
-        }
-        sb.append("]");
+
+        var root = new java.util.LinkedHashMap<String, Object>();
+        root.put("candidates", candidates);
         if (state.getRecognitionCategory() != null) {
-            sb.append(",\"recognitionCategory\":\"").append(state.getRecognitionCategory().name()).append("\"");
+            root.put("recognitionCategory", state.getRecognitionCategory().name());
         }
-        sb.append("}");
-        return sb.toString();
+
+        RoundParameters roundParameters = resolveRoundParameters(state);
+        if (roundParameters != null) {
+            var rp = new java.util.LinkedHashMap<String, Object>();
+            rp.put("optionCount", roundParameters.optionCount());
+            rp.put("distractorStrategy", roundParameters.distractorStrategy().name());
+            rp.put("guideChromEnabled", roundParameters.guideChromEnabled());
+            rp.put("touchEnableDelayMs", roundParameters.touchEnableDelayMs());
+            rp.put("nonChromaticKeyRequired", roundParameters.nonChromaticKeyRequired());
+            root.put("roundParameters", rp);
+            root.put("candidateMetadata", buildCandidateMetadata(candidates));
+        }
+
+        try {
+            return OBJECT_MAPPER.writeValueAsString(root);
+        } catch (JacksonException e) {
+            throw new IllegalStateException("Failed to serialize engineParams", e);
+        }
+    }
+
+    private List<CandidateMetadata> buildCandidateMetadata(List<String> candidateIds) {
+        if (candidateIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = candidateIds.stream().map(Long::valueOf).toList();
+        Map<Long, RecognitionElement> elementsById = recognitionElementRepository.findAllById(ids).stream()
+                .collect(java.util.stream.Collectors.toMap(RecognitionElement::getId, e -> e));
+        return candidateIds.stream()
+                .map(id -> {
+                    RecognitionElement element = elementsById.get(Long.valueOf(id));
+                    return new CandidateMetadata(
+                            id,
+                            element != null ? element.getTopicId() : null,
+                            element != null ? element.getSimilarityGroup() : null);
+                })
+                .toList();
+    }
+
+    private RoundParameters resolveRoundParameters(GameState state) {
+        if (state.getEngine() != EngineType.RECOGNITION || state.getRecognitionCategory() == null) {
+            return null;
+        }
+        DifficultyCode difficultyCode = resolveDifficultyCode(state.getDifficultyLevelId());
+        ColorVisionMode colorVisionMode = resolveColorVisionMode(state.getChildProfileId());
+        return recognitionDifficultyService.resolveRoundParameters(
+                difficultyCode, state.getRecognitionCategory(), colorVisionMode);
+    }
+
+    private DifficultyCode resolveDifficultyCode(Long difficultyLevelId) {
+        if (difficultyLevelId == null) {
+            return DifficultyCode.EASY;
+        }
+        try {
+            return difficultyLevelUseCase.getGameReadyDifficultyLevel(difficultyLevelId).getDifficultyCode();
+        } catch (ContentNotReadyException e) {
+            log.warn("DifficultyLevel {} not ready, defaulting to EASY: {}", difficultyLevelId, e.getMessage());
+            return DifficultyCode.EASY;
+        }
+    }
+
+    private ColorVisionMode resolveColorVisionMode(Long childProfileId) {
+        if (childProfileId == null) {
+            return ColorVisionMode.NONE;
+        }
+        try {
+            ChildProfile profile = childProfileUseCase.getChild(childProfileId);
+            return profile.getColorVisionMode() != null ? profile.getColorVisionMode() : ColorVisionMode.NONE;
+        } catch (ResourceNotFoundException e) {
+            log.warn("ChildProfile {} not found, defaulting to ColorVisionMode.NONE", childProfileId);
+            return ColorVisionMode.NONE;
+        }
     }
 
     private List<String> resolveCandidates(Long childProfileId, Activity activity, LaunchContext launchContext) {

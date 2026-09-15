@@ -82,6 +82,15 @@ class GameOrchestratorServiceTrackingIntegrationTest {
     @Mock
     private es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository recognitionElementRepository;
 
+    @Mock
+    private es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase difficultyLevelUseCase;
+
+    @Mock
+    private es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase childProfileUseCase;
+
+    @Mock
+    private RecognitionDifficultyService recognitionDifficultyService;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -97,7 +106,10 @@ class GameOrchestratorServiceTrackingIntegrationTest {
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
             elementProgressPort,
-            recognitionElementRepository
+            recognitionElementRepository,
+            difficultyLevelUseCase,
+            childProfileUseCase,
+            recognitionDifficultyService
         );
     }
 

@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.game.service;
 
-import es.vargontoc.educational.framework.content.model.RecognitionElement;
+import es.vargontoc.educational.framework.game.model.recognition.CandidateMetadata;
 import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
 import org.junit.jupiter.api.Test;
 
@@ -20,21 +20,18 @@ class DistractorSelectorTest {
 
     private final DistractorSelector selector = new DistractorSelector(new Random(42));
 
-    private RecognitionElement element(Long topicId, String similarityGroup) {
-        RecognitionElement element = new RecognitionElement();
-        element.setTopicId(topicId);
-        element.setSimilarityGroup(similarityGroup);
-        return element;
+    private CandidateMetadata element(Long topicId, String similarityGroup) {
+        return new CandidateMetadata("unused", topicId, similarityGroup);
     }
 
-    private Function<String, RecognitionElement> resolverOf(Map<String, RecognitionElement> elements) {
+    private Function<String, CandidateMetadata> resolverOf(Map<String, CandidateMetadata> elements) {
         return elements::get;
     }
 
     @Test
     void select_semanticallyFar_ignoresElementResolverAndReturnsFromCandidates() {
         List<String> candidates = List.of("target", "a", "b", "c");
-        Function<String, RecognitionElement> resolver = id -> null;
+        Function<String, CandidateMetadata> resolver = id -> null;
 
         List<String> result = selector.select("target", candidates, DistractorStrategy.SEMANTICALLY_FAR, 2, resolver);
 
@@ -45,7 +42,7 @@ class DistractorSelectorTest {
 
     @Test
     void select_sameCategory_returnsOnlyMatchingTopicId() {
-        Map<String, RecognitionElement> elements = new HashMap<>();
+        Map<String, CandidateMetadata> elements = new HashMap<>();
         elements.put("target", element(1L, null));
         elements.put("sameTopicA", element(1L, null));
         elements.put("sameTopicB", element(1L, null));
@@ -62,7 +59,7 @@ class DistractorSelectorTest {
 
     @Test
     void select_similarOutline_returnsOnlyMatchingSimilarityGroup() {
-        Map<String, RecognitionElement> elements = new HashMap<>();
+        Map<String, CandidateMetadata> elements = new HashMap<>();
         elements.put("target", element(1L, "curve_round"));
         elements.put("sameGroup", element(1L, "curve_round"));
         elements.put("differentGroup", element(1L, "angular_peak"));
@@ -77,7 +74,7 @@ class DistractorSelectorTest {
 
     @Test
     void select_similarOutline_nullGroupNeverMatchesAnotherNullGroup() {
-        Map<String, RecognitionElement> elements = new HashMap<>();
+        Map<String, CandidateMetadata> elements = new HashMap<>();
         elements.put("target", element(1L, null));
         elements.put("alsoNoGroup", element(1L, null));
         List<String> candidates = List.of("target", "alsoNoGroup");
@@ -90,7 +87,7 @@ class DistractorSelectorTest {
 
     @Test
     void select_partialFallback_fillsRemainderFromOtherCandidates() {
-        Map<String, RecognitionElement> elements = new HashMap<>();
+        Map<String, CandidateMetadata> elements = new HashMap<>();
         elements.put("target", element(1L, null));
         elements.put("sameTopic", element(1L, null));
         elements.put("otherTopicA", element(2L, null));
@@ -105,7 +102,7 @@ class DistractorSelectorTest {
 
     @Test
     void select_totalFallback_whenNoCandidateMatchesStrategy() {
-        Map<String, RecognitionElement> elements = new HashMap<>();
+        Map<String, CandidateMetadata> elements = new HashMap<>();
         elements.put("target", element(1L, "groupA"));
         elements.put("candidateA", element(2L, "groupB"));
         elements.put("candidateB", element(3L, "groupC"));
@@ -120,7 +117,7 @@ class DistractorSelectorTest {
 
     @Test
     void select_exhaustedPool_returnsAvailableWithoutThrowing() {
-        Map<String, RecognitionElement> elements = new HashMap<>();
+        Map<String, CandidateMetadata> elements = new HashMap<>();
         elements.put("target", element(1L, null));
         elements.put("onlyOther", element(1L, null));
         List<String> candidates = List.of("target", "onlyOther");
@@ -134,7 +131,7 @@ class DistractorSelectorTest {
 
     @Test
     void select_unresolvableElement_treatedAsNonMatchAndFallsBackToRandomPool() {
-        Map<String, RecognitionElement> elements = new HashMap<>();
+        Map<String, CandidateMetadata> elements = new HashMap<>();
         elements.put("target", element(1L, null));
         elements.put("sameTopic", element(1L, null));
         // "unresolvable" intentionally absent from the map -> resolver returns null

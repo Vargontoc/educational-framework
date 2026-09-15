@@ -12,17 +12,18 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
-import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.game.model.ActionResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
+import es.vargontoc.educational.framework.game.model.recognition.CandidateMetadata;
 import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionAttemptContext;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
+import es.vargontoc.educational.framework.game.model.recognition.RoundParameters;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.service.DistractorSelector;
 
@@ -58,7 +59,9 @@ public class RecognitionEngine implements GameEnginePort {
         gameState.setEngine(EngineType.RECOGNITION);
 
         List<String> candidates = parseCandidates(engineParams);
-        RecognitionState state = buildInitialState(candidates);
+        RoundParameters roundParameters = parseRoundParameters(engineParams);
+        List<CandidateMetadata> candidateMetadata = parseCandidateMetadata(engineParams);
+        RecognitionState state = buildInitialState(candidates, roundParameters, candidateMetadata);
         state.setRecognitionCategory(parseRecognitionCategory(engineParams));
         gameState.setEnginePayload(serializeState(state));
     }
@@ -133,6 +136,9 @@ public class RecognitionEngine implements GameEnginePort {
             map.put("targetElementId", state.getTargetElementId());
             map.put("optionIds", state.getOptionIds());
             map.put("roundIndex", state.getRoundIndex());
+            map.put("guideChromEnabled", state.isGuideChromEnabled());
+            map.put("touchEnableDelayMs", state.getTouchEnableDelayMs());
+            map.put("nonChromaticKeyRequired", state.isNonChromaticKeyRequired());
             return OBJECT_MAPPER.writeValueAsString(map);
         } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize next element", e);
@@ -173,7 +179,7 @@ public class RecognitionEngine implements GameEnginePort {
         List<String> candidates = state.getCandidateElementIds();
         String target = selectTarget(candidates, state.getRoundsShownElementIds());
         state.setTargetElementId(target);
-        state.setOptionIds(buildOptions(candidates, target));
+        state.setOptionIds(buildOptionsForState(state, candidates, target));
         state.getRoundsShownElementIds().add(target);
         state.setCurrentRoundAttemptCount(0);
         state.setCurrentRoundConsecutiveFailures(0);
@@ -245,7 +251,42 @@ public class RecognitionEngine implements GameEnginePort {
         }
     }
 
-    private RecognitionState buildInitialState(List<String> candidates) {
+    private RoundParameters parseRoundParameters(String engineParams) {
+        if (engineParams == null || engineParams.isBlank()) {
+            return null;
+        }
+        try {
+            var node = OBJECT_MAPPER.readTree(engineParams);
+            var roundParametersNode = node.get("roundParameters");
+            if (roundParametersNode == null || roundParametersNode.isNull()) {
+                return null;
+            }
+            return OBJECT_MAPPER.convertValue(roundParametersNode, RoundParameters.class);
+        } catch (JacksonException | IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private List<CandidateMetadata> parseCandidateMetadata(String engineParams) {
+        if (engineParams == null || engineParams.isBlank()) {
+            return List.of();
+        }
+        try {
+            var node = OBJECT_MAPPER.readTree(engineParams);
+            var metadataNode = node.get("candidateMetadata");
+            if (metadataNode == null || !metadataNode.isArray()) {
+                return List.of();
+            }
+            return OBJECT_MAPPER.convertValue(metadataNode, new TypeReference<List<CandidateMetadata>>() {});
+        } catch (JacksonException e) {
+            return List.of();
+        }
+    }
+
+    private RecognitionState buildInitialState(
+            List<String> candidates,
+            RoundParameters roundParameters,
+            List<CandidateMetadata> candidateMetadata) {
         RecognitionState state = new RecognitionState();
         state.setRoundIndex(0);
         state.setTotalRounds(RecognitionDefaults.DEFAULT_TOTAL_ROUNDS);
@@ -259,10 +300,19 @@ public class RecognitionEngine implements GameEnginePort {
         state.setSelectedOptionId(null);
         state.setTotalResponseTimeMs(0L);
         state.setCandidateElementIds(new ArrayList<>(candidates));
+        state.setCandidateMetadata(candidateMetadata != null ? candidateMetadata : List.of());
+
+        if (roundParameters != null) {
+            state.setOptionCount(roundParameters.optionCount());
+            state.setDistractorStrategy(roundParameters.distractorStrategy());
+            state.setGuideChromEnabled(roundParameters.guideChromEnabled());
+            state.setTouchEnableDelayMs(roundParameters.touchEnableDelayMs());
+            state.setNonChromaticKeyRequired(roundParameters.nonChromaticKeyRequired());
+        }
 
         String target = selectTarget(candidates, state.getRoundsShownElementIds());
         state.setTargetElementId(target);
-        state.setOptionIds(buildOptions(candidates, target));
+        state.setOptionIds(buildOptionsForState(state, candidates, target));
         state.getRoundsShownElementIds().add(target);
 
         return state;
@@ -288,12 +338,21 @@ public class RecognitionEngine implements GameEnginePort {
         return buildOptions(candidates, target, DistractorStrategy.SEMANTICALLY_FAR, null, id -> null);
     }
 
+    private List<String> buildOptionsForState(RecognitionState state, List<String> candidates, String target) {
+        List<CandidateMetadata> metadata = state.getCandidateMetadata();
+        java.util.Map<String, CandidateMetadata> byId = metadata == null
+                ? java.util.Map.of()
+                : metadata.stream().collect(java.util.stream.Collectors.toMap(
+                        CandidateMetadata::id, java.util.function.Function.identity(), (a, b) -> a));
+        return buildOptions(candidates, target, state.getDistractorStrategy(), state.getOptionCount(), byId::get);
+    }
+
     List<String> buildOptions(
             List<String> candidates,
             String target,
             DistractorStrategy strategy,
             Integer optionCount,
-            Function<String, RecognitionElement> elementResolver) {
+            Function<String, CandidateMetadata> elementResolver) {
         if (target == null || candidates.isEmpty()) {
             return new ArrayList<>();
         }

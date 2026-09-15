@@ -26,12 +26,19 @@ public class RecognitionState {
     private long totalResponseTimeMs;
     private List<String> candidateElementIds;
     private List<RoundAttemptRecord> roundAttempts;
+    private Integer optionCount;
+    private DistractorStrategy distractorStrategy;
+    private boolean guideChromEnabled;
+    private int touchEnableDelayMs;
+    private boolean nonChromaticKeyRequired;
+    private List<CandidateMetadata> candidateMetadata;
 
     public RecognitionState() {
         this.totalRounds = RecognitionDefaults.DEFAULT_TOTAL_ROUNDS;
         this.optionIds = new ArrayList<>();
         this.roundsShownElementIds = new ArrayList<>();
         this.roundAttempts = new ArrayList<>();
+        this.candidateMetadata = new ArrayList<>();
     }
 
     public RecognitionCategory getRecognitionCategory() {
@@ -176,5 +183,53 @@ public class RecognitionState {
 
     public void setRoundAttempts(List<RoundAttemptRecord> roundAttempts) {
         this.roundAttempts = roundAttempts;
+    }
+
+    public Integer getOptionCount() {
+        return optionCount;
+    }
+
+    public void setOptionCount(Integer optionCount) {
+        this.optionCount = optionCount;
+    }
+
+    public DistractorStrategy getDistractorStrategy() {
+        return distractorStrategy;
+    }
+
+    public void setDistractorStrategy(DistractorStrategy distractorStrategy) {
+        this.distractorStrategy = distractorStrategy;
+    }
+
+    public boolean isGuideChromEnabled() {
+        return guideChromEnabled;
+    }
+
+    public void setGuideChromEnabled(boolean guideChromEnabled) {
+        this.guideChromEnabled = guideChromEnabled;
+    }
+
+    public int getTouchEnableDelayMs() {
+        return touchEnableDelayMs;
+    }
+
+    public void setTouchEnableDelayMs(int touchEnableDelayMs) {
+        this.touchEnableDelayMs = touchEnableDelayMs;
+    }
+
+    public boolean isNonChromaticKeyRequired() {
+        return nonChromaticKeyRequired;
+    }
+
+    public void setNonChromaticKeyRequired(boolean nonChromaticKeyRequired) {
+        this.nonChromaticKeyRequired = nonChromaticKeyRequired;
+    }
+
+    public List<CandidateMetadata> getCandidateMetadata() {
+        return candidateMetadata;
+    }
+
+    public void setCandidateMetadata(List<CandidateMetadata> candidateMetadata) {
+        this.candidateMetadata = candidateMetadata;
     }
 }

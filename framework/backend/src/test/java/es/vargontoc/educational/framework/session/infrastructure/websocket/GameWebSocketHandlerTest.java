@@ -830,6 +830,9 @@ class GameWebSocketHandlerTest {
         recognitionState.setTotalIncorrectAttempts(3);
         recognitionState.setTotalCorrectFirstTry(1);
         recognitionState.setTotalResponseTimeMs(5000L);
+        recognitionState.setGuideChromEnabled(true);
+        recognitionState.setTouchEnableDelayMs(500);
+        recognitionState.setNonChromaticKeyRequired(true);
 
         ObjectMapper mapper = new ObjectMapper();
         try {
@@ -851,6 +854,9 @@ class GameWebSocketHandlerTest {
         assertEquals("elem-1", recPayload.get("targetElementId"));
         assertEquals(List.of("elem-1", "elem-2", "elem-3"), recPayload.get("optionIds"));
         assertEquals(true, recPayload.get("hintActive"));
+        assertEquals(true, recPayload.get("guideChromEnabled"));
+        assertEquals(500, recPayload.get("touchEnableDelayMs"));
+        assertEquals(true, recPayload.get("nonChromaticKeyRequired"));
     }
 
     @Test

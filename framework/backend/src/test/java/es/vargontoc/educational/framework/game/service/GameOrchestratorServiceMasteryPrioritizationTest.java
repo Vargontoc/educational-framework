@@ -89,7 +89,10 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
             elementProgressPort,
-            recognitionElementRepository
+            recognitionElementRepository,
+            org.mockito.Mockito.mock(es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase.class),
+            org.mockito.Mockito.mock(es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase.class),
+            org.mockito.Mockito.mock(RecognitionDifficultyService.class)
         );
     }
 

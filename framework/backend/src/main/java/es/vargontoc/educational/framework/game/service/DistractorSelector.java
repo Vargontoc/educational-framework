@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.game.service;
 
-import es.vargontoc.educational.framework.content.model.RecognitionElement;
+import es.vargontoc.educational.framework.game.model.recognition.CandidateMetadata;
 import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ public class DistractorSelector {
             List<String> candidates,
             DistractorStrategy strategy,
             int count,
-            Function<String, RecognitionElement> elementResolver) {
+            Function<String, CandidateMetadata> elementResolver) {
         List<String> pool = new ArrayList<>();
         for (String candidate : candidates) {
             if (!candidate.equals(target)) {
@@ -61,33 +61,33 @@ public class DistractorSelector {
             String target,
             List<String> pool,
             DistractorStrategy strategy,
-            Function<String, RecognitionElement> elementResolver) {
+            Function<String, CandidateMetadata> elementResolver) {
         if (strategy == null || strategy == DistractorStrategy.SEMANTICALLY_FAR) {
             return new ArrayList<>(pool);
         }
 
-        RecognitionElement targetElement = elementResolver.apply(target);
-        if (targetElement == null) {
+        CandidateMetadata targetMetadata = elementResolver.apply(target);
+        if (targetMetadata == null) {
             return new ArrayList<>();
         }
 
         return switch (strategy) {
             case SAME_CATEGORY -> filterBy(pool, elementResolver,
-                    e -> e.getTopicId() != null && e.getTopicId().equals(targetElement.getTopicId()));
+                    m -> m.topicId() != null && m.topicId().equals(targetMetadata.topicId()));
             case SIMILAR_OUTLINE -> filterBy(pool, elementResolver,
-                    e -> targetElement.getSimilarityGroup() != null
-                            && targetElement.getSimilarityGroup().equals(e.getSimilarityGroup()));
+                    m -> targetMetadata.similarityGroup() != null
+                            && targetMetadata.similarityGroup().equals(m.similarityGroup()));
             case SEMANTICALLY_FAR -> new ArrayList<>(pool);
         };
     }
 
     private List<String> filterBy(
             List<String> pool,
-            Function<String, RecognitionElement> elementResolver,
-            java.util.function.Predicate<RecognitionElement> matches) {
+            Function<String, CandidateMetadata> elementResolver,
+            java.util.function.Predicate<CandidateMetadata> matches) {
         List<String> result = new ArrayList<>();
         for (String candidateId : pool) {
-            RecognitionElement candidate = elementResolver.apply(candidateId);
+            CandidateMetadata candidate = elementResolver.apply(candidateId);
             if (candidate != null && matches.test(candidate)) {
                 result.add(candidateId);
             }

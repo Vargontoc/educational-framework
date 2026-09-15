@@ -1,8 +1,10 @@
 package es.vargontoc.educational.framework.game.application;
 
+import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
+import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDifficultyConfig;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
@@ -33,7 +35,10 @@ class GameModuleConfiguration {
             TopicUseCase topicUseCase,
             FilterAllowedRecognitionCategoriesUseCase filterAllowedRecognitionCategoriesUseCase,
             ElementProgressPort elementProgressPort,
-            RecognitionElementRepository recognitionElementRepository) {
+            RecognitionElementRepository recognitionElementRepository,
+            DifficultyLevelUseCase difficultyLevelUseCase,
+            ChildProfileUseCase childProfileUseCase,
+            RecognitionDifficultyService recognitionDifficultyService) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
@@ -45,7 +50,10 @@ class GameModuleConfiguration {
             topicUseCase,
             filterAllowedRecognitionCategoriesUseCase,
             elementProgressPort,
-            recognitionElementRepository
+            recognitionElementRepository,
+            difficultyLevelUseCase,
+            childProfileUseCase,
+            recognitionDifficultyService
         );
     }
 

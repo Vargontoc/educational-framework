@@ -45,6 +45,25 @@ class RecognitionEngineTest {
         }
     }
 
+    private String buildEngineParamsWithRoundParameters(
+            List<String> candidates,
+            es.vargontoc.educational.framework.game.model.recognition.RoundParameters roundParameters) {
+        try {
+            var root = new java.util.LinkedHashMap<String, Object>();
+            root.put("candidates", candidates);
+            var rp = new java.util.LinkedHashMap<String, Object>();
+            rp.put("optionCount", roundParameters.optionCount());
+            rp.put("distractorStrategy", roundParameters.distractorStrategy().name());
+            rp.put("guideChromEnabled", roundParameters.guideChromEnabled());
+            rp.put("touchEnableDelayMs", roundParameters.touchEnableDelayMs());
+            rp.put("nonChromaticKeyRequired", roundParameters.nonChromaticKeyRequired());
+            root.put("roundParameters", rp);
+            return MAPPER.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private RecognitionState deserializeState(String payload) throws Exception {
         return MAPPER.readValue(payload, new TypeReference<RecognitionState>() {});
     }
@@ -824,5 +843,78 @@ class RecognitionEngineTest {
         assertTrue(options.size() <= RecognitionDefaults.MAX_OPTIONS_PER_ROUND);
         assertTrue(options.contains("target"));
         assertTrue(candidates.containsAll(options));
+    }
+
+    @Test
+    void initGame_storesRoundParametersInState() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(7));
+        GameState gs = createGameState();
+        List<String> candidates = List.of("e1", "e2", "e3", "e4", "e5");
+        var roundParameters = new es.vargontoc.educational.framework.game.model.recognition.RoundParameters(
+                3, DistractorStrategy.SAME_CATEGORY, false, 800, true);
+
+        engine.initGame(gs, buildEngineParamsWithRoundParameters(candidates, roundParameters));
+
+        RecognitionState state = deserializeState(gs.getEnginePayload());
+        assertEquals(3, state.getOptionCount());
+        assertEquals(DistractorStrategy.SAME_CATEGORY, state.getDistractorStrategy());
+        assertFalse(state.isGuideChromEnabled());
+        assertEquals(800, state.getTouchEnableDelayMs());
+        assertTrue(state.isNonChromaticKeyRequired());
+        assertEquals(3, state.getOptionIds().size());
+    }
+
+    @Test
+    void getNextElement_includesGuideChromTouchDelayAndNonChromaticKey() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(8));
+        GameState gs = createGameState();
+        List<String> candidates = List.of("e1", "e2", "e3");
+        var roundParameters = new es.vargontoc.educational.framework.game.model.recognition.RoundParameters(
+                2, DistractorStrategy.SEMANTICALLY_FAR, true, 500, false);
+        engine.initGame(gs, buildEngineParamsWithRoundParameters(candidates, roundParameters));
+
+        String nextElementJson = engine.getNextElement(gs);
+
+        var node = MAPPER.readTree(nextElementJson);
+        assertTrue(node.get("guideChromEnabled").asBoolean());
+        assertEquals(500, node.get("touchEnableDelayMs").asInt());
+        assertFalse(node.get("nonChromaticKeyRequired").asBoolean());
+    }
+
+    @Test
+    void advanceRound_preservesRoundParametersAcrossRounds() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(9));
+        GameState gs = createGameState();
+        List<String> candidates = List.of("e1", "e2", "e3", "e4", "e5", "e6");
+        var roundParameters = new es.vargontoc.educational.framework.game.model.recognition.RoundParameters(
+                3, DistractorStrategy.SAME_CATEGORY, false, 800, false);
+        engine.initGame(gs, buildEngineParamsWithRoundParameters(candidates, roundParameters));
+
+        RecognitionState stateBeforeRound2 = deserializeState(gs.getEnginePayload());
+        String target = stateBeforeRound2.getTargetElementId();
+        String actionPayload = MAPPER.writeValueAsString(java.util.Map.of("selectedOptionId", target));
+        engine.processAction(gs, actionPayload);
+
+        RecognitionState stateAfterRound2 = deserializeState(gs.getEnginePayload());
+        assertEquals(1, stateAfterRound2.getRoundIndex());
+        assertEquals(3, stateAfterRound2.getOptionCount());
+        assertEquals(DistractorStrategy.SAME_CATEGORY, stateAfterRound2.getDistractorStrategy());
+        assertEquals(800, stateAfterRound2.getTouchEnableDelayMs());
+        assertEquals(3, stateAfterRound2.getOptionIds().size());
+    }
+
+    @Test
+    void initGame_withoutRoundParameters_fallsBackToDefaultBehavior() throws Exception {
+        RecognitionEngine engine = new RecognitionEngine(new Random(10));
+        GameState gs = createGameState();
+        List<String> candidates = List.of("e1", "e2", "e3", "e4", "e5");
+
+        engine.initGame(gs, buildEngineParams(candidates));
+
+        RecognitionState state = deserializeState(gs.getEnginePayload());
+        assertNull(state.getOptionCount());
+        assertNull(state.getDistractorStrategy());
+        assertTrue(state.getOptionIds().size() >= RecognitionDefaults.MIN_OPTIONS_PER_ROUND);
+        assertTrue(state.getOptionIds().size() <= RecognitionDefaults.MAX_OPTIONS_PER_ROUND);
     }
 }
