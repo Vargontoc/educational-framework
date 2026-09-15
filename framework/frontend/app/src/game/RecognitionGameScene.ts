@@ -18,7 +18,6 @@ const VIEWPORT_WIDTH = 1280
 const VIEWPORT_HEIGHT = 720
 const FADE_DURATION = 400
 const FEEDBACK_DELAY = 500
-const MIN_ELEMENT_HIT_SIZE = 80
 const FEEDBACK_WOBBLE_PX = 8
 const FEEDBACK_WOBBLE_DURATION = 300
 const FEEDBACK_WOBBLE_CYCLES = 2
@@ -46,6 +45,13 @@ const CELEBRATION_TOTAL_DURATION = 1500
 const CELEBRATION_STAR_COLORS = [0xFFC107, 0x42A5F5, 0x66BB6A]
 const HINT_DEPTH = 4
 const CELEBRATION_DEPTH = 50
+const STIMULUS_CARD_WIDTH = 120
+const STIMULUS_CARD_HEIGHT = 120
+const STIMULUS_CARD_ALPHA = 0.15
+const STIMULUS_CARD_CORNER_RADIUS = 12
+const STIMULUS_ZONE_Y = 0.25
+const STIMULUS_ZONE_X = 0.5
+const OPTIONS_ZONE_Y = 0.65
 
 const BIOME_GRADIENTS: Record<string, [number, number]> = {
     meadow:    [0xc8e6c9, 0x81c784],
@@ -65,7 +71,7 @@ export class RecognitionGameScene extends Scene {
     blockActions: boolean = false
     dateClick: number = Date.now()
 
-    images: Phaser.GameObjects.Image[] = []
+    images: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[] = []
     private progressBar?: RoundProgressBar
     private nubiLayer?: MinigameNubiLayer
     private reducedMotion: boolean = false
@@ -77,6 +83,8 @@ export class RecognitionGameScene extends Scene {
     private previousHintActive: boolean = false
     private hintBorderGraphics?: Phaser.GameObjects.Graphics
     private hintPulseTween?: Phaser.Tweens.Tween
+    private minElementHitSize = 80
+    private stimulusCardGraphics?: Phaser.GameObjects.Graphics
 
     constructor() { super({ key: 'recognition-game', active: false }) }
 
@@ -225,12 +233,21 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
-    renderElements(items: RecognitionElement[]) {
+    renderElements(items: RecognitionElement[], targetElementId: string) {
         this.images = []
-        const count = items.length
-        const spacing = Math.max(MIN_ELEMENT_HIT_SIZE, VIEWPORT_WIDTH / (count + 1))
+        this.cleanupStimulusCard()
 
-        items.forEach((e, i) => {
+        const targetElement = items.find(e => e.id === targetElementId)
+        const optionElements = items.filter(e => e.id !== targetElementId)
+
+        if (targetElement) {
+            this.renderTargetElement(targetElement)
+        }
+
+        const count = optionElements.length
+        const spacing = count > 0 ? Math.max(this.minElementHitSize, VIEWPORT_WIDTH / (count + 1)) : 0
+
+        optionElements.forEach((e, i) => {
             const imageKey = e.resourceRefs?.['image']
             if (!imageKey) return
 
@@ -240,14 +257,14 @@ export class RecognitionGameScene extends Scene {
             }
 
             const x = spacing * (i + 1)
-            const y = VIEWPORT_HEIGHT / 2
+            const y = VIEWPORT_HEIGHT * OPTIONS_ZONE_Y
 
             const img = this.add.image(x, y, imageKey)
                 .setScale(0.1, 0.1)
                 .setInteractive({ useHandCursor: false })
 
-            if (img.displayWidth < MIN_ELEMENT_HIT_SIZE || img.displayHeight < MIN_ELEMENT_HIT_SIZE) {
-                const scale = MIN_ELEMENT_HIT_SIZE / Math.max(img.displayWidth, img.displayHeight) * 0.1
+            if (img.displayWidth < this.minElementHitSize || img.displayHeight < this.minElementHitSize) {
+                const scale = this.minElementHitSize / Math.max(img.displayWidth, img.displayHeight) * 0.1
                 img.setScale(scale, scale)
             }
 
@@ -272,33 +289,145 @@ export class RecognitionGameScene extends Scene {
         })
     }
 
-    loadResources(type: RECOGNITION_TYPE | null, items: RecognitionElement[], onReady?: () => void) {
+    private renderTargetElement(element: RecognitionElement): void {
+        const x = VIEWPORT_WIDTH * STIMULUS_ZONE_X
+        const y = VIEWPORT_HEIGHT * STIMULUS_ZONE_Y
+
+        const cardGraphics = this.add.graphics()
+        cardGraphics.fillStyle(0xFFFFFF, STIMULUS_CARD_ALPHA)
+        cardGraphics.fillRoundedRect(
+            x - STIMULUS_CARD_WIDTH / 2,
+            y - STIMULUS_CARD_HEIGHT / 2,
+            STIMULUS_CARD_WIDTH,
+            STIMULUS_CARD_HEIGHT,
+            STIMULUS_CARD_CORNER_RADIUS
+        )
+        this.stimulusCardGraphics = cardGraphics
+
+        const imageKey = element.resourceRefs?.['image']
+        if (imageKey && this.textures.exists(imageKey)) {
+            const img = this.add.image(x, y, imageKey)
+                .setScale(0.1, 0.1)
+
+            if (img.displayWidth < STIMULUS_CARD_WIDTH || img.displayHeight < STIMULUS_CARD_HEIGHT) {
+                const scale = Math.min(STIMULUS_CARD_WIDTH, STIMULUS_CARD_HEIGHT) / Math.max(img.displayWidth, img.displayHeight) * 0.1
+                img.setScale(scale, scale)
+            }
+
+            img.setData('elementId', element.id)
+            this.images.push(img)
+        } else {
+            const placeholder = this.add.text(x, y, element.displayValue, {
+                fontSize: '48px',
+                color: '#ffffff',
+                fontStyle: 'bold'
+            }).setOrigin(0.5, 0.5)
+            placeholder.setData('elementId', element.id)
+            this.images.push(placeholder)
+        }
+    }
+
+    private cleanupStimulusCard(): void {
+        if (this.stimulusCardGraphics) {
+            this.stimulusCardGraphics.destroy()
+            this.stimulusCardGraphics = undefined
+        }
+    }
+
+    loadResources(type: RECOGNITION_TYPE | null, items: RecognitionElement[], targetElementId: string, onReady?: () => void) {
         if (!type) return
         if (!items || items.length <= 0) return
 
         const allCached = items.every((e) => !e.resourceRefs?.['image'] || this.textures.exists(e.resourceRefs['image']))
         if (allCached) {
-            this.renderElements(items)
+            this.renderElements(items, targetElementId)
             onReady?.()
             return
         }
 
         this.load.setBaseURL('/')
-        switch (type) {
-            case 'LETTER':
-                this.load.pack('packManifestRecognitionLetters', 'assets-manifest.json', 'recognition-letters')
-                this.load.on('loaderror', (file: Phaser.Loader.File) => { console.error('Failed to load asset', file.key, file.url) })
-                this.load.once('complete', () => {
-                    this.renderElements(items)
-                    this.startingGame = false
-                    onReady?.()
-                })
-                this.load.start()
-                break
-            default:
-                console.log('No implementado tipo: ' + type)
-                break
+        const packKeyMap: Record<RECOGNITION_TYPE, string> = {
+            'LETTER': 'recognition-letters',
+            'NUMBER': 'recognition-numbers',
+            'SHAPE': 'recognition-shapes',
+            'COLOR': 'recognition-colors',
+            'ANIMAL': 'recognition-animals'
         }
+
+        const packKey = packKeyMap[type]
+        if (!packKey) {
+            this.renderPlaceholderElements(items, targetElementId)
+            this.startingGame = false
+            onReady?.()
+            return
+        }
+
+        let packFailed = false
+        this.load.pack(`packManifest_${packKey}`, 'assets-manifest.json', packKey)
+        this.load.on('loaderror', (_file: Phaser.Loader.File) => {
+            packFailed = true
+            console.warn('Asset pack not available, using placeholders for:', type)
+            this.renderPlaceholderElements(items, targetElementId)
+            this.startingGame = false
+            onReady?.()
+        })
+        this.load.once('complete', () => {
+            if (!packFailed) {
+                this.renderElements(items, targetElementId)
+                this.startingGame = false
+                onReady?.()
+            }
+        })
+        this.load.start()
+    }
+
+    private renderPlaceholderElements(items: RecognitionElement[], targetElementId: string): void {
+        this.images = []
+        this.cleanupStimulusCard()
+
+        const targetElement = items.find(e => e.id === targetElementId)
+        const optionElements = items.filter(e => e.id !== targetElementId)
+
+        if (targetElement) {
+            this.renderTargetElement(targetElement)
+        }
+
+        const count = optionElements.length
+        const spacing = count > 0 ? Math.max(this.minElementHitSize, VIEWPORT_WIDTH / (count + 1)) : 0
+
+        optionElements.forEach((e, i) => {
+            const x = spacing * (i + 1)
+            const y = VIEWPORT_HEIGHT * OPTIONS_ZONE_Y
+
+            const rect = this.add.rectangle(x, y, this.minElementHitSize, this.minElementHitSize, 0x90A4AE, 0.6)
+                .setInteractive({ useHandCursor: false })
+            const label = this.add.text(x, y, e.displayValue, {
+                fontSize: '36px',
+                color: '#ffffff',
+                fontStyle: 'bold'
+            }).setOrigin(0.5, 0.5)
+
+            rect.setData('elementId', e.id)
+            label.setData('elementId', e.id)
+
+            rect.on('pointerdown', () => {
+                if (this.startingGame) return
+                if (this.blockActions) return
+                this.blockActions = true
+                this.selectedOptionId = e.id
+                this.removeVisualHint()
+                if (this.websocket) {
+                    const ev = new GameRecognitionActionEvent()
+                    const diff = Date.now() - this.dateClick
+                    ev.setAction(e.id, diff)
+                    this.websocket.send(JSON.stringify(ev))
+                    this.dateClick = Date.now()
+                }
+            })
+
+            this.images.push(rect)
+            this.images.push(label)
+        })
     }
 
     readEvent(event: ServerGameEvent | AvatarEvent) {
@@ -328,7 +457,7 @@ export class RecognitionGameScene extends Scene {
                     if (this.progressBar && rs.totalRounds > 0) {
                         this.progressBar.updateProgress(rs.roundIndex, rs.totalRounds)
                     }
-                    this.loadResources(rs.recognitionCategory ?? null, rs.elements, () => {
+                    this.loadResources(rs.recognitionCategory ?? null, rs.elements, rs.targetElementId ?? '', () => {
                         this.nubiLayer?.showPhrase('welcome')
                         if (rs.hintActive) {
                             this.showVisualHint(rs.targetElementId)
@@ -378,7 +507,8 @@ export class RecognitionGameScene extends Scene {
                     if (state.recognitionState && state.recognitionState.recognitionCategory) {
                         this.images.forEach((i) => { i.destroy(true) })
                         this.images = []
-                        this.renderElements(state.recognitionState.elements)
+                        this.cleanupStimulusCard()
+                        this.renderElements(state.recognitionState.elements, state.recognitionState.targetElementId ?? '')
                         if (currentHintActive && state.recognitionState.targetElementId) {
                             this.showVisualHint(state.recognitionState.targetElementId)
                         }
@@ -396,7 +526,7 @@ export class RecognitionGameScene extends Scene {
         })
     }
 
-    private playFeedbackAnimation(result: GAME_RESULT_TYPE, targetImage: Phaser.GameObjects.Image | undefined, onComplete: () => void): void {
+    private playFeedbackAnimation(result: GAME_RESULT_TYPE, targetImage: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text) | undefined, onComplete: () => void): void {
         this.playFeedbackSound(result)
 
         if (result === 'CORRECT') {
@@ -408,7 +538,7 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
-    private playCorrectAnimation(targetImage: Phaser.GameObjects.Image | undefined, onComplete: () => void): void {
+    private playCorrectAnimation(targetImage: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text) | undefined, onComplete: () => void): void {
         const target = targetImage ?? this.images[0]
         if (!target) {
             onComplete()
@@ -438,10 +568,14 @@ export class RecognitionGameScene extends Scene {
             }
         })
 
-        target.setTint(CORRECT_TINT)
+        if ('setTint' in target) {
+            (target as Phaser.GameObjects.Image).setTint(CORRECT_TINT)
+        }
         target.setAlpha(1 - CORRECT_TINT_ALPHA)
         this.time.delayedCall(FEEDBACK_SCALE_DURATION, () => {
-            target.clearTint()
+            if ('clearTint' in target) {
+                (target as Phaser.GameObjects.Image).clearTint()
+            }
             target.setAlpha(1)
         })
 
@@ -461,7 +595,7 @@ export class RecognitionGameScene extends Scene {
         this.time.delayedCall(Math.max(FEEDBACK_SCALE_DURATION, PARTICLE_DURATION), onComplete)
     }
 
-    private playIncorrectAnimation(targetImage: Phaser.GameObjects.Image | undefined, onComplete: () => void): void {
+    private playIncorrectAnimation(targetImage: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text) | undefined, onComplete: () => void): void {
         const target = targetImage ?? this.images[0]
         if (!target) {
             onComplete()
@@ -640,6 +774,7 @@ export class RecognitionGameScene extends Scene {
         this.nubiLayer = undefined
         this.images.forEach(i => i.destroy(true))
         this.images = []
+        this.cleanupStimulusCard()
         this.cleanupFeedbackTweens()
         this.removeVisualHint()
         

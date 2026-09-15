@@ -127,6 +127,26 @@ const loadPhaserGame = async () => {
               active.websocket.close()
             }
           } catch { /* noop */ }
+        },
+        getSceneData() {
+          try {
+            const scenes = gameInstance.scene?.scenes ?? []
+            const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+            if (!active || !active.images) return null
+            return {
+              images: active.images.map((img: any) => ({
+                elementId: img.getData?.('elementId') ?? null,
+                x: img.x,
+                y: img.y,
+                displayWidth: img.displayWidth ?? img.width ?? 0,
+                displayHeight: img.displayHeight ?? img.height ?? 0,
+                inputEnabled: img.input?.enabled ?? false,
+                type: img.type ?? 'unknown'
+              })),
+              minElementHitSize: active.minElementHitSize ?? null,
+              startingGame: active.startingGame ?? null
+            }
+          } catch { return null }
         }
       }
     }

@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
@@ -40,7 +41,7 @@ class GameModuleConfiguration {
             ElementProgressPort elementProgressPort,
             RecognitionElementRepository recognitionElementRepository,
             DifficultyLevelUseCase difficultyLevelUseCase,
-            ChildProfileUseCase childProfileUseCase,
+            @Lazy ChildProfileUseCase childProfileUseCase,
             RecognitionDifficultyService recognitionDifficultyService) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
