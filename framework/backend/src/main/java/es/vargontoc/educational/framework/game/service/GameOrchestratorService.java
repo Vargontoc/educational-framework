@@ -235,7 +235,7 @@ public class GameOrchestratorService implements GameOrchestrator {
             Long elementId = null;
             if (targetBeforeAction != null) {
                 try {
-                    elementId = Long.parseLong(targetBeforeAction);
+                    elementId = Long.valueOf(targetBeforeAction);
                 } catch (NumberFormatException e) {
                     log.debug("targetElementId '{}' is not a numeric element ID, skipping element tracking", targetBeforeAction);
                 }
@@ -304,9 +304,9 @@ public class GameOrchestratorService implements GameOrchestrator {
                             state.getDifficultyLevelId(),
                             newDifficultyLevelId != null ? newDifficultyLevelId : state.getDifficultyLevelId(),
                             state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
-                            state.getAttempts() != null ? state.getAttempts() : 0,
-                            state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
-                            state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
+                        getValue(state.getAttempts(), 0),
+                        getValue(state.getCorrectAttempts(), 0),
+                        getValue(state.getTimeoutAttempts(), 0),
                             state.getStartedAt(),
                             LocalDateTime.now(),
                             GameSessionFinalStatus.COMPLETED,
@@ -367,9 +367,9 @@ public class GameOrchestratorService implements GameOrchestrator {
                         state.getDifficultyLevelId(),
                         state.getDifficultyLevelId(),
                         state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
-                        state.getAttempts() != null ? state.getAttempts() : 0,
-                        state.getCorrectAttempts() != null ? state.getCorrectAttempts() : 0,
-                        state.getTimeoutAttempts() != null ? state.getTimeoutAttempts() : 0,
+                        getValue(state.getAttempts(), 0),
+                        getValue(state.getCorrectAttempts(), 0),
+                        getValue(state.getTimeoutAttempts(), 0),
                         state.getStartedAt(),
                         LocalDateTime.now(),
                         GameSessionFinalStatus.ABANDONED,
@@ -388,6 +388,13 @@ public class GameOrchestratorService implements GameOrchestrator {
         } finally {
             lock.unlock();
         }
+    }
+
+    private Integer getValue(Integer value, int defaultValue) {
+        if(value != null)
+            return value;
+
+        return defaultValue;
     }
 
     @Override
@@ -479,7 +486,7 @@ public class GameOrchestratorService implements GameOrchestrator {
         }
         List<Long> ids = candidateIds.stream().map(Long::valueOf).toList();
         Map<Long, RecognitionElement> elementsById = recognitionElementRepository.findAllById(ids).stream()
-                .collect(java.util.stream.Collectors.toMap(RecognitionElement::getId, e -> e));
+                .collect(java.util.stream.Collectors.toMap(r -> r.getId(), e -> e));
         return candidateIds.stream()
                 .map(id -> {
                     RecognitionElement element = elementsById.get(Long.valueOf(id));

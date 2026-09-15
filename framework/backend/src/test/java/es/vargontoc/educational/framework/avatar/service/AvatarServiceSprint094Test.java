@@ -31,8 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -178,7 +176,7 @@ class AvatarServiceSprint094Test {
             new AvatarEventRequest(1L, AvatarEventType.BIOME_TRANSITION, Map.of("biome", "MEADOW")));
 
         verify(audio, org.mockito.Mockito.times(2)).getAudio(requestCaptor.capture());
-        var texts = requestCaptor.getAllValues().stream().map(AudioRequest::text).toList();
+        var texts = requestCaptor.getAllValues().stream().map(a -> a.text()).toList();
         assertFalse(texts.get(0).equals(texts.get(1)),
             "Consecutive biome transitions to same biome should not repeat variant when alternatives exist");
     }

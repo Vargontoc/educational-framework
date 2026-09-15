@@ -343,7 +343,7 @@ public class RecognitionEngine implements GameEnginePort {
         java.util.Map<String, CandidateMetadata> byId = metadata == null
                 ? java.util.Map.of()
                 : metadata.stream().collect(java.util.stream.Collectors.toMap(
-                        CandidateMetadata::id, java.util.function.Function.identity(), (a, b) -> a));
+                        c -> c.id(), java.util.function.Function.identity(), (a, b) -> a));
         return buildOptions(candidates, target, state.getDistractorStrategy(), state.getOptionCount(), byId::get);
     }
 

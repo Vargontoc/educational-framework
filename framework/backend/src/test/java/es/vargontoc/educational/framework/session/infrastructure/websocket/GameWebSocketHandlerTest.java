@@ -223,7 +223,7 @@ class GameWebSocketHandlerTest {
         var captor = ArgumentCaptor.forClass(TextMessage.class);
         verify(session, org.mockito.Mockito.atLeastOnce()).sendMessage(captor.capture());
         String syncMessage = captor.getAllValues().stream()
-            .map(TextMessage::getPayload)
+            .map(t -> t.getPayload())
             .filter(payload -> payload.contains("WORLD_STATE_SYNC"))
             .findFirst()
             .orElseThrow();

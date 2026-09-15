@@ -2,6 +2,7 @@ package es.vargontoc.educational.framework.game.service;
 
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.family.model.ColorVisionMode;
+import es.vargontoc.educational.framework.game.application.RecognitionProperties;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDifficultyConfig;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RecognitionDifficultyServiceTest {
 
     private final RecognitionDifficultyService service =
-            new RecognitionDifficultyService(new RecognitionDifficultyConfig());
+            new RecognitionDifficultyService(new RecognitionDifficultyConfig(new RecognitionProperties()));
 
     @Test
     void resolveRoundParameters_easyLetter_returnsEasyTierWithoutNonChromaticKey() {
@@ -85,5 +86,21 @@ class RecognitionDifficultyServiceTest {
                 DifficultyCode.MEDIUM, RecognitionCategory.ANIMAL, ColorVisionMode.NONE);
 
         assertEquals(animalResult, shapeResult);
+    }
+
+    @Test
+    void resolveRoundParameters_usesCustomRecognitionProperties() {
+        RecognitionProperties properties = new RecognitionProperties();
+        properties.getDifficulty().setEasy(new RecognitionProperties.Tier(5, 1234, false));
+        RecognitionDifficultyService customService =
+                new RecognitionDifficultyService(new RecognitionDifficultyConfig(properties));
+
+        RoundParameters result = customService.resolveRoundParameters(
+                DifficultyCode.EASY, RecognitionCategory.LETTER, ColorVisionMode.NONE);
+
+        assertEquals(5, result.optionCount());
+        assertEquals(1234, result.touchEnableDelayMs());
+        assertFalse(result.guideChromEnabled());
+        assertEquals(DistractorStrategy.SEMANTICALLY_FAR, result.distractorStrategy());
     }
 }

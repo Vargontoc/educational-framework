@@ -100,3 +100,18 @@ app:
   telegram:
     bot:
       token: ${TELEGRAM_TOKEN:}
+  recognition:
+    touch-target-size-px: ${APP_RECOGNITION_TOUCH_TARGET_SIZE_PX:92}
+    difficulty:
+      easy:
+        option-count: ${APP_RECOGNITION_EASY_OPTION_COUNT:2}
+        touch-enable-delay-ms: ${APP_RECOGNITION_EASY_TOUCH_DELAY_MS:500}
+        guide-chrom-enabled: ${APP_RECOGNITION_EASY_GUIDE_CHROM:true}
+      medium:
+        option-count: ${APP_RECOGNITION_MEDIUM_OPTION_COUNT:3}
+        touch-enable-delay-ms: ${APP_RECOGNITION_MEDIUM_TOUCH_DELAY_MS:800}
+        guide-chrom-enabled: ${APP_RECOGNITION_MEDIUM_GUIDE_CHROM:false}
+      hard:
+        option-count: ${APP_RECOGNITION_HARD_OPTION_COUNT:4}
+        touch-enable-delay-ms: ${APP_RECOGNITION_HARD_TOUCH_DELAY_MS:0}
+        guide-chrom-enabled: ${APP_RECOGNITION_HARD_GUIDE_CHROM:false}

@@ -1,5 +1,10 @@
 package es.vargontoc.educational.framework.game.application;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
@@ -16,15 +21,13 @@ import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecogni
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterGameSessionSummaryUseCase;
 import es.vargontoc.educational.framework.tracking.ports.out.ElementProgressPort;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties(RecognitionProperties.class)
 class GameModuleConfiguration {
 
     @Bean
-    GameOrchestrator gameOrchestrator(
+    public GameOrchestrator gameOrchestrator(
             GameCatalogUseCase gameCatalogUseCase,
             GameStateRegistry gameStateRegistry,
             SessionAntiRepetitionRegistry sessionAntiRepetitionRegistry,
@@ -58,12 +61,12 @@ class GameModuleConfiguration {
     }
 
     @Bean
-    RecognitionDifficultyConfig recognitionDifficultyConfig() {
-        return new RecognitionDifficultyConfig();
+    public RecognitionDifficultyConfig recognitionDifficultyConfig(RecognitionProperties recognitionProperties) {
+        return new RecognitionDifficultyConfig(recognitionProperties);
     }
 
     @Bean
-    RecognitionDifficultyService recognitionDifficultyService(RecognitionDifficultyConfig recognitionDifficultyConfig) {
+    public RecognitionDifficultyService recognitionDifficultyService(RecognitionDifficultyConfig recognitionDifficultyConfig) {
         return new RecognitionDifficultyService(recognitionDifficultyConfig);
     }
 }

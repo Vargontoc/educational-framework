@@ -17,7 +17,7 @@ class WorldStateSyncPayloadMinimizationTest {
 
         RecordComponent[] components = WorldStateSyncPayload.class.getRecordComponents();
         Set<String> actualNames = java.util.Arrays.stream(components)
-            .map(RecordComponent::getName)
+            .map(r -> r.getName())
             .collect(Collectors.toSet());
 
         assertEquals(componentNames, actualNames,

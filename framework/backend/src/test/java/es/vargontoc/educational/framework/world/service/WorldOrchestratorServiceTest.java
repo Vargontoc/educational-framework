@@ -755,7 +755,7 @@ class WorldOrchestratorServiceTest {
     }
 
     private Set<Long> idsOf(List<WorldDiscoveryProposal> proposals) {
-        return proposals.stream().map(WorldDiscoveryProposal::getDiscoveryElementId).collect(Collectors.toSet());
+        return proposals.stream().map(w -> w.getDiscoveryElementId()).collect(Collectors.toSet());
     }
 
     private WorldDiscoveryProposal proposalFor(Long discoveryElementId) {

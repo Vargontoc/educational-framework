@@ -1,5 +1,18 @@
 package es.vargontoc.educational.framework.world.service;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.CompatibleActivityProjection;
 import es.vargontoc.educational.framework.content.model.ElementType;
@@ -14,26 +27,13 @@ import es.vargontoc.educational.framework.world.model.SelectedWorldActivity;
 import es.vargontoc.educational.framework.world.model.WorldDestination;
 import es.vargontoc.educational.framework.world.model.WorldDestinationSelectionResult;
 import es.vargontoc.educational.framework.world.model.WorldDiscoveryProposal;
-import es.vargontoc.educational.framework.world.model.WorldEngineEngagementPattern;
-import es.vargontoc.educational.framework.world.model.WorldEnginePriorityAdjustment;
 import es.vargontoc.educational.framework.world.model.WorldEngagementThresholdConfig;
 import es.vargontoc.educational.framework.world.model.WorldEngagementWindow;
+import es.vargontoc.educational.framework.world.model.WorldEngineEngagementPattern;
+import es.vargontoc.educational.framework.world.model.WorldEnginePriorityAdjustment;
 import es.vargontoc.educational.framework.world.ports.in.EngagementThresholdConfigUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class WorldOrchestratorService implements WorldOrchestrator {
 
@@ -49,11 +49,11 @@ public class WorldOrchestratorService implements WorldOrchestrator {
     private final WorldExplorationConfig worldExplorationConfig;
 
     public WorldOrchestratorService(SelectTopicsForDifficultyUseCase selectTopicsForDifficultyUseCase,
-                                   WorldCatalogUseCase worldCatalogUseCase,
-                                   EngagementThresholdConfigUseCase engagementThresholdConfigUseCase,
-                                   WorldEngagementEvaluator worldEngagementEvaluator,
-                                   WorldStateRegistry worldStateRegistry,
-                                   WorldExplorationConfig worldExplorationConfig) {
+                                WorldCatalogUseCase worldCatalogUseCase,
+                                EngagementThresholdConfigUseCase engagementThresholdConfigUseCase,
+                                WorldEngagementEvaluator worldEngagementEvaluator,
+                                WorldStateRegistry worldStateRegistry,
+                                WorldExplorationConfig worldExplorationConfig) {
         this.selectTopicsForDifficultyUseCase = selectTopicsForDifficultyUseCase;
         this.worldCatalogUseCase = worldCatalogUseCase;
         this.engagementThresholdConfigUseCase = engagementThresholdConfigUseCase;
@@ -73,7 +73,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         List<WorldEnginePriorityAdjustment> adjustments = worldEngagementEvaluator.evaluateAdjustments(patterns);
 
         SelectedWorldActivity selectedActivity = selectActivity(compatibleActivities, adjustments);
-        WorldDestination destination = buildDestination(childSessionId, selectedActivity, childAge);
+        WorldDestination destination = buildDestination(childSessionId, childAge);
 
         boolean priorityAdjustmentApplied = !adjustments.isEmpty();
 
@@ -176,12 +176,12 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         return map;
     }
 
-    private WorldDestination buildDestination(Long childSessionId, SelectedWorldActivity selectedActivity, Integer childAge) {
+    private WorldDestination buildDestination(Long childSessionId, Integer childAge) {
         List<WorldHostProjection> hosts = worldCatalogUseCase.listActiveHostsForAge(childAge);
         List<WorldHostProjection> sortedHosts = (hosts == null) ? Collections.emptyList() :
             hosts.stream()
                 .sorted(Comparator.comparing(
-                    WorldHostProjection::sortOrder,
+                    e -> e.sortOrder(),
                     Comparator.nullsLast(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
 
@@ -201,7 +201,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
             hosts.stream()
                 .filter(h -> h.biome() == targetBiome)
                 .sorted(Comparator.comparing(
-                    WorldHostProjection::sortOrder,
+                    w -> w.sortOrder(),
                     Comparator.nullsLast(Comparator.naturalOrder())))
                 .findFirst()
                 .orElse(null);
@@ -210,7 +210,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
             destination.setHostId(matchedHost.id());
             destination.setHostCode(matchedHost.code());
             destination.setHostDisplayName(matchedHost.displayName());
-            destination.setWorldWidth(matchedHost.worldWidth() != null ? matchedHost.worldWidth() : DEFAULT_WORLD_WIDTH);
+            destination.setWorldWidth(matchedHost.worldWidth());
             destination.setHostSequenceOrder(matchedHost.sortOrder());
         } else {
             destination.setWorldWidth(DEFAULT_WORLD_WIDTH);
@@ -242,14 +242,14 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         List<WorldDiscoveryElementProjection> alwaysVisible = elements.stream()
             .filter(element -> element.activityId() == null)
             .sorted(Comparator.comparing(
-                WorldDiscoveryElementProjection::sortOrder,
+                w -> w.sortOrder(),
                 Comparator.nullsLast(Comparator.naturalOrder())))
             .collect(Collectors.toList());
 
         List<WorldDiscoveryElementProjection> eligible = elements.stream()
             .filter(element -> element.activityId() != null)
             .sorted(Comparator.comparing(
-                WorldDiscoveryElementProjection::sortOrder,
+                w -> w.sortOrder(),
                 Comparator.nullsLast(Comparator.naturalOrder())))
             .collect(Collectors.toList());
 
@@ -352,7 +352,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
             .map(state -> state.getVisibleDiscoveryElements())
             .orElse(Collections.emptyList())
             .stream()
-            .map(WorldDiscoveryProposal::getDiscoveryElementId)
+            .map(w -> w.getDiscoveryElementId())
             .filter(Objects::nonNull)
             .collect(Collectors.toCollection(HashSet::new));
     }

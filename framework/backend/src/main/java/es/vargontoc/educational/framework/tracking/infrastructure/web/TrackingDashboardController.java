@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/tracking/children")
+@RequestMapping("/api/v1/tracking/children/{childProfileId}")
 public class TrackingDashboardController {
 
     private final TrackingDashboardService dashboardService;
@@ -41,28 +41,28 @@ public class TrackingDashboardController {
         this.childProfileUseCase = childProfileUseCase;
     }
 
-    @GetMapping("/{childProfileId}/summary")
+    @GetMapping("/summary")
     public ResponseEntity<ApiResponse<ChildTrackingSummaryResponse>> getChildTrackingSummary(@PathVariable Long childProfileId) {
         verifyChildBelongsToFamily(childProfileId);
         var summary = dashboardService.getChildTrackingSummary(childProfileId);
         return ResponseEntity.ok(ApiResponse.ok(summary));
     }
 
-    @GetMapping("/{childProfileId}/activities")
+    @GetMapping("/activities")
     public ResponseEntity<ApiResponse<List<?>>> getActivityPerformance(@PathVariable Long childProfileId) {
         verifyChildBelongsToFamily(childProfileId);
         var activities = dashboardService.getActivityPerformance(childProfileId);
         return ResponseEntity.ok(ApiResponse.ok(activities));
     }
 
-    @GetMapping("/{childProfileId}/topics")
+    @GetMapping("/topics")
     public ResponseEntity<ApiResponse<List<?>>> getTopicPerformance(@PathVariable Long childProfileId) {
         verifyChildBelongsToFamily(childProfileId);
         var topics = dashboardService.getTopicPerformance(childProfileId);
         return ResponseEntity.ok(ApiResponse.ok(topics));
     }
 
-    @GetMapping("/{childProfileId}/difficulty")
+    @GetMapping("/difficulty")
     public ResponseEntity<ApiResponse<DifficultyEvolutionResponse>> getDifficultyEvolution(
             @PathVariable Long childProfileId,
             @RequestParam(required = false) Long activityId) {
@@ -71,14 +71,14 @@ public class TrackingDashboardController {
         return ResponseEntity.ok(ApiResponse.ok(evolution));
     }
 
-    @GetMapping("/{childProfileId}/response-time")
+    @GetMapping("/response-time")
     public ResponseEntity<ApiResponse<ResponseTimeMetricsResponse>> getResponseTimeMetrics(@PathVariable Long childProfileId) {
         verifyChildBelongsToFamily(childProfileId);
         var metrics = dashboardService.getResponseTimeMetrics(childProfileId);
         return ResponseEntity.ok(ApiResponse.ok(metrics));
     }
 
-    @GetMapping("/{childProfileId}/achievements")
+    @GetMapping("/achievements")
     public ResponseEntity<ApiResponse<List<ChildAchievement>>> getChildAchievements(
             @PathVariable Long childProfileId,
             @RequestParam(required = false) Long activityId) {
@@ -87,7 +87,7 @@ public class TrackingDashboardController {
         return ResponseEntity.ok(ApiResponse.ok(achievements));
     }
 
-    @GetMapping("/{childProfileId}/learning-progress")
+    @GetMapping("/learning-progress")
     public ResponseEntity<ApiResponse<List<ChildLearningProgress>>> getChildLearningProgress(
             @PathVariable Long childProfileId,
             @RequestParam(required = false) Long learningPathId) {
@@ -96,7 +96,7 @@ public class TrackingDashboardController {
         return ResponseEntity.ok(ApiResponse.ok(progress));
     }
 
-    @GetMapping("/{childProfileId}/engagement")
+    @GetMapping("/engagement")
     public ResponseEntity<ApiResponse<ActivityEngagementSummaryResult>> getActivityEngagementSummary(
             @PathVariable Long childProfileId) {
         verifyChildBelongsToFamily(childProfileId);

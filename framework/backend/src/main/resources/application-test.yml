@@ -1,0 +1,16 @@
+app:
+  recognition:
+    touch-target-size-px: 96
+    difficulty:
+      easy:
+        option-count: 2
+        touch-enable-delay-ms: 400
+        guide-chrom-enabled: true
+      medium:
+        option-count: 3
+        touch-enable-delay-ms: 700
+        guide-chrom-enabled: false
+      hard:
+        option-count: 4
+        touch-enable-delay-ms: 50
+        guide-chrom-enabled: false
