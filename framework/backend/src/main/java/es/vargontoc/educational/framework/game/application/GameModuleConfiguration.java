@@ -3,10 +3,12 @@ package es.vargontoc.educational.framework.game.application;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
+import es.vargontoc.educational.framework.game.model.recognition.RecognitionDifficultyConfig;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.game.service.GameOrchestratorService;
+import es.vargontoc.educational.framework.game.service.RecognitionDifficultyService;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
@@ -45,5 +47,15 @@ class GameModuleConfiguration {
             elementProgressPort,
             recognitionElementRepository
         );
+    }
+
+    @Bean
+    RecognitionDifficultyConfig recognitionDifficultyConfig() {
+        return new RecognitionDifficultyConfig();
+    }
+
+    @Bean
+    RecognitionDifficultyService recognitionDifficultyService(RecognitionDifficultyConfig recognitionDifficultyConfig) {
+        return new RecognitionDifficultyService(recognitionDifficultyConfig);
     }
 }
