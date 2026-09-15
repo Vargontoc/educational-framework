@@ -1,6 +1,6 @@
 import { Scene } from "phaser";
 import router from "@/router";
-import { AvatarEvent, ServerGameEvent, WorldHeartbeatEvent, GameErrorPayload, WorldDiscoveryElements } from "./GameEvent";
+import { AvatarEvent, ServerGameEvent, WorldHeartbeatEvent, GameErrorPayload, WorldDiscoveryElements, WorldDiscoveryElementInteractiveEvent } from "./GameEvent";
 import { connectWebSocket, clearWebSocketHeartbeat } from "./websocket";
 import { ConnectionMonitor } from "./ConnectionMonitor";
 import { ErrorClassifier } from "./ErrorClassifier";
@@ -56,6 +56,8 @@ export class WorldMapScene extends Scene {
     private pendingBiomeLoad?: string
     private arrivalInProgress = false
     private sessionResumed = false
+    private transitioningToMinigame = false
+    private pendingMinigameElement?: WorldDiscoveryElements
 
     constructor() { super({ key: 'world-map', active: false}) }
 
@@ -63,48 +65,83 @@ export class WorldMapScene extends Scene {
         this.websocket = data.websocket
         this.sessionId = data.sessionId
         this.childId = data.childId
+        this.transitioningToMinigame = false
+        this.pendingMinigameElement = undefined
     }
 
     create() {
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         const npcEnabled = this.registry.get('npcEnabled') as boolean
 
-        this.currentBiome = INITIAL_BIOME
-        this.activeWorldWidth = WORLD_MAP_CONFIG.worldWidth
+        // Verify WebSocket state when returning from minigame
+        if (this.websocket) {
+            console.log('[WorldMapScene] WebSocket state on create:', this.websocket.readyState, '(0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)')
+        }
+
+        // create() se re-ejecuta sobre la MISMA instancia de escena al volver
+        // de un minijuego (Phaser reutiliza la instancia con scene.start(),
+        // no crea una nueva) — los campos de clase sobreviven. Sin este
+        // reset, arrivalInProgress se quedaba en `true` para siempre desde
+        // enterMinigame() (que lo pone a true pero nunca lo revierte al
+        // volver, a diferencia de beginBiomeArrival), bloqueando en
+        // silencio el portal, el selector de biomas Y cualquier
+        // reconstrucción futura de discoveryElements — el bug crítico de
+        // "parece que pierde la conexión".
+        this.arrivalInProgress = false
+        this.transitioningToMinigame = false
+
+        // currentBiome ya tiene valor si esto es un restart tras volver de
+        // un minijuego (no la primera vez que se ejecuta create() en esta
+        // instancia) — en ese caso NO se reinicia a INITIAL_BIOME ni se
+        // reconstruye como si el niño acabara de "llegar": seguía en el
+        // mismo bioma antes de entrar al minijuego, así que se reconstruye
+        // tal cual, sin fundido ni animación de arribo.
+        const isReturningFromMinigame = this.currentBiome !== undefined
+        const bootBiome = isReturningFromMinigame ? this.currentBiome! : INITIAL_BIOME
+
+        if (!isReturningFromMinigame) {
+            this.currentBiome = INITIAL_BIOME
+            this.activeWorldWidth = WORLD_MAP_CONFIG.worldWidth
+        }
 
         this.backgroundLayer = new BackgroundLayer(this)
-        this.backgroundLayer.buildFrom(INITIAL_BIOME)
+        this.backgroundLayer.buildFrom(bootBiome)
 
         this.groundLayer = new GroundLayer(this)
-        const groundContainer = this.groundLayer.create(INITIAL_BIOME, this.activeWorldWidth)
+        const groundContainer = this.groundLayer.create(bootBiome, this.activeWorldWidth)
 
         this.parallaxLayer = new ParallaxLayer(this)
-        const parallaxContainer = this.parallaxLayer.create(this.groundLayer.getBandHeight(), INITIAL_BIOME, this.activeWorldWidth)
+        const parallaxContainer = this.parallaxLayer.create(this.groundLayer.getBandHeight(), bootBiome, this.activeWorldWidth)
 
         this.nubiLayer?.create(npcEnabled, this.getGroundTopY())
 
         this.interactiveLayer = new InteractiveLayer(this)
         const interactiveContainer = this.interactiveLayer.create()
         this.environmentReaction = new EnvironmentReaction(this)
-        this.interactiveLayer.setOnTouch((_element, shape, pointer) => {
+        this.interactiveLayer.setOnTouch((element, shape, pointer) => {
             this.environmentReaction?.play(shape)
             this.nubiLayer?.walkTo(this.clampToWorldWidth(pointer.x + (this.scroller?.getOffset() ?? 0)))
+
+            if (element.hasActivity && !this.arrivalInProgress) {
+                this.enterMinigame(element)
+            }
         })
 
         this.transportLayer = new TransportLayer(this)
-        const transportContainer = this.transportLayer.create(INITIAL_BIOME, this.getGroundTopY(), WORLD_MAP_CONFIG.viewportWidth / 6)
+        const transportContainer = this.transportLayer.create(bootBiome, this.getGroundTopY(), WORLD_MAP_CONFIG.viewportWidth / 6)
 
         this.biomeSelectorLayer = new BiomeSelectorLayer(this)
 
         this.edgeHintLayer = new EdgeHintLayer(this)
         this.edgeHintLayer.create()
+        this.edgeHintLayer.setRightEdgeSuppressed(bootBiome === 'prehistory')
 
         this.exitPortalLayer = new ExitPortalLayer(this)
-        const exitPortalContainer = this.exitPortalLayer.create(INITIAL_BIOME, this.activeWorldWidth, this.getGroundTopY())
+        const exitPortalContainer = this.exitPortalLayer.create(bootBiome, this.activeWorldWidth, this.getGroundTopY())
 
         this.scroller = new GradualScroller(this, reducedMotion)
         this.scroller.attach()
-        this.scroller.setMaxScrollOffset(this.computeMaxScrollOffset(this.activeWorldWidth, INITIAL_BIOME))
+        this.scroller.setMaxScrollOffset(this.computeMaxScrollOffset(this.activeWorldWidth, bootBiome))
         if (!reducedMotion) {
             this.scroller.registerLayer(parallaxContainer, WORLD_MAP_CONFIG.parallaxFactor)
         }
@@ -165,7 +202,10 @@ export class WorldMapScene extends Scene {
         const audioService = this.registry.get('audioService') as AudioService | undefined
         audioService?.stop()
 
-        this.cleanupWebSocket()
+        // Don't close WebSocket when transitioning to minigame — RecognitionGameScene needs it
+        if (!this.transitioningToMinigame) {
+            this.cleanupWebSocket()
+        }
     }
 
     cleanupLayers() {
@@ -212,6 +252,8 @@ export class WorldMapScene extends Scene {
     }
 
     setupWebSocketHandlers(ws: WebSocket) {
+        console.log('[WorldMapScene] Setting up WebSocket handlers, readyState:', ws.readyState)
+        
         ws.onmessage = (msg) => {
             MessageRouter.route(
                 msg.data,
@@ -226,11 +268,13 @@ export class WorldMapScene extends Scene {
         }
 
         ws.onclose = () => {
+            console.log('[WorldMapScene] WebSocket closed')
             clearWebSocketHeartbeat(ws)
             this.connectionMonitor?.handleWebSocketClose()
         }
 
-        ws.onerror = () => {
+        ws.onerror = (error) => {
+            console.error('[WorldMapScene] WebSocket error:', error)
             clearWebSocketHeartbeat(ws)
         }
     }
@@ -273,15 +317,17 @@ export class WorldMapScene extends Scene {
                     }
                     break;
                 case 'WORLD_ACTIVITY_STARTED':
-                    console.log('WORLD_ACTIVITY_STARTED recibido, sin acción en esta fase')
+                    if (event.payload?.activityId && this.pendingMinigameElement) {
+                        this.startMinigameTransition(event.payload.activityId)
+                    }
                     break;
                 case 'CHILD_AGENT_ACTIVATED':
                     this.registry.set('npcEnabled', true)
-                    this.events.emit('npc-state-changed', true)
+                    this.registry.events.emit('npc-state-changed', true)
                     break;
                 case 'CHILD_AGENT_DEACTIVATED':
                     this.registry.set('npcEnabled', false)
-                    this.events.emit('npc-state-changed', false)
+                    this.registry.events.emit('npc-state-changed', false)
                     break;
                 case 'CHILD_TTS_ACTIVATED':
                     this.registry.set('ttsEnabled', true)
@@ -507,6 +553,59 @@ export class WorldMapScene extends Scene {
         const portalWorldX = this.activeWorldWidth + PORTAL_MARGIN
         this.nubiLayer?.walkTo(portalWorldX, () => {
             this.sendWorldTravel(nextBiome)
+        })
+    }
+
+    private enterMinigame(element: WorldDiscoveryElements): void {
+        if (this.arrivalInProgress) return
+        if (!element.hasActivity) return
+        
+        // Store the element for later transition
+        this.pendingMinigameElement = element
+        
+        // Send world_discovery_interacted to backend
+        if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+            const event = new WorldDiscoveryElementInteractiveEvent()
+            event.proposalRuntimeId = element.proposalRuntimeId
+            event.discoveryElementId = element.discoveryElementId
+            this.websocket.send(JSON.stringify(event))
+        }
+    }
+
+    private startMinigameTransition(activityId: number): void {
+        if (this.arrivalInProgress) return
+        this.arrivalInProgress = true
+        this.transitioningToMinigame = true
+        this.pendingMinigameElement = undefined  // Clear pending element
+
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        const duration = reducedMotion ? 200 : 400
+
+        const overlay = this.add.rectangle(
+            WORLD_MAP_CONFIG.viewportWidth / 2,
+            WORLD_MAP_CONFIG.viewportHeight / 2,
+            WORLD_MAP_CONFIG.viewportWidth,
+            WORLD_MAP_CONFIG.viewportHeight,
+            0x000000,
+            0
+        )
+        overlay.setDepth(200)
+        overlay.setScrollFactor(0)
+
+        this.tweens.add({
+            targets: overlay,
+            alpha: 1,
+            duration,
+            ease: 'Linear',
+            onComplete: () => {
+                this.scene.start('recognition-game', {
+                    websocket: this.websocket,
+                    activityId: activityId,
+                    biome: this.currentBiome,
+                    sessionId: this.sessionId,
+                    childId: this.childId
+                })
+            }
         })
     }
 

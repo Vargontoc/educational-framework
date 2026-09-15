@@ -1,4 +1,4 @@
-export type TYPE_SEND_EVENT = 'auth' | 'heartbeat' | 'world_discovery_interacted' |  'game_start' | 'game_ready' |  'game_action' | 'world_heartbeat' | 'world_travel'
+export type TYPE_SEND_EVENT = 'auth' | 'heartbeat' | 'world_discovery_interacted' |  'game_start' | 'game_ready' |  'game_action' | 'game_abandon' | 'world_heartbeat' | 'world_travel'
 export type SERVER_EVENT =
     'AUTH_ACK' |
     'HEARTBEAT_ACK' |
@@ -120,13 +120,22 @@ export class GameRecognitionActionEvent extends GameEvent {
     constructor() { super('game_action') }
     action: string = ''
 
-    setAction(id: number, time: number) {
+    // NOTE (OBS-070-4): Pre-existing contract discrepancy.
+    // AsyncAPI contract (game-client-message.yaml) defines `action` as a plain
+    // string and `responseTimeMs` as a separate integer field. This implementation
+    // serializes both into a single JSON string in `action`. Deferred to a future
+    // sprint for alignment — do not change without backend coordination.
+    setAction(id: string, time: number) {
         this.action = `{"selectedOptionId" : "${id}", "responseTimeMs" : ${time}}`
     }
 }
 
+export class GameAbandonEvent extends GameEvent {
+    constructor() { super('game_abandon') }
+}
+
 export class RecognitionAction {
-    selectedOptionId: number = 0
+    selectedOptionId: string = ''
     responseTimeMs: number = 0
 }
 
@@ -199,19 +208,21 @@ export class BaseGameActionResult<P extends BaseEnginePayload> {
     updatedState?: P
 }
 
-export class RecognitionElementResource {
-    image: string = ''
-    audio: string = ''
-}
-
 export class RecognitionElement {
-    id: number = 0
-    resourceRefs?: RecognitionElementResource
+    id: string = ''
+    code: string = ''
+    displayValue: string = ''
+    resourceRefs?: Record<string, string>
 }
 
 export class RecognitionState {
     elements: RecognitionElement[] = []
     recognitionCategory?: RECOGNITION_TYPE
+    roundIndex: number = 0
+    totalRounds: number = 0
+    hintActive: boolean = false
+    targetElementId: string = ''
+    optionIds: string[] = []
 }
 
 export class RecognitionEnginePayload extends BaseEnginePayload {

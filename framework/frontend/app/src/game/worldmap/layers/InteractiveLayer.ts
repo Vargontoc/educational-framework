@@ -102,9 +102,6 @@ export class InteractiveLayer {
             } else {
                 y = defaultY
             }
-
-            console.log(`Element: [${element.positionX}:${element.positionY}] -> World position: [${x}:${y}]`)
-
             this.createElement(element, x, y)
         })
     }

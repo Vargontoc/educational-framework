@@ -12,6 +12,7 @@ import { BaseStateScene } from '@/game/BaseStateScene';
 import { FarewellScene } from '@/game/FarewellScene';
 import { OrientationRequiredScene } from '@/game/OrientationRequiredScene';
 import { WorldMapScene } from '@/game/WorldMapScene';
+import { RecognitionGameScene } from '@/game/RecognitionGameScene';
 import { useRoute } from 'vue-router';
 import { useGlobalConfig } from '@/composables/useGlobalConfig';
 import { useGameOrientation } from '@/composables/useGameOrientation';
@@ -37,7 +38,7 @@ const loadPhaserGame = async () => {
       width: 1280,
       height: 720,
       parent: gameContainer.value,
-      scene: [LoadingScene, BaseStateScene, WorldMapScene, FarewellScene, OrientationRequiredScene],
+      scene: [LoadingScene, BaseStateScene, WorldMapScene, RecognitionGameScene, FarewellScene, OrientationRequiredScene],
       backgroundColor: "#028af8",
       plugins: {
         scene: [

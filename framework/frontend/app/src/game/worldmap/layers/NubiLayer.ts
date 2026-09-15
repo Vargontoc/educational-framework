@@ -99,7 +99,7 @@ export class NubiLayer {
 
         this.setNpcEnabled(npcEnabled)
 
-        this.scene.events.on('npc-state-changed', this.onNpcStateChanged)
+        this.scene.registry.events.on('npc-state-changed', this.onNpcStateChanged)
         this.scene.events.once('shutdown', () => this.destroy())
         this.scene.events.once('destroy', () => this.destroy())
     }
@@ -212,7 +212,7 @@ export class NubiLayer {
     }
 
     destroy() {
-        this.scene.events.off('npc-state-changed', this.onNpcStateChanged)
+        this.scene.registry.events.off('npc-state-changed', this.onNpcStateChanged)
         this.nubi?.destroy()
         this.nubi = undefined
     }
