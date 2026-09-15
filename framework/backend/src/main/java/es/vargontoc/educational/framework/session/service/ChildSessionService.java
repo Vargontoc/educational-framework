@@ -9,9 +9,11 @@ import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
+import es.vargontoc.educational.framework.shared.exception.ConflictException;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import es.vargontoc.educational.framework.shared.exception.SessionException;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,7 +65,12 @@ public class ChildSessionService implements ChildSessionUseCase {
         session.setHeartbeatIntervalSeconds(heartbeatInterval);
         session.setConnectionMeta(connectionMeta);
 
-        return childSessionRepository.save(session);
+        try {
+            return childSessionRepository.save(session);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException(
+                "Another session was opened concurrently for this child profile. Please retry.");
+        }
     }
 
     @Override

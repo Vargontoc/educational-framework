@@ -23,8 +23,8 @@ Verificado por análisis técnico (`analyser-frontend`, 2026-09-15):
   - Sin cromo guía, EASY no se diferencia visualmente de MEDIUM/HARD.
 
 ## Status
-status: pending
-started_at:
+status: implemented
+started_at: 2026-09-15
 closed_at:
 blocked_by: SPRINT-073
 waiting_for: Backend SPRINT-102 (contratos round-ready-event)
@@ -112,34 +112,34 @@ export class RecognitionState {
 ## Tareas del sprint
 
 ### Extensión de contratos
-- [ ] Añadir `guideChromEnabled`, `touchEnableDelayMs`, `nonChromaticKeyRequired` a `RecognitionState` en `GameEvent.ts`.
-- [ ] Añadir campo de instancia `nonChromaticKeyRequired` en `RecognitionGameScene`.
+- [x] Añadir `guideChromEnabled`, `touchEnableDelayMs`, `nonChromaticKeyRequired` a `RecognitionState` en `GameEvent.ts`.
+- [x] Añadir campo de instancia `nonChromaticKeyRequired` en `RecognitionGameScene`.
 
 ### Espera antes del toque
-- [ ] Implementar método `applyTouchEnableDelay(delayMs, optionImages)`.
-- [ ] Al recibir `GAME_READY`: aplicar espera si `touchEnableDelayMs > 0`.
-- [ ] Al recibir `GAME_ACTION_RESULT` con `CORRECT` (nueva ronda): aplicar espera si `touchEnableDelayMs > 0`.
-- [ ] Las opciones aparecen con `alpha: 0.5` y `disableInteractive()` durante la espera.
-- [ ] Al expirar: `alpha: 1.0` y `setInteractive()`.
-- [ ] Respetar `prefers-reduced-motion: reduce` (transición instantánea).
+- [x] Implementar método `applyTouchEnableDelay(delayMs, optionImages)`.
+- [x] Al recibir `GAME_READY`: aplicar espera si `touchEnableDelayMs > 0`.
+- [x] Al recibir `GAME_ACTION_RESULT` con `CORRECT` (nueva ronda): aplicar espera si `touchEnableDelayMs > 0`.
+- [x] Las opciones aparecen con `alpha: 0.5` y `disableInteractive()` durante la espera.
+- [x] Al expirar: `alpha: 1.0` y `setInteractive()`.
+- [x] Respetar `prefers-reduced-motion: reduce` (transición instantánea).
 
 ### Cromo guía
-- [ ] Implementar método `renderGuideChrom()` que dibuja halo alrededor de zona de opciones.
-- [ ] Si `guideChromEnabled` es true: mostrar halo con pulso lento.
-- [ ] Si `guideChromEnabled` es false: no mostrar halo.
-- [ ] Destruir halo al cambiar de ronda.
-- [ ] Respetar `prefers-reduced-motion: reduce` (halo estático, sin pulso).
+- [x] Implementar método `renderGuideChrom()` que dibuja halo alrededor de zona de opciones.
+- [x] Si `guideChromEnabled` es true: mostrar halo con pulso lento.
+- [x] Si `guideChromEnabled` es false: no mostrar halo.
+- [x] Destruir halo al cambiar de ronda.
+- [x] Respetar `prefers-reduced-motion: reduce` (halo estático, sin pulso).
 
 ### Almacenamiento de `nonChromaticKeyRequired`
-- [ ] Almacenar `nonChromaticKeyRequired` del `RecognitionState` en campo de instancia.
-- [ ] No consumir en este sprint.
+- [x] Almacenar `nonChromaticKeyRequired` del `RecognitionState` en campo de instancia.
+- [x] No consumir en este sprint.
 
 ### Pruebas
-- [ ] Test: `touchEnableDelayMs > 0` bloquea el toque durante el tiempo configurado.
-- [ ] Test: `touchEnableDelayMs = 0` habilita el toque inmediatamente.
-- [ ] Test: `guideChromEnabled = true` muestra halo alrededor de opciones.
-- [ ] Test: `guideChromEnabled = false` no muestra halo.
-- [ ] Test: `nonChromaticKeyRequired` se almacena correctamente.
+- [x] Test: `touchEnableDelayMs > 0` bloquea el toque durante el tiempo configurado.
+- [x] Test: `touchEnableDelayMs = 0` habilita el toque inmediatamente.
+- [x] Test: `guideChromEnabled = true` muestra halo alrededor de opciones.
+- [x] Test: `guideChromEnabled = false` no muestra halo.
+- [x] Test: `nonChromaticKeyRequired` se almacena correctamente.
 - [ ] Test: `prefers-reduced-motion: reduce` simplifica animaciones de espera y cromo.
 
 ## Manual Tests

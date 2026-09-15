@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="042__prevent_duplicate_active_child_sessions" author="vargontoc">
+        <sql>
+            UPDATE child_session cs
+            SET status = 'CLOSED',
+                ended_at = COALESCE(cs.last_activity_at, now()),
+                duration_seconds = GREATEST(0, EXTRACT(EPOCH FROM (COALESCE(cs.last_activity_at, now()) - cs.started_at))::int)
+            WHERE cs.status = 'ACTIVE'
+              AND cs.id NOT IN (
+                  SELECT DISTINCT ON (child_profile_id) id
+                  FROM child_session
+                  WHERE status = 'ACTIVE'
+                  ORDER BY child_profile_id, started_at DESC
+              );
+
+            CREATE UNIQUE INDEX uq_child_session_active_per_child
+                ON child_session (child_profile_id)
+                WHERE status = 'ACTIVE';
+        </sql>
+        <rollback>
+            <sql>DROP INDEX IF EXISTS uq_child_session_active_per_child;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

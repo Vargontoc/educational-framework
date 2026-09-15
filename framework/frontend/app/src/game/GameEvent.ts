@@ -223,6 +223,9 @@ export class RecognitionState {
     hintActive: boolean = false
     targetElementId: string = ''
     optionIds: string[] = []
+    guideChromEnabled: boolean = false
+    touchEnableDelayMs: number = 0
+    nonChromaticKeyRequired: boolean = false
 }
 
 export class RecognitionEnginePayload extends BaseEnginePayload {

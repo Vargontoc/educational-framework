@@ -3,6 +3,8 @@ package es.vargontoc.educational.framework.session.infrastructure.persistence;
 import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -11,6 +13,8 @@ import java.util.Optional;
 
 @Repository
 public class ChildSessionPersistenceAdapter implements ChildSessionRepository {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChildSessionPersistenceAdapter.class);
 
     private final ChildSessionJpaRepository jpaRepository;
 
@@ -26,8 +30,20 @@ public class ChildSessionPersistenceAdapter implements ChildSessionRepository {
 
     @Override
     public Optional<ChildSession> findActiveByChildProfileId(Long childProfileId) {
-        return jpaRepository.findByChildProfileIdAndStatus(childProfileId, ChildSessionStatus.ACTIVE.name())
-            .map(ChildSessionPersistenceAdapter::toDomain);
+        List<ChildSessionJpaEntity> activeSessions = jpaRepository
+            .findByChildProfileIdAndStatusOrderByStartedAtDesc(childProfileId, ChildSessionStatus.ACTIVE.name());
+
+        if (activeSessions.size() > 1) {
+            LOGGER.warn(
+                "Found {} ACTIVE child_session rows for childProfileId={} (expected at most 1); using the most "
+                    + "recently started one (id={}) and ignoring the rest: {}",
+                activeSessions.size(),
+                childProfileId,
+                activeSessions.get(0).getId(),
+                activeSessions.stream().map(ChildSessionJpaEntity::getId).toList());
+        }
+
+        return activeSessions.stream().findFirst().map(ChildSessionPersistenceAdapter::toDomain);
     }
 
     @Override

@@ -46,4 +46,5 @@
     <include file="db/changelog/migrations/039__add_is_repetition_to_game_session_summary.xml"/>
     <include file="db/changelog/migrations/040__add_abandon_reason_to_game_session_summary.xml"/>
     <include file="db/changelog/migrations/041__add_similarity_group_to_recognition_element.xml"/>
+    <include file="db/changelog/migrations/042__prevent_duplicate_active_child_sessions.xml"/>
 </databaseChangeLog>

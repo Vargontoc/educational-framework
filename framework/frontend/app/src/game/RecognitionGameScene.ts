@@ -1,4 +1,4 @@
-import { Scene } from "phaser"
+import { Scene, GameObjects } from "phaser"
 import {
     AvatarEvent,
     GAME_RESULT_TYPE,
@@ -52,6 +52,12 @@ const STIMULUS_CARD_CORNER_RADIUS = 12
 const STIMULUS_ZONE_Y = 0.25
 const STIMULUS_ZONE_X = 0.5
 const OPTIONS_ZONE_Y = 0.65
+const GUIDE_CHROM_COLOR = 0xFFFFFF
+const GUIDE_CHROM_ALPHA_BASE = 0.2
+const GUIDE_CHROM_ALPHA_MAX = 0.25
+const GUIDE_CHROM_PULSE_DURATION = 2000
+const GUIDE_CHROM_PADDING = 20
+const GUIDE_CHROM_DEPTH = 1
 
 const BIOME_GRADIENTS: Record<string, [number, number]> = {
     meadow:    [0xc8e6c9, 0x81c784],
@@ -85,8 +91,16 @@ export class RecognitionGameScene extends Scene {
     private hintPulseTween?: Phaser.Tweens.Tween
     private minElementHitSize = 80
     private stimulusCardGraphics?: Phaser.GameObjects.Graphics
+    private _nonChromaticKeyRequired: boolean = false
+    private guideChromGraphics?: Phaser.GameObjects.Graphics
+    private guideChromPulseTween?: Phaser.Tweens.Tween
+    private touchEnableTimer?: Phaser.Time.TimerEvent
 
     constructor() { super({ key: 'recognition-game', active: false }) }
+
+    get nonChromaticKeyRequired(): boolean {
+        return this._nonChromaticKeyRequired
+    }
 
     init(data: {
         websocket: WebSocket,
@@ -238,7 +252,7 @@ export class RecognitionGameScene extends Scene {
         this.cleanupStimulusCard()
 
         const targetElement = items.find(e => e.id === targetElementId)
-        const optionElements = items.filter(e => e.id !== targetElementId)
+        const optionElements = items
 
         if (targetElement) {
             this.renderTargetElement(targetElement)
@@ -246,31 +260,46 @@ export class RecognitionGameScene extends Scene {
 
         const count = optionElements.length
         const spacing = count > 0 ? Math.max(this.minElementHitSize, VIEWPORT_WIDTH / (count + 1)) : 0
-
+        console.log("Elementos :" + count)
         optionElements.forEach((e, i) => {
-            const imageKey = e.resourceRefs?.['image']
-            if (!imageKey) return
-
-            if (!this.textures.exists(imageKey)) {
-                console.error('Texture not in cache after load complete:', imageKey)
-                return
-            }
-
             const x = spacing * (i + 1)
             const y = VIEWPORT_HEIGHT * OPTIONS_ZONE_Y
+            const imageKey = e.resourceRefs?.['image']
+            console.log(`Elemento ${e} | Posicion [X:${x}|Y:${y}]`)
+            let optionElement: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
+            let labelElement: Phaser.GameObjects.Text | undefined
 
-            const img = this.add.image(x, y, imageKey)
-                .setScale(0.1, 0.1)
-                .setInteractive({ useHandCursor: false })
+            if (imageKey && this.textures.exists(imageKey)) {
+                const img = this.add.image(x, y, imageKey)
+                    .setScale(0.1, 0.1)
 
-            if (img.displayWidth < this.minElementHitSize || img.displayHeight < this.minElementHitSize) {
-                const scale = this.minElementHitSize / Math.max(img.displayWidth, img.displayHeight) * 0.1
-                img.setScale(scale, scale)
+                if (img.displayWidth < this.minElementHitSize || img.displayHeight < this.minElementHitSize) {
+                    const scale = this.minElementHitSize / Math.max(img.displayWidth, img.displayHeight) * 0.1
+                    img.setScale(scale, scale)
+                }
+
+                optionElement = img
+            } else {
+                if (imageKey) {
+                    console.warn('Texture not in cache, using placeholder for option:', imageKey)
+                }
+                const rect = this.add.rectangle(x, y, this.minElementHitSize, this.minElementHitSize, 0x90A4AE, 0.6)
+                const label = this.add.text(x, y, e.displayValue, {
+                    fontSize: '36px',
+                    color: '#ffffff',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5, 0.5)
+                optionElement = rect
+                labelElement = label
             }
 
-            img.setData('elementId', e.id)
+            optionElement.setInteractive({ useHandCursor: false })
+            optionElement.setData('elementId', e.id)
+            if (labelElement) {
+                labelElement.setData('elementId', e.id)
+            }
 
-            img.on('pointerdown', () => {
+            optionElement.on('pointerdown', () => {
                 if (this.startingGame) return
                 if (this.blockActions) return
                 this.blockActions = true
@@ -285,7 +314,10 @@ export class RecognitionGameScene extends Scene {
                 }
             })
 
-            this.images.push(img)
+            this.images.push(optionElement)
+            if (labelElement) {
+                this.images.push(labelElement)
+            }
         })
     }
 
@@ -315,6 +347,7 @@ export class RecognitionGameScene extends Scene {
             }
 
             img.setData('elementId', element.id)
+            img.setData('isStimulus', true)
             this.images.push(img)
         } else {
             const placeholder = this.add.text(x, y, element.displayValue, {
@@ -323,6 +356,7 @@ export class RecognitionGameScene extends Scene {
                 fontStyle: 'bold'
             }).setOrigin(0.5, 0.5)
             placeholder.setData('elementId', element.id)
+            placeholder.setData('isStimulus', true)
             this.images.push(placeholder)
         }
     }
@@ -332,6 +366,119 @@ export class RecognitionGameScene extends Scene {
             this.stimulusCardGraphics.destroy()
             this.stimulusCardGraphics = undefined
         }
+    }
+
+    private applyTouchEnableDelay(delayMs: number, optionImages: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[]): void {
+        if (this.touchEnableTimer) {
+            this.touchEnableTimer.remove(false)
+            this.touchEnableTimer = undefined
+        }
+
+        const isTappable = (obj: GameObjects.GameObject): obj is GameObjects.Image | GameObjects.Rectangle =>
+            !(obj instanceof GameObjects.Text)
+
+        if (delayMs <= 0) {
+            optionImages.forEach(img => {
+                img.setAlpha(1.0)
+                if (isTappable(img)) {
+                    img.setInteractive({ useHandCursor: false })
+                }
+            })
+            this.blockActions = false
+            return
+        }
+
+        optionImages.forEach(img => {
+            img.setAlpha(0.5)
+            if (isTappable(img)) {
+                img.disableInteractive()
+            }
+        })
+        this.blockActions = true
+
+        if (this.reducedMotion) {
+            this.touchEnableTimer = this.time.delayedCall(delayMs, () => {
+                optionImages.forEach(img => {
+                    img.setAlpha(1.0)
+                    if (isTappable(img)) {
+                        img.setInteractive({ useHandCursor: false })
+                    }
+                })
+                this.blockActions = false
+                this.touchEnableTimer = undefined
+            })
+        } else {
+            this.touchEnableTimer = this.time.delayedCall(delayMs, () => {
+                const tappableImages = optionImages.filter(isTappable)
+                this.tweens.add({
+                    targets: optionImages,
+                    alpha: 1.0,
+                    duration: 200,
+                    ease: 'Sine.easeOut',
+                    onComplete: () => {
+                        tappableImages.forEach(img => {
+                            img.setInteractive({ useHandCursor: false })
+                        })
+                        this.blockActions = false
+                        this.touchEnableTimer = undefined
+                    }
+                })
+            })
+        }
+    }
+
+    private renderGuideChrom(): void {
+        this.destroyGuideChrom()
+
+        const optionImages = this.getOptionImages()
+        if (optionImages.length === 0) return
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+        optionImages.forEach(img => {
+            const bounds = img.getBounds()
+            if (bounds.x < minX) minX = bounds.x
+            if (bounds.x + bounds.width > maxX) maxX = bounds.x + bounds.width
+            if (bounds.y < minY) minY = bounds.y
+            if (bounds.y + bounds.height > maxY) maxY = bounds.y + bounds.height
+        })
+
+        const cx = (minX + maxX) / 2
+        const cy = (minY + maxY) / 2
+        const rx = (maxX - minX) / 2 + GUIDE_CHROM_PADDING
+        const ry = (maxY - minY) / 2 + GUIDE_CHROM_PADDING
+
+        const graphics = this.add.graphics()
+        graphics.setDepth(GUIDE_CHROM_DEPTH)
+        graphics.fillStyle(GUIDE_CHROM_COLOR, GUIDE_CHROM_ALPHA_BASE)
+        graphics.fillEllipse(cx, cy, rx * 2, ry * 2)
+
+        this.guideChromGraphics = graphics
+
+        if (!this.reducedMotion) {
+            this.guideChromPulseTween = this.tweens.add({
+                targets: graphics,
+                alpha: GUIDE_CHROM_ALPHA_MAX,
+                duration: GUIDE_CHROM_PULSE_DURATION / 2,
+                ease: 'Sine.inOut',
+                yoyo: true,
+                repeat: -1
+            })
+        }
+    }
+
+    private destroyGuideChrom(): void {
+        if (this.guideChromPulseTween) {
+            this.guideChromPulseTween.stop()
+            this.guideChromPulseTween = undefined
+        }
+        if (this.guideChromGraphics) {
+            this.guideChromGraphics.destroy()
+            this.guideChromGraphics = undefined
+        }
+    }
+
+    private getOptionImages(): (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[] {
+        return this.images.filter(img => !img.getData('isStimulus'))
     }
 
     loadResources(type: RECOGNITION_TYPE | null, items: RecognitionElement[], targetElementId: string, onReady?: () => void) {
@@ -386,7 +533,7 @@ export class RecognitionGameScene extends Scene {
         this.cleanupStimulusCard()
 
         const targetElement = items.find(e => e.id === targetElementId)
-        const optionElements = items.filter(e => e.id !== targetElementId)
+        const optionElements = items
 
         if (targetElement) {
             this.renderTargetElement(targetElement)
@@ -454,6 +601,7 @@ export class RecognitionGameScene extends Scene {
             case 'GAME_READY':
                 if (event.payload.engine === "RECOGNITION" && event.payload.recognitionState?.recognitionCategory) {
                     const rs = event.payload.recognitionState
+                    this._nonChromaticKeyRequired = rs.nonChromaticKeyRequired ?? false
                     if (this.progressBar && rs.totalRounds > 0) {
                         this.progressBar.updateProgress(rs.roundIndex, rs.totalRounds)
                     }
@@ -462,6 +610,11 @@ export class RecognitionGameScene extends Scene {
                         if (rs.hintActive) {
                             this.showVisualHint(rs.targetElementId)
                         }
+                        if (rs.guideChromEnabled) {
+                            this.renderGuideChrom()
+                        }
+                        const optionImages = this.getOptionImages()
+                        this.applyTouchEnableDelay(rs.touchEnableDelayMs ?? 0, optionImages)
                     })
                     if (rs.hintActive) {
                         this.nubiLayer?.showPhrase('hint')
@@ -473,6 +626,10 @@ export class RecognitionGameScene extends Scene {
     }
 
     applyActionToResultType(result: GAME_RESULT_TYPE, complete: boolean, state: RecognitionEnginePayload) {
+        if (state.recognitionState) {
+            this._nonChromaticKeyRequired = state.recognitionState.nonChromaticKeyRequired ?? false
+        }
+
         if (state.recognitionState && this.progressBar) {
             this.progressBar.updateProgress(
                 state.recognitionState.roundIndex,
@@ -491,7 +648,7 @@ export class RecognitionGameScene extends Scene {
             this.nubiLayer?.showPhrase('celebration')
         }
 
-        const selectedImage = this.images.find(img => img.getData('elementId') === this.selectedOptionId)
+        const selectedImage = this.images.find(img => img.getData('elementId') === this.selectedOptionId && !img.getData('isStimulus'))
 
         if (complete) {
             this.removeVisualHint()
@@ -508,10 +665,16 @@ export class RecognitionGameScene extends Scene {
                         this.images.forEach((i) => { i.destroy(true) })
                         this.images = []
                         this.cleanupStimulusCard()
+                        this.destroyGuideChrom()
                         this.renderElements(state.recognitionState.elements, state.recognitionState.targetElementId ?? '')
                         if (currentHintActive && state.recognitionState.targetElementId) {
                             this.showVisualHint(state.recognitionState.targetElementId)
                         }
+                        if (state.recognitionState.guideChromEnabled) {
+                            this.renderGuideChrom()
+                        }
+                        const optionImages = this.getOptionImages()
+                        this.applyTouchEnableDelay(state.recognitionState.touchEnableDelayMs ?? 0, optionImages)
                     }
                     break
                 case 'INCORRECT':
@@ -521,7 +684,9 @@ export class RecognitionGameScene extends Scene {
             }
 
             this.time.delayedCall(FEEDBACK_DELAY, () => {
-                this.blockActions = false
+                if (!this.touchEnableTimer) {
+                    this.blockActions = false
+                }
             })
         })
     }
@@ -650,7 +815,7 @@ export class RecognitionGameScene extends Scene {
 
         if (!targetElementId) return
 
-        const targetImage = this.images.find(img => img.getData('elementId') === targetElementId)
+        const targetImage = this.images.find(img => img.getData('elementId') === targetElementId && !img.getData('isStimulus'))
         if (!targetImage) return
 
         const graphics = this.add.graphics()
@@ -777,6 +942,11 @@ export class RecognitionGameScene extends Scene {
         this.cleanupStimulusCard()
         this.cleanupFeedbackTweens()
         this.removeVisualHint()
+        this.destroyGuideChrom()
+        if (this.touchEnableTimer) {
+            this.touchEnableTimer.remove(false)
+            this.touchEnableTimer = undefined
+        }
         
         // Clean up WebSocket handlers but don't close the connection
         if (this.websocket) {

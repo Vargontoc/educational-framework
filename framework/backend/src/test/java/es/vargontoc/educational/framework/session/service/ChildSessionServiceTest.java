@@ -7,6 +7,7 @@ import es.vargontoc.educational.framework.session.infrastructure.websocket.Sessi
 import es.vargontoc.educational.framework.session.model.ChildSession;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
+import es.vargontoc.educational.framework.shared.exception.ConflictException;
 import es.vargontoc.educational.framework.shared.exception.SessionException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -98,6 +100,16 @@ class ChildSessionServiceTest {
         assertEquals(SessionEventType.SESSION_EXPIRED, event.event());
         assertEquals(99L, event.sessionId());
         assertEquals("new_session_opened", event.payload().get("reason"));
+    }
+
+    @Test
+    void openSession_concurrentInsertConflict_throwsConflictException() {
+        when(childSessionRepository.findActiveByChildProfileId(10L)).thenReturn(Optional.empty());
+        when(childSessionRepository.save(any(ChildSession.class)))
+            .thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint"));
+
+        assertThrows(ConflictException.class,
+            () -> childSessionService.openSession(10L, 1L, 30, null));
     }
 
     @Test
