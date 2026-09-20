@@ -119,6 +119,61 @@ const loadPhaserGame = async () => {
             }
           } catch { /* noop */ }
         },
+        setPreference(key: string, value: boolean) {
+          gameInstance.registry?.set(key, value)
+        },
+        startRecognitionScene() {
+          try {
+            const scenes = gameInstance.scene?.scenes ?? []
+            const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+            if (!active) return
+            active.scene.start('recognition-game', {
+              websocket: active.websocket,
+              biome: active.currentBiome,
+              sessionId: active.sessionId,
+              childId: active.childId
+            })
+          } catch { /* noop */ }
+        },
+        seedAudioBuffer(audioId: string) {
+          const cache = gameInstance.registry?.get('audioCache')
+          const ctx = new AudioContext()
+          cache?.set(audioId, ctx.createBuffer(1, 4410, 44100))
+          void ctx.close()
+          gameInstance.registry?.get('audioService')?.emit('audio-received', audioId)
+        },
+        hasAudioBuffer(audioId: string): boolean {
+          return gameInstance.registry?.get('audioCache')?.has(audioId) ?? false
+        },
+        spyDynamicAudio(): string[] {
+          const played: string[] = []
+          const service = gameInstance.registry?.get('audioService')
+          service.playDynamic = async (audioId: string) => { played.push(audioId) }
+          w.__NUBI_PLAYED_AUDIO__ = played
+          return played
+        },
+        getScaleInfo() {
+          const sc = gameInstance.scale
+          return { width: sc.width, height: sc.height, displayScale: sc.displayScale.x, mode: sc.scaleMode }
+        },
+        getLayoutSizes() {
+          const scenes = gameInstance.scene?.scenes ?? []
+          const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+          return active?.sizes ? { ...active.sizes } : null
+        },
+        textureExists(key: string): boolean {
+          return gameInstance.textures?.exists(key) ?? false
+        },
+        tapNubi() {
+          const scenes = gameInstance.scene?.scenes ?? []
+          const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+          active?.nubiLayer?.nubiSprite?.emit('pointerdown')
+        },
+        tapExitButton() {
+          const scenes = gameInstance.scene?.scenes ?? []
+          const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+          active?.exitButton?.hitZone?.emit('pointerdown')
+        },
         closeWs() {
           try {
             const scenes = gameInstance.scene?.scenes ?? []
@@ -142,7 +197,9 @@ const loadPhaserGame = async () => {
                 displayHeight: img.displayHeight ?? img.height ?? 0,
                 inputEnabled: img.input?.enabled ?? false,
                 type: img.type ?? 'unknown',
-                alpha: img.alpha ?? 1.0
+                alpha: img.alpha ?? 1.0,
+                isStimulus: img.getData?.('isStimulus') ?? false,
+                tint: img.isTinted ? img.tintTopLeft : null
               })),
               minElementHitSize: active.minElementHitSize ?? null,
               startingGame: active.startingGame ?? null,

@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.game.service;
 
+import es.vargontoc.educational.framework.game.service.LetterSimilarityService;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
@@ -99,6 +100,12 @@ class GameOrchestratorServiceTest {
     @Mock
     private RecognitionDifficultyService recognitionDifficultyService;
 
+    @Mock
+    private LetterSimilarityService letterSimilarityService;
+
+    @Mock
+    private RoundAudioService roundAudioService;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -117,7 +124,9 @@ class GameOrchestratorServiceTest {
             recognitionElementRepository,
             difficultyLevelUseCase,
             childProfileUseCase,
-            recognitionDifficultyService
+            recognitionDifficultyService,
+            letterSimilarityService,
+            roundAudioService
         );
     }
 
@@ -343,7 +352,9 @@ class GameOrchestratorServiceTest {
             recognitionElementRepository,
             difficultyLevelUseCase,
             childProfileUseCase,
-            recognitionDifficultyService
+            recognitionDifficultyService,
+            letterSimilarityService,
+            roundAudioService
         );
 
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);

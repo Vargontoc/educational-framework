@@ -3,12 +3,16 @@ package es.vargontoc.educational.framework.content.infrastructure.seed;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
+import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
+import es.vargontoc.educational.framework.audio.domain.AudioRequest;
 import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
 import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaEntity;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
-import es.vargontoc.educational.framework.content.model.AccessibleColor;
-import es.vargontoc.educational.framework.content.model.AccessibleColorPalette;
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionAlphaNumericElementSeed;
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionAnimalElementSeed;
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionColorElementSeed;
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.LetterSimilarityPairSeed;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Category;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
@@ -23,9 +27,6 @@ import es.vargontoc.educational.framework.content.model.TracingPattern;
 import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
 import es.vargontoc.educational.framework.content.model.WorldHost;
 import es.vargontoc.educational.framework.content.model.WorldNarrativeSituation;
-import es.vargontoc.educational.framework.family.model.ColorVisionMode;
-import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
-import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
@@ -39,6 +40,8 @@ import es.vargontoc.educational.framework.content.ports.out.TracingPatternReposi
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaEntity;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -69,18 +72,19 @@ public class SeedService {
     private final WorldHostRepository worldHostRepository;
     private final WorldNarrativeSituationRepository worldNarrativeSituationRepository;
     private final WorldDiscoveryElementRepository worldDiscoveryElementRepository;
-    private final AccessibleColorRepository accessibleColorRepository;
-    private final AccessibleColorPaletteRepository accessibleColorPaletteRepository;
     private final RecognitionElementRepository recognitionElementRepository;
+    private final LetterSimilarityPairJpaRepository letterSimilarityPairRepository;
     private final ObjectMapper objectMapper;
+    private final AudioUseCase audio;
+
 
     private final Map<String, Long> categoryCache = new HashMap<>();
     private final Map<String, Long> topicCache = new HashMap<>();
     private final Map<String, Long> activityCache = new HashMap<>();
     private final Map<String, Long> learningPathCache = new HashMap<>();
-    private final Map<String, Long> accessibleColorCache = new HashMap<>();
 
     public SeedService(
+            AudioUseCase audio,
             DevSeedStateJpaRepository seedStateRepository,
             CategoryRepository categoryRepository,
             TopicRepository topicRepository,
@@ -94,9 +98,8 @@ public class SeedService {
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
-            AccessibleColorRepository accessibleColorRepository,
-            AccessibleColorPaletteRepository accessibleColorPaletteRepository,
             RecognitionElementRepository recognitionElementRepository,
+            LetterSimilarityPairJpaRepository letterSimilarityPairRepository,
             ObjectMapper objectMapper) {
         this.seedStateRepository = seedStateRepository;
         this.categoryRepository = categoryRepository;
@@ -111,10 +114,10 @@ public class SeedService {
         this.worldHostRepository = worldHostRepository;
         this.worldNarrativeSituationRepository = worldNarrativeSituationRepository;
         this.worldDiscoveryElementRepository = worldDiscoveryElementRepository;
-        this.accessibleColorRepository = accessibleColorRepository;
-        this.accessibleColorPaletteRepository = accessibleColorPaletteRepository;
         this.recognitionElementRepository = recognitionElementRepository;
+        this.letterSimilarityPairRepository = letterSimilarityPairRepository;
         this.objectMapper = objectMapper;
+        this.audio = audio;
     }
 
     public void loadAll() {
@@ -132,8 +135,11 @@ public class SeedService {
         loaded += loadWorldHosts();
         loaded += loadWorldNarrativeSituations();
         loaded += loadWorldDiscoveryElements();
-        loaded += loadAccessibleColors();
-        loaded += loadRecognitionElements();
+        loaded += loadRecognitionAlphaNumeric(false);
+        loaded += loadRecognitionAlphaNumeric(true);
+        loaded += loadRecognitionColors();
+        loaded += loadRecognitionAnimals();
+        loaded += loadLetterSimilarityPairs();
         log.info("Seed loading complete. {} records loaded.", loaded);
     }
 
@@ -560,81 +566,158 @@ public class SeedService {
             .findFirst()
             .orElse(null);
     }
+    
+        private int loadRecognitionAnimals() {
+        String file = "20-recognition-elements-animals.json";
+        var seeds = readSeedFile(file, new TypeReference<List<RecognitionAnimalElementSeed>>() {});
 
-
-    private int loadAccessibleColors() {
-        String file = "15-accessible-colors.json";
-        var seeds = readSeedFile(file, new TypeReference<List<SeedData.AccessibleColorSeed>>() {});
         int count = 0;
-        for (var seed : seeds) {
-            String key = "accessible-color:" + seed.conceptualIdentity().toLowerCase();
-            if (alreadyLoaded(key)) {
-                log.debug("Skipping already loaded seed: {}", key);
-                continue;
-            }
-            var color = new AccessibleColor();
-            color.setConceptualIdentity(seed.conceptualIdentity());
-            color.setLabelKey(seed.labelKey());
-            color.setShapeIcon(seed.shapeIcon());
-            color.setSymbol(seed.symbol());
-            color.setStatus(ContentStatus.valueOf(seed.status()));
-            color.setSortOrder(seed.sortOrder());
-            color.setCreatedAt(LocalDateTime.now());
-            var savedColor = accessibleColorRepository.save(color);
-            markLoaded(key, file);
-            accessibleColorCache.put(seed.conceptualIdentity(), savedColor.getId());
-            count++;
-            if (seed.palettes() != null) {
-                for (var paletteSeed : seed.palettes()) {
-                    var palette = new AccessibleColorPalette();
-                    palette.setAccessibleColorId(savedColor.getId());
-                    palette.setColorVisionMode(ColorVisionMode.valueOf(paletteSeed.colorVisionMode()));
-                    palette.setAccessibleColorValue(paletteSeed.accessibleColorValue());
-                    palette.setAccessibleLabelKey(paletteSeed.accessibleLabelKey());
-                    palette.setCreatedAt(LocalDateTime.now());
-                    accessibleColorPaletteRepository.save(palette);
-                    count++;
-                }
-            }
-            log.info("Loaded seed: {}", key);
+
+        Long topicId = resolveTopicId("Animales");
+        if(topicId == null){
+            log.warn("Topic not found for recognition element seed.");
+            return 0;
         }
-        return count;
-    }
 
-    private int loadRecognitionElements() {
-        String file = "16-recognition-elements.json";
-        var seeds = readSeedFile(file, new TypeReference<List<SeedData.RecognitionElementSeed>>() {});
-        int count = 0;
-        for (var seed : seeds) {
-            String key = "recognition-element:" + seed.topicName().toLowerCase() + ":" + seed.code().toLowerCase();
-            if (alreadyLoaded(key)) {
+        for(var seed : seeds) {
+            String key =  "recognition-element-animal:" + seed.code();
+            if(alreadyLoaded(key)){
                 log.debug("Skipping already loaded seed: {}", key);
                 continue;
             }
-            Long topicId = resolveTopicId(seed.topicName());
-            if (topicId == null) {
-                log.warn("Topic not found for recognition element seed: {}", seed.topicName());
-                continue;
-            }
+
+            audio.getAudio(AudioRequest.withPreset(seed.nubi(), TonePreset.CALM));
+
             var element = new RecognitionElement();
             element.setTopicId(topicId);
             element.setCode(seed.code());
-            element.setDisplayValue(seed.displayValue());
-            element.setResourceRefs(seed.resourceRefs());
-            element.setSortOrder(seed.sortOrder());
-            element.setStatus(ContentStatus.valueOf(seed.status()));
-            element.setSimilarityGroup(seed.similarityGroup());
-            if (seed.accessibleColorConceptualIdentity() != null) {
-                Long accessibleColorId = accessibleColorCache.get(seed.accessibleColorConceptualIdentity());
-                if (accessibleColorId == null) {
-                    log.warn("AccessibleColor not found for recognition element seed: {} (conceptualIdentity={})",
-                        seed.code(), seed.accessibleColorConceptualIdentity());
-                } else {
-                    element.setAccessibleColorId(accessibleColorId);
-                }
-            }
+            element.setSortOrder(0);
+            element.setResourceRefs(objectMapper.writeValueAsString(Map.of(
+                "nubi-audio", seed.nubi(),
+                "biome", seed.biome(),
+                "group", seed.group()
+            )));
+            element.setStatus(ContentStatus.ACTIVE);
             element.setCreatedAt(LocalDateTime.now());
             recognitionElementRepository.save(element);
+
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+
+        return count;
+    }
+
+
+    private int loadRecognitionColors() {
+        String file = "19-recognition-elements-colors.json";
+        var seeds = readSeedFile(file, new TypeReference<List<RecognitionColorElementSeed>>() {});
+
+        int count = 0;
+
+        Long topicId = resolveTopicId("Colores");
+        if(topicId == null){
+            log.warn("Topic not found for recognition element seed.");
+            return 0;
+        }
+
+        for(var seed : seeds) {
+            String key =  "recognition-element-color:" + seed.code();
+            if(alreadyLoaded(key)){
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+
+            audio.getAudio(AudioRequest.withPreset(seed.nubi(), TonePreset.CALM));
+
+            var element = new RecognitionElement();
+            element.setTopicId(topicId);
+            element.setCode(seed.code());
+            element.setSortOrder(0);
+            element.setResourceRefs(objectMapper.writeValueAsString(Map.of(
+                "nubi-audio", seed.nubi(),
+                "color", seed.color()
+            )));
+            element.setStatus(ContentStatus.ACTIVE);
+            element.setCreatedAt(LocalDateTime.now());
+            recognitionElementRepository.save(element);
+
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+
+        return count;
+    }
+
+
+    private int loadRecognitionAlphaNumeric(boolean isNumbers) {
+        String file = isNumbers ?
+            "18-recognition-elements-numbers.json" : "17-recognition-elements-letters.json";
+        var seeds = readSeedFile(file, new TypeReference<List<RecognitionAlphaNumericElementSeed>>() {});
+
+        int count = 0;
+
+        Long topicId = resolveTopicId(isNumbers ? "Números" : "Letras");
+        if(topicId == null){
+            log.warn("Topic not found for recognition element seed.");
+            return 0;
+        }
+
+        for(var seed : seeds) {
+            String key =  "recognition-element-" +
+                (isNumbers ? "number:" : "letter:")
+            + seed.code();
+            if(alreadyLoaded(key)){
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+
+            audio.getAudio(AudioRequest.withPreset(seed.nubi(), TonePreset.CALM));
+
+            var element = new RecognitionElement();
+            element.setTopicId(topicId);
+            element.setCode(seed.code());
+            element.setSortOrder(0);
+            if (seed.resourceRefs() != null && !seed.resourceRefs().isBlank()) {
+                element.setResourceRefs(seed.resourceRefs());
+            } else {
+                element.setResourceRefs(objectMapper.writeValueAsString(Map.of(
+                    "nubi-audio", seed.nubi()
+                )));
+            }
+            element.setStatus(ContentStatus.ACTIVE);
+            element.setCreatedAt(LocalDateTime.now());
+            recognitionElementRepository.save(element);
+
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+
+        return count;
+    }
+
+    private int loadLetterSimilarityPairs() {
+        String file = "18-letter-similarity-pairs.json";
+        var seeds = readSeedFile(file, new TypeReference<List<LetterSimilarityPairSeed>>() {});
+        int count = 0;
+        for (var seed : seeds) {
+            if (seed.pair() == null || seed.pair().length != 2) {
+                log.warn("Invalid letter similarity pair seed, skipping");
+                continue;
+            }
+            String codeA = seed.pair()[0];
+            String codeB = seed.pair()[1];
+            String key = "letter-similarity-pair:" + codeA + ":" + codeB;
+            if (alreadyLoaded(key)) {
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+            var entity = new LetterSimilarityPairJpaEntity(codeA, codeB, seed.strength().toUpperCase());
+            entity.setCreatedAt(LocalDateTime.now());
+            letterSimilarityPairRepository.save(entity);
             markLoaded(key, file);
             count++;
             log.info("Loaded seed: {}", key);

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="044__create_letter_similarity_pair" author="vargontoc">
+        <createTable tableName="letter_similarity_pair">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="letter_code_a" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="letter_code_b" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="strength" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <addUniqueConstraint
+            tableName="letter_similarity_pair"
+            columnNames="letter_code_a, letter_code_b"
+            constraintName="uk_letter_similarity_pair_codes"/>
+
+        <createIndex
+            tableName="letter_similarity_pair"
+            indexName="idx_letter_similarity_pair_code_a">
+            <column name="letter_code_a"/>
+        </createIndex>
+
+        <createIndex
+            tableName="letter_similarity_pair"
+            indexName="idx_letter_similarity_pair_code_b">
+            <column name="letter_code_b"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

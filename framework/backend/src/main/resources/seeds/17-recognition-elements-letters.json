@@ -1,0 +1,137 @@
+[
+    {
+        "code" : "letter_a",
+        "nubi" : "¿Dónde está la letra   A?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra A?\"}"
+    },
+    {
+        "code" : "letter_b",
+        "nubi" : "¿Dónde está la letra   BE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra BE?\"}"
+    },
+    {
+        "code" : "letter_c",
+        "nubi" : "¿Dónde está la letra   CE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra CE?\"}"
+    },
+    {
+        "code" : "letter_d",
+        "nubi" : "¿Dónde está la letra   DE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra DE?\"}"
+    },
+    {
+        "code" : "letter_e",
+        "nubi" : "¿Dónde está la letra   E?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra E?\"}"
+    },
+    {
+        "code" : "letter_f",
+        "nubi" : "¿Dónde está la letra   F?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra F?\"}"
+    },
+    {
+        "code" : "letter_g",
+        "nubi" : "¿Dónde está la letra   GE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra GE?\"}"
+    },
+    {
+        "code" : "letter_h",
+        "nubi" : "¿Dónde está la letra   ACHE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra ACHE?\"}"
+    },
+    {
+        "code" : "letter_i",
+        "nubi" : "¿Dónde está la letra   I?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra I?\"}"
+    },
+    {
+        "code" : "letter_j",
+        "nubi" : "¿Dónde está la letra   JOTA?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra JOTA?\"}"
+    },
+    {
+        "code" : "letter_k",
+        "nubi" : "¿Dónde está la letra  KA?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra KA?\"}"
+    },
+    {
+        "code" : "letter_l",
+        "nubi" : "¿Dónde está la letra   ELE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra ELE?\"}"
+    },
+    {
+        "code" : "letter_m",
+        "nubi" : "¿Dónde está la letra   EME?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra EME?\"}"
+    },
+    {
+        "code" : "letter_n",
+        "nubi" : "¿Dónde está la letra   ENE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra ENE?\"}"
+    },
+    {
+        "code" : "letter_o",
+        "nubi" : "¿Dónde está la letra   O?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra O?\"}"
+    },
+    {
+        "code" : "letter_p",
+        "nubi" : "¿Dónde está la letra   PÉ?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra PÉ?\"}"
+    },
+    {
+        "code" : "letter_q",
+        "nubi" : "¿Dónde está la letra   QU?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra QU?\"}"
+    },
+    {
+        "code" : "letter_r",
+        "nubi" : "¿Dónde está la letra   ERRE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra ERRE?\"}"
+    },
+    {
+        "code" : "letter_ñ",
+        "nubi" : "¿Dónde está la letra   ENIE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra ENIE?\"}"
+    },
+    {
+        "code" : "letter_s",
+        "nubi" : "¿Dónde está la letra   ESE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra ESE?\"}"
+    },
+    {
+        "code" : "letter_t",
+        "nubi" : "¿Dónde está la letra   TÉ?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra TÉ?\"}"
+    },
+    {
+        "code" : "letter_u",
+        "nubi" : "¿Dónde está la letra   U?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra U?\"}"
+    },
+    {
+        "code" : "letter_v",
+        "nubi" : "¿Dónde está la letra   UVE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra UVE?\"}"
+    },
+    {
+        "code" : "letter_w",
+        "nubi" : "¿Dónde está la letra   UVE DOBLE?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra UVE DOBLE?\"}"
+    },
+    {
+        "code" : "letter_y",
+        "nubi" : "¿Dónde está la letra   I GRIEGA?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra I GRIEGA?\"}"
+    },
+    {
+        "code" : "letter_x",
+        "nubi" : "¿Dónde está la letra   EKIS?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra EKIS?\"}"
+    },
+    {
+        "code" : "letter_z",
+        "nubi" : "¿Dónde está la letra   ZETA?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está la letra ZETA?\"}"
+    }
+]

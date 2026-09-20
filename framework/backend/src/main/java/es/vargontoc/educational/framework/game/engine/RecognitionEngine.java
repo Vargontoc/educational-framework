@@ -26,6 +26,7 @@ import es.vargontoc.educational.framework.game.model.recognition.RecognitionStat
 import es.vargontoc.educational.framework.game.model.recognition.RoundParameters;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.service.DistractorSelector;
+import es.vargontoc.educational.framework.game.service.LetterSimilarityService;
 
 public class RecognitionEngine implements GameEnginePort {
 
@@ -35,12 +36,20 @@ public class RecognitionEngine implements GameEnginePort {
     private final DistractorSelector distractorSelector;
 
     public RecognitionEngine() {
-        this(new Random());
+        this(new Random(), null);
     }
 
     public RecognitionEngine(Random random) {
+        this(random, null);
+    }
+
+    public RecognitionEngine(LetterSimilarityService letterSimilarityService) {
+        this(new Random(), letterSimilarityService);
+    }
+
+    public RecognitionEngine(Random random, LetterSimilarityService letterSimilarityService) {
         this.random = random;
-        this.distractorSelector = new DistractorSelector(random);
+        this.distractorSelector = new DistractorSelector(random, letterSimilarityService);
     }
 
     @Override
@@ -335,7 +344,7 @@ public class RecognitionEngine implements GameEnginePort {
     }
 
     List<String> buildOptions(List<String> candidates, String target) {
-        return buildOptions(candidates, target, DistractorStrategy.SEMANTICALLY_FAR, null, id -> null);
+        return buildOptions(candidates, target, DistractorStrategy.SEMANTICALLY_FAR, null, null, id -> null);
     }
 
     private List<String> buildOptionsForState(RecognitionState state, List<String> candidates, String target) {
@@ -344,7 +353,8 @@ public class RecognitionEngine implements GameEnginePort {
                 ? java.util.Map.of()
                 : metadata.stream().collect(java.util.stream.Collectors.toMap(
                         c -> c.id(), java.util.function.Function.identity(), (a, b) -> a));
-        return buildOptions(candidates, target, state.getDistractorStrategy(), state.getOptionCount(), byId::get);
+        return buildOptions(candidates, target, state.getDistractorStrategy(), state.getOptionCount(),
+                state.getRecognitionCategory(), byId::get);
     }
 
     List<String> buildOptions(
@@ -352,6 +362,7 @@ public class RecognitionEngine implements GameEnginePort {
             String target,
             DistractorStrategy strategy,
             Integer optionCount,
+            RecognitionCategory category,
             Function<String, CandidateMetadata> elementResolver) {
         if (target == null || candidates.isEmpty()) {
             return new ArrayList<>();
@@ -367,6 +378,7 @@ public class RecognitionEngine implements GameEnginePort {
                 candidates,
                 strategy != null ? strategy : DistractorStrategy.SEMANTICALLY_FAR,
                 distractorCount,
+                category,
                 elementResolver);
 
         List<String> options = new ArrayList<>();

@@ -20,30 +20,64 @@
     @keydown.enter.prevent="emit('select')"
     @keydown.space.prevent="emit('select')"
   >
-    <svg
-      class="color-vision-card__sample"
-      width="120"
-      height="56"
-      viewBox="0 0 120 56"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <defs>
-        <filter :id="filterId">
-          <feColorMatrix :values="matrixValues" />
-        </filter>
-      </defs>
-      <g :filter="previewed ? `url(#${filterId})` : undefined">
-        <circle cx="20" cy="28" r="16" fill="#e53e3e" stroke="#444" stroke-width="1" />
-        <circle cx="20" cy="28" r="5" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.85" />
+    <div class="color-vision-card__sample" aria-hidden="true">
+      <svg
+        v-for="sample in samples"
+        :key="sample.index"
+        class="color-vision-card__shape-icon"
+        width="26"
+        height="26"
+        viewBox="0 0 26 26"
+      >
+        <template v-if="sample.shape === 'circle'">
+          <circle
+            cx="13"
+            cy="13"
+            r="11"
+            :fill="sample.original"
+            class="color-vision-card__layer"
+            :class="{ 'color-vision-card__layer--visible': !showSimulated }"
+          />
+          <circle
+            cx="13"
+            cy="13"
+            r="11"
+            :fill="sample.adaptative"
+            class="color-vision-card__layer"
+            :class="{ 'color-vision-card__layer--visible': showSimulated }"
+          />
+        </template>
+        <template v-else>
+          <polygon
+            :points="sample.points"
+            :fill="sample.original"
+            class="color-vision-card__layer"
+            :class="{ 'color-vision-card__layer--visible': !showSimulated }"
+          />
+          <polygon
+            :points="sample.points"
+            :fill="sample.adaptative"
+            class="color-vision-card__layer"
+            :class="{ 'color-vision-card__layer--visible': showSimulated }"
+          />
+        </template>
+      </svg>
+    </div>
 
-        <polygon points="60,12 76,44 44,44" fill="#38a169" stroke="#444" stroke-width="1" />
-        <polygon points="60,22 67,38 53,38" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.85" />
-
-        <rect x="84" y="12" width="32" height="32" fill="#3182ce" stroke="#444" stroke-width="1" />
-        <rect x="92" y="20" width="16" height="16" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.85" />
-      </g>
-    </svg>
+    <div class="color-vision-card__phase-label" aria-hidden="true">
+      <span
+        class="color-vision-card__phase-text"
+        :class="{ 'color-vision-card__phase-text--visible': !showSimulated }"
+      >
+        {{ t('views.ninos.edit.sections.visualAccessibility.originalLabel') }}
+      </span>
+      <span
+        class="color-vision-card__phase-text color-vision-card__phase-text--simulated"
+        :class="{ 'color-vision-card__phase-text--visible': showSimulated }"
+      >
+        {{ t('views.ninos.edit.sections.visualAccessibility.simulatedLabel') }}
+      </span>
+    </div>
 
     <div class="color-vision-card__text">
       <span class="color-vision-card__name">{{ mode.label }}</span>
@@ -60,15 +94,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useId } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { simulateColorVision } from '../../utils/simulateColorVision'
+
+interface ColorSample {
+  original: string
+  adaptative: string
+}
 
 interface Props {
   mode: {
     value: string
     label: string
     description: string
+    colors: ColorSample[]
   }
   selected: boolean
   previewed: boolean
@@ -83,10 +122,40 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const uniqueId = useId()
-const filterId = `cvf-${uniqueId}`
 
-const matrixValues = computed(() => simulateColorVision(props.mode.value))
+const SHAPES = ['circle', 'triangle', 'square', 'pentagon', 'rhombus'] as const
+type Shape = typeof SHAPES[number]
+
+function polygonPoints(sides: number, rotationDeg: number, r: number): string {
+  const cx = 13
+  const cy = 13
+  const points: string[] = []
+  for (let i = 0; i < sides; i++) {
+    const angle = (rotationDeg + (360 / sides) * i) * (Math.PI / 180)
+    points.push(`${(cx + r * Math.cos(angle)).toFixed(2)},${(cy + r * Math.sin(angle)).toFixed(2)}`)
+  }
+  return points.join(' ')
+}
+
+const SHAPE_POINTS: Partial<Record<Shape, string>> = {
+  triangle: polygonPoints(3, -90, 11),
+  square: polygonPoints(4, -45, 11),
+  pentagon: polygonPoints(5, -90, 11),
+  rhombus: polygonPoints(4, -90, 11)
+}
+
+const samples = computed(() =>
+  props.mode.colors.map((color, index) => {
+    const shape = SHAPES[index % SHAPES.length]
+    return {
+      index,
+      shape,
+      points: SHAPE_POINTS[shape],
+      original: color.original,
+      adaptative: color.adaptative
+    }
+  })
+)
 
 const ariaLabel = computed(() =>
   t('views.ninos.edit.sections.visualAccessibility.cardAriaLabel', {
@@ -94,6 +163,22 @@ const ariaLabel = computed(() =>
     description: props.mode.description
   })
 )
+
+const showSimulated = ref(false)
+let toggleTimer: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (prefersReducedMotion) return
+
+  toggleTimer = setInterval(() => {
+    showSimulated.value = !showSimulated.value
+  }, 1500)
+})
+
+onBeforeUnmount(() => {
+  if (toggleTimer) clearInterval(toggleTimer)
+})
 </script>
 
 <style scoped>
@@ -130,9 +215,58 @@ const ariaLabel = computed(() =>
 }
 
 .color-vision-card__sample {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 140px;
+}
+
+.color-vision-card__shape-icon {
   display: block;
-  max-width: 100%;
-  height: auto;
+  flex-shrink: 0;
+}
+
+.color-vision-card__layer {
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+}
+
+.color-vision-card__layer--visible {
+  opacity: 1;
+}
+
+.color-vision-card__phase-label {
+  position: relative;
+  height: 1.1em;
+  min-width: 4.5em;
+  text-align: center;
+}
+
+.color-vision-card__phase-text {
+  position: absolute;
+  inset: 0;
+  font-size: var(--nubi-font-size-xs);
+  font-weight: var(--nubi-font-weight-medium);
+  color: var(--nubi-text-tertiary);
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+}
+
+.color-vision-card__phase-text--visible {
+  opacity: 1;
+}
+
+.color-vision-card__phase-text--simulated.color-vision-card__phase-text--visible {
+  color: var(--nubi-color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .color-vision-card__layer,
+  .color-vision-card__phase-text {
+    transition: none;
+  }
 }
 
 .color-vision-card__text {

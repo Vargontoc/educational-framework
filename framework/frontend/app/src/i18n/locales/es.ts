@@ -505,7 +505,9 @@ export default {
             toggleLabel: 'Activar ajuste visual',
             selectorLabel: 'Selecciona un perfil de visualización para comparar',
             warning: 'Esta comparación es orientativa para adaptar algunos minijuegos relacionados con identificar colores. No identifica la visión del niño ni sustituye la orientación de un especialista.',
-            cardAriaLabel: 'Perfil de visualización {mode}: {description}'
+            cardAriaLabel: 'Perfil de visualización {mode}: {description}',
+            originalLabel: 'Original',
+            simulatedLabel: 'Simulado'
           }
         }
       },

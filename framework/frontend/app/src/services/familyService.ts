@@ -1,6 +1,7 @@
 import { apiClient, type ApiError } from './api'
 import type { ApiFamilyResponse, FamilyData } from '../composables/useFamilyStatus'
 import type { FamilyUpdatePayload } from '../types/family-config'
+import { ColorVisionMode } from '@/types/colorVision'
 
 export interface ChildProfileExtended {
   id: number
@@ -87,6 +88,18 @@ interface ApiChildProfileResponse {
   message: string | null
   errors: string[]
   data: ChildProfileExtended
+}
+
+interface ApiVisionColor {
+  success: boolean
+  message: string | null
+  errors: string[]
+  data: Record<ColorVisionMode, VisionValues[]>
+}
+
+export interface VisionValues {
+  original: string
+  adaptative: string
 }
 
 export async function getFamily(): Promise<FamilyData | null> {
@@ -196,6 +209,12 @@ export async function getChild(id: number): Promise<ChildProfileExtended> {
   const response = await apiClient.get<ApiChildProfileResponse>(
     `/api/v1/family/children/${id}`
   )
+  return response.data
+}
+
+export async function getVisions() : Promise<Record<ColorVisionMode, VisionValues[]>> {
+  const response = await apiClient.get<ApiVisionColor>('/api/v1/family/children/visions')
+  console.log(response.data)
   return response.data
 }
 

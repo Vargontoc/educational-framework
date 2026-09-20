@@ -206,90 +206,582 @@
             "files" : [
                 {
                     "type": "image",
-                    "key": "img_letter_A",
-                    "url": "assets/images/letters/letter_A.webp"
+                    "key": "letter_a",
+                    "url": "assets/images/letters/letter_a.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_B",
-                    "url": "assets/images/letters/letter_B.webp"
+                    "key": "letter_b",
+                    "url": "assets/images/letters/letter_b.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_C",
-                    "url": "assets/images/letters/letter_C.webp"
+                    "key": "letter_c",
+                    "url": "assets/images/letters/letter_c.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_D",
-                    "url": "assets/images/letters/letter_D.webp"
+                    "key": "letter_d",
+                    "url": "assets/images/letters/letter_d.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_E",
-                    "url": "assets/images/letters/letter_E.webp"
+                    "key": "letter_e",
+                    "url": "assets/images/letters/letter_e.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_M",
-                    "url": "assets/images/letters/letter_M.webp"
+                    "key": "letter_f",
+                    "url": "assets/images/letters/letter_f.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_O",
-                    "url": "assets/images/letters/letter_O.webp"
+                    "key": "letter_g",
+                    "url": "assets/images/letters/letter_g.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_S",
-                    "url": "assets/images/letters/letter_S.webp"
+                    "key": "letter_h",
+                    "url": "assets/images/letters/letter_h.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_i",
+                    "url": "assets/images/letters/letter_i.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_j",
+                    "url": "assets/images/letters/letter_j.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_k",
+                    "url": "assets/images/letters/letter_k.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_l",
+                    "url": "assets/images/letters/letter_l.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_m",
+                    "url": "assets/images/letters/letter_m.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_n",
+                    "url": "assets/images/letters/letter_n.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_ñ",
+                    "url": "assets/images/letters/letter_ñ.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_o",
+                    "url": "assets/images/letters/letter_o.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_p",
+                    "url": "assets/images/letters/letter_p.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_q",
+                    "url": "assets/images/letters/letter_q.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_r",
+                    "url": "assets/images/letters/letter_r.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_s",
+                    "url": "assets/images/letters/letter_s.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_t",
+                    "url": "assets/images/letters/letter_t.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_u",
+                    "url": "assets/images/letters/letter_u.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_v",
+                    "url": "assets/images/letters/letter_v.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_w",
+                    "url": "assets/images/letters/letter_w.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_x",
+                    "url": "assets/images/letters/letter_x.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_y",
+                    "url": "assets/images/letters/letter_y.png"
+                },
+                {
+                    "type": "image",
+                    "key": "letter_z",
+                    "url": "assets/images/letters/letter_z.png"
                 }
             ]
         },
-        
-    "recognition-colors" :  {
-            "files" : [
+    "recognition-numbers" : {
+        "files" : [
                 {
                     "type": "image",
-                    "key": "img_letter_A",
-                    "url": "assets/images/letters/letter_A.webp"
+                    "key": "number_0",
+                    "url": "assets/images/numbers/number_0.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_B",
-                    "url": "assets/images/letters/letter_B.webp"
+                    "key": "number_1",
+                    "url": "assets/images/letters/number_1.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_C",
-                    "url": "assets/images/letters/letter_C.webp"
+                    "key": "number_2",
+                    "url": "assets/images/letters/number_2.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_D",
-                    "url": "assets/images/letters/letter_D.webp"
+                    "key": "number_3",
+                    "url": "assets/images/letters/number_3.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_E",
-                    "url": "assets/images/letters/letter_E.webp"
+                    "key": "number_4",
+                    "url": "assets/images/letters/number_4.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_M",
-                    "url": "assets/images/letters/letter_M.webp"
+                    "key": "number_5",
+                    "url": "assets/images/letters/number_5.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_O",
-                    "url": "assets/images/letters/letter_O.webp"
+                    "key": "number_6",
+                    "url": "assets/images/letters/number_6.png"
                 },
                 {
                     "type": "image",
-                    "key": "img_letter_S",
-                    "url": "assets/images/letters/letter_S.webp"
+                    "key": "number_7",
+                    "url": "assets/images/letters/number_7.png"
+                },
+                {
+                    "type": "image",
+                    "key": "number_8",
+                    "url": "assets/images/letters/number_8.png"
+                },
+                {
+                    "type": "image",
+                    "key": "number_9",
+                    "url": "assets/images/letters/number_9.png"
                 }
-            ]
-        }
-    
+        ]
+    },
+    "recognition-animals" : {
+        "files" : [
+                {
+                    "type": "image",
+                    "key": "bee",
+                    "url": "assets/images/animals/bee.png"
+                },
+                {
+                    "type": "image",
+                    "key": "bull",
+                    "url": "assets/images/animals/bull.png"
+                },
+                {
+                    "type": "image",
+                    "key": "butterfly",
+                    "url": "assets/images/animals/butterfly.png"
+                },
+                {
+                    "type": "image",
+                    "key": "cat",
+                    "url": "assets/images/animals/cat.png"
+                },
+                {
+                    "type": "image",
+                    "key": "cow",
+                    "url": "assets/images/animals/cow.png"
+                },
+                {
+                    "type": "image",
+                    "key": "deer",
+                    "url": "assets/images/animals/deer.png"
+                },
+                {
+                    "type": "image",
+                    "key": "dog",
+                    "url": "assets/images/animals/dog.png"
+                },
+                {
+                    "type": "image",
+                    "key": "donkey",
+                    "url": "assets/images/animals/donkey.png"
+                },
+                {
+                    "type": "image",
+                    "key": "duck",
+                    "url": "assets/images/animals/duck.png"
+                },
+                {
+                    "type": "image",
+                    "key": "frog",
+                    "url": "assets/images/animals/frog.png"
+                },
+                {
+                    "type": "image",
+                    "key": "goat",
+                    "url": "assets/images/animals/goat.png"
+                },
+                {
+                    "type": "image",
+                    "key": "goose",
+                    "url": "assets/images/animals/goose.png"
+                },
+                {
+                    "type": "image",
+                    "key": "horse",
+                    "url": "assets/images/animals/horse.png"
+                },
+                {
+                    "type": "image",
+                    "key": "ladybug",
+                    "url": "assets/images/animals/ladybug.png"
+                },
+                {
+                    "type": "image",
+                    "key": "chicken",
+                    "url": "assets/images/animals/chicken.png"
+                },
+                {
+                    "type": "image",
+                    "key": "owl",
+                    "url": "assets/images/animals/owl.png"
+                },
+                {
+                    "type": "image",
+                    "key": "pig",
+                    "url": "assets/images/animals/pig.png"
+                },
+                {
+                    "type": "image",
+                    "key": "rabbit",
+                    "url": "assets/images/animals/rabbit.png"
+                },
+                {
+                    "type": "image",
+                    "key": "rooster",
+                    "url": "assets/images/animals/rooster.png"
+                },
+                {
+                    "type": "image",
+                    "key": "sheep",
+                    "url": "assets/images/animals/sheep.png"
+                },
+                {
+                    "type": "image",
+                    "key": "snail",
+                    "url": "assets/images/animals/snail.png"
+                },
+                {
+                    "type": "image",
+                    "key": "squirrel",
+                    "url": "assets/images/animals/squirrel.png"
+                }
+        ]
+    },
+    "recognition-color-red" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/red/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/red/red_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/red/red_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/red/red_3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_4",
+                "url" : "assets/images/colors/red/red_4.png"
+            }
+        ]
+    },
+    "recognition-color-blue" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/blue/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/blue/blue_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/blue/blue_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/blue/blue_3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_4",
+                "url" : "assets/images/colors/blue/blue_4.png"
+            }
+        ]
+    },
+    "recognition-color-green" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/green/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/green/green_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/green/green_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/green/green_3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_4",
+                "url" : "assets/images/colors/green/green_4.png"
+            }
+        ]
+    },
+    "recognition-color-yellow" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/yellow/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/yellow/yellow_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/yellow/yellow_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/yellow/yellow_3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_4",
+                "url" : "assets/images/colors/yellow/yellow_4.png"
+            }
+        ]
+    },
+    "recognition-color-orange" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/orange/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/orange/orange_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/orange/orange_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/orange/orange_3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_4",
+                "url" : "assets/images/colors/orange/orange_4.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_5",
+                "url" : "assets/images/colors/orange/orange_5.png"
+            }
+        ]
+    },
+    "recognition-color-pink" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/pink/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/pink/pink_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/pink/pink_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/pink/pink_3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_4",
+                "url" : "assets/images/colors/pink/pink_4.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_5",
+                "url" : "assets/images/colors/pink/pink_5.png"
+            }
+        ]
+    },
+    "recognition-color-purple" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/purple/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/purple/purple_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/purple/purple_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/purple/purple_3.png"
+            }
+        ]
+    },
+    "recognition-color-black" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/black/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/black/black_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/black/black_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/black/black_3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_4",
+                "url" : "assets/images/colors/black/black_4.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_5",
+                "url" : "assets/images/colors/black/black_5.png"
+            }
+        ]
+    },"recognition-color-white" :  {
+        "files" : [
+            {
+                "type" : "image",
+                "key" : "splash",
+                "url" : "assets/images/colors/white/splash.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_1",
+                "url" : "assets/images/colors/white/white_1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_2",
+                "url" : "assets/images/colors/white/white_2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_3",
+                "url" : "assets/images/colors/white/white_3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_4",
+                "url" : "assets/images/colors/white/white_4.png"
+            },
+            {
+                "type" : "image",
+                "key" : "item_5",
+                "url" : "assets/images/colors/white/white_5.png"
+            }
+        ]
+    }
 }

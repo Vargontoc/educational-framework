@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 import tools.jackson.databind.ObjectMapper;
 
+import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.content.infrastructure.ActivityInformationPortImpl;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.ActivityJpaRepository;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
@@ -12,8 +13,6 @@ import es.vargontoc.educational.framework.content.infrastructure.seed.SeedServic
 import es.vargontoc.educational.framework.content.ports.in.ActivityUseCase;
 import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
 import es.vargontoc.educational.framework.content.ports.in.WorldCatalogUseCase;
-import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
-import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.ActivityResourceRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
@@ -43,6 +42,7 @@ import es.vargontoc.educational.framework.content.service.RecognitionElementServ
 import es.vargontoc.educational.framework.content.service.TopicService;
 import es.vargontoc.educational.framework.content.service.TracingPatternService;
 import es.vargontoc.educational.framework.content.service.WorldCatalogService;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 
@@ -131,6 +131,7 @@ class ContentModuleConfiguration {
 
     @Bean
     SeedService seedService(
+            AudioUseCase audio,
             DevSeedStateJpaRepository seedStateRepository,
             CategoryRepository categoryRepository,
             TopicRepository topicRepository,
@@ -144,15 +145,14 @@ class ContentModuleConfiguration {
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
-            AccessibleColorRepository accessibleColorRepository,
-            AccessibleColorPaletteRepository accessibleColorPaletteRepository,
             RecognitionElementRepository recognitionElementRepository,
+            LetterSimilarityPairJpaRepository letterSimilarityPairRepository,
             ObjectMapper objectMapper) {
-        return new SeedService(seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
+        return new SeedService(audio, seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
             learningPathStepRepository, tracingPatternRepository,
-            worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository,
-            accessibleColorRepository, accessibleColorPaletteRepository, recognitionElementRepository, objectMapper);
+            worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository, recognitionElementRepository,
+            letterSimilarityPairRepository, objectMapper);
     }
 
     @Bean

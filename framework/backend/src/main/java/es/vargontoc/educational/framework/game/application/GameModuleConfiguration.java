@@ -6,17 +6,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDifficultyConfig;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.game.service.GameOrchestratorService;
+import es.vargontoc.educational.framework.game.service.LetterSimilarityService;
 import es.vargontoc.educational.framework.game.service.RecognitionDifficultyService;
+import es.vargontoc.educational.framework.game.service.RoundAudioService;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.RegisterActivityAttemptUseCase;
@@ -42,7 +46,9 @@ class GameModuleConfiguration {
             RecognitionElementRepository recognitionElementRepository,
             DifficultyLevelUseCase difficultyLevelUseCase,
             @Lazy ChildProfileUseCase childProfileUseCase,
-            RecognitionDifficultyService recognitionDifficultyService) {
+            RecognitionDifficultyService recognitionDifficultyService,
+            LetterSimilarityService letterSimilarityService,
+            RoundAudioService roundAudioService) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
@@ -57,8 +63,23 @@ class GameModuleConfiguration {
             recognitionElementRepository,
             difficultyLevelUseCase,
             childProfileUseCase,
-            recognitionDifficultyService
+            recognitionDifficultyService,
+            letterSimilarityService,
+            roundAudioService
         );
+    }
+
+    @Bean
+    public LetterSimilarityService letterSimilarityService(LetterSimilarityPairJpaRepository letterSimilarityPairJpaRepository) {
+        return new LetterSimilarityService(letterSimilarityPairJpaRepository);
+    }
+
+    @Bean
+    public RoundAudioService roundAudioService(
+            RecognitionElementRepository recognitionElementRepository,
+            @Lazy ChildProfileUseCase childProfileUseCase,
+            AudioUseCase audioUseCase) {
+        return new RoundAudioService(recognitionElementRepository, childProfileUseCase, audioUseCase);
     }
 
     @Bean

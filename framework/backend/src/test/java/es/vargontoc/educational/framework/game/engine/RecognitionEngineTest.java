@@ -802,7 +802,7 @@ class RecognitionEngineTest {
         List<String> candidates = List.of("target", "a", "b", "c", "d");
 
         List<String> options = engine.buildOptions(
-                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 2, id -> null);
+                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 2, null, id -> null);
 
         assertEquals(2, options.size());
         assertTrue(options.contains("target"));
@@ -814,7 +814,7 @@ class RecognitionEngineTest {
         List<String> candidates = List.of("target", "a", "b", "c", "d");
 
         List<String> options = engine.buildOptions(
-                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 3, id -> null);
+                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 3, null, id -> null);
 
         assertEquals(3, options.size());
         assertTrue(options.contains("target"));
@@ -826,7 +826,7 @@ class RecognitionEngineTest {
         List<String> candidates = List.of("target", "a", "b", "c", "d");
 
         List<String> options = engine.buildOptions(
-                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 4, id -> null);
+                candidates, "target", DistractorStrategy.SEMANTICALLY_FAR, 4, null, id -> null);
 
         assertEquals(4, options.size());
         assertTrue(options.contains("target"));

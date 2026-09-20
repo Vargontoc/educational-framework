@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.game.service;
 
+import es.vargontoc.educational.framework.game.service.LetterSimilarityService;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
@@ -89,6 +90,12 @@ class GameOrchestratorServiceCandidateFilteringTest {
     @Mock
     private RecognitionDifficultyService recognitionDifficultyService;
 
+    @Mock
+    private LetterSimilarityService letterSimilarityService;
+
+    @Mock
+    private RoundAudioService roundAudioService;
+
     private GameOrchestratorService orchestratorService;
 
     @BeforeEach
@@ -107,7 +114,9 @@ class GameOrchestratorServiceCandidateFilteringTest {
             recognitionElementRepository,
             difficultyLevelUseCase,
             childProfileUseCase,
-            recognitionDifficultyService
+            recognitionDifficultyService,
+            letterSimilarityService,
+            roundAudioService
         );
     }
 

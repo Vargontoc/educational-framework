@@ -1,0 +1,135 @@
+[
+    {
+        "code" : "bee",
+        "nubi" : "¿Dónde está la   ABEJA?",
+        "biome" : ["MEADOW"],
+        "group" : []
+    },
+    {
+        "code" : "bull",
+        "nubi" : "¿Dónde está el   TORO?",
+        "biome" : ["MEADOW", "FARM"],
+        "group" : ["horns"]
+    },
+    
+    {
+        "code" : "butterfly",
+        "nubi" : "¿Dónde está la   MARIPOSA?",
+        "biome" : ["MEADOW"],
+        "group" : []
+    },
+    {
+        "code" : "cat",
+        "nubi" : "¿Dónde está el   GATO?",
+        "biome" : ["FARM"],
+        "group" : []
+    },
+    {
+        "code" : "cow",
+        "nubi" : "¿Dónde está la  VACA?",
+        "biome" : ["FARM"],
+        "group" : ["horns"]
+    },
+    {
+        "code" : "deer",
+        "nubi" : "¿Dónde está el   CIERVO?",
+        "biome" : ["MEADOW"],
+        "group" : ["horns", "equine"]
+    },
+    {
+        "code" : "dog",
+        "nubi" : "¿Dónde está el   PERRO?",
+        "biome" : ["FARM","MEADOW"],
+        "group" : []
+    },
+    {
+        "code" : "donkey",
+        "nubi" : "¿Dónde está el   BURRO?",
+        "biome" : ["FARM"],
+        "group" : ["equine"]
+    },
+    {
+        "code" : "duck",
+        "nubi" : "¿Dónde está el   PATO?",
+        "biome" : ["FARM","MEADOW"],
+        "group" : ["peck"]
+    },
+    {
+        "code" : "frog",
+        "nubi" : "¿Dónde está la   RANA?",
+        "biome" : ["MEADOW"],
+        "group" : []
+    },
+    {
+        "code" : "goat",
+        "nubi" : "¿Dónde está la   CABRA?",
+        "biome" : ["FARM"],
+        "group" : ["horns", "wool"]
+    },
+    {
+        "code" : "goose",
+        "nubi" : "¿Dónde está la   GANSO?",
+        "biome" : ["FARM"],
+        "group" : ["peck"]
+    },
+    {
+        "code" : "horse",
+        "nubi" : "¿Dónde está la   CABALLO?",
+        "biome" : ["FARM"],
+        "group" : ["equine"]
+    },
+    {
+        "code" : "ladybug",
+        "nubi" : "¿Dónde está la   MARIQUITA?",
+        "biome" : ["MEADOW"],
+        "group" : []
+    },
+    {
+        "code" : "chicken",
+        "nubi" : "¿Dónde está el   POLLITO?",
+        "biome" : ["FARM"],
+        "group" : ["peck"]
+    },
+    {
+        "code" : "owl",
+        "nubi" : "¿Dónde está el   BUHO?",
+        "biome" : ["MEADOW"],
+        "group" : []
+    },
+    {
+        "code" : "pig",
+        "nubi" : "¿Dónde está el   CERDO?",
+        "biome" : ["FARM"],
+        "group" : []
+    },
+    {
+        "code" : "rabbit",
+        "nubi" : "¿Dónde está el   CONEJO?",
+        "biome" : ["MEADOW"],
+        "group" : []
+    },
+    {
+        "code" : "rooster",
+        "nubi" : "¿Dónde está el   GALLO?",
+        "biome" : ["FARM"],
+        "group" : []
+    },
+    {
+        "code" : "sheep",
+        "nubi" : "¿Dónde está la   OVEJA?",
+        "biome" : ["FARM"],
+        "group" : ["wool"]
+    },
+    {
+        "code" : "snail",
+        "nubi" : "¿Dónde está el   CARACOL?",
+        "biome" : ["MEADOW"],
+        "group" : []
+    },
+    {
+        "code" : "squirrel",
+        "nubi" : "¿Dónde está la   ARDILLA?",
+        "biome" : ["MEADOW"],
+        "group" : []
+    }
+]

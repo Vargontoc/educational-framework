@@ -1,0 +1,42 @@
+[
+    {
+        "code" : "number_0",
+        "nubi" : "¿Dónde está el número   CERO?"
+    },
+    {
+        "code" : "number_1",
+        "nubi" : "¿Dónde está el número   UNO?"
+    },
+    {
+        "code" : "number_2",
+        "nubi" : "¿Dónde está el número   DOS?"
+    },
+    {
+        "code" : "number_3",
+        "nubi" : "¿Dónde está el número   TRES?"
+    },
+    {
+        "code" : "number_4",
+        "nubi" : "¿Dónde está el número   CUATRO?"
+    },
+    {
+        "code" : "number_5",
+        "nubi" : "¿Dónde está el número   CINCO?"
+    },
+    {
+        "code" : "number_6",
+        "nubi" : "¿Dónde está el número   SEIS?"
+    },
+    {
+        "code" : "number_7",
+        "nubi" : "¿Dónde está el número   SIETE?"
+    },
+    {
+        "code" : "number_8",
+        "nubi" : "¿Dónde está el número   OCHO?"
+    },
+    {
+        "code" : "number_9",
+        "nubi" : "¿Dónde está el número   NUEVE?"
+    }
+]

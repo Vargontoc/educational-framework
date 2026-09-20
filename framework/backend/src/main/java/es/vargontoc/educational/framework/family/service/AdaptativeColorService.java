@@ -1,19 +1,26 @@
 package es.vargontoc.educational.framework.family.service;
 
-import org.springframework.stereotype.Component;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.springframework.stereotype.Service;
+
+import es.vargontoc.educational.framework.family.infrastructure.dto.AdaptativeColor;
 import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import es.vargontoc.educational.framework.family.ports.in.ColorAdaptativeUseCase;
 
-@Component
+@Service
 public class AdaptativeColorService implements ColorAdaptativeUseCase {
+
 
     @Override
     public String getColorAdaptive(ColorVisionMode vision, String colorValue) {
         
         double[] rgb = hexToLinear(colorValue);
-        double[] mutation = vision.adaptation(rgb);
-        return lineartoHex(mutation);
+        double[] simulated = vision.simulate(rgb);
+        return lineartoHex(simulated);
     }
 
     @Override
@@ -86,4 +93,26 @@ public class AdaptativeColorService implements ColorAdaptativeUseCase {
         // %02X asegura dos caracteres en mayúsculas por canal, rellenando con '0' si es necesario
         return String.format("#%02X%02X%02X", r, g, b);
     }
+
+    @Override
+    public Map<ColorVisionMode, List<AdaptativeColor>> getVisions() {
+        Map<ColorVisionMode, List<AdaptativeColor>> result = new HashMap<>();
+
+        String[] primaryColors = new String[]{
+            "#FF0000", "#0000FF","#00FF00","#FFFF00","#FF8000","#FF69B4","#800080"
+        };
+
+        for(ColorVisionMode cvm: ColorVisionMode.values())
+        {
+            result.put(cvm, new ArrayList<>());
+            for(String color: primaryColors) 
+            {
+                result.get(cvm).add(new AdaptativeColor(color, getColorAdaptive(cvm, color)));
+            }
+        }
+
+        return result;
+    }
+
+
 }

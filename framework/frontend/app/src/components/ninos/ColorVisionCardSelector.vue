@@ -2,7 +2,7 @@
   <div class="color-vision-card-selector" role="radiogroup" :aria-label="selectorLabel">
     <div class="color-vision-card-selector__grid">
       <ColorVisionCard
-        v-for="mode in modes"
+        v-for="mode in modeCards"
         :key="mode.value"
         :mode="mode"
         :selected="modelValue === mode.value"
@@ -19,20 +19,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ColorVisionCard from './ColorVisionCard.vue'
+import {
+  ColorVisionMode,
+  COLOR_VISION_LABELS,
+  COLOR_VISION_DESCRIPTIONS
+} from '../../types/colorVision'
+import type { VisionValues } from '../../services/familyService'
 
 interface Props {
   modelValue: string
-  modes: ReadonlyArray<{
-    value: string
-    label: string
-    description: string
-  }>
+  modes: Record<ColorVisionMode, VisionValues[]>
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 defineEmits<{
   (e: 'update:modelValue', value: string): void
@@ -44,6 +46,15 @@ const previewedMode = ref<string | null>(null)
 
 const selectorLabel = t('views.ninos.edit.sections.visualAccessibility.selectorLabel')
 const warningText = t('views.ninos.edit.sections.visualAccessibility.warning')
+
+const modeCards = computed(() =>
+  Object.entries(props.modes).map(([value, colors]) => ({
+    value,
+    label: COLOR_VISION_LABELS[value as ColorVisionMode],
+    description: COLOR_VISION_DESCRIPTIONS[value as ColorVisionMode],
+    colors
+  }))
+)
 </script>
 
 <style scoped>
@@ -55,7 +66,7 @@ const warningText = t('views.ninos.edit.sections.visualAccessibility.warning')
 
 .color-vision-card-selector__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--nubi-spacing-md);
 }
 

@@ -19,4 +19,8 @@ public record GameAvatarEvent(
     public static GameAvatarEvent farewell(Long sessionId, boolean audioAvailable, String audioId, String text) {
         return new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, "FAREWELL", audioAvailable, audioId, text);
     }
+
+    public static GameAvatarEvent roundPrompt(Long sessionId, boolean audioAvailable, String audioId, String text) {
+        return new GameAvatarEvent(SessionEventType.GAME_AVATAR_EVENT, sessionId, "ROUND_PROMPT", audioAvailable, audioId, text);
+    }
 }

@@ -1,9 +1,20 @@
 package es.vargontoc.educational.framework.family.ports.in;
 
+import java.util.List;
+import java.util.Map;
+
+import es.vargontoc.educational.framework.family.infrastructure.dto.AdaptativeColor;
 import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 
 public interface ColorAdaptativeUseCase {
     
+    /**
+     * 
+     * @return
+     */
+    Map<ColorVisionMode, List<AdaptativeColor>> getVisions();
+
+
     /**
      * Obtener color simulado adaptado a tipo visión
      * @param vision

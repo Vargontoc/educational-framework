@@ -3,6 +3,7 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.avatar.domain.AvatarEventRequest;
+import es.vargontoc.educational.framework.avatar.domain.GameAvatarEvent;
 import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
 import es.vargontoc.educational.framework.content.model.Biome;
@@ -17,8 +18,10 @@ import es.vargontoc.educational.framework.game.infrastructure.websocket.GameErro
 import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.GameActionRequest;
 import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.GameActionResponse;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
+import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
+import es.vargontoc.educational.framework.game.service.RoundAudioResult;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldActivityStartedPayload;
 import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldDestinationPayload;
@@ -343,6 +346,29 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    /**
+     * Sends a ROUND_PROMPT avatar event with audio if the round audio result is available.
+     * The event JSON is sent first, followed by the binary audio data.
+     */
+    private void sendRoundAudioIfPresent(Long childSessionId, WebSocketSession session, RoundAudioResult roundAudioResult) {
+        if (roundAudioResult == null || !roundAudioResult.audioAvailable()) {
+            return;
+        }
+        try {
+            GameAvatarEvent avatarEvent = GameAvatarEvent.roundPrompt(
+                    childSessionId,
+                    true,
+                    roundAudioResult.audioId(),
+                    roundAudioResult.text());
+            sendToSession(childSessionId, objectMapper.writeValueAsString(avatarEvent));
+            if (roundAudioResult.audioData() != null && session != null && session.isOpen()) {
+                sendBinaryFrame(session, roundAudioResult.audioId(), roundAudioResult.audioData());
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Could not send round audio to childSessionId={}: {}", childSessionId, e.getMessage());
+        }
+    }
+
     public boolean sendBinaryFrame(WebSocketSession session, String audioId, byte[] audioData) {
         try {
             byte[] audioIdBytes = audioId.getBytes(StandardCharsets.UTF_8);
@@ -447,6 +473,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             SessionEvent event = SessionEvent.of(SessionEventType.GAME_ACTION_RESULT, childSessionId, toPayload(response));
             sendToSession(childSessionId, objectMapper.writeValueAsString(event));
 
+            // Send round audio for the next round if the answer was correct and game not completed
+            if (result.resultType() == es.vargontoc.educational.framework.game.model.ActionResultType.CORRECT
+                    && !result.gameCompleted()) {
+                sendRoundAudioIfPresent(childSessionId, session, result.updatedState().getRoundAudioResult());
+            }
+
             if (result.gameCompleted()) {
                 SessionEvent completedEvent = SessionEvent.of(SessionEventType.GAME_COMPLETED, childSessionId);
                 sendToSession(childSessionId, objectMapper.writeValueAsString(completedEvent));
@@ -533,6 +565,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
             SessionEvent event = SessionEvent.of(SessionEventType.GAME_READY, childSessionId, gameStateToPayload(updatedState));
             sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+
+            // Send round audio for the first round if available
+            sendRoundAudioIfPresent(childSessionId, session, updatedState.getRoundAudioResult());
 
         } catch (InvalidStateTransitionException e) {
             LOGGER.debug("Game ready rejected - invalid state: childSessionId={}", childSessionId);

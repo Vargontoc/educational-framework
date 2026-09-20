@@ -128,7 +128,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useChildProfileEdit } from '../../composables/useChildProfileEdit'
 import { useToast } from '../../composables/useToast'
-import { ColorVisionMode, COLOR_VISION_LABELS, COLOR_VISION_DESCRIPTIONS } from '../../types/colorVision'
+import { ColorVisionMode } from '../../types/colorVision'
 
 import NubiBreadcrumb from '../../components/base/NubiBreadcrumb.vue'
 import NubiSpinner from '../../components/base/NubiSpinner.vue'
@@ -139,6 +139,7 @@ import NubiConfirmModal from '../../components/base/NubiConfirmModal.vue'
 import AvatarSelector from '../../components/home/AvatarSelector.vue'
 import ToggleWithPercentage from '../../components/config/ToggleWithPercentage.vue'
 import ColorVisionCardSelector from '../../components/ninos/ColorVisionCardSelector.vue'
+import { getVisions, VisionValues } from '@/services/familyService.ts'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -174,17 +175,15 @@ const visualAccessibilityActive = computed({
   }
 })
 
-const colorVisionModes = computed(() =>
-  Object.values(ColorVisionMode).map((value) => ({
-    value,
-    label: COLOR_VISION_LABELS[value],
-    description: COLOR_VISION_DESCRIPTIONS[value]
-  }))
-)
+const colorVisionModes = ref<Record<ColorVisionMode, VisionValues[]>>({} as Record<ColorVisionMode, VisionValues[]>)
+
 
 const showDeleteModal = ref(false)
 
 onMounted(async () => {
+  const visions = await getVisions()
+  colorVisionModes.value = visions
+  
   await loadProfile(childId.value)
 })
 

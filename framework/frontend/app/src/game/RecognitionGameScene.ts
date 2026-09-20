@@ -1,4 +1,4 @@
-import { Scene, GameObjects } from "phaser"
+import { Scene, GameObjects, Scale } from "phaser"
 import {
     AvatarEvent,
     GAME_RESULT_TYPE,
@@ -12,14 +12,21 @@ import {
     ServerGameEvent
 } from "./GameEvent"
 import { RoundProgressBar } from "./ui/RoundProgressBar"
+import { ExitButton } from "./ui/ExitButton"
+import { DynamicAssetLoader } from "./utils/DynamicAssetLoader"
+import { LetterColorizer } from "./utils/LetterColorizer"
+import { ResponsiveLayout, type LayoutSizes, type OptionSlot } from "./utils/ResponsiveLayout"
+import { DEVICE_PROFILE_REGISTRY_KEY, detectDeviceProfile, type DeviceProfile } from "./utils/DeviceProfile"
+import { RoundAudioCache } from "./RoundAudioCache"
+import { MessageRouter } from "@/services/MessageRouter"
+import type { AudioService } from "@/services/AudioService"
+import type { AudioCache } from "@/services/AudioCache"
 import { MinigameNubiLayer } from "./worldmap/layers/MinigameNubiLayer"
 import {
     generateColorTexture,
     type ColorShape
 } from "../utils/colorTextureGenerator"
 
-const VIEWPORT_WIDTH = 1280
-const VIEWPORT_HEIGHT = 720
 const FADE_DURATION = 400
 const FEEDBACK_DELAY = 500
 const FEEDBACK_WOBBLE_PX = 8
@@ -49,13 +56,11 @@ const CELEBRATION_TOTAL_DURATION = 1500
 const CELEBRATION_STAR_COLORS = [0xFFC107, 0x42A5F5, 0x66BB6A]
 const HINT_DEPTH = 4
 const CELEBRATION_DEPTH = 50
-const STIMULUS_CARD_WIDTH = 120
-const STIMULUS_CARD_HEIGHT = 120
 const STIMULUS_CARD_ALPHA = 0.15
-const STIMULUS_CARD_CORNER_RADIUS = 12
-const STIMULUS_ZONE_Y = 0.25
-const STIMULUS_ZONE_X = 0.5
-const OPTIONS_ZONE_Y = 0.65
+const STIMULUS_CARD_CORNER_RATIO = 0.1
+const STIMULUS_LABEL_RATIO = 0.4
+const OPTION_LABEL_RATIO = 0.45
+const KEEP_RECENT_ROUNDS = 3
 const GUIDE_CHROM_COLOR = 0xFFFFFF
 const GUIDE_CHROM_ALPHA_BASE = 0.2
 const GUIDE_CHROM_ALPHA_MAX = 0.25
@@ -90,6 +95,12 @@ export class RecognitionGameScene extends Scene {
     images: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[] = []
     private progressBar?: RoundProgressBar
     private nubiLayer?: MinigameNubiLayer
+    private exitButton?: ExitButton
+    private roundAudio = new RoundAudioCache()
+    private assetLoader?: DynamicAssetLoader
+    private letterColorizer = new LetterColorizer()
+    private roundLoadToken = 0
+    private pendingAudioListener?: { id: string, handler: (audioId: string) => void }
     private reducedMotion: boolean = false
     private exitInProgress: boolean = false
     private feedbackTweenGroup: Phaser.Tweens.Tween[] = []
@@ -99,7 +110,21 @@ export class RecognitionGameScene extends Scene {
     private previousHintActive: boolean = false
     private hintBorderGraphics?: Phaser.GameObjects.Graphics
     private hintPulseTween?: Phaser.Tweens.Tween
-    private minElementHitSize = 80
+    private layout!: ResponsiveLayout
+    private sizes!: LayoutSizes
+    private previousScaleMode?: Scale.ScaleModeType
+    private hintTargetId: string = ''
+    private fitActive = false
+    private onScaleResize = () => this.relayout()
+    // Paused = portrait: OrientationRequiredScene takes over and needs the normal (cover) scaling to stay legible.
+    private onScenePause = () => {
+        this.blockActions = true
+        this.restoreScaling()
+    }
+    private onSceneResume = () => {
+        this.blockActions = false
+        this.enterFitScaling()
+    }
     private stimulusCardGraphics?: Phaser.GameObjects.Graphics
     private _nonChromaticKeyRequired: boolean = false
     private _recognitionCategory: string = ''
@@ -109,6 +134,11 @@ export class RecognitionGameScene extends Scene {
     private touchEnableTimer?: Phaser.Time.TimerEvent
 
     constructor() { super({ key: 'recognition-game', active: false }) }
+
+    /** Tamaño táctil de las opciones (unidades lógicas), calculado por ResponsiveLayout. */
+    get minElementHitSize(): number {
+        return this.sizes?.hitSize ?? 0
+    }
 
     get nonChromaticKeyRequired(): boolean {
         return this._nonChromaticKeyRequired
@@ -134,6 +164,59 @@ export class RecognitionGameScene extends Scene {
         this.blockActions = false
         this.selectedOptionId = ''
         this.previousHintActive = false
+        this.roundAudio = new RoundAudioCache(this.registry.get('audioCache') as AudioCache | undefined)
+        this.assetLoader = new DynamicAssetLoader(this)
+        this.roundLoadToken++
+
+        let profile = this.registry.get(DEVICE_PROFILE_REGISTRY_KEY) as DeviceProfile | undefined
+        if (!profile) {
+            profile = detectDeviceProfile()
+            this.registry.set(DEVICE_PROFILE_REGISTRY_KEY, profile)
+        }
+        this.layout = new ResponsiveLayout(profile)
+        this.enterFitScaling()
+        this.refreshSizes()
+    }
+
+    /**
+     * Mientras dura el minijuego el canvas se ajusta con FIT (todo el contenido visible,
+     * sin recortes en pantallas que no son 16:9). El resto de escenas siguen con su modo.
+     */
+    private enterFitScaling(): void {
+        if (this.fitActive) return
+        this.fitActive = true
+        this.previousScaleMode = this.scale.scaleMode
+        this.scale.scaleMode = Scale.FIT
+        this.scale.displaySize.setAspectMode(Scale.FIT)
+        this.scale.refresh()
+    }
+
+    private restoreScaling(): void {
+        if (!this.fitActive || this.previousScaleMode === undefined) return
+        this.fitActive = false
+        this.scale.scaleMode = this.previousScaleMode
+        this.scale.displaySize.setAspectMode(this.previousScaleMode)
+        this.previousScaleMode = undefined
+        this.scale.refresh()
+    }
+
+    private refreshSizes(): void {
+        this.sizes = this.layout.calculateSizes({
+            viewportWidth: this.scale.width,
+            viewportHeight: this.scale.height,
+            displayScale: this.scale.displayScale.x
+        })
+    }
+
+    /** El tamaño del canvas en pantalla cambió: recalcula tamaños y recoloca todo. */
+    private relayout(): void {
+        if (!this.layout || this.exitInProgress) return
+
+        this.refreshSizes()
+        this.progressBar?.resize(this.sizes)
+        this.exitButton?.resize(this.sizes)
+        this.nubiLayer?.resize(this.sizes)
+        this.layoutRound()
     }
 
     create() {
@@ -143,23 +226,23 @@ export class RecognitionGameScene extends Scene {
 
         this.createBiomeBackground()
 
-        this.progressBar = new RoundProgressBar(this)
+        this.refreshSizes()
+        this.progressBar = new RoundProgressBar(this, this.sizes)
 
         const npcEnabled = this.registry.get('npcEnabled') as boolean ?? false
-        this.nubiLayer = new MinigameNubiLayer(this)
+        this.nubiLayer = new MinigameNubiLayer(this, this.sizes)
         this.nubiLayer.create(npcEnabled)
 
-        this.events.on('minigame-nubi-double-tap', () => this.sendAbandonAndExit())
+        this.exitButton = new ExitButton(this, this.sizes)
+        this.scale.on('resize', this.onScaleResize)
+
+        this.events.on('exit-button-double-tap', this.onExitDoubleTap)
+        this.events.on('minigame-nubi-tap', this.onNubiTap)
 
         this.fadeFromBlack()
 
-        this.events.on('pause', () => {
-            this.blockActions = true
-        })
-
-        this.events.on('resume', () => {
-            this.blockActions = false
-        })
+        this.events.on('pause', this.onScenePause)
+        this.events.on('resume', this.onSceneResume)
 
         this.events.once('shutdown', () => this.cleanup())
     }
@@ -177,7 +260,7 @@ export class RecognitionGameScene extends Scene {
         const graphics = this.add.graphics()
         graphics.setDepth(-1)
         const steps = 8
-        const stepHeight = VIEWPORT_HEIGHT / steps
+        const stepHeight = this.scale.height / steps
         for (let i = 0; i < steps; i++) {
             const ratio = i / (steps - 1)
             const r = ((colorTop >> 16) & 0xff) * (1 - ratio) + ((colorBottom >> 16) & 0xff) * ratio
@@ -185,13 +268,19 @@ export class RecognitionGameScene extends Scene {
             const b = (colorTop & 0xff) * (1 - ratio) + (colorBottom & 0xff) * ratio
             const color = (Math.round(r) << 16) | (Math.round(g) << 8) | Math.round(b)
             graphics.fillStyle(color, 1)
-            graphics.fillRect(0, i * stepHeight, VIEWPORT_WIDTH, stepHeight + 1)
+            graphics.fillRect(0, i * stepHeight, this.scale.width, stepHeight + 1)
         }
     }
+
+    private onExitDoubleTap = () => this.sendAbandonAndExit()
+    private onNubiTap = () => this.replayRoundAudio()
 
     private sendAbandonAndExit(): void {
         if (this.exitInProgress) return
         this.exitInProgress = true
+
+        this.cancelPendingRoundAudio()
+        this.getAudioService()?.stop()
 
         if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
             this.websocket.send(JSON.stringify(new GameAbandonEvent()))
@@ -202,8 +291,8 @@ export class RecognitionGameScene extends Scene {
 
     private fadeFromBlack(): void {
         const overlay = this.add.rectangle(
-            VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2,
-            VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0x000000, 1
+            this.scale.width / 2, this.scale.height / 2,
+            this.scale.width, this.scale.height, 0x000000, 1
         )
         overlay.setDepth(100)
         overlay.setScrollFactor(0)
@@ -223,8 +312,8 @@ export class RecognitionGameScene extends Scene {
         this.cleanupFeedbackTweens()
 
         const overlay = this.add.rectangle(
-            VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2,
-            VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0x000000, 0
+            this.scale.width / 2, this.scale.height / 2,
+            this.scale.width, this.scale.height, 0x000000, 0
         )
         overlay.setDepth(100)
         overlay.setScrollFactor(0)
@@ -248,7 +337,11 @@ export class RecognitionGameScene extends Scene {
 
     manageWs(ws: WebSocket) {
         ws.onmessage = (msg) => {
-            this.readEvent(JSON.parse(msg.data))
+            MessageRouter.route(
+                msg.data,
+                (jsonData) => this.readEvent(jsonData as ServerGameEvent | AvatarEvent),
+                (binaryData) => { void this.getAudioService()?.handleBinaryFrame(binaryData) }
+            )
         }
 
         if (this.activityId && this.startingGame === true) {
@@ -274,38 +367,46 @@ export class RecognitionGameScene extends Scene {
             return generateColorTexture(this, element.accessibleColor.value, shape, size)
         }
 
-        const imageRef = element.resourceRefs?.['image']
-        if (!imageRef) return null
-
-        return imageRef
+        return DynamicAssetLoader.textureKey(element, this._recognitionCategory as RECOGNITION_TYPE)
     }
 
-    renderElements(items: RecognitionElement[], targetElementId: string) {
+    private placeOption(
+        option: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle,
+        label: Phaser.GameObjects.Text | undefined,
+        slot: OptionSlot
+    ): void {
+        option.setPosition(slot.x, slot.y)
+        if (option instanceof GameObjects.Image) {
+            option.setScale(slot.size / Math.max(option.width, option.height))
+        } else {
+            option.setSize(slot.size, slot.size)
+            option.input?.hitArea?.setSize(slot.size, slot.size)
+        }
+        label?.setPosition(slot.x, slot.y).setFontSize(slot.size * OPTION_LABEL_RATIO)
+    }
+
+    renderElements(items: RecognitionElement[], targetElementId: string, colors?: number[]) {
         this.images = []
         this.cleanupStimulusCard()
 
         const targetElement = items.find(e => e.id === targetElementId)
         const optionElements = items
-        console.log(items)
         if (targetElement) {
-            this.renderTargetElement(targetElement)
+            this.renderTargetElement(targetElement, colors ? this.letterColorizer.pickStimulusColor(colors) : undefined)
         }
 
-        const count = optionElements.length
-        const spacing = count > 0 ? Math.max(this.minElementHitSize, VIEWPORT_WIDTH / (count + 1)) : 0
+        const slots = this.layout.getOptionSlots(optionElements.length)
         optionElements.forEach((e, i) => {
-            const x = spacing * (i + 1)
-            const y = VIEWPORT_HEIGHT * OPTIONS_ZONE_Y
-            const imageKey = this.resolveTextureKey(e)
+            const slot = slots[i]
+            const imageKey = this.resolveTextureKey(e, Math.round(slot.size))
             let optionElement: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
             let labelElement: Phaser.GameObjects.Text | undefined
 
             if (imageKey && this.textures.exists(imageKey)) {
-                const img = this.add.image(x, y, imageKey)
+                const img = this.add.image(slot.x, slot.y, imageKey)
 
-                if (img.displayWidth < this.minElementHitSize || img.displayHeight < this.minElementHitSize) {
-                    const scale = this.minElementHitSize / Math.max(img.displayWidth, img.displayHeight)
-                    img.setScale(scale, scale)
+                if (colors && colors[i] !== undefined) {
+                    this.letterColorizer.applyTint(img, colors[i])
                 }
 
                 optionElement = img
@@ -313,9 +414,9 @@ export class RecognitionGameScene extends Scene {
                 if (imageKey) {
                     console.warn('Texture not in cache, using placeholder for option:', imageKey)
                 }
-                const rect = this.add.rectangle(x, y, this.minElementHitSize, this.minElementHitSize, 0x90A4AE, 0.6)
-                const label = this.add.text(x, y, e.displayValue, {
-                    fontSize: '36px',
+                const rect = this.add.rectangle(slot.x, slot.y, slot.size, slot.size, 0x90A4AE, 0.6)
+                const label = this.add.text(slot.x, slot.y, e.displayValue, {
+                    fontSize: `${slot.size * OPTION_LABEL_RATIO}px`,
                     color: '#ffffff',
                     fontStyle: 'bold'
                 }).setOrigin(0.5, 0.5)
@@ -325,9 +426,12 @@ export class RecognitionGameScene extends Scene {
 
             optionElement.setInteractive({ useHandCursor: false })
             optionElement.setData('elementId', e.id)
+            optionElement.setData('optionIndex', i)
             if (labelElement) {
                 labelElement.setData('elementId', e.id)
+                labelElement.setData('optionIndex', i)
             }
+            this.placeOption(optionElement, labelElement, slot)
 
             optionElement.on('pointerdown', () => {
                 if (this.startingGame) return
@@ -351,43 +455,79 @@ export class RecognitionGameScene extends Scene {
         })
     }
 
-    private renderTargetElement(element: RecognitionElement): void {
-        const x = VIEWPORT_WIDTH * STIMULUS_ZONE_X
-        const y = VIEWPORT_HEIGHT * STIMULUS_ZONE_Y
+    private renderTargetElement(element: RecognitionElement, tint?: number): void {
+        const { x, y } = this.sizes.stimulusCenter
+        this.drawStimulusCard()
 
-        const cardGraphics = this.add.graphics()
-        cardGraphics.fillStyle(0xFFFFFF, STIMULUS_CARD_ALPHA)
-        cardGraphics.fillRoundedRect(
-            x - STIMULUS_CARD_WIDTH / 2,
-            y - STIMULUS_CARD_HEIGHT / 2,
-            STIMULUS_CARD_WIDTH,
-            STIMULUS_CARD_HEIGHT,
-            STIMULUS_CARD_CORNER_RADIUS
-        )
-        this.stimulusCardGraphics = cardGraphics
-
-        const imageKey = this.resolveTextureKey(element, STIMULUS_CARD_WIDTH)
+        const imageKey = this.resolveTextureKey(element, Math.round(this.sizes.stimulusSize))
+        let stimulus: Phaser.GameObjects.Image | Phaser.GameObjects.Text
         if (imageKey && this.textures.exists(imageKey)) {
             const img = this.add.image(x, y, imageKey)
 
-            if (img.displayWidth < STIMULUS_CARD_WIDTH || img.displayHeight < STIMULUS_CARD_HEIGHT) {
-                const scale = Math.min(STIMULUS_CARD_WIDTH, STIMULUS_CARD_HEIGHT) / Math.max(img.displayWidth, img.displayHeight)
-                img.setScale(scale, scale)
+            if (tint !== undefined) {
+                this.letterColorizer.applyTint(img, tint)
             }
-
-            img.setData('elementId', element.id)
-            img.setData('isStimulus', true)
-            this.images.push(img)
+            stimulus = img
         } else {
-            const placeholder = this.add.text(x, y, element.displayValue, {
-                fontSize: '48px',
+            stimulus = this.add.text(x, y, element.displayValue, {
+                fontSize: `${this.sizes.stimulusSize * STIMULUS_LABEL_RATIO}px`,
                 color: '#ffffff',
                 fontStyle: 'bold'
             }).setOrigin(0.5, 0.5)
-            placeholder.setData('elementId', element.id)
-            placeholder.setData('isStimulus', true)
-            this.images.push(placeholder)
         }
+
+        stimulus.setData('elementId', element.id)
+        stimulus.setData('isStimulus', true)
+        this.images.push(stimulus)
+        this.layoutStimulus()
+    }
+
+    private drawStimulusCard(): void {
+        const { x, y } = this.sizes.stimulusCenter
+        const size = this.sizes.stimulusSize
+
+        const card = this.stimulusCardGraphics ?? this.add.graphics()
+        card.clear()
+        card.fillStyle(0xFFFFFF, STIMULUS_CARD_ALPHA)
+        card.fillRoundedRect(x - size / 2, y - size / 2, size, size, size * STIMULUS_CARD_CORNER_RATIO)
+        this.stimulusCardGraphics = card
+    }
+
+    private layoutStimulus(): void {
+        const stimulus = this.images.find(o => o.getData('isStimulus'))
+        if (!stimulus) return
+
+        const { x, y } = this.sizes.stimulusCenter
+        const size = this.sizes.stimulusSize
+        this.drawStimulusCard()
+        stimulus.setPosition(x, y)
+        if (stimulus instanceof GameObjects.Image) {
+            stimulus.setScale(size / Math.max(stimulus.width, stimulus.height))
+        } else if (stimulus instanceof GameObjects.Text) {
+            stimulus.setFontSize(size * STIMULUS_LABEL_RATIO)
+        }
+    }
+
+    /** Recoloca lo ya renderizado con los tamaños actuales y redibuja los overlays. */
+    private layoutRound(): void {
+        const options = this.getOptionImages()
+        const bases = options.filter(
+            (o): o is Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle => !(o instanceof GameObjects.Text)
+        )
+        const slots = this.layout.getOptionSlots(bases.length)
+
+        bases.forEach((base, i) => {
+            const index = base.getData('optionIndex') as number ?? i
+            const label = options.find(
+                (o): o is Phaser.GameObjects.Text => o instanceof GameObjects.Text && o.getData('optionIndex') === index
+            )
+            this.placeOption(base, label, slots[index] ?? slots[i])
+        })
+        this.layoutStimulus()
+
+        if (this.hintBorderGraphics && this.hintTargetId) this.showVisualHint(this.hintTargetId)
+        if (this.guideChromGraphics) this.renderGuideChrom()
+        if (this.nonChromaticPatternGraphics.length > 0) this.renderNonChromaticPatterns(this.getOptionImages())
     }
 
     private cleanupStimulusCard(): void {
@@ -610,114 +750,43 @@ export class RecognitionGameScene extends Scene {
         return this.images.filter(img => !img.getData('isStimulus'))
     }
 
+    /**
+     * Carga solo las texturas de la ronda (las que falten) y renderiza cuando estan listas.
+     * Si mientras tanto llega otra ronda o se cierra la escena, el resultado se descarta.
+     */
     loadResources(type: RECOGNITION_TYPE | null, items: RecognitionElement[], targetElementId: string, onReady?: () => void) {
         if (!type) return
         if (!items || items.length <= 0) return
+        if (!this.assetLoader) return
 
-        const allCached = items.every((e) => !e.resourceRefs?.['image'] || this.textures.exists(e.resourceRefs['image']))
-        if (allCached) {
-            this.renderElements(items, targetElementId)
-            onReady?.()
-            return
-        }
+        const token = ++this.roundLoadToken
+        this.assetLoader.loadRoundAssets(items, type).then(() => {
+            if (token !== this.roundLoadToken) return
 
-        this.load.setBaseURL('/')
-        const packKeyMap: Record<RECOGNITION_TYPE, string> = {
-            'LETTER': 'recognition-letters',
-            'NUMBER': 'recognition-numbers',
-            'SHAPE': 'recognition-shapes',
-            'COLOR': 'recognition-colors',
-            'ANIMAL': 'recognition-animals'
-        }
-
-        const packKey = packKeyMap[type]
-        if (!packKey) {
-            this.renderPlaceholderElements(items, targetElementId)
+            this.clearRoundVisuals()
+            const colors = type === 'LETTER' ? this.letterColorizer.assignColors(items.length) : undefined
+            this.renderElements(items, targetElementId, colors)
             this.startingGame = false
-            onReady?.()
-            return
-        }
-
-        // COLOR category generates textures dynamically, no need to load assets
-        if (type === 'COLOR') {
-            this.renderElements(items, targetElementId)
-            this.startingGame = false
-            onReady?.()
-            return
-        }
-
-        let packFailed = false
-        this.load.pack(`packManifest_${packKey}`, 'assets-manifest.json', packKey)
-        this.load.on('loaderror', (_file: Phaser.Loader.File) => {
-            packFailed = true
-            console.warn('Asset pack not available, using placeholders for:', type)
-            this.renderPlaceholderElements(items, targetElementId)
-            this.startingGame = false
+            this.assetLoader?.cleanupOldTextures(KEEP_RECENT_ROUNDS)
             onReady?.()
         })
-        this.load.once('complete', () => {
-            if (!packFailed) {
-                this.renderElements(items, targetElementId)
-                this.startingGame = false
-                onReady?.()
-            }
-        })
-        this.load.start()
     }
 
-    private renderPlaceholderElements(items: RecognitionElement[], targetElementId: string): void {
+    private clearRoundVisuals(): void {
+        this.images.forEach(i => i.destroy(true))
         this.images = []
         this.cleanupStimulusCard()
-
-        const targetElement = items.find(e => e.id === targetElementId)
-        const optionElements = items
-
-        if (targetElement) {
-            this.renderTargetElement(targetElement)
-        }
-
-        const count = optionElements.length
-        const spacing = count > 0 ? Math.max(this.minElementHitSize, VIEWPORT_WIDTH / (count + 1)) : 0
-
-        optionElements.forEach((e, i) => {
-            const x = spacing * (i + 1)
-            const y = VIEWPORT_HEIGHT * OPTIONS_ZONE_Y
-
-            const rect = this.add.rectangle(x, y, this.minElementHitSize, this.minElementHitSize, 0x90A4AE, 0.6)
-                .setInteractive({ useHandCursor: false })
-            const label = this.add.text(x, y, e.displayValue, {
-                fontSize: '36px',
-                color: '#ffffff',
-                fontStyle: 'bold'
-            }).setOrigin(0.5, 0.5)
-
-            rect.setData('elementId', e.id)
-            label.setData('elementId', e.id)
-
-            rect.on('pointerdown', () => {
-                if (this.startingGame) return
-                if (this.blockActions) return
-                this.blockActions = true
-                this.selectedOptionId = e.id
-                this.removeVisualHint()
-                if (this.websocket) {
-                    const ev = new GameRecognitionActionEvent()
-                    const diff = Date.now() - this.dateClick
-                    ev.setAction(e.id, diff)
-                    this.websocket.send(JSON.stringify(ev))
-                    this.dateClick = Date.now()
-                }
-            })
-
-            this.images.push(rect)
-            this.images.push(label)
-        })
+        this.destroyGuideChrom()
+        this.destroyNonChromaticPatterns()
     }
 
     readEvent(event: ServerGameEvent | AvatarEvent) {
         if (!this.websocket) return
         if (!event) return
         if (event.event === 'GAME_AVATAR_EVENT') {
+            if (event.eventType === 'ROUND_PROMPT') {
+                this.handleRoundPrompt(event)
+            }
             return
         }
         switch (event.event) {
@@ -764,6 +833,67 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
+    private getAudioService(): AudioService | undefined {
+        return this.registry.get('audioService') as AudioService | undefined
+    }
+
+    private isRoundAudioEnabled(): boolean {
+        const audioGeneralEnabled = this.registry.get('audioGeneralEnabled') as boolean ?? false
+        const ttsEnabled = this.registry.get('ttsEnabled') as boolean ?? false
+        return audioGeneralEnabled && ttsEnabled
+    }
+
+    private handleRoundPrompt(event: AvatarEvent): void {
+        this.cancelPendingRoundAudio()
+
+        const audioId = event.audioAvailable ? event.audioId : undefined
+        this.roundAudio.setCurrent(audioId)
+        if (!audioId || !this.isRoundAudioEnabled()) return
+
+        const audioService = this.getAudioService()
+        if (!audioService) return
+
+        // Queued so the success/error jingle of the previous answer is not cut off.
+        const play = () => {
+            audioService.enqueue('dynamic', audioId)
+            audioService.playNext()
+        }
+
+        if (this.roundAudio.isCached(audioId)) {
+            play()
+            return
+        }
+
+        // The binary frame follows the JSON event and is decoded asynchronously.
+        const handler = (receivedId: string) => {
+            if (receivedId !== audioId) return
+            this.cancelPendingRoundAudio()
+            play()
+        }
+        this.pendingAudioListener = { id: audioId, handler }
+        audioService.on('audio-received', handler)
+    }
+
+    private cancelPendingRoundAudio(): void {
+        if (!this.pendingAudioListener) return
+        this.getAudioService()?.off('audio-received', this.pendingAudioListener.handler)
+        this.pendingAudioListener = undefined
+    }
+
+    private replayRoundAudio(): void {
+        if (this.exitInProgress) return
+        if (!this.isRoundAudioEnabled()) return
+
+        const audioId = this.roundAudio.getCurrentId()
+        if (!audioId || !this.roundAudio.isCached(audioId)) return
+
+        const audioService = this.getAudioService()
+        if (!audioService) return
+
+        void audioService.playDynamic(audioId)
+        this.nubiLayer?.playSoundWave()
+    }
+
     applyActionToResultType(result: GAME_RESULT_TYPE, complete: boolean, state: RecognitionEnginePayload) {
         if (state.recognitionState) {
             this._nonChromaticKeyRequired = state.recognitionState.nonChromaticKeyRequired ?? false
@@ -798,31 +928,30 @@ export class RecognitionGameScene extends Scene {
             return
         }
 
+        const nextState = state.recognitionState
+        const nextCategory = nextState?.recognitionCategory
+        const advancesRound = result === 'CORRECT' && !!nextState && !!nextCategory && nextState.elements.length > 0
+
+        // The next round is already known: warm its textures while the feedback plays.
+        if (advancesRound && nextState && nextCategory) {
+            void this.assetLoader?.preloadNextRound(nextState.elements, nextCategory)
+        }
+
         this.playFeedbackAnimation(result, selectedImage, () => {
-            switch (result) {
-                case 'CORRECT':
-                    if (state.recognitionState && state.recognitionState.recognitionCategory) {
-                        this.images.forEach((i) => { i.destroy(true) })
-                        this.images = []
-                        this.cleanupStimulusCard()
-                        this.destroyGuideChrom()
-                        this.destroyNonChromaticPatterns()
-                        this.renderElements(state.recognitionState.elements, state.recognitionState.targetElementId ?? '')
-                        if (currentHintActive && state.recognitionState.targetElementId) {
-                            this.showVisualHint(state.recognitionState.targetElementId)
-                        }
-                        if (state.recognitionState.guideChromEnabled) {
-                            this.renderGuideChrom()
-                        }
-                        const optionImages = this.getOptionImages()
-                        this.renderNonChromaticPatterns(optionImages)
-                        this.applyTouchEnableDelay(state.recognitionState.touchEnableDelayMs ?? 0, optionImages)
+            if (advancesRound && nextState && nextCategory) {
+                // blockActions stays on until the new round is rendered (applyTouchEnableDelay releases it).
+                this.loadResources(nextCategory, nextState.elements, nextState.targetElementId ?? '', () => {
+                    if (currentHintActive && nextState.targetElementId) {
+                        this.showVisualHint(nextState.targetElementId)
                     }
-                    break
-                case 'INCORRECT':
-                    break
-                case 'TIMEOUT':
-                    break
+                    if (nextState.guideChromEnabled) {
+                        this.renderGuideChrom()
+                    }
+                    const optionImages = this.getOptionImages()
+                    this.renderNonChromaticPatterns(optionImages)
+                    this.applyTouchEnableDelay(nextState.touchEnableDelayMs ?? 0, optionImages)
+                })
+                return
             }
 
             this.time.delayedCall(FEEDBACK_DELAY, () => {
@@ -880,7 +1009,10 @@ export class RecognitionGameScene extends Scene {
         }
         target.setAlpha(1 - CORRECT_TINT_ALPHA)
         this.time.delayedCall(FEEDBACK_SCALE_DURATION, () => {
-            if ('clearTint' in target) {
+            const letterTint = this.letterColorizer.getTint(target)
+            if (letterTint !== undefined) {
+                (target as Phaser.GameObjects.Image).setTint(letterTint)
+            } else if ('clearTint' in target) {
                 (target as Phaser.GameObjects.Image).clearTint()
             }
             target.setAlpha(1)
@@ -956,6 +1088,7 @@ export class RecognitionGameScene extends Scene {
         this.removeVisualHint()
 
         if (!targetElementId) return
+        this.hintTargetId = targetElementId
 
         const targetImage = this.images.find(img => img.getData('elementId') === targetElementId && !img.getData('isStimulus'))
         if (!targetImage) return
@@ -990,6 +1123,7 @@ export class RecognitionGameScene extends Scene {
     }
 
     private removeVisualHint(): void {
+        this.hintTargetId = ''
         if (this.hintPulseTween) {
             this.hintPulseTween.stop()
             this.hintPulseTween = undefined
@@ -1009,8 +1143,8 @@ export class RecognitionGameScene extends Scene {
 
         const stars: Phaser.GameObjects.Star[] = []
         for (let i = 0; i < starCount; i++) {
-            const x = VIEWPORT_WIDTH * (0.2 + Math.random() * 0.6)
-            const y = VIEWPORT_HEIGHT * (0.2 + Math.random() * 0.4)
+            const x = this.scale.width * (0.2 + Math.random() * 0.6)
+            const y = this.scale.height * (0.2 + Math.random() * 0.4)
             const color = CELEBRATION_STAR_COLORS[i % CELEBRATION_STAR_COLORS.length]
 
             const star = this.add.star(x, y, CELEBRATION_STAR_POINTS, CELEBRATION_STAR_INNER_RADIUS, CELEBRATION_STAR_OUTER_RADIUS, color)
@@ -1075,13 +1209,29 @@ export class RecognitionGameScene extends Scene {
     private cleanup(): void {
         console.log('[RecognitionGameScene] Cleanup called, WebSocket readyState:', this.websocket?.readyState)
         
+        this.scale.off('resize', this.onScaleResize)
+        this.events.off('pause', this.onScenePause)
+        this.events.off('resume', this.onSceneResume)
+        this.restoreScaling()
+        this.events.off('exit-button-double-tap', this.onExitDoubleTap)
+        this.events.off('minigame-nubi-tap', this.onNubiTap)
+        this.cancelPendingRoundAudio()
+        this.roundAudio.clear()
+        this.exitButton?.destroy()
+        this.exitButton = undefined
         this.progressBar?.destroy()
         this.progressBar = undefined
         this.nubiLayer?.destroy()
         this.nubiLayer = undefined
-        this.images.forEach(i => i.destroy(true))
+        this.roundLoadToken++
+        this.images.forEach(i => {
+            if (i instanceof GameObjects.Image) this.letterColorizer.clearTint(i)
+            i.destroy(true)
+        })
         this.images = []
         this.cleanupStimulusCard()
+        this.assetLoader?.cleanupOldTextures(0)
+        this.assetLoader = undefined
         this.cleanupFeedbackTweens()
         this.removeVisualHint()
         this.destroyGuideChrom()

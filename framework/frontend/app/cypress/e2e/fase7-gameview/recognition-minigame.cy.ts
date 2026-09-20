@@ -268,7 +268,7 @@ describe('RecognitionGameScene — base jugable minijuego (SPRINT-070)', () => {
     })
   })
 
-  it('positivo: doble-toque en zona abandono retorna a WorldMap', () => {
+  it('positivo: doble-toque en boton de salida retorna a WorldMap', () => {
     cy.selectChildProfile('Nubi')
     cy.visit(`/game/${childId}`)
 
@@ -289,8 +289,9 @@ describe('RecognitionGameScene — base jugable minijuego (SPRINT-070)', () => {
       const rect = $canvas[0].getBoundingClientRect()
       const scaleX = rect.width / 1280
       const scaleY = rect.height / 720
-      const abandonX = rect.left + (1280 - 50) * scaleX
-      const abandonY = rect.top + (720 - 50) * scaleY
+      // SPRINT-078: el abandono es el boton de salida (esquina superior izquierda)
+      const abandonX = rect.left + 50 * scaleX
+      const abandonY = rect.top + 50 * scaleY
 
       cy.wrap($canvas).click(abandonX - rect.left, abandonY - rect.top, { force: true })
       cy.wait(300)

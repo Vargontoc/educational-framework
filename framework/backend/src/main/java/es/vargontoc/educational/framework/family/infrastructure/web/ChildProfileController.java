@@ -1,10 +1,13 @@
 package es.vargontoc.educational.framework.family.infrastructure.web;
 
+import es.vargontoc.educational.framework.family.infrastructure.dto.AdaptativeColor;
 import es.vargontoc.educational.framework.family.infrastructure.dto.ChildProfileResponse;
 import es.vargontoc.educational.framework.family.infrastructure.dto.CreateChildProfileRequest;
 import es.vargontoc.educational.framework.family.infrastructure.dto.UpdateChildProfileRequest;
 import es.vargontoc.educational.framework.family.model.ChildProfile;
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
+import es.vargontoc.educational.framework.family.ports.in.ColorAdaptativeUseCase;
 import es.vargontoc.educational.framework.family.ports.in.FamilyUseCase;
 import es.vargontoc.educational.framework.shared.api.ApiResponse;
 
@@ -18,7 +21,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.bind.annotation.PutMapping;
 
@@ -28,10 +33,12 @@ public class ChildProfileController {
 
     private final FamilyUseCase familyUseCase;
     private final ChildProfileUseCase childProfileUseCase;
+    private final ColorAdaptativeUseCase colorsUseCase;
 
-    public ChildProfileController(FamilyUseCase familyUseCase, ChildProfileUseCase childProfileUseCase) {
+    public ChildProfileController(FamilyUseCase familyUseCase, ColorAdaptativeUseCase colorsUseCase,  ChildProfileUseCase childProfileUseCase) {
         this.familyUseCase = familyUseCase;
         this.childProfileUseCase = childProfileUseCase;
+        this.colorsUseCase = colorsUseCase;
     }
 
     @PostMapping
@@ -83,6 +90,11 @@ public class ChildProfileController {
     {  
         childProfileUseCase.deleteChild(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/visions")
+    public ResponseEntity<ApiResponse<Map<ColorVisionMode, List<AdaptativeColor>>>> getVisions() {
+        return ResponseEntity.ok(ApiResponse.ok(colorsUseCase.getVisions()));
     }
 
     private static ChildProfileResponse toResponse(ChildProfile source) {

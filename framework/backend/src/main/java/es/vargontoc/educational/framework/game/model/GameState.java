@@ -6,6 +6,7 @@ import java.util.List;
 
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
+import es.vargontoc.educational.framework.game.service.RoundAudioResult;
 
 public class GameState {
 
@@ -33,6 +34,10 @@ public class GameState {
     private List<String> candidates;
     private RecognitionCategory recognitionCategory;
     private boolean repetition;
+
+    // Transient field for carrying round audio from orchestrator to WebSocket handler.
+    // Not persisted; set by GameOrchestratorService after round transitions and consumed by GameWebSocketHandler.
+    private transient RoundAudioResult roundAudioResult;
 
     public Long getGameId() {
         return gameId;
@@ -224,6 +229,14 @@ public class GameState {
 
     public void setRepetition(boolean repetition) {
         this.repetition = repetition;
+    }
+
+    public RoundAudioResult getRoundAudioResult() {
+        return roundAudioResult;
+    }
+
+    public void setRoundAudioResult(RoundAudioResult roundAudioResult) {
+        this.roundAudioResult = roundAudioResult;
     }
 
 }

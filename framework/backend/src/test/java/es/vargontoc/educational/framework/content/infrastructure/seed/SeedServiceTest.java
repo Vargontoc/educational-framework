@@ -37,6 +37,8 @@ import es.vargontoc.educational.framework.content.ports.out.TracingPatternReposi
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
+import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -90,18 +92,24 @@ class SeedServiceTest {
     @Mock
     private es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository recognitionElementRepository;
 
+    @Mock
+    private AudioUseCase audioUseCase;
+
+    @Mock
+    private LetterSimilarityPairJpaRepository letterSimilarityPairRepository;
+
     private SeedService seedService;
 
     @BeforeEach
     void setUp() {
         ObjectMapper objectMapper = new ObjectMapper();
         seedService = new SeedService(
-            seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
+            audioUseCase, seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository,
             learningPathRepository, learningPathStepRepository, tracingPatternRepository,
             worldHostRepository, worldNarrativeSituationRepository,
-            worldDiscoveryElementRepository, accessibleColorRepository, accessibleColorPaletteRepository,
-            recognitionElementRepository, objectMapper
+            worldDiscoveryElementRepository,
+            recognitionElementRepository, letterSimilarityPairRepository, objectMapper
         );
     }
 

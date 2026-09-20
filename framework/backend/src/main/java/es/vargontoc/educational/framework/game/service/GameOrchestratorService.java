@@ -84,6 +84,8 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final DifficultyLevelUseCase difficultyLevelUseCase;
     private final ChildProfileUseCase childProfileUseCase;
     private final RecognitionDifficultyService recognitionDifficultyService;
+    private final LetterSimilarityService letterSimilarityService;
+    private final RoundAudioService roundAudioService;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
     private final Map<Long, Set<Long>> completedActivitiesBySession = new ConcurrentHashMap<>();
@@ -102,7 +104,9 @@ public class GameOrchestratorService implements GameOrchestrator {
             RecognitionElementRepository recognitionElementRepository,
             DifficultyLevelUseCase difficultyLevelUseCase,
             ChildProfileUseCase childProfileUseCase,
-            RecognitionDifficultyService recognitionDifficultyService) {
+            RecognitionDifficultyService recognitionDifficultyService,
+            LetterSimilarityService letterSimilarityService,
+            RoundAudioService roundAudioService) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.sessionAntiRepetitionRegistry = sessionAntiRepetitionRegistry;
@@ -117,8 +121,10 @@ public class GameOrchestratorService implements GameOrchestrator {
         this.difficultyLevelUseCase = difficultyLevelUseCase;
         this.childProfileUseCase = childProfileUseCase;
         this.recognitionDifficultyService = recognitionDifficultyService;
+        this.letterSimilarityService = letterSimilarityService;
+        this.roundAudioService = roundAudioService;
 
-        this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine());
+        this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine(new java.util.Random(), letterSimilarityService));
     }
 
     @Override
@@ -188,6 +194,9 @@ public class GameOrchestratorService implements GameOrchestrator {
         state.setStatus(GameStatus.IN_PROGRESS);
         state.setLastActivityAt(LocalDateTime.now());
         gameStateRegistry.save(state);
+
+        // Generate round audio for the first round
+        generateAndAttachRoundAudio(state);
 
         return state;
     }
@@ -267,6 +276,10 @@ public class GameOrchestratorService implements GameOrchestrator {
                 if (targetBeforeAction != null && topicId != null) {
                     sessionAntiRepetitionRegistry.registerRecentElement(
                             state.getChildSessionId(), topicId, targetBeforeAction);
+                }
+                // Generate round audio for the next round (if game not completed)
+                if (!engineResult.isCompleted()) {
+                    generateAndAttachRoundAudio(state);
                 }
             }
 
@@ -493,7 +506,8 @@ public class GameOrchestratorService implements GameOrchestrator {
                     return new CandidateMetadata(
                             id,
                             element != null ? element.getTopicId() : null,
-                            element != null ? element.getSimilarityGroup() : null);
+                            element != null ? element.getSimilarityGroup() : null,
+                            element != null ? element.getCode() : null);
                 })
                 .toList();
     }
@@ -752,6 +766,29 @@ public class GameOrchestratorService implements GameOrchestrator {
             return OBJECT_MAPPER.writeValueAsString(state);
         } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize RecognitionState", e);
+        }
+    }
+
+    /**
+     * Extracts the current target element ID from the engine payload and generates
+     * round audio via RoundAudioService. The result is attached to the GameState as
+     * a transient field for the WebSocket handler to consume.
+     */
+    private void generateAndAttachRoundAudio(GameState state) {
+        if (state.getEngine() != EngineType.RECOGNITION || state.getEnginePayload() == null) {
+            return;
+        }
+        try {
+            RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
+            String targetElementId = recState.getTargetElementId();
+            if (targetElementId == null || targetElementId.isBlank()) {
+                return;
+            }
+            RoundAudioResult audioResult = roundAudioService.generateRoundAudio(
+                    state.getChildProfileId(), targetElementId);
+            state.setRoundAudioResult(audioResult);
+        } catch (Exception e) {
+            log.warn("Failed to generate round audio for gameId={}: {}", state.getGameId(), e.getMessage());
         }
     }
 }

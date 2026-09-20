@@ -7,5 +7,6 @@ public enum AvatarEventType {
     HELP_REQUESTED,
     WELCOME,
     FAREWELL,
-    BIOME_TRANSITION
+    BIOME_TRANSITION,
+    ROUND_PROMPT
 }

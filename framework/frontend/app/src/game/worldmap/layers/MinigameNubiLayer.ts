@@ -1,8 +1,6 @@
 import { Scene } from "phaser"
+import type { LayoutSizes } from "../../utils/ResponsiveLayout"
 
-const NUBI_SIZE = 100
-const EDGE_MARGIN = 20
-const DOUBLE_TAP_WINDOW = 2000
 const BUBBLE_FADE_DURATION = 200
 const BUBBLE_VISIBLE_DURATION = 3000
 const BUBBLE_BG_COLOR = 0xFFFFFF
@@ -17,6 +15,14 @@ const NUBI_DEPTH = 20
 const BUBBLE_DEPTH = 21
 const SLEEPING_TINT = 0x8888CC
 const ZZZ_FONT_SIZE = 20
+const WAVE_COUNT = 3
+const WAVE_DURATION = 350
+const WAVE_STAGGER = 75
+const WAVE_END_SCALE = 1.8
+const WAVE_COLOR = 0xFFFFFF
+const WAVE_ALPHA = 0.6
+const WAVE_LINE_WIDTH = 4
+const REDUCED_MOTION_WAVE_DURATION = 200
 
 type PhraseMoment = 'welcome' | 'hint' | 'celebration'
 
@@ -48,17 +54,28 @@ export class MinigameNubiLayer {
     private bubbleContainer?: Phaser.GameObjects.Container
     private npcEnabled = false
     private reducedMotion = false
-    private lastTapTime = 0
     private usedPhrases = new Set<string>()
     private bubbleVisible = false
     private bubbleTimer?: Phaser.Time.TimerEvent
+    private waveTweens: Phaser.Tweens.Tween[] = []
+    private sizes: LayoutSizes
     private onNpcStateChanged = (enabled: boolean) => this.setNpcEnabled(enabled)
 
-    constructor(scene: Scene) {
+    constructor(scene: Scene, sizes: LayoutSizes) {
         this.scene = scene
+        this.sizes = sizes
         this.container = scene.add.container(0, 0)
         this.container.setDepth(NUBI_DEPTH)
         this.container.setScrollFactor(0)
+    }
+
+    private get nubiSize(): number {
+        return this.sizes.nubiSize
+    }
+
+    /** Escala del texto del globo: nunca por debajo del tamaño base ni de la fuente minima legible. */
+    private get textScale(): number {
+        return Math.max(1, this.sizes.minFontSize / BUBBLE_FONT_SIZE)
     }
 
     create(npcEnabled: boolean): void {
@@ -66,11 +83,8 @@ export class MinigameNubiLayer {
         this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         this.usedPhrases.clear()
 
-        const posX = this.scene.scale.width - NUBI_SIZE / 2 - EDGE_MARGIN
-        const posY = this.scene.scale.height - NUBI_SIZE / 2 - EDGE_MARGIN
-
         if (this.scene.textures.exists('nubi-greetings')) {
-            this.buildNubiSprite(posX, posY)
+            this.buildNubiSprite()
             this.applyState()
         } else {
             this.scene.load.spritesheet('nubi-greetings', '/assets/animations/nubi/greetings.png', {
@@ -78,7 +92,7 @@ export class MinigameNubiLayer {
                 frameHeight: 400
             })
             this.scene.load.once('complete', () => {
-                this.buildNubiSprite(posX, posY)
+                this.buildNubiSprite()
                 this.applyState()
             })
             this.scene.load.start()
@@ -89,12 +103,10 @@ export class MinigameNubiLayer {
         this.scene.events.once('destroy', () => this.destroy())
     }
 
-    private buildNubiSprite(x: number, y: number): void {
+    private buildNubiSprite(): void {
         if (this.nubiSprite) return
 
         this.nubiSprite = this.scene.add.sprite(0, 0, 'nubi-greetings')
-        const scale = NUBI_SIZE / Math.max(this.nubiSprite.width, this.nubiSprite.height)
-        this.nubiSprite.setScale(scale)
 
         if (!this.scene.anims.exists('minigame-nubi-idle')) {
             this.scene.anims.create({
@@ -109,16 +121,62 @@ export class MinigameNubiLayer {
         this.nubiSprite.on('pointerdown', () => this.handleTap())
 
         this.container.add([this.nubiSprite])
-        this.container.setPosition(x, y)
+        this.applyLayout()
+    }
+
+    /** Tamaño y posicion de Nubi (esquina inferior derecha) segun los tamaños actuales. */
+    private applyLayout(): void {
+        const size = this.nubiSize
+        this.container.setPosition(
+            this.sizes.viewportWidth - this.sizes.nubiMargin - size / 2,
+            this.sizes.viewportHeight - this.sizes.nubiMargin - size / 2
+        )
+
+        if (!this.nubiSprite) return
+        this.nubiSprite.setScale(size / Math.max(this.nubiSprite.width, this.nubiSprite.height))
+
+        const zzz = this.container.getByName('zzz-text') as Phaser.GameObjects.Text | null
+        if (zzz) {
+            zzz.setFontSize(ZZZ_FONT_SIZE * this.textScale)
+            zzz.setPosition(this.nubiSprite.displayWidth / 2 + 5, -this.nubiSprite.displayHeight / 2 - 5)
+        }
+    }
+
+    resize(sizes: LayoutSizes): void {
+        this.sizes = sizes
+        this.hideBubble()
+        this.applyLayout()
     }
 
     private handleTap(): void {
-        const now = Date.now()
-        if (now - this.lastTapTime <= DOUBLE_TAP_WINDOW) {
-            this.lastTapTime = 0
-            this.scene.events.emit('minigame-nubi-double-tap')
-        } else {
-            this.lastTapTime = now
+        if (!this.npcEnabled) return
+        this.scene.events.emit('minigame-nubi-tap')
+    }
+
+    playSoundWave(): void {
+        if (!this.nubiSprite) return
+
+        const count = this.reducedMotion ? 1 : WAVE_COUNT
+        for (let i = 0; i < count; i++) {
+            const wave = this.scene.add.circle(0, 0, this.nubiSize / 2)
+            wave.setStrokeStyle(WAVE_LINE_WIDTH * this.textScale, WAVE_COLOR, WAVE_ALPHA)
+            wave.setFillStyle(WAVE_COLOR, 0)
+            this.container.add(wave)
+
+            const tween = this.scene.tweens.add({
+                targets: wave,
+                scaleX: this.reducedMotion ? 1 : WAVE_END_SCALE,
+                scaleY: this.reducedMotion ? 1 : WAVE_END_SCALE,
+                alpha: 0,
+                delay: i * WAVE_STAGGER,
+                duration: this.reducedMotion ? REDUCED_MOTION_WAVE_DURATION : WAVE_DURATION,
+                ease: 'Sine.easeOut',
+                onComplete: () => {
+                    this.waveTweens = this.waveTweens.filter(t => t !== tween)
+                    wave.destroy()
+                }
+            })
+            this.waveTweens.push(tween)
         }
     }
 
@@ -152,7 +210,7 @@ export class MinigameNubiLayer {
             -this.nubiSprite.displayHeight / 2 - 5,
             'Z Z Z',
             {
-                fontSize: `${ZZZ_FONT_SIZE}px`,
+                fontSize: `${ZZZ_FONT_SIZE * this.textScale}px`,
                 color: '#6666AA',
                 fontStyle: 'bold'
             }
@@ -232,10 +290,15 @@ export class MinigameNubiLayer {
         bubble.add([bg, textObj])
         bubble.setDepth(BUBBLE_DEPTH)
 
+        // Se dibuja a tamaño base y se escala entero para que el texto sea legible en pantallas pequeñas.
+        const scale = this.textScale
+        bubble.setScale(scale)
+
         const nubiWorldX = this.container.x
         const nubiWorldY = this.container.y
-        const bubbleY = nubiWorldY - NUBI_SIZE / 2 - bgHeight / 2 - BUBBLE_POINTER_SIZE - 5
-        const clampedBubbleX = Math.min(nubiWorldX, this.scene.scale.width - bgWidth / 2 - 10)
+        const scaledHalfHeight = (bgHeight / 2) * scale
+        const bubbleY = nubiWorldY - this.nubiSize / 2 - scaledHalfHeight - (BUBBLE_POINTER_SIZE + 5) * scale
+        const clampedBubbleX = Math.min(nubiWorldX, this.scene.scale.width - (bgWidth / 2) * scale - 10)
         bubble.setPosition(clampedBubbleX, bubbleY)
 
         this.bubbleContainer = bubble
@@ -287,6 +350,8 @@ export class MinigameNubiLayer {
     destroy(): void {
         this.scene.registry.events.off('npc-state-changed', this.onNpcStateChanged)
         this.hideBubble()
+        this.waveTweens.forEach(t => t.stop())
+        this.waveTweens = []
         this.container.destroy()
         this.usedPhrases.clear()
     }

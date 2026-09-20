@@ -40,7 +40,7 @@ public class ChildSessionPersistenceAdapter implements ChildSessionRepository {
                 activeSessions.size(),
                 childProfileId,
                 activeSessions.get(0).getId(),
-                activeSessions.stream().map(ChildSessionJpaEntity::getId).toList());
+                activeSessions.stream().map(e -> e.getId()).toList());
         }
 
         return activeSessions.stream().findFirst().map(ChildSessionPersistenceAdapter::toDomain);
