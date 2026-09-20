@@ -32,6 +32,7 @@ public class RecognitionState {
     private int touchEnableDelayMs;
     private boolean nonChromaticKeyRequired;
     private List<CandidateMetadata> candidateMetadata;
+    private boolean showIcon;
 
     public RecognitionState() {
         this.totalRounds = RecognitionDefaults.DEFAULT_TOTAL_ROUNDS;
@@ -231,5 +232,13 @@ public class RecognitionState {
 
     public void setCandidateMetadata(List<CandidateMetadata> candidateMetadata) {
         this.candidateMetadata = candidateMetadata;
+    }
+
+    public boolean isShowIcon() {
+        return showIcon;
+    }
+
+    public void setShowIcon(boolean showIcon) {
+        this.showIcon = showIcon;
     }
 }

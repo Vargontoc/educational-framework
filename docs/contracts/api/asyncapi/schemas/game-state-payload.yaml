@@ -82,6 +82,11 @@ properties:
         description: >-
           Whether options must render a non-hue cue (pattern/texture) in addition to colour, because the category
           is COLOR and the child profile has a configured colour vision preference other than NONE.
+      showIcon:
+        type: boolean
+        description: >-
+          Whether the reference icon (resourceRefs.icon of the elements) should be shown for this round. true in
+          EASY and MEDIUM, false in HARD. Only meaningful for the COLOR category; other categories may ignore it.
       elements:
         type: array
         description: >-
@@ -104,7 +109,9 @@ properties:
               type: object
               description: >-
                 Opaque JSON object with media references (e.g. {"audio":"tts://letter_a","image":"img://letter_a"}).
-                Structure is content-defined; client should handle missing keys gracefully.
+                Structure is content-defined; client should handle missing keys gracefully. COLOR elements also
+                carry "color" (hex code used for similarity validation) and "icon" (name of the reference icon,
+                resolved to an asset by the client; see showIcon).
             accessibleColor:
               type: object
               description: >-
@@ -138,3 +145,4 @@ properties:
       - guideChromEnabled
       - touchEnableDelayMs
       - nonChromaticKeyRequired
+      - showIcon

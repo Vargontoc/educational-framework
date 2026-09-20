@@ -103,4 +103,28 @@ class RecognitionDifficultyServiceTest {
         assertFalse(result.guideChromEnabled());
         assertEquals(DistractorStrategy.SEMANTICALLY_FAR, result.distractorStrategy());
     }
+    @Test
+    void resolveRoundParameters_easyAndMedium_showIcon() {
+        assertTrue(service.resolveRoundParameters(
+                DifficultyCode.EASY, RecognitionCategory.COLOR, ColorVisionMode.NONE).showIcon());
+        assertTrue(service.resolveRoundParameters(
+                DifficultyCode.MEDIUM, RecognitionCategory.COLOR, ColorVisionMode.NONE).showIcon());
+    }
+
+    @Test
+    void resolveRoundParameters_hard_doesNotShowIcon() {
+        assertFalse(service.resolveRoundParameters(
+                DifficultyCode.HARD, RecognitionCategory.COLOR, ColorVisionMode.NONE).showIcon());
+    }
+
+    @Test
+    void resolveRoundParameters_color_optionCountPerDifficulty() {
+        assertEquals(2, service.resolveRoundParameters(
+                DifficultyCode.EASY, RecognitionCategory.COLOR, ColorVisionMode.NONE).optionCount());
+        assertEquals(3, service.resolveRoundParameters(
+                DifficultyCode.MEDIUM, RecognitionCategory.COLOR, ColorVisionMode.NONE).optionCount());
+        int hardOptions = service.resolveRoundParameters(
+                DifficultyCode.HARD, RecognitionCategory.COLOR, ColorVisionMode.NONE).optionCount();
+        assertTrue(hardOptions >= 3 && hardOptions <= 4, "HARD ladder is 3-4 options, was " + hardOptions);
+    }
 }

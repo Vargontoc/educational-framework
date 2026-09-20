@@ -118,7 +118,8 @@ class GameOrchestratorServiceTrackingIntegrationTest {
             childProfileUseCase,
             recognitionDifficultyService,
             recognitionSimilarityService,
-            roundAudioService
+            roundAudioService,
+            null
         );
     }
 

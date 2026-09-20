@@ -22,11 +22,15 @@ public class RecognitionDifficultyService {
         boolean nonChromaticKeyRequired =
                 category == RecognitionCategory.COLOR && colorVisionMode != ColorVisionMode.NONE;
 
+        // showIcon is true for EASY and MEDIUM, false for HARD
+        boolean showIcon = difficultyCode != DifficultyCode.HARD;
+
         return new RoundParameters(
                 tier.optionCount(),
                 tier.distractorStrategy(),
                 tier.guideChromEnabled(),
                 tier.touchEnableDelayMs(),
-                nonChromaticKeyRequired);
+                nonChromaticKeyRequired,
+                showIcon);
     }
 }

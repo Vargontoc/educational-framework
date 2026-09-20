@@ -1,0 +1,47 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: game-unavailable-event.v1
+title: Game unavailable event v1
+description: >-
+  Evento WebSocket GAME_UNAVAILABLE del sobre SessionEvent. Se envía en lugar de
+  GAME_READY cuando el cliente pide game_ready para una partida que el perfil
+  infantil no puede jugar. Hoy solo ocurre con el minijuego COLOR y un perfil con
+  colorVisionMode ACHROMATOMALY o ACHROMATOPSIA (SPRINT-106). No es un error: la
+  partida se descarta en el servidor sin registrar resumen ni abandono, y el
+  cliente debe volver al mapa del mundo, donde el elemento de descubrimiento
+  sigue visible.
+type: object
+additionalProperties: false
+required:
+  - event
+  - sessionId
+  - payload
+properties:
+  event:
+    const: GAME_UNAVAILABLE
+  sessionId:
+    type: integer
+    format: int64
+    description: Identificador de la ChildSession destinataria del evento.
+  payload:
+    type: object
+    additionalProperties: false
+    required:
+      - gameId
+      - activityId
+      - reason
+    properties:
+      gameId:
+        type: integer
+        format: int64
+        description: Partida descartada.
+      activityId:
+        type: integer
+        format: int64
+        description: Actividad que el niño intentó jugar.
+      reason:
+        type: string
+        enum:
+          - COLOR_VISION_ACHROMATIC
+        description: >-
+          COLOR_VISION_ACHROMATIC: el minijuego de colores no se ofrece a perfiles
+          con colorVisionMode ACHROMATOMALY o ACHROMATOPSIA.

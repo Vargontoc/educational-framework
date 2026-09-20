@@ -2,46 +2,55 @@
     {
         "code" : "color_red",
         "nubi" : "¿Dónde está el color   ROJO?",
-        "color" : "#FF0000"
+        "color" : "#FF0000",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color rojo?\", \"color\": \"#FF0000\", \"icon\": \"apple\"}"
     },
     {
         "code" : "color_green",
         "nubi" : "¿Dónde está el color   VERDE?",
-        "color" : "#00FF00"
+        "color" : "#00FF00",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color verde?\", \"color\": \"#00FF00\", \"icon\": \"leaf\"}"
     },
     {
         "code" : "color_blue",
         "nubi" : "¿Dónde está el color   AZUL?",
-        "color" : "#0000FF"
+        "color" : "#0000FF",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color azul?\", \"color\": \"#0000FF\", \"icon\": \"drop\"}"
     },
     {
         "code" : "color_yellow",
         "nubi" : "¿Dónde está el color   AMARILLO?",
-        "color" : "#FFFF00"
+        "color" : "#FFFF00",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color amarillo?\", \"color\": \"#FFFF00\", \"icon\": \"sun\"}"
     },
     {
         "code" : "color_orange",
         "nubi" : "¿Dónde está el color   NARANJA?",
-        "color" : "#FF8000"
+        "color" : "#FF8000",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color naranja?\", \"color\": \"#FF8000\", \"icon\": \"carrot\"}"
     },
     {
         "code" : "color_pink",
         "nubi" : "¿Dónde está el color   ROSA?",
-        "color" : "#FF69B4"
+        "color" : "#FF69B4",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color rosa?\", \"color\": \"#FF69B4\", \"icon\": \"flower\"}"
     },
     {
         "code" : "color_purple",
         "nubi" : "¿Dónde está el color   MORADO?",
-        "color" : "#800080"
+        "color" : "#800080",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color morado?\", \"color\": \"#800080\", \"icon\": \"grape\"}"
     },
     {
         "code" : "color_black",
         "nubi" : "¿Dónde está el color   NEGRO?",
-        "color" :"#000000"
+        "color" :"#000000",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color negro?\", \"color\": \"#000000\", \"icon\": \"moon\"}"
     },
     {
         "code" : "color_white",
         "nubi" : "¿Dónde está el color   BLANCO?",
-        "color" : "#FFFFFF"
+        "color" : "#FFFFFF",
+        "resourceRefs": "{\"nubi-audio\": \"¿Dónde está el color blanco?\", \"color\": \"#FFFFFF\", \"icon\": \"cloud\"}"
     }
 ]

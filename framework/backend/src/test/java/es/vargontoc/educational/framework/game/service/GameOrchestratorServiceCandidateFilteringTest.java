@@ -116,7 +116,8 @@ class GameOrchestratorServiceCandidateFilteringTest {
             childProfileUseCase,
             recognitionDifficultyService,
             recognitionSimilarityService,
-            roundAudioService
+            roundAudioService,
+            null
         );
     }
 

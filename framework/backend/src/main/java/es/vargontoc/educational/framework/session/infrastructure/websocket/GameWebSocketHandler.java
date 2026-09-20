@@ -13,6 +13,8 @@ import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepos
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
+import es.vargontoc.educational.framework.game.exception.GameUnavailableException;
+import es.vargontoc.educational.framework.game.model.event.GameUnavailableEvent;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
 import es.vargontoc.educational.framework.game.infrastructure.websocket.GameErrorCode;
 import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.GameActionRequest;
@@ -569,6 +571,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             // Send round audio for the first round if available
             sendRoundAudioIfPresent(childSessionId, session, updatedState.getRoundAudioResult());
 
+        } catch (GameUnavailableException e) {
+            LOGGER.debug("Game unavailable for childSessionId={}: reason={}", childSessionId, e.getReason());
+            sendGameUnavailable(childSessionId, new GameUnavailableEvent(e.getGameId(), e.getActivityId(), e.getReason()));
+
         } catch (InvalidStateTransitionException e) {
             LOGGER.debug("Game ready rejected - invalid state: childSessionId={}", childSessionId);
             sendGameError(childSessionId, GameErrorCode.INVALID_STATE_TRANSITION, null);
@@ -609,6 +615,19 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         } catch (Exception e) {
             LOGGER.error("Unexpected error abandoning game: childSessionId={}, error={}", childSessionId, e.getMessage());
             sendGameError(childSessionId, GameErrorCode.ENGINE_ERROR, null);
+        }
+    }
+
+    private void sendGameUnavailable(Long childSessionId, GameUnavailableEvent unavailable) {
+        Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("gameId", unavailable.gameId());
+        payload.put("activityId", unavailable.activityId());
+        payload.put("reason", unavailable.reason().name());
+        SessionEvent event = SessionEvent.of(SessionEventType.GAME_UNAVAILABLE, childSessionId, payload);
+        try {
+            sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+        } catch (Exception e) {
+            LOGGER.error("Failed to send game unavailable to childSessionId={}: {}", childSessionId, e.getMessage());
         }
     }
 
@@ -684,6 +703,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             recognitionPayload.put("guideChromEnabled", recognitionState.isGuideChromEnabled());
             recognitionPayload.put("touchEnableDelayMs", recognitionState.getTouchEnableDelayMs());
             recognitionPayload.put("nonChromaticKeyRequired", recognitionState.isNonChromaticKeyRequired());
+            recognitionPayload.put("showIcon", recognitionState.isShowIcon());
 
             java.util.Set<Long> elementIds = new java.util.LinkedHashSet<>();
             if (recognitionState.getTargetElementId() != null) {

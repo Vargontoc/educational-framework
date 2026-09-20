@@ -636,10 +636,14 @@ public class SeedService {
             element.setTopicId(topicId);
             element.setCode(seed.code());
             element.setSortOrder(0);
-            element.setResourceRefs(objectMapper.writeValueAsString(Map.of(
-                "nubi-audio", seed.nubi(),
-                "color", seed.color()
-            )));
+            if (seed.resourceRefs() != null && !seed.resourceRefs().isBlank()) {
+                element.setResourceRefs(seed.resourceRefs());
+            } else {
+                element.setResourceRefs(objectMapper.writeValueAsString(Map.of(
+                    "nubi-audio", seed.nubi(),
+                    "color", seed.color()
+                )));
+            }
             element.setStatus(ContentStatus.ACTIVE);
             element.setCreatedAt(LocalDateTime.now());
             recognitionElementRepository.save(element);

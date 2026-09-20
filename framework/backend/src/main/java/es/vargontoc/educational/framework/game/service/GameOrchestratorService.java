@@ -19,6 +19,8 @@ import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.game.engine.RecognitionEngine;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
+import es.vargontoc.educational.framework.game.exception.GameUnavailableException;
+import es.vargontoc.educational.framework.game.model.enums.GameUnavailableReason;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.ActionResult;
@@ -86,6 +88,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final RecognitionDifficultyService recognitionDifficultyService;
     private final RecognitionSimilarityService recognitionSimilarityService;
     private final RoundAudioService roundAudioService;
+    private final ColorSimilarityValidator colorSimilarityValidator;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
     private final Map<Long, Set<Long>> completedActivitiesBySession = new ConcurrentHashMap<>();
@@ -106,7 +109,8 @@ public class GameOrchestratorService implements GameOrchestrator {
             ChildProfileUseCase childProfileUseCase,
             RecognitionDifficultyService recognitionDifficultyService,
             RecognitionSimilarityService recognitionSimilarityService,
-            RoundAudioService roundAudioService) {
+            RoundAudioService roundAudioService,
+            ColorSimilarityValidator colorSimilarityValidator) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.sessionAntiRepetitionRegistry = sessionAntiRepetitionRegistry;
@@ -123,8 +127,11 @@ public class GameOrchestratorService implements GameOrchestrator {
         this.recognitionDifficultyService = recognitionDifficultyService;
         this.recognitionSimilarityService = recognitionSimilarityService;
         this.roundAudioService = roundAudioService;
+        this.colorSimilarityValidator = colorSimilarityValidator;
 
-        this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine(new java.util.Random(), recognitionSimilarityService));
+        // Default engine without color validator (will be overridden per-game if needed)
+        this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(),
+                new RecognitionEngine(new java.util.Random(), recognitionSimilarityService, null, null));
     }
 
     @Override
@@ -160,6 +167,16 @@ public class GameOrchestratorService implements GameOrchestrator {
         return state;
     }
 
+    /**
+     * The COLOR minigame is not offered to achromatic profiles (ACHROMATOMALY / ACHROMATOPSIA);
+     * they still see the discovery element in the world map.
+     */
+    private boolean isUnavailableForProfile(GameState state) {
+        return state.getEngine() == EngineType.RECOGNITION
+                && state.getRecognitionCategory() == RecognitionCategory.COLOR
+                && resolveColorVisionMode(state.getChildProfileId()).isAchromatic();
+    }
+
     private EngineType resolveEngineType(Activity activity) {
         String gameEngineType = activity.getGameEngineType();
         try {
@@ -176,6 +193,13 @@ public class GameOrchestratorService implements GameOrchestrator {
 
         if (state.getStatus() != GameStatus.WAITING) {
             throw new InvalidStateTransitionException(state.getStatus(), GameStatus.STARTING);
+        }
+
+        if (isUnavailableForProfile(state)) {
+            // The game never started (no attempts): drop it without a summary or an "abandoned" record.
+            gameStateRegistry.remove(gameId);
+            gameLocks.remove(gameId);
+            throw new GameUnavailableException(gameId, state.getActivityId(), GameUnavailableReason.COLOR_VISION_ACHROMATIC);
         }
 
         Long childSessionId = state.getChildSessionId();
@@ -453,6 +477,15 @@ public class GameOrchestratorService implements GameOrchestrator {
 
     private GameEnginePort resolveEngine(GameState state) {
         try{
+            // For COLOR category, create a per-game engine with the child's colorVisionMode
+            if (state.getEngine() == EngineType.RECOGNITION
+                    && state.getRecognitionCategory() == RecognitionCategory.COLOR
+                    && colorSimilarityValidator != null) {
+                ColorVisionMode cvm = resolveColorVisionMode(state.getChildProfileId());
+                return new RecognitionEngine(new java.util.Random(), recognitionSimilarityService,
+                        colorSimilarityValidator, cvm);
+            }
+
             GameEnginePort engine = engineInstances.get(state.getEngine().name());
             if (engine == null) {
                 throw new EngineNotAvailableException(state.getEngine().name());
@@ -482,6 +515,7 @@ public class GameOrchestratorService implements GameOrchestrator {
             rp.put("guideChromEnabled", roundParameters.guideChromEnabled());
             rp.put("touchEnableDelayMs", roundParameters.touchEnableDelayMs());
             rp.put("nonChromaticKeyRequired", roundParameters.nonChromaticKeyRequired());
+            rp.put("showIcon", roundParameters.showIcon());
             root.put("roundParameters", rp);
             root.put("candidateMetadata", buildCandidateMetadata(candidates));
         }
@@ -503,11 +537,16 @@ public class GameOrchestratorService implements GameOrchestrator {
         return candidateIds.stream()
                 .map(id -> {
                     RecognitionElement element = elementsById.get(Long.valueOf(id));
+                    String colorHex = null;
+                    if (element != null && element.getResourceRefs() != null) {
+                        colorHex = RecognitionResourceRefs.colorHex(element.getResourceRefs());
+                    }
                     return new CandidateMetadata(
                             id,
                             element != null ? element.getTopicId() : null,
                             element != null ? element.getSimilarityGroup() : null,
-                            element != null ? element.getCode() : null);
+                            element != null ? element.getCode() : null,
+                            colorHex);
                 })
                 .toList();
     }

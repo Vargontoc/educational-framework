@@ -233,6 +233,8 @@ export class RecognitionState {
     guideChromEnabled: boolean = false
     touchEnableDelayMs: number = 0
     nonChromaticKeyRequired: boolean = false
+    /** COLOR: muestra el item de referencia (EASY/MEDIUM). Los payloads antiguos sin el campo cuentan como true. */
+    showIcon: boolean = true
 }
 
 export class RecognitionEnginePayload extends BaseEnginePayload {

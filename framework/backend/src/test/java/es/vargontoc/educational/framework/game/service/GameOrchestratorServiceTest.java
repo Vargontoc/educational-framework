@@ -126,7 +126,8 @@ class GameOrchestratorServiceTest {
             childProfileUseCase,
             recognitionDifficultyService,
             recognitionSimilarityService,
-            roundAudioService
+            roundAudioService,
+            null
         );
     }
 
@@ -354,7 +355,8 @@ class GameOrchestratorServiceTest {
             childProfileUseCase,
             recognitionDifficultyService,
             recognitionSimilarityService,
-            roundAudioService
+            roundAudioService,
+            null
         );
 
         GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);

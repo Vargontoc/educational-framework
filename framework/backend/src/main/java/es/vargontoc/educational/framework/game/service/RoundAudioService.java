@@ -9,11 +9,7 @@ import es.vargontoc.educational.framework.family.model.ChildProfile;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
 
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -24,8 +20,6 @@ import java.util.UUID;
 public class RoundAudioService {
 
     private static final Logger log = LoggerFactory.getLogger(RoundAudioService.class);
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String NUBI_AUDIO_KEY = "nubi-audio";
 
     private final RecognitionElementRepository recognitionElementRepository;
     private final ChildProfileUseCase childProfileUseCase;
@@ -116,16 +110,6 @@ public class RoundAudioService {
      * Parses the resourceRefs JSON string and extracts the "nubi-audio" value.
      */
     String extractNubiAudioFromResourceRefs(String resourceRefs) {
-        if (resourceRefs == null || resourceRefs.isBlank()) {
-            return null;
-        }
-        try {
-            Map<String, String> refs = OBJECT_MAPPER.readValue(
-                    resourceRefs, new TypeReference<Map<String, String>>() {});
-            return refs.get(NUBI_AUDIO_KEY);
-        } catch (JacksonException e) {
-            log.warn("Failed to parse resourceRefs JSON: {}", e.getMessage());
-            return null;
-        }
+        return RecognitionResourceRefs.nubiAudio(resourceRefs);
     }
 }

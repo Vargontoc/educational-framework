@@ -11,7 +11,9 @@ import java.util.function.Function;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import es.vargontoc.educational.framework.game.model.ActionResult;
 import es.vargontoc.educational.framework.game.model.ActionResultType;
 import es.vargontoc.educational.framework.game.model.GameState;
@@ -25,6 +27,7 @@ import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefa
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.model.recognition.RoundParameters;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
+import es.vargontoc.educational.framework.game.service.ColorSimilarityValidator;
 import es.vargontoc.educational.framework.game.service.DistractorSelector;
 import es.vargontoc.educational.framework.game.service.RecognitionSimilarityService;
 
@@ -34,22 +37,34 @@ public class RecognitionEngine implements GameEnginePort {
 
     private final Random random;
     private final DistractorSelector distractorSelector;
+    private final RecognitionSimilarityService recognitionSimilarityService;
+    private final ColorSimilarityValidator colorSimilarityValidator;
+    private final ColorVisionMode colorVisionMode;
 
     public RecognitionEngine() {
-        this(new Random(), null);
+        this(new Random(), null, null, null);
     }
 
     public RecognitionEngine(Random random) {
-        this(random, null);
+        this(random, null, null, null);
     }
 
     public RecognitionEngine(RecognitionSimilarityService recognitionSimilarityService) {
-        this(new Random(), recognitionSimilarityService);
+        this(new Random(), recognitionSimilarityService, null, null);
     }
 
     public RecognitionEngine(Random random, RecognitionSimilarityService recognitionSimilarityService) {
+        this(random, recognitionSimilarityService, null, null);
+    }
+
+    public RecognitionEngine(Random random, RecognitionSimilarityService recognitionSimilarityService,
+                             ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode) {
         this.random = random;
-        this.distractorSelector = new DistractorSelector(random, recognitionSimilarityService);
+        this.recognitionSimilarityService = recognitionSimilarityService;
+        this.colorSimilarityValidator = colorSimilarityValidator;
+        this.colorVisionMode = colorVisionMode;
+        this.distractorSelector = new DistractorSelector(random, recognitionSimilarityService,
+                colorSimilarityValidator, colorVisionMode);
     }
 
     @Override
@@ -70,8 +85,8 @@ public class RecognitionEngine implements GameEnginePort {
         List<String> candidates = parseCandidates(engineParams);
         RoundParameters roundParameters = parseRoundParameters(engineParams);
         List<CandidateMetadata> candidateMetadata = parseCandidateMetadata(engineParams);
-        RecognitionState state = buildInitialState(candidates, roundParameters, candidateMetadata);
-        state.setRecognitionCategory(parseRecognitionCategory(engineParams));
+        RecognitionState state = buildInitialState(
+                candidates, roundParameters, candidateMetadata, parseRecognitionCategory(engineParams));
         gameState.setEnginePayload(serializeState(state));
     }
 
@@ -270,6 +285,10 @@ public class RecognitionEngine implements GameEnginePort {
             if (roundParametersNode == null || roundParametersNode.isNull()) {
                 return null;
             }
+            // Engine params written before showIcon existed do not carry it; default to true like RoundParameters does.
+            if (roundParametersNode instanceof ObjectNode roundParametersObject && !roundParametersObject.has("showIcon")) {
+                roundParametersObject.put("showIcon", true);
+            }
             return OBJECT_MAPPER.convertValue(roundParametersNode, RoundParameters.class);
         } catch (JacksonException | IllegalArgumentException e) {
             return null;
@@ -295,8 +314,12 @@ public class RecognitionEngine implements GameEnginePort {
     private RecognitionState buildInitialState(
             List<String> candidates,
             RoundParameters roundParameters,
-            List<CandidateMetadata> candidateMetadata) {
+            List<CandidateMetadata> candidateMetadata,
+            RecognitionCategory category) {
         RecognitionState state = new RecognitionState();
+        // The category must be known before the first round's options are built: category-specific
+        // distractor selection (colour / letter / number similarity) depends on it.
+        state.setRecognitionCategory(category);
         state.setRoundIndex(0);
         state.setTotalRounds(RecognitionDefaults.DEFAULT_TOTAL_ROUNDS);
         state.setRoundStartedAt(LocalDateTime.now());
@@ -317,6 +340,7 @@ public class RecognitionEngine implements GameEnginePort {
             state.setGuideChromEnabled(roundParameters.guideChromEnabled());
             state.setTouchEnableDelayMs(roundParameters.touchEnableDelayMs());
             state.setNonChromaticKeyRequired(roundParameters.nonChromaticKeyRequired());
+            state.setShowIcon(roundParameters.showIcon());
         }
 
         String target = selectTarget(candidates, state.getRoundsShownElementIds());

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
+import es.vargontoc.educational.framework.family.ports.in.ColorAdaptativeUseCase;
 import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
 import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
@@ -17,6 +18,7 @@ import es.vargontoc.educational.framework.game.model.recognition.RecognitionDiff
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
+import es.vargontoc.educational.framework.game.service.ColorSimilarityValidator;
 import es.vargontoc.educational.framework.game.service.GameOrchestratorService;
 import es.vargontoc.educational.framework.game.service.RecognitionDifficultyService;
 import es.vargontoc.educational.framework.game.service.RecognitionSimilarityService;
@@ -48,7 +50,8 @@ class GameModuleConfiguration {
             @Lazy ChildProfileUseCase childProfileUseCase,
             RecognitionDifficultyService recognitionDifficultyService,
             RecognitionSimilarityService recognitionSimilarityService,
-            RoundAudioService roundAudioService) {
+            RoundAudioService roundAudioService,
+            ColorSimilarityValidator colorSimilarityValidator) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
@@ -65,8 +68,14 @@ class GameModuleConfiguration {
             childProfileUseCase,
             recognitionDifficultyService,
             recognitionSimilarityService,
-            roundAudioService
+            roundAudioService,
+            colorSimilarityValidator
         );
+    }
+
+    @Bean
+    public ColorSimilarityValidator colorSimilarityValidator(ColorAdaptativeUseCase colorAdaptativeUseCase) {
+        return new ColorSimilarityValidator(colorAdaptativeUseCase);
     }
 
     @Bean

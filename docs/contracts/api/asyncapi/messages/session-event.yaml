@@ -24,6 +24,7 @@ payload:
         - GAME_ERROR
         - GAME_STARTED
         - GAME_READY
+        - GAME_UNAVAILABLE
         - GAME_ABANDONED
         - WORLD_STATE_SYNC
         - WORLD_DESTINATION_READY

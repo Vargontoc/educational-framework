@@ -15,6 +15,7 @@ required:
   - guideChromEnabled
   - touchEnableDelayMs
   - nonChromaticKeyRequired
+  - showIcon
 properties:
   optionCount:
     type: integer
@@ -43,3 +44,9 @@ properties:
     description: >-
       true solo cuando la categoría es COLOR y el perfil infantil tiene
       configurada una preferencia de colorVisionMode distinta de NONE.
+  showIcon:
+    type: boolean
+    description: >-
+      Si se muestra el icono de referencia del elemento (resourceRefs.icon). true en EASY y MEDIUM,
+      false en HARD. Solo tiene efecto en la categoría COLOR; el resto de categorías puede ignorarlo.
+      Los payloads anteriores a este campo se interpretan como true.

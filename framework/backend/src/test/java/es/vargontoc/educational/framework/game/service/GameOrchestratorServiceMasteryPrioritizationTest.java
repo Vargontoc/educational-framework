@@ -101,7 +101,8 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
             org.mockito.Mockito.mock(es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase.class),
             org.mockito.Mockito.mock(RecognitionDifficultyService.class),
             recognitionSimilarityService,
-            roundAudioService
+            roundAudioService,
+            null
         );
     }
 

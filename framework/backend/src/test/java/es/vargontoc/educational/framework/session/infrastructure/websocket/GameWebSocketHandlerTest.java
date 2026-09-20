@@ -625,6 +625,31 @@ class GameWebSocketHandlerTest {
     }
 
     @Test
+    void gameReady_gameUnavailable_sendsGAME_UNAVAILABLEInsteadOfGAME_ERROR() throws IOException {
+        var childSession = childSession(17L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(17L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":17}"));
+
+        var existingGame = createGameState(1L, 17L, 100L, 5L, GameStatus.WAITING);
+        when(gameStateRegistry.findByChildSessionId(17L)).thenReturn(Optional.of(existingGame));
+        when(gameOrchestrator.readyGame(1L)).thenThrow(new es.vargontoc.educational.framework.game.exception.GameUnavailableException(
+            1L, 5L, es.vargontoc.educational.framework.game.model.enums.GameUnavailableReason.COLOR_VISION_ACHROMATIC));
+
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_ready\"}"));
+
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        var messages = captor.getAllValues();
+        assertTrue(messages.stream().anyMatch(m -> m.getPayload().contains("GAME_UNAVAILABLE")
+            && m.getPayload().contains("COLOR_VISION_ACHROMATIC")));
+        assertFalse(messages.stream().anyMatch(m -> m.getPayload().contains("GAME_ERROR")));
+        assertFalse(messages.stream().anyMatch(m -> m.getPayload().contains("GAME_READY")));
+    }
+
+    @Test
     void gameAbandon_beforeAuth_closesWithPolicyViolation() throws IOException {
         handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_abandon\"}"));
 
@@ -874,6 +899,32 @@ class GameWebSocketHandlerTest {
         assertEquals(true, recPayload.get("guideChromEnabled"));
         assertEquals(500, recPayload.get("touchEnableDelayMs"));
         assertEquals(true, recPayload.get("nonChromaticKeyRequired"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_recognitionEngine_includesShowIcon() {
+        for (boolean showIcon : new boolean[] {true, false}) {
+            var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+            state.setEngine(EngineType.RECOGNITION);
+            state.setStarsEarned(0);
+
+            RecognitionState recognitionState = new RecognitionState();
+            recognitionState.setRecognitionCategory(RecognitionCategory.COLOR);
+            recognitionState.setTargetElementId("elem-1");
+            recognitionState.setOptionIds(List.of("elem-1", "elem-2"));
+            recognitionState.setShowIcon(showIcon);
+            try {
+                state.setEnginePayload(new ObjectMapper().writeValueAsString(recognitionState));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            Map<String, Object> recPayload =
+                (Map<String, Object>) handler.gameStateToPayload(state).get("recognitionState");
+
+            assertEquals(showIcon, recPayload.get("showIcon"));
+        }
     }
 
     @Test

@@ -20,6 +20,7 @@ public enum SessionEventType {
     GAME_ERROR("Game action failed with an error code."),
     GAME_STARTED("Game created and waiting to be ready."),
     GAME_READY("Game transitioned to IN_PROGRESS and ready for actions."),
+    GAME_UNAVAILABLE("Game cannot be played by this child profile (e.g. COLOR minigame with an achromatic vision profile)."),
     GAME_ABANDONED("Game was abandoned by client."),
     WELCOME("Game client authenticated and avatar welcome sent."),
     FAREWELL("Backend-initiated session end with avatar farewell sent."),

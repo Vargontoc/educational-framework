@@ -37,6 +37,7 @@ properties:
           - guideChromEnabled
           - touchEnableDelayMs
           - nonChromaticKeyRequired
+          - showIcon
         properties:
           targetElementId:
             type: string
@@ -62,3 +63,9 @@ properties:
               al matiz, porque la categoría es COLOR y el perfil infantil
               tiene configurada una preferencia de colorVisionMode distinta
               de NONE.
+          showIcon:
+            type: boolean
+            description: >-
+              Si se muestra el icono de referencia (resourceRefs.icon) de los
+              elementos. true en EASY y MEDIUM, false en HARD; solo aplica a la
+              categoría COLOR.

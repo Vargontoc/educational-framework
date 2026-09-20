@@ -199,8 +199,22 @@ const loadPhaserGame = async () => {
                 type: img.type ?? 'unknown',
                 alpha: img.alpha ?? 1.0,
                 isStimulus: img.getData?.('isStimulus') ?? false,
-                tint: img.isTinted ? img.tintTopLeft : null
+                tint: img.isTinted ? img.tintTopLeft : null,
+                textureKey: img.texture?.key ?? null,
+                // composite (COLOR): splash + item children, relative to the container centre
+                children: Array.isArray(img.list)
+                  ? img.list.map((c: any) => ({
+                      name: c.name,
+                      key: c.texture?.key ?? null,
+                      x: c.x,
+                      y: c.y,
+                      width: c.displayWidth,
+                      height: c.displayHeight
+                    }))
+                  : null
               })),
+              selectedColorItem: active.selectedColorItem ?? '',
+              showIcon: active.showIcon ?? null,
               minElementHitSize: active.minElementHitSize ?? null,
               startingGame: active.startingGame ?? null,
               touchEnableTimerActive: !!active.touchEnableTimer,

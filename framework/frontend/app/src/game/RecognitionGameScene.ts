@@ -13,6 +13,7 @@ import {
 } from "./GameEvent"
 import { RoundProgressBar } from "./ui/RoundProgressBar"
 import { ExitButton } from "./ui/ExitButton"
+import { createSplashCompound, layoutSplashCompound } from "./ui/SplashCompound"
 import { DynamicAssetLoader } from "./utils/DynamicAssetLoader"
 import { RecognitionColorizer } from "./utils/RecognitionColorizer"
 import { ResponsiveLayout, type LayoutSizes, type OptionSlot } from "./utils/ResponsiveLayout"
@@ -26,6 +27,12 @@ import {
     generateColorTexture,
     type ColorShape
 } from "../utils/colorTextureGenerator"
+
+type RoundObject =
+    Phaser.GameObjects.Image
+    | Phaser.GameObjects.Rectangle
+    | Phaser.GameObjects.Text
+    | Phaser.GameObjects.Container
 
 const FADE_DURATION = 400
 const FEEDBACK_DELAY = 500
@@ -92,7 +99,7 @@ export class RecognitionGameScene extends Scene {
     blockActions: boolean = false
     dateClick: number = Date.now()
 
-    images: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[] = []
+    images: RoundObject[] = []
     private progressBar?: RoundProgressBar
     private nubiLayer?: MinigameNubiLayer
     private exitButton?: ExitButton
@@ -100,6 +107,9 @@ export class RecognitionGameScene extends Scene {
     private assetLoader?: DynamicAssetLoader
     private colorizer = new RecognitionColorizer()
     private roundLoadToken = 0
+    /** COLOR: item (`item_N`) elegido para la ronda, el mismo en todas las opciones y en el estimulo. */
+    private selectedColorItem: string = ''
+    private showIcon: boolean = true
     private pendingAudioListener?: { id: string, handler: (audioId: string) => void }
     private reducedMotion: boolean = false
     private exitInProgress: boolean = false
@@ -360,24 +370,43 @@ export class RecognitionGameScene extends Scene {
      * Resolve the texture key for an element, generating color textures dynamically if needed
      */
     private resolveTextureKey(element: RecognitionElement, size: number = this.minElementHitSize): string | null {
-        // COLOR elements render from the accessible color already resolved server-side
-        // (accessible_color / accessible_color_palette) — never derived client-side.
-        if (this._recognitionCategory === 'COLOR' && element.accessibleColor) {
-            const shape = (element.accessibleColor.shapeIcon || 'circle') as ColorShape
-            return generateColorTexture(this, element.accessibleColor.value, shape, size)
+        const category = this._recognitionCategory as RECOGNITION_TYPE
+
+        if (category === 'COLOR') {
+            // Profiles with a colour vision preference keep the accessible colour + shape resolved
+            // server-side (SPRINT-075) as the splash; the rest use the block's splash image.
+            const accessible = element.accessibleColor
+            const generate = () => generateColorTexture(
+                this, accessible!.value, (accessible!.shapeIcon || 'circle') as ColorShape, size)
+
+            if (accessible && this._nonChromaticKeyRequired) return generate()
+
+            const splashKey = DynamicAssetLoader.textureKey(element, category)
+            if (splashKey && this.textures.exists(splashKey)) return splashKey
+            return accessible ? generate() : splashKey
         }
 
-        return DynamicAssetLoader.textureKey(element, this._recognitionCategory as RECOGNITION_TYPE)
+        return DynamicAssetLoader.textureKey(element, category)
+    }
+
+    /** Key of the selected item texture in the colour block of `element`, if it is loaded. */
+    private colorItemKey(element: RecognitionElement): string | null {
+        const block = DynamicAssetLoader.colorBlock(element)
+        if (!block || !this.selectedColorItem) return null
+        const key = DynamicAssetLoader.colorItemKey(block, this.selectedColorItem)
+        return this.textures.exists(key) ? key : null
     }
 
     private placeOption(
-        option: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle,
+        option: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Container,
         label: Phaser.GameObjects.Text | undefined,
         slot: OptionSlot
     ): void {
         option.setPosition(slot.x, slot.y)
         if (option instanceof GameObjects.Image) {
             option.setScale(slot.size / Math.max(option.width, option.height))
+        } else if (option instanceof GameObjects.Container) {
+            layoutSplashCompound(option, slot.size)
         } else {
             option.setSize(slot.size, slot.size)
             option.input?.hitArea?.setSize(slot.size, slot.size)
@@ -399,10 +428,12 @@ export class RecognitionGameScene extends Scene {
         optionElements.forEach((e, i) => {
             const slot = slots[i]
             const imageKey = this.resolveTextureKey(e, Math.round(slot.size))
-            let optionElement: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
+            let optionElement: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Container
             let labelElement: Phaser.GameObjects.Text | undefined
 
-            if (imageKey && this.textures.exists(imageKey)) {
+            if (imageKey && this.textures.exists(imageKey) && this._recognitionCategory === 'COLOR') {
+                optionElement = createSplashCompound(this, imageKey, this.colorItemKey(e))
+            } else if (imageKey && this.textures.exists(imageKey)) {
                 const img = this.add.image(slot.x, slot.y, imageKey)
 
                 if (colors && colors[i] !== undefined) {
@@ -424,14 +455,15 @@ export class RecognitionGameScene extends Scene {
                 labelElement = label
             }
 
-            optionElement.setInteractive({ useHandCursor: false })
             optionElement.setData('elementId', e.id)
             optionElement.setData('optionIndex', i)
             if (labelElement) {
                 labelElement.setData('elementId', e.id)
                 labelElement.setData('optionIndex', i)
             }
+            // Size first: a Container takes its hit area from its size.
             this.placeOption(optionElement, labelElement, slot)
+            optionElement.setInteractive({ useHandCursor: false })
 
             optionElement.on('pointerdown', () => {
                 if (this.startingGame) return
@@ -460,8 +492,12 @@ export class RecognitionGameScene extends Scene {
         this.drawStimulusCard()
 
         const imageKey = this.resolveTextureKey(element, Math.round(this.sizes.stimulusSize))
-        let stimulus: Phaser.GameObjects.Image | Phaser.GameObjects.Text
-        if (imageKey && this.textures.exists(imageKey)) {
+        let stimulus: Phaser.GameObjects.Image | Phaser.GameObjects.Text | Phaser.GameObjects.Container
+        if (imageKey && this.textures.exists(imageKey) && this._recognitionCategory === 'COLOR') {
+            // The target's item is the hint (EASY/MEDIUM): the option showing the same item is the right one.
+            // In HARD (showIcon=false) the target is the bare splash.
+            stimulus = createSplashCompound(this, imageKey, this.showIcon ? this.colorItemKey(element) : null)
+        } else if (imageKey && this.textures.exists(imageKey)) {
             const img = this.add.image(x, y, imageKey)
 
             if (tint !== undefined) {
@@ -503,6 +539,8 @@ export class RecognitionGameScene extends Scene {
         stimulus.setPosition(x, y)
         if (stimulus instanceof GameObjects.Image) {
             stimulus.setScale(size / Math.max(stimulus.width, stimulus.height))
+        } else if (stimulus instanceof GameObjects.Container) {
+            layoutSplashCompound(stimulus, size)
         } else if (stimulus instanceof GameObjects.Text) {
             stimulus.setFontSize(size * STIMULUS_LABEL_RATIO)
         }
@@ -512,7 +550,8 @@ export class RecognitionGameScene extends Scene {
     private layoutRound(): void {
         const options = this.getOptionImages()
         const bases = options.filter(
-            (o): o is Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle => !(o instanceof GameObjects.Text)
+            (o): o is Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Container =>
+                !(o instanceof GameObjects.Text)
         )
         const slots = this.layout.getOptionSlots(bases.length)
 
@@ -537,13 +576,13 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
-    private applyTouchEnableDelay(delayMs: number, optionImages: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[]): void {
+    private applyTouchEnableDelay(delayMs: number, optionImages: RoundObject[]): void {
         if (this.touchEnableTimer) {
             this.touchEnableTimer.remove(false)
             this.touchEnableTimer = undefined
         }
 
-        const isTappable = (obj: GameObjects.GameObject): obj is GameObjects.Image | GameObjects.Rectangle =>
+        const isTappable = (obj: GameObjects.GameObject): obj is GameObjects.Image | GameObjects.Rectangle | GameObjects.Container =>
             !(obj instanceof GameObjects.Text)
 
         if (delayMs <= 0) {
@@ -726,7 +765,7 @@ export class RecognitionGameScene extends Scene {
         return graphics
     }
 
-    private renderNonChromaticPatterns(optionImages: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[]): void {
+    private renderNonChromaticPatterns(optionImages: RoundObject[]): void {
         this.destroyNonChromaticPatterns()
 
         if (!this._nonChromaticKeyRequired || this._recognitionCategory !== 'COLOR') return
@@ -746,7 +785,7 @@ export class RecognitionGameScene extends Scene {
         this.nonChromaticPatternGraphics = []
     }
 
-    private getOptionImages(): (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[] {
+    private getOptionImages(): RoundObject[] {
         return this.images.filter(img => !img.getData('isStimulus'))
     }
 
@@ -760,9 +799,15 @@ export class RecognitionGameScene extends Scene {
         if (!this.assetLoader) return
 
         const token = ++this.roundLoadToken
-        this.assetLoader.loadRoundAssets(items, type).then(() => {
+        // COLOR also picks the item shared by every option of the round; other categories have none.
+        const loading = type === 'COLOR'
+            ? this.assetLoader.loadColorRound(items)
+            : this.assetLoader.loadRoundAssets(items, type).then(() => null)
+
+        loading.then(colorItem => {
             if (token !== this.roundLoadToken) return
 
+            this.selectedColorItem = colorItem ?? ''
             this.clearRoundVisuals()
             const colors = RecognitionColorizer.appliesTo(type) ? this.colorizer.assignColors(items.length) : undefined
             this.renderElements(items, targetElementId, colors)
@@ -809,6 +854,7 @@ export class RecognitionGameScene extends Scene {
                     const rs = event.payload.recognitionState
                     this._nonChromaticKeyRequired = rs.nonChromaticKeyRequired ?? false
                     this._recognitionCategory = rs.recognitionCategory ?? ''
+                    this.showIcon = rs.showIcon ?? true
                     if (this.progressBar && rs.totalRounds > 0) {
                         this.progressBar.updateProgress(rs.roundIndex, rs.totalRounds)
                     }
@@ -898,6 +944,7 @@ export class RecognitionGameScene extends Scene {
         if (state.recognitionState) {
             this._nonChromaticKeyRequired = state.recognitionState.nonChromaticKeyRequired ?? false
             this._recognitionCategory = state.recognitionState.recognitionCategory ?? ''
+            this.showIcon = state.recognitionState.showIcon ?? true
         }
 
         if (state.recognitionState && this.progressBar) {
@@ -962,7 +1009,7 @@ export class RecognitionGameScene extends Scene {
         })
     }
 
-    private playFeedbackAnimation(result: GAME_RESULT_TYPE, targetImage: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text) | undefined, onComplete: () => void): void {
+    private playFeedbackAnimation(result: GAME_RESULT_TYPE, targetImage: RoundObject | undefined, onComplete: () => void): void {
         this.playFeedbackSound(result)
 
         if (result === 'CORRECT') {
@@ -974,7 +1021,7 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
-    private playCorrectAnimation(targetImage: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text) | undefined, onComplete: () => void): void {
+    private playCorrectAnimation(targetImage: RoundObject | undefined, onComplete: () => void): void {
         const target = targetImage ?? this.images[0]
         if (!target) {
             onComplete()
@@ -1034,7 +1081,7 @@ export class RecognitionGameScene extends Scene {
         this.time.delayedCall(Math.max(FEEDBACK_SCALE_DURATION, PARTICLE_DURATION), onComplete)
     }
 
-    private playIncorrectAnimation(targetImage: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text) | undefined, onComplete: () => void): void {
+    private playIncorrectAnimation(targetImage: RoundObject | undefined, onComplete: () => void): void {
         const target = targetImage ?? this.images[0]
         if (!target) {
             onComplete()

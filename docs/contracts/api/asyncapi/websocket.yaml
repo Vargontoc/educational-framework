@@ -61,6 +61,14 @@ components:
     GAME_READY:
       direction: server_to_client
       description: Game transitioned to IN_PROGRESS and ready for actions. Payload contains gameId, status (IN_PROGRESS).
+    GAME_UNAVAILABLE:
+      direction: server_to_client
+      description: >-
+        Sent instead of GAME_READY (in response to game_ready) when the game exists but cannot be played by this
+        child profile. Payload contains gameId, activityId and reason (COLOR_VISION_ACHROMATIC: COLOR minigame with
+        colourVisionMode ACHROMATOMALY or ACHROMATOPSIA). Not an error: the game is discarded server-side (no
+        summary, no abandoned record) and the client should return to the world map, where the discovery element
+        remains visible. See docs/contracts/schemas/game-unavailable-event.v1.yaml.
     GAME_ABANDONED:
       direction: server_to_client
       description: Game was abandoned. Can be triggered by client (game_abandon message) or by system events (SESSION_EXPIRED, CHILD_EXPELLED, PARENT_BLOCK). Payload contains gameId, status (ABANDONED).

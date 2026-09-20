@@ -1,5 +1,6 @@
 package es.vargontoc.educational.framework.game.service;
 
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.recognition.CandidateMetadata;
 import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
@@ -17,22 +18,31 @@ public class DistractorSelector {
 
     private final Random random;
     private final RecognitionSimilarityService recognitionSimilarityService;
+    private final ColorSimilarityValidator colorSimilarityValidator;
+    private final ColorVisionMode colorVisionMode;
 
     public DistractorSelector() {
-        this(new Random(), null);
+        this(new Random(), null, null, null);
     }
 
     public DistractorSelector(Random random) {
-        this(random, null);
+        this(random, null, null, null);
     }
 
     public DistractorSelector(RecognitionSimilarityService recognitionSimilarityService) {
-        this(new Random(), recognitionSimilarityService);
+        this(new Random(), recognitionSimilarityService, null, null);
     }
 
     public DistractorSelector(Random random, RecognitionSimilarityService recognitionSimilarityService) {
+        this(random, recognitionSimilarityService, null, null);
+    }
+
+    public DistractorSelector(Random random, RecognitionSimilarityService recognitionSimilarityService,
+                              ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode) {
         this.random = random;
         this.recognitionSimilarityService = recognitionSimilarityService;
+        this.colorSimilarityValidator = colorSimilarityValidator;
+        this.colorVisionMode = colorVisionMode;
     }
 
     /**
@@ -53,6 +63,10 @@ public class DistractorSelector {
      * When category is LETTER or NUMBER and recognitionSimilarityService is available:
      * - EASY/MEDIUM (SEMANTICALLY_FAR, SAME_CATEGORY): exclude elements that appear in similarity pairs with target
      * - HARD (SIMILAR_OUTLINE): use similarity table with priority strong -> moderate -> weak
+     *
+     * When category is COLOR and colorSimilarityValidator is available:
+     * - All difficulties: validate that distractors are sufficiently different from target and each other
+     *   using color similarity validation (Delta E threshold)
      *
      * For other categories or when no service is available, falls back to existing strategy logic.
      */
@@ -78,7 +92,13 @@ public class DistractorSelector {
             return selectForRecognitionCategory(target, pool, strategy, count, category, elementResolver);
         }
 
-        // Non-letter/number or no service: existing strategy logic
+        // COLOR specific logic
+        if (category == RecognitionCategory.COLOR && colorSimilarityValidator != null) {
+            return colorSimilarityValidator.filterValidDistractors(
+                    target, pool, count, colorVisionMode, elementResolver);
+        }
+
+        // Non-letter/number/color or no service: existing strategy logic
         List<String> primary = filterByStrategy(target, pool, strategy, elementResolver);
         Collections.shuffle(primary, random);
 

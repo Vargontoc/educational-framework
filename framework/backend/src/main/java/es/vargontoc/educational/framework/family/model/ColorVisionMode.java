@@ -42,6 +42,13 @@ public enum ColorVisionMode {
 
     private final double[][] mutation;
 
+    /**
+     * Achromatic profiles cannot tell colours apart, so hue-based games are not offered to them.
+     */
+    public boolean isAchromatic() {
+        return this == ACHROMATOMALY || this == ACHROMATOPSIA;
+    }
+
     private static final double XN = 0.95047;
     private static final double YN = 1.00000;
     private static final double ZN = 1.08883;
