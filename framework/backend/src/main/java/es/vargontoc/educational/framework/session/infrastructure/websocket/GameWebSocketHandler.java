@@ -532,7 +532,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             var childSession = childSessionUseCase.getSession(childSessionId);
             Long childProfileId = childSession.getChildProfileId();
 
-            var gameState = gameOrchestrator.startGame(childProfileId, activityId);
+            // The world flow already started this game with the player's biome; keep it when restarting on game_start
+            var launchContext = worldGameStartUseCase.resolveLaunchContext(childSessionId, activityId);
+            var gameState = launchContext != null
+                ? gameOrchestrator.startGame(childProfileId, activityId, launchContext)
+                : gameOrchestrator.startGame(childProfileId, activityId);
             gameState.setChildSessionId(childSessionId);
             gameStateRegistry.save(gameState);
 

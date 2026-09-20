@@ -61,6 +61,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,6 +90,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final RecognitionSimilarityService recognitionSimilarityService;
     private final RoundAudioService roundAudioService;
     private final ColorSimilarityValidator colorSimilarityValidator;
+    private final AnimalGroupService animalGroupService;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
     private final Map<Long, Set<Long>> completedActivitiesBySession = new ConcurrentHashMap<>();
@@ -110,7 +112,8 @@ public class GameOrchestratorService implements GameOrchestrator {
             RecognitionDifficultyService recognitionDifficultyService,
             RecognitionSimilarityService recognitionSimilarityService,
             RoundAudioService roundAudioService,
-            ColorSimilarityValidator colorSimilarityValidator) {
+            ColorSimilarityValidator colorSimilarityValidator,
+            AnimalGroupService animalGroupService) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.sessionAntiRepetitionRegistry = sessionAntiRepetitionRegistry;
@@ -128,10 +131,11 @@ public class GameOrchestratorService implements GameOrchestrator {
         this.recognitionSimilarityService = recognitionSimilarityService;
         this.roundAudioService = roundAudioService;
         this.colorSimilarityValidator = colorSimilarityValidator;
+        this.animalGroupService = animalGroupService;
 
         // Default engine without color validator (will be overridden per-game if needed)
         this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(),
-                new RecognitionEngine(new java.util.Random(), recognitionSimilarityService, null, null));
+                new RecognitionEngine(new java.util.Random(), recognitionSimilarityService, null, null, animalGroupService));
     }
 
     @Override
@@ -483,7 +487,7 @@ public class GameOrchestratorService implements GameOrchestrator {
                     && colorSimilarityValidator != null) {
                 ColorVisionMode cvm = resolveColorVisionMode(state.getChildProfileId());
                 return new RecognitionEngine(new java.util.Random(), recognitionSimilarityService,
-                        colorSimilarityValidator, cvm);
+                        colorSimilarityValidator, cvm, animalGroupService);
             }
 
             GameEnginePort engine = engineInstances.get(state.getEngine().name());
@@ -606,17 +610,24 @@ public class GameOrchestratorService implements GameOrchestrator {
         RecognitionType recognitionType = RecognitionType.valueOf(category.name());
 
         List<Topic> topics;
+        Biome biome = null;
         if (category == RecognitionCategory.ANIMAL
                 && launchContext != null
                 && launchContext.getHabitatTag() != null
                 && !launchContext.getHabitatTag().isBlank()) {
-            Biome biome = Biome.valueOf(launchContext.getHabitatTag());
+            biome = Biome.valueOf(launchContext.getHabitatTag());
             topics = topicUseCase.listTopicsByRecognitionTypeAndHabitat(recognitionType, biome);
+            if (topics.isEmpty()) {
+                // Animal topics are not tagged per habitat (the biome lives on each element): use them all
+                // and let the element-level biome filter below decide.
+                topics = topicUseCase.listTopicsByRecognitionType(recognitionType);
+            }
         } else {
             topics = topicUseCase.listTopicsByRecognitionType(recognitionType);
         }
 
         List<String> candidates = new ArrayList<>();
+        Map<String, String> codeByCandidateId = new HashMap<>();
         for (Topic topic : topics) {
             List<RecognitionElement> elements = recognitionElementRepository.findByTopicIdAndStatus(topic.getId(), ContentStatus.ACTIVE);
             if (elements.isEmpty()) {
@@ -625,7 +636,12 @@ public class GameOrchestratorService implements GameOrchestrator {
             }
             for (RecognitionElement element : elements) {
                 candidates.add(String.valueOf(element.getId()));
+                codeByCandidateId.put(String.valueOf(element.getId()), element.getCode());
             }
+        }
+
+        if (biome != null) {
+            candidates = filterAnimalCandidatesByBiome(candidates, codeByCandidateId, biome);
         }
 
         Long topicKey = activity.getTopicIds() != null && !activity.getTopicIds().isEmpty()
@@ -648,6 +664,26 @@ public class GameOrchestratorService implements GameOrchestrator {
         candidates = prioritizeByMastery(childProfileId, topicKey, candidates);
 
         return candidates;
+    }
+
+    /**
+     * Keeps only the animals valid for the player's current biome (an animal's {@code biome} list must contain it).
+     * If that leaves too few animals to build a round, the unfiltered list is kept rather than blocking the game.
+     */
+    private List<String> filterAnimalCandidatesByBiome(
+            List<String> candidates, Map<String, String> codeByCandidateId, Biome biome) {
+        if (animalGroupService == null) {
+            return candidates;
+        }
+        Set<String> validCodes = Set.copyOf(animalGroupService.getAnimalsByBiome(biome.name()));
+        List<String> inBiome = candidates.stream()
+                .filter(id -> validCodes.contains(codeByCandidateId.get(id)))
+                .toList();
+        if (inBiome.size() < RecognitionDefaults.MIN_OPTIONS_PER_ROUND) {
+            log.warn("Biome {} leaves too few animal candidates ({}). Using all candidates.", biome, inBiome.size());
+            return candidates;
+        }
+        return new ArrayList<>(inBiome);
     }
 
     private List<String> prioritizeByMastery(Long childProfileId, Long topicId, List<String> candidates) {

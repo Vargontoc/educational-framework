@@ -27,6 +27,7 @@ import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefa
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.model.recognition.RoundParameters;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
+import es.vargontoc.educational.framework.game.service.AnimalGroupService;
 import es.vargontoc.educational.framework.game.service.ColorSimilarityValidator;
 import es.vargontoc.educational.framework.game.service.DistractorSelector;
 import es.vargontoc.educational.framework.game.service.RecognitionSimilarityService;
@@ -59,12 +60,18 @@ public class RecognitionEngine implements GameEnginePort {
 
     public RecognitionEngine(Random random, RecognitionSimilarityService recognitionSimilarityService,
                              ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode) {
+        this(random, recognitionSimilarityService, colorSimilarityValidator, colorVisionMode, null);
+    }
+
+    public RecognitionEngine(Random random, RecognitionSimilarityService recognitionSimilarityService,
+                             ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode,
+                             AnimalGroupService animalGroupService) {
         this.random = random;
         this.recognitionSimilarityService = recognitionSimilarityService;
         this.colorSimilarityValidator = colorSimilarityValidator;
         this.colorVisionMode = colorVisionMode;
         this.distractorSelector = new DistractorSelector(random, recognitionSimilarityService,
-                colorSimilarityValidator, colorVisionMode);
+                colorSimilarityValidator, colorVisionMode, animalGroupService);
     }
 
     @Override

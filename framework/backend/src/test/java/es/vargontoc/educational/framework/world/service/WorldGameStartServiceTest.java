@@ -272,6 +272,52 @@ class WorldGameStartServiceTest {
     }
 
     @Test
+    void resolveLaunchContext_animalProposal_returnsCurrentBiome() {
+        Long childSessionId = 100L;
+        Long activityId = 10L;
+        Long topicId = 50L;
+
+        WorldState worldState = createWorldState(childSessionId, 1L);
+        WorldDestination destination = new WorldDestination();
+        destination.setBiome("FARM");
+        destination.setDiscoveryProposals(List.of(createProposal(activityId, topicId, 77L)));
+        worldState.setCurrentDestination(destination);
+
+        when(worldStateRegistry.findByChildSessionId(childSessionId)).thenReturn(Optional.of(worldState));
+        when(topicUseCase.getTopic(topicId)).thenReturn(createTopic(topicId, RecognitionType.ANIMAL));
+
+        LaunchContext ctx = worldGameStartService.resolveLaunchContext(childSessionId, activityId);
+
+        assertNotNull(ctx);
+        assertEquals("FARM", ctx.getHabitatTag());
+        assertEquals("77", ctx.getDiscoveryElementId());
+    }
+
+    @Test
+    void resolveLaunchContext_noWorldState_returnsNull() {
+        when(worldStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.empty());
+
+        assertNull(worldGameStartService.resolveLaunchContext(100L, 10L));
+    }
+
+    @Test
+    void resolveLaunchContext_nonAnimalProposal_returnsNull() {
+        Long childSessionId = 100L;
+        Long topicId = 50L;
+
+        WorldState worldState = createWorldState(childSessionId, 1L);
+        WorldDestination destination = new WorldDestination();
+        destination.setBiome("FARM");
+        destination.setDiscoveryProposals(List.of(createProposal(10L, topicId, 77L)));
+        worldState.setCurrentDestination(destination);
+
+        when(worldStateRegistry.findByChildSessionId(childSessionId)).thenReturn(Optional.of(worldState));
+        when(topicUseCase.getTopic(topicId)).thenReturn(createTopic(topicId, RecognitionType.LETTER));
+
+        assertNull(worldGameStartService.resolveLaunchContext(childSessionId, 10L));
+    }
+
+    @Test
     void nonAnimalRecognitionLaunch_passesNullContext() {
         Long childSessionId = 100L;
         Long childProfileId = 1L;

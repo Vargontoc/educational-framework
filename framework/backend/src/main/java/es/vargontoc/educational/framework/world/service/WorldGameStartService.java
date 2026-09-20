@@ -101,6 +101,13 @@ public class WorldGameStartService implements WorldGameStartUseCase {
         }
     }
 
+    @Override
+    public LaunchContext resolveLaunchContext(Long childSessionId, Long activityId) {
+        return worldStateRegistry.findByChildSessionId(childSessionId)
+                .map(worldState -> buildLaunchContext(worldState, activityId))
+                .orElse(null);
+    }
+
     LaunchContext buildLaunchContext(WorldState worldState, Long activityId) {
         WorldDiscoveryProposal matchingProposal = findMatchingProposal(worldState, activityId);
 

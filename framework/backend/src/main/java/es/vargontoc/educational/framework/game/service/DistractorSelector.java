@@ -20,6 +20,7 @@ public class DistractorSelector {
     private final RecognitionSimilarityService recognitionSimilarityService;
     private final ColorSimilarityValidator colorSimilarityValidator;
     private final ColorVisionMode colorVisionMode;
+    private final AnimalGroupService animalGroupService;
 
     public DistractorSelector() {
         this(new Random(), null, null, null);
@@ -39,10 +40,17 @@ public class DistractorSelector {
 
     public DistractorSelector(Random random, RecognitionSimilarityService recognitionSimilarityService,
                               ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode) {
+        this(random, recognitionSimilarityService, colorSimilarityValidator, colorVisionMode, null);
+    }
+
+    public DistractorSelector(Random random, RecognitionSimilarityService recognitionSimilarityService,
+                              ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode,
+                              AnimalGroupService animalGroupService) {
         this.random = random;
         this.recognitionSimilarityService = recognitionSimilarityService;
         this.colorSimilarityValidator = colorSimilarityValidator;
         this.colorVisionMode = colorVisionMode;
+        this.animalGroupService = animalGroupService;
     }
 
     /**
@@ -67,6 +75,11 @@ public class DistractorSelector {
      * When category is COLOR and colorSimilarityValidator is available:
      * - All difficulties: validate that distractors are sufficiently different from target and each other
      *   using color similarity validation (Delta E threshold)
+     *
+     * When category is ANIMAL and animalGroupService is available:
+     * - EASY/MEDIUM (SEMANTICALLY_FAR, SAME_CATEGORY): exclude animals that share a group with the target
+     * - HARD (SIMILAR_OUTLINE): prioritise animals of the target's groups, completing with the rest of the pool
+     * The candidates are expected to be already filtered by the player's biome.
      *
      * For other categories or when no service is available, falls back to existing strategy logic.
      */
@@ -98,11 +111,63 @@ public class DistractorSelector {
                     target, pool, count, colorVisionMode, elementResolver);
         }
 
-        // Non-letter/number/color or no service: existing strategy logic
+        // ANIMAL specific logic
+        if (category == RecognitionCategory.ANIMAL && animalGroupService != null) {
+            return selectForAnimal(target, pool, strategy, count, elementResolver);
+        }
+
+        // Non-letter/number/color/animal or no service: existing strategy logic
         List<String> primary = filterByStrategy(target, pool, strategy, elementResolver);
         Collections.shuffle(primary, random);
 
         return fillFromPrimary(primary, pool, count);
+    }
+
+    /**
+     * ANIMAL distractor selection based on the groups of the target.
+     * EASY/MEDIUM exclude the target's group mates; HARD prefers them. In both cases the other side of the
+     * partition is used as fallback so the round always gets {@code count} distractors when the pool allows it.
+     */
+    private List<String> selectForAnimal(
+            String target,
+            List<String> pool,
+            DistractorStrategy strategy,
+            int count,
+            Function<String, CandidateMetadata> elementResolver) {
+
+        String targetCode = resolveCode(target, elementResolver);
+        if (targetCode == null || !animalGroupService.isKnown(targetCode)) {
+            return selectWithFallback(target, pool, strategy, count, elementResolver);
+        }
+
+        Set<String> groupMates = Set.copyOf(animalGroupService.getAnimalsInSameGroup(targetCode));
+        List<String> sameGroup = new ArrayList<>();
+        List<String> otherGroups = new ArrayList<>();
+        for (String candidateId : pool) {
+            String code = resolveCode(candidateId, elementResolver);
+            if (code != null && groupMates.contains(code)) {
+                sameGroup.add(candidateId);
+            } else {
+                otherGroups.add(candidateId);
+            }
+        }
+        Collections.shuffle(sameGroup, random);
+        Collections.shuffle(otherGroups, random);
+
+        boolean hard = strategy == DistractorStrategy.SIMILAR_OUTLINE;
+        List<String> preferred = hard ? sameGroup : otherGroups;
+        List<String> fallback = hard ? otherGroups : sameGroup;
+
+        List<String> selected = new ArrayList<>();
+        for (String candidate : preferred) {
+            if (selected.size() >= count) break;
+            selected.add(candidate);
+        }
+        for (String candidate : fallback) {
+            if (selected.size() >= count) break;
+            selected.add(candidate);
+        }
+        return selected;
     }
 
     /**

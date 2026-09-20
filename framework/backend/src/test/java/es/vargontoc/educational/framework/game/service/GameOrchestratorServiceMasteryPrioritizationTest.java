@@ -102,6 +102,7 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
             org.mockito.Mockito.mock(RecognitionDifficultyService.class),
             recognitionSimilarityService,
             roundAudioService,
+            null,
             null
         );
     }

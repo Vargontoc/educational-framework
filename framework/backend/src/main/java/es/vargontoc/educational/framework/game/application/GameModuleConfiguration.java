@@ -18,6 +18,7 @@ import es.vargontoc.educational.framework.game.model.recognition.RecognitionDiff
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
+import es.vargontoc.educational.framework.game.service.AnimalGroupService;
 import es.vargontoc.educational.framework.game.service.ColorSimilarityValidator;
 import es.vargontoc.educational.framework.game.service.GameOrchestratorService;
 import es.vargontoc.educational.framework.game.service.RecognitionDifficultyService;
@@ -51,7 +52,8 @@ class GameModuleConfiguration {
             RecognitionDifficultyService recognitionDifficultyService,
             RecognitionSimilarityService recognitionSimilarityService,
             RoundAudioService roundAudioService,
-            ColorSimilarityValidator colorSimilarityValidator) {
+            ColorSimilarityValidator colorSimilarityValidator,
+            AnimalGroupService animalGroupService) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
             gameStateRegistry,
@@ -69,8 +71,14 @@ class GameModuleConfiguration {
             recognitionDifficultyService,
             recognitionSimilarityService,
             roundAudioService,
-            colorSimilarityValidator
+            colorSimilarityValidator,
+            animalGroupService
         );
+    }
+
+    @Bean
+    public AnimalGroupService animalGroupService() {
+        return AnimalGroupService.fromSeed();
     }
 
     @Bean

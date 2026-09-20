@@ -114,6 +114,7 @@ class GameOrchestratorServiceSprint070Test {
             org.mockito.Mockito.mock(RecognitionDifficultyService.class),
             recognitionSimilarityService,
             roundAudioService,
+            null,
             null
         );
     }

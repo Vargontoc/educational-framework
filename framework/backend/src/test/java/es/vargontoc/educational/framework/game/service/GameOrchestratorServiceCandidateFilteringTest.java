@@ -117,6 +117,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
             recognitionDifficultyService,
             recognitionSimilarityService,
             roundAudioService,
+            null,
             null
         );
     }
@@ -474,5 +475,94 @@ class GameOrchestratorServiceCandidateFilteringTest {
 
         assertEquals(GameStatus.IN_PROGRESS, readyResult.getStatus());
         assertNotNull(readyResult.getEnginePayload());
+    }
+
+    private GameOrchestratorService orchestratorWithAnimalService() {
+        return new GameOrchestratorService(
+            gameCatalogUseCase,
+            gameStateRegistry,
+            sessionAntiRepetitionRegistry,
+            registerActivityAttemptUseCase,
+            evaluateGameCompletionAchievementsUseCase,
+            registerGameSessionSummaryUseCase,
+            eventPublisher,
+            topicUseCase,
+            filterAllowedRecognitionCategoriesUseCase,
+            elementProgressPort,
+            recognitionElementRepository,
+            difficultyLevelUseCase,
+            childProfileUseCase,
+            recognitionDifficultyService,
+            recognitionSimilarityService,
+            roundAudioService,
+            null,
+            AnimalGroupService.fromSeed()
+        );
+    }
+
+    private RecognitionElement createAnimal(Long id, Long topicId, String code) {
+        RecognitionElement element = createElement(id, topicId);
+        element.setCode(code);
+        return element;
+    }
+
+    private GameState startAnimalGame(GameOrchestratorService service, String biome, List<RecognitionElement> elements) {
+        Activity activity = createActivity(1L, List.of(20L));
+        GameCatalogReadiness readiness = new GameCatalogReadiness(activity, createDifficultyLevel(5L), true);
+        Topic animalTopic = createTopic(20L, RecognitionType.ANIMAL);
+
+        when(gameCatalogUseCase.getGameReadiness(100L, 1L)).thenReturn(readiness);
+        when(topicUseCase.getTopic(20L)).thenReturn(animalTopic);
+        when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(
+                eq(100L), ArgumentMatchers.<List<RecognitionCategory>>any()))
+                .thenReturn(List.of(RecognitionCategory.ANIMAL));
+        // The seeded "Animales" topic has no habitatTag, so the habitat query finds nothing
+        when(topicUseCase.listTopicsByRecognitionTypeAndHabitat(eq(RecognitionType.ANIMAL), any(Biome.class)))
+                .thenReturn(List.of());
+        when(topicUseCase.listTopicsByRecognitionType(RecognitionType.ANIMAL)).thenReturn(List.of(animalTopic));
+        when(recognitionElementRepository.findByTopicIdAndStatus(20L, ContentStatus.ACTIVE)).thenReturn(elements);
+        doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
+
+        return service.startGame(100L, 1L, new LaunchContext(null, biome, null, null));
+    }
+
+    @Test
+    void startGame_animalWithBiome_keepsOnlyAnimalsValidForThatBiome() {
+        List<RecognitionElement> elements = List.of(
+                createAnimal(1L, 20L, "bull"),   // MEADOW + FARM
+                createAnimal(2L, 20L, "cat"),    // FARM
+                createAnimal(3L, 20L, "bee"),    // MEADOW
+                createAnimal(4L, 20L, "pig"),    // FARM
+                createAnimal(5L, 20L, "frog"));  // MEADOW
+
+        GameState meadow = startAnimalGame(orchestratorWithAnimalService(), "MEADOW", elements);
+
+        assertEquals(List.of("1", "3", "5"), meadow.getCandidates());
+    }
+
+    @Test
+    void startGame_animalWithBiome_farmExcludesMeadowOnlyAnimals() {
+        List<RecognitionElement> elements = List.of(
+                createAnimal(1L, 20L, "bull"),
+                createAnimal(2L, 20L, "cat"),
+                createAnimal(3L, 20L, "bee"),
+                createAnimal(4L, 20L, "pig"),
+                createAnimal(5L, 20L, "frog"));
+
+        GameState farm = startAnimalGame(orchestratorWithAnimalService(), "FARM", elements);
+
+        assertEquals(List.of("1", "2", "4"), farm.getCandidates());
+    }
+
+    @Test
+    void startGame_animalWithBiome_tooFewValidAnimals_keepsAllInsteadOfBlockingTheGame() {
+        List<RecognitionElement> elements = List.of(
+                createAnimal(1L, 20L, "cat"),   // only FARM animal
+                createAnimal(2L, 20L, "bee"),
+                createAnimal(3L, 20L, "frog"));
+
+        GameState farm = startAnimalGame(orchestratorWithAnimalService(), "FARM", elements);
+
+        assertEquals(3, farm.getCandidates().size());
     }
 }

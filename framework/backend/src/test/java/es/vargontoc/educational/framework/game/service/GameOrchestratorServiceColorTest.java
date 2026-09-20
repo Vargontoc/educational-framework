@@ -107,7 +107,8 @@ class GameOrchestratorServiceColorTest {
                 new RecognitionDifficultyService(new RecognitionDifficultyConfig(new RecognitionProperties())),
                 recognitionSimilarityService,
                 roundAudioService,
-                new ColorSimilarityValidator(colorService));
+                new ColorSimilarityValidator(colorService),
+                null);
 
         when(recognitionElementRepository.findAllById(any())).thenAnswer(invocation -> {
             Iterable<Long> ids = invocation.getArgument(0);

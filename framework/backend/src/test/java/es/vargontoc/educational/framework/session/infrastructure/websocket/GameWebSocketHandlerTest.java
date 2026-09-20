@@ -528,6 +528,30 @@ class GameWebSocketHandlerTest {
     }
 
     @Test
+    void gameStart_withWorldLaunchContext_keepsTheBiomeOfTheProposal() throws IOException {
+        var childSession = childSession(13L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(13L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":13}"));
+
+        var launchContext = new es.vargontoc.educational.framework.game.model.LaunchContext(null, "FARM", null, null);
+        when(worldGameStartUseCase.resolveLaunchContext(13L, 1L)).thenReturn(launchContext);
+        var gameState = createGameState(1L, 13L, 100L, 1L, GameStatus.WAITING);
+        when(gameOrchestrator.startGame(100L, 1L, launchContext)).thenReturn(gameState);
+
+        handler.handleTextMessage(session, new TextMessage(
+            "{\"type\":\"game_start\",\"activityId\":1}"));
+
+        verify(gameOrchestrator).startGame(100L, 1L, launchContext);
+        verify(gameOrchestrator, never()).startGame(100L, 1L);
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream().anyMatch(m -> m.getPayload().contains("GAME_STARTED")));
+    }
+
+    @Test
     void gameStart_missingActivityId_returnsGAME_ERROR() throws IOException {
         var childSession = childSession(11L, ChildSessionStatus.ACTIVE);
         when(childSessionUseCase.getSession(11L)).thenReturn(childSession);

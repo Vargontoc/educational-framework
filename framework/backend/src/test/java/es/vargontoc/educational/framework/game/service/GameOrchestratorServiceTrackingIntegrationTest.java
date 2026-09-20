@@ -119,6 +119,7 @@ class GameOrchestratorServiceTrackingIntegrationTest {
             recognitionDifficultyService,
             recognitionSimilarityService,
             roundAudioService,
+            null,
             null
         );
     }

@@ -594,7 +594,7 @@ public class SeedService {
             element.setCode(seed.code());
             element.setSortOrder(0);
             element.setResourceRefs(objectMapper.writeValueAsString(Map.of(
-                "nubi-audio", seed.nubi(),
+                "nubi-audio", animalNubiAudio(seed),
                 "biome", seed.biome(),
                 "group", seed.group()
             )));
@@ -610,6 +610,17 @@ public class SeedService {
         return count;
     }
 
+
+    /** Narration text: {@code resourceRefs["nubi-audio"]} from the seed, falling back to the raw {@code nubi} text. */
+    private String animalNubiAudio(RecognitionAnimalElementSeed seed) {
+        if (seed.resourceRefs() != null && !seed.resourceRefs().isBlank()) {
+            var text = objectMapper.readTree(seed.resourceRefs()).get("nubi-audio");
+            if (text != null && !text.isNull() && !text.asString().isBlank()) {
+                return text.asString();
+            }
+        }
+        return seed.nubi();
+    }
 
     private int loadRecognitionColors() {
         String file = "19-recognition-elements-colors.json";
