@@ -1,7 +1,8 @@
 package es.vargontoc.educational.framework.game.service;
 
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaEntity;
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaEntity;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
+import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,24 +15,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class LetterSimilarityServiceTest {
+class RecognitionSimilarityServiceTest {
 
-    private LetterSimilarityPairJpaRepository repository;
-    private LetterSimilarityService service;
+    private RecognitionSimilarityPairJpaRepository repository;
+    private RecognitionSimilarityService service;
 
     @BeforeEach
     void setUp() {
-        repository = mock(LetterSimilarityPairJpaRepository.class);
+        repository = mock(RecognitionSimilarityPairJpaRepository.class);
     }
 
-    private void initWithPairs(List<LetterSimilarityPairJpaEntity> pairs) {
+    private void initWithPairs(List<RecognitionSimilarityPairJpaEntity> pairs) {
         when(repository.findAll()).thenReturn(pairs);
-        service = new LetterSimilarityService(repository);
+        service = new RecognitionSimilarityService(repository);
         service.init();
     }
 
-    private LetterSimilarityPairJpaEntity pair(String a, String b, String strength) {
-        return new LetterSimilarityPairJpaEntity(a, b, strength);
+    private RecognitionSimilarityPairJpaEntity pair(String a, String b, String strength) {
+        return new RecognitionSimilarityPairJpaEntity("LETTER", a, b, strength);
     }
 
     @Test
@@ -43,7 +44,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_c", "letter_g", "MODERATE")
         ));
 
-        Set<String> excluded = service.getExcludedLetters("letter_o");
+        Set<String> excluded = service.getExcludedElements(RecognitionCategory.LETTER,"letter_o");
 
         assertEquals(3, excluded.size());
         assertTrue(excluded.contains("letter_q"));
@@ -57,7 +58,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_o", "letter_q", "STRONG")
         ));
 
-        Set<String> excludedFromQ = service.getExcludedLetters("letter_q");
+        Set<String> excludedFromQ = service.getExcludedElements(RecognitionCategory.LETTER,"letter_q");
 
         assertEquals(1, excludedFromQ.size());
         assertTrue(excludedFromQ.contains("letter_o"));
@@ -69,7 +70,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_o", "letter_q", "STRONG")
         ));
 
-        Set<String> excluded = service.getExcludedLetters("letter_z");
+        Set<String> excluded = service.getExcludedElements(RecognitionCategory.LETTER,"letter_z");
 
         assertTrue(excluded.isEmpty());
     }
@@ -78,7 +79,7 @@ class LetterSimilarityServiceTest {
     void getExcludedLetters_nullReturnsEmpty() {
         initWithPairs(List.of());
 
-        Set<String> excluded = service.getExcludedLetters(null);
+        Set<String> excluded = service.getExcludedElements(RecognitionCategory.LETTER,null);
 
         assertTrue(excluded.isEmpty());
     }
@@ -92,7 +93,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_o", "letter_z", "WEAK")
         ));
 
-        List<String> similar = service.getSimilarLetters("letter_o", 2);
+        List<String> similar = service.getSimilarElements(RecognitionCategory.LETTER,"letter_o", 2);
 
         assertEquals(2, similar.size());
         // Strong ones should come first
@@ -108,7 +109,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_o", "letter_z", "WEAK")
         ));
 
-        List<String> similar = service.getSimilarLetters("letter_o", 3);
+        List<String> similar = service.getSimilarElements(RecognitionCategory.LETTER,"letter_o", 3);
 
         assertEquals(3, similar.size());
         assertEquals("letter_q", similar.get(0));   // STRONG first
@@ -122,7 +123,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_o", "letter_q", "STRONG")
         ));
 
-        List<String> similar = service.getSimilarLetters("letter_o", 3);
+        List<String> similar = service.getSimilarElements(RecognitionCategory.LETTER,"letter_o", 3);
 
         assertEquals(1, similar.size());
         assertEquals("letter_q", similar.get(0));
@@ -134,7 +135,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_o", "letter_q", "STRONG")
         ));
 
-        List<String> similar = service.getSimilarLetters("letter_z", 2);
+        List<String> similar = service.getSimilarElements(RecognitionCategory.LETTER,"letter_z", 2);
 
         assertTrue(similar.isEmpty());
     }
@@ -145,8 +146,8 @@ class LetterSimilarityServiceTest {
                 pair("letter_o", "letter_q", "STRONG")
         ));
 
-        assertTrue(service.hasSimilarityEntries("letter_o"));
-        assertTrue(service.hasSimilarityEntries("letter_q"));
+        assertTrue(service.hasSimilarityEntries(RecognitionCategory.LETTER,"letter_o"));
+        assertTrue(service.hasSimilarityEntries(RecognitionCategory.LETTER,"letter_q"));
     }
 
     @Test
@@ -155,7 +156,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_o", "letter_q", "STRONG")
         ));
 
-        assertFalse(service.hasSimilarityEntries("letter_z"));
+        assertFalse(service.hasSimilarityEntries(RecognitionCategory.LETTER,"letter_z"));
     }
 
     @Test
@@ -170,7 +171,7 @@ class LetterSimilarityServiceTest {
                 pair("letter_d", "letter_q", "MODERATE")
         ));
 
-        Set<String> excluded = service.getExcludedLetters("letter_o");
+        Set<String> excluded = service.getExcludedElements(RecognitionCategory.LETTER,"letter_o");
 
         // letter_o appears in pairs with: q, c, d
         assertEquals(3, excluded.size());

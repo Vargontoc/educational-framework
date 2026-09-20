@@ -12,14 +12,14 @@ import es.vargontoc.educational.framework.content.ports.in.GameCatalogUseCase;
 import es.vargontoc.educational.framework.content.ports.in.TopicUseCase;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDifficultyConfig;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.ports.out.SessionAntiRepetitionRegistry;
 import es.vargontoc.educational.framework.game.service.GameOrchestratorService;
-import es.vargontoc.educational.framework.game.service.LetterSimilarityService;
 import es.vargontoc.educational.framework.game.service.RecognitionDifficultyService;
+import es.vargontoc.educational.framework.game.service.RecognitionSimilarityService;
 import es.vargontoc.educational.framework.game.service.RoundAudioService;
 import es.vargontoc.educational.framework.tracking.ports.in.EvaluateGameCompletionAchievementsUseCase;
 import es.vargontoc.educational.framework.tracking.ports.in.FilterAllowedRecognitionCategoriesUseCase;
@@ -47,7 +47,7 @@ class GameModuleConfiguration {
             DifficultyLevelUseCase difficultyLevelUseCase,
             @Lazy ChildProfileUseCase childProfileUseCase,
             RecognitionDifficultyService recognitionDifficultyService,
-            LetterSimilarityService letterSimilarityService,
+            RecognitionSimilarityService recognitionSimilarityService,
             RoundAudioService roundAudioService) {
         return new GameOrchestratorService(
             gameCatalogUseCase,
@@ -64,14 +64,14 @@ class GameModuleConfiguration {
             difficultyLevelUseCase,
             childProfileUseCase,
             recognitionDifficultyService,
-            letterSimilarityService,
+            recognitionSimilarityService,
             roundAudioService
         );
     }
 
     @Bean
-    public LetterSimilarityService letterSimilarityService(LetterSimilarityPairJpaRepository letterSimilarityPairJpaRepository) {
-        return new LetterSimilarityService(letterSimilarityPairJpaRepository);
+    public RecognitionSimilarityService recognitionSimilarityService(RecognitionSimilarityPairJpaRepository recognitionSimilarityPairJpaRepository) {
+        return new RecognitionSimilarityService(recognitionSimilarityPairJpaRepository);
     }
 
     @Bean

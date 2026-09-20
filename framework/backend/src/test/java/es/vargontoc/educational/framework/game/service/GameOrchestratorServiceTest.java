@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.game.service;
 
-import es.vargontoc.educational.framework.game.service.LetterSimilarityService;
+import es.vargontoc.educational.framework.game.service.RecognitionSimilarityService;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
@@ -101,7 +101,7 @@ class GameOrchestratorServiceTest {
     private RecognitionDifficultyService recognitionDifficultyService;
 
     @Mock
-    private LetterSimilarityService letterSimilarityService;
+    private RecognitionSimilarityService recognitionSimilarityService;
 
     @Mock
     private RoundAudioService roundAudioService;
@@ -125,7 +125,7 @@ class GameOrchestratorServiceTest {
             difficultyLevelUseCase,
             childProfileUseCase,
             recognitionDifficultyService,
-            letterSimilarityService,
+            recognitionSimilarityService,
             roundAudioService
         );
     }
@@ -353,7 +353,7 @@ class GameOrchestratorServiceTest {
             difficultyLevelUseCase,
             childProfileUseCase,
             recognitionDifficultyService,
-            letterSimilarityService,
+            recognitionSimilarityService,
             roundAudioService
         );
 

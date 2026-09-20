@@ -15,15 +15,6 @@ function letterElements(letters: string[]) {
   }))
 }
 
-function numberElements(numbers: number[]) {
-  return numbers.map(n => ({
-    id: `number_${n}`,
-    code: `number_${n}`,
-    displayValue: `${n}`,
-    resourceRefs: { image: `number_${n}` }
-  }))
-}
-
 function recognitionState(category: string, elements: any[], roundIndex: number) {
   return {
     recognitionCategory: category,
@@ -132,10 +123,13 @@ describe('RecognitionGameScene — carga dinamica y tintado de letras (SPRINT-07
     })
   })
 
-  it('negativo: categorias no-LETTER no aplican tint', () => {
+  it('negativo: categorias sin tint (ANIMAL) no aplican tint', () => {
     openRecognitionScene(childId)
 
-    cy.window().then((win) => state(win).injectWsEvent(gameReady('NUMBER', numberElements([1, 2, 3]))))
+    const animals = ['bee', 'bull', 'butterfly'].map(a => ({
+      id: `animal_${a}`, code: `animal_${a}`, displayValue: a, resourceRefs: { image: a }
+    }))
+    cy.window().then((win) => state(win).injectWsEvent(gameReady('ANIMAL', animals)))
 
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
       const images = state(win).getSceneData().images

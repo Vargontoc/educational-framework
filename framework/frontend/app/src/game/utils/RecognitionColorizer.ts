@@ -1,6 +1,7 @@
 import type { GameObjects } from "phaser"
+import type { RECOGNITION_TYPE } from "../GameEvent"
 
-export const LETTER_PALETTE = [
+export const RECOGNITION_PALETTE = [
     0xE57373, // rojo suave
     0x64B5F6, // azul suave
     0x81C784, // verde suave
@@ -9,9 +10,16 @@ export const LETTER_PALETTE = [
     0xBA68C8  // morado suave
 ] as const
 
-const TINT_DATA_KEY = 'letterTint'
+const TINT_DATA_KEY = 'recognitionTint'
 
-export class LetterColorizer {
+/** Categorias cuyas imagenes son glifos claros pensados para recibir tint. */
+const TINTED_CATEGORIES: readonly RECOGNITION_TYPE[] = ['LETTER', 'NUMBER']
+
+export class RecognitionColorizer {
+    static appliesTo(category: RECOGNITION_TYPE | null | undefined): boolean {
+        return !!category && TINTED_CATEGORIES.includes(category)
+    }
+
     /**
      * Colores distintos para las opciones de una ronda. Si hay mas opciones que
      * colores en la paleta se recicla, pero nunca dos consecutivos iguales.
@@ -21,7 +29,7 @@ export class LetterColorizer {
 
         const colors: number[] = []
         while (colors.length < optionCount) {
-            const batch = this.shuffle<number>([...LETTER_PALETTE])
+            const batch = this.shuffle<number>([...RECOGNITION_PALETTE])
             if (colors.length > 0 && batch[0] === colors[colors.length - 1]) {
                 batch.push(batch.shift() as number)
             }
@@ -35,7 +43,7 @@ export class LetterColorizer {
      * el color no sirva de pista para emparejar estimulo y respuesta.
      */
     pickStimulusColor(usedColors: number[]): number | undefined {
-        const free = LETTER_PALETTE.filter(c => !usedColors.includes(c))
+        const free = RECOGNITION_PALETTE.filter(c => !usedColors.includes(c))
         if (free.length === 0) return undefined
         return free[Math.floor(Math.random() * free.length)]
     }

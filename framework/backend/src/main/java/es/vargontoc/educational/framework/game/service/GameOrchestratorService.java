@@ -84,7 +84,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final DifficultyLevelUseCase difficultyLevelUseCase;
     private final ChildProfileUseCase childProfileUseCase;
     private final RecognitionDifficultyService recognitionDifficultyService;
-    private final LetterSimilarityService letterSimilarityService;
+    private final RecognitionSimilarityService recognitionSimilarityService;
     private final RoundAudioService roundAudioService;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
@@ -105,7 +105,7 @@ public class GameOrchestratorService implements GameOrchestrator {
             DifficultyLevelUseCase difficultyLevelUseCase,
             ChildProfileUseCase childProfileUseCase,
             RecognitionDifficultyService recognitionDifficultyService,
-            LetterSimilarityService letterSimilarityService,
+            RecognitionSimilarityService recognitionSimilarityService,
             RoundAudioService roundAudioService) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
@@ -121,10 +121,10 @@ public class GameOrchestratorService implements GameOrchestrator {
         this.difficultyLevelUseCase = difficultyLevelUseCase;
         this.childProfileUseCase = childProfileUseCase;
         this.recognitionDifficultyService = recognitionDifficultyService;
-        this.letterSimilarityService = letterSimilarityService;
+        this.recognitionSimilarityService = recognitionSimilarityService;
         this.roundAudioService = roundAudioService;
 
-        this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine(new java.util.Random(), letterSimilarityService));
+        this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(), new RecognitionEngine(new java.util.Random(), recognitionSimilarityService));
     }
 
     @Override

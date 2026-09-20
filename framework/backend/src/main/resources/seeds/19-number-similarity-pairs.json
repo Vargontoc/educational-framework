@@ -1,0 +1,8 @@
+[
+  { "pair": ["number_6", "number_9"], "strength": "strong" },
+  { "pair": ["number_3", "number_8"], "strength": "strong" },
+  { "pair": ["number_1", "number_7"], "strength": "moderate" },
+  { "pair": ["number_0", "number_8"], "strength": "moderate" },
+  { "pair": ["number_2", "number_5"], "strength": "weak" },
+  { "pair": ["number_0", "number_9"], "strength": "weak" }
+]

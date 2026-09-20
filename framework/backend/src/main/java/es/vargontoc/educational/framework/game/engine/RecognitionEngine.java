@@ -26,7 +26,7 @@ import es.vargontoc.educational.framework.game.model.recognition.RecognitionStat
 import es.vargontoc.educational.framework.game.model.recognition.RoundParameters;
 import es.vargontoc.educational.framework.game.ports.in.GameEnginePort;
 import es.vargontoc.educational.framework.game.service.DistractorSelector;
-import es.vargontoc.educational.framework.game.service.LetterSimilarityService;
+import es.vargontoc.educational.framework.game.service.RecognitionSimilarityService;
 
 public class RecognitionEngine implements GameEnginePort {
 
@@ -43,13 +43,13 @@ public class RecognitionEngine implements GameEnginePort {
         this(random, null);
     }
 
-    public RecognitionEngine(LetterSimilarityService letterSimilarityService) {
-        this(new Random(), letterSimilarityService);
+    public RecognitionEngine(RecognitionSimilarityService recognitionSimilarityService) {
+        this(new Random(), recognitionSimilarityService);
     }
 
-    public RecognitionEngine(Random random, LetterSimilarityService letterSimilarityService) {
+    public RecognitionEngine(Random random, RecognitionSimilarityService recognitionSimilarityService) {
         this.random = random;
-        this.distractorSelector = new DistractorSelector(random, letterSimilarityService);
+        this.distractorSelector = new DistractorSelector(random, recognitionSimilarityService);
     }
 
     @Override

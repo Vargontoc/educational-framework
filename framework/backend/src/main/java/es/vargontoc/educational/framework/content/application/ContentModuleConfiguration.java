@@ -42,7 +42,7 @@ import es.vargontoc.educational.framework.content.service.RecognitionElementServ
 import es.vargontoc.educational.framework.content.service.TopicService;
 import es.vargontoc.educational.framework.content.service.TracingPatternService;
 import es.vargontoc.educational.framework.content.service.WorldCatalogService;
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 
@@ -146,13 +146,13 @@ class ContentModuleConfiguration {
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             RecognitionElementRepository recognitionElementRepository,
-            LetterSimilarityPairJpaRepository letterSimilarityPairRepository,
+            RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository,
             ObjectMapper objectMapper) {
         return new SeedService(audio, seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
             learningPathStepRepository, tracingPatternRepository,
             worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository, recognitionElementRepository,
-            letterSimilarityPairRepository, objectMapper);
+            recognitionSimilarityPairRepository, objectMapper);
     }
 
     @Bean

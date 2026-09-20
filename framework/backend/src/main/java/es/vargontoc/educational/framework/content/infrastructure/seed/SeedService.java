@@ -40,8 +40,8 @@ import es.vargontoc.educational.framework.content.ports.out.TracingPatternReposi
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaEntity;
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaEntity;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -73,7 +73,7 @@ public class SeedService {
     private final WorldNarrativeSituationRepository worldNarrativeSituationRepository;
     private final WorldDiscoveryElementRepository worldDiscoveryElementRepository;
     private final RecognitionElementRepository recognitionElementRepository;
-    private final LetterSimilarityPairJpaRepository letterSimilarityPairRepository;
+    private final RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository;
     private final ObjectMapper objectMapper;
     private final AudioUseCase audio;
 
@@ -99,7 +99,7 @@ public class SeedService {
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             RecognitionElementRepository recognitionElementRepository,
-            LetterSimilarityPairJpaRepository letterSimilarityPairRepository,
+            RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository,
             ObjectMapper objectMapper) {
         this.seedStateRepository = seedStateRepository;
         this.categoryRepository = categoryRepository;
@@ -115,7 +115,7 @@ public class SeedService {
         this.worldNarrativeSituationRepository = worldNarrativeSituationRepository;
         this.worldDiscoveryElementRepository = worldDiscoveryElementRepository;
         this.recognitionElementRepository = recognitionElementRepository;
-        this.letterSimilarityPairRepository = letterSimilarityPairRepository;
+        this.recognitionSimilarityPairRepository = recognitionSimilarityPairRepository;
         this.objectMapper = objectMapper;
         this.audio = audio;
     }
@@ -140,6 +140,7 @@ public class SeedService {
         loaded += loadRecognitionColors();
         loaded += loadRecognitionAnimals();
         loaded += loadLetterSimilarityPairs();
+        loaded += loadNumberSimilarityPairs();
         log.info("Seed loading complete. {} records loaded.", loaded);
     }
 
@@ -715,9 +716,35 @@ public class SeedService {
                 log.debug("Skipping already loaded seed: {}", key);
                 continue;
             }
-            var entity = new LetterSimilarityPairJpaEntity(codeA, codeB, seed.strength().toUpperCase());
+            var entity = new RecognitionSimilarityPairJpaEntity("LETTER", codeA, codeB, seed.strength().toUpperCase());
             entity.setCreatedAt(LocalDateTime.now());
-            letterSimilarityPairRepository.save(entity);
+            recognitionSimilarityPairRepository.save(entity);
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+        return count;
+    }
+
+    private int loadNumberSimilarityPairs() {
+        String file = "19-number-similarity-pairs.json";
+        var seeds = readSeedFile(file, new TypeReference<List<LetterSimilarityPairSeed>>() {});
+        int count = 0;
+        for (var seed : seeds) {
+            if (seed.pair() == null || seed.pair().length != 2) {
+                log.warn("Invalid number similarity pair seed, skipping");
+                continue;
+            }
+            String codeA = seed.pair()[0];
+            String codeB = seed.pair()[1];
+            String key = "number-similarity-pair:" + codeA + ":" + codeB;
+            if (alreadyLoaded(key)) {
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+            var entity = new RecognitionSimilarityPairJpaEntity("NUMBER", codeA, codeB, seed.strength().toUpperCase());
+            entity.setCreatedAt(LocalDateTime.now());
+            recognitionSimilarityPairRepository.save(entity);
             markLoaded(key, file);
             count++;
             log.info("Loaded seed: {}", key);

@@ -1,7 +1,7 @@
 package es.vargontoc.educational.framework.game.service;
 
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaEntity;
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaEntity;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.recognition.CandidateMetadata;
 import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
@@ -20,29 +20,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class DistractorSelectorLetterSimilarityTest {
+class DistractorSelectorRecognitionSimilarityTest {
 
-    private LetterSimilarityService letterSimilarityService;
+    private RecognitionSimilarityService recognitionSimilarityService;
     private DistractorSelector selector;
 
     @BeforeEach
     void setUp() {
-        LetterSimilarityPairJpaRepository repository = mock(LetterSimilarityPairJpaRepository.class);
+        RecognitionSimilarityPairJpaRepository repository = mock(RecognitionSimilarityPairJpaRepository.class);
         when(repository.findAll()).thenReturn(List.of(
-                new LetterSimilarityPairJpaEntity("letter_o", "letter_q", "STRONG"),
-                new LetterSimilarityPairJpaEntity("letter_o", "letter_c", "STRONG"),
-                new LetterSimilarityPairJpaEntity("letter_o", "letter_d", "MODERATE"),
-                new LetterSimilarityPairJpaEntity("letter_c", "letter_g", "MODERATE"),
-                new LetterSimilarityPairJpaEntity("letter_g", "letter_q", "MODERATE"),
-                new LetterSimilarityPairJpaEntity("letter_d", "letter_q", "MODERATE"),
-                new LetterSimilarityPairJpaEntity("letter_i", "letter_l", "STRONG"),
-                new LetterSimilarityPairJpaEntity("letter_l", "letter_t", "STRONG"),
-                new LetterSimilarityPairJpaEntity("letter_i", "letter_t", "MODERATE"),
-                new LetterSimilarityPairJpaEntity("letter_n", "letter_z", "WEAK")
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_o", "letter_q", "STRONG"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_o", "letter_c", "STRONG"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_o", "letter_d", "MODERATE"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_c", "letter_g", "MODERATE"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_g", "letter_q", "MODERATE"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_d", "letter_q", "MODERATE"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_i", "letter_l", "STRONG"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_l", "letter_t", "STRONG"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_i", "letter_t", "MODERATE"),
+                new RecognitionSimilarityPairJpaEntity("LETTER", "letter_n", "letter_z", "WEAK")
         ));
-        letterSimilarityService = new LetterSimilarityService(repository);
-        letterSimilarityService.init();
-        selector = new DistractorSelector(new Random(42), letterSimilarityService);
+        recognitionSimilarityService = new RecognitionSimilarityService(repository);
+        recognitionSimilarityService.init();
+        selector = new DistractorSelector(new Random(42), recognitionSimilarityService);
     }
 
     private CandidateMetadata letterMeta(String code) {

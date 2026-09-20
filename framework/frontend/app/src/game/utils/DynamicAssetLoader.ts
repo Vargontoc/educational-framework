@@ -50,10 +50,10 @@ export class DynamicAssetLoader {
         this.scene = scene
     }
 
-    /** LETTER usa el `code` como key de textura; el resto, `resourceRefs['image']`. */
+    /** LETTER y NUMBER usan el `code` como key de textura; el resto, `resourceRefs['image']`. */
     static textureKey(element: RecognitionElement, category: RECOGNITION_TYPE | null | undefined): string | null {
         if (category === 'COLOR') return null
-        if (category === 'LETTER') return element.code || null
+        if (category === 'LETTER' || category === 'NUMBER') return element.code || null
         return element.resourceRefs?.['image'] ?? null
     }
 

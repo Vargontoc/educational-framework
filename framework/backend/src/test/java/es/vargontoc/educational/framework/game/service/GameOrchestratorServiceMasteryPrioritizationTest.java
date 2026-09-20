@@ -1,6 +1,6 @@
 package es.vargontoc.educational.framework.game.service;
 
-import es.vargontoc.educational.framework.game.service.LetterSimilarityService;
+import es.vargontoc.educational.framework.game.service.RecognitionSimilarityService;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
@@ -76,7 +76,7 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
     private RecognitionElementRepository recognitionElementRepository;
 
     @Mock
-    private LetterSimilarityService letterSimilarityService;
+    private RecognitionSimilarityService recognitionSimilarityService;
 
     @Mock
     private RoundAudioService roundAudioService;
@@ -100,7 +100,7 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
             org.mockito.Mockito.mock(es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase.class),
             org.mockito.Mockito.mock(es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase.class),
             org.mockito.Mockito.mock(RecognitionDifficultyService.class),
-            letterSimilarityService,
+            recognitionSimilarityService,
             roundAudioService
         );
     }

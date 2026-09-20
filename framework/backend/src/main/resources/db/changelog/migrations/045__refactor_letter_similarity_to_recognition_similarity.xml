@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="045__refactor_letter_similarity_to_recognition_similarity" author="vargontoc">
+        <!-- Renombrar tabla -->
+        <renameTable oldTableName="letter_similarity_pair" newTableName="recognition_similarity_pair"/>
+        
+        <!-- Renombrar columnas -->
+        <renameColumn tableName="recognition_similarity_pair" oldColumnName="letter_code_a" newColumnName="element_code_a" columnDataType="VARCHAR(50)"/>
+        <renameColumn tableName="recognition_similarity_pair" oldColumnName="letter_code_b" newColumnName="element_code_b" columnDataType="VARCHAR(50)"/>
+        
+        <!-- Añadir columna category -->
+        <addColumn tableName="recognition_similarity_pair">
+            <column name="category" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        
+        <!-- Actualizar todos los registros existentes con category=LETTER -->
+        <update tableName="recognition_similarity_pair">
+            <column name="category" value="LETTER"/>
+        </update>
+        
+        <!-- Renombrar índices -->
+        <dropIndex tableName="recognition_similarity_pair" indexName="idx_letter_similarity_pair_code_a"/>
+        <dropIndex tableName="recognition_similarity_pair" indexName="idx_letter_similarity_pair_code_b"/>
+        
+        <createIndex tableName="recognition_similarity_pair" indexName="idx_recognition_similarity_pair_category_code_a">
+            <column name="category"/>
+            <column name="element_code_a"/>
+        </createIndex>
+        
+        <createIndex tableName="recognition_similarity_pair" indexName="idx_recognition_similarity_pair_category_code_b">
+            <column name="category"/>
+            <column name="element_code_b"/>
+        </createIndex>
+        
+        <!-- Renombrar constraint unique -->
+        <dropUniqueConstraint tableName="recognition_similarity_pair" constraintName="uk_letter_similarity_pair_codes"/>
+        
+        <addUniqueConstraint tableName="recognition_similarity_pair" columnNames="category, element_code_a, element_code_b" constraintName="uk_recognition_similarity_pair_codes"/>
+    </changeSet>
+
+</databaseChangeLog>

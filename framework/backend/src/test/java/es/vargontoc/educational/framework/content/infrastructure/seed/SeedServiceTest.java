@@ -38,7 +38,7 @@ import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElemen
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
 import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
-import es.vargontoc.educational.framework.game.infrastructure.persistence.LetterSimilarityPairJpaRepository;
+import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -96,7 +96,7 @@ class SeedServiceTest {
     private AudioUseCase audioUseCase;
 
     @Mock
-    private LetterSimilarityPairJpaRepository letterSimilarityPairRepository;
+    private RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository;
 
     private SeedService seedService;
 
@@ -109,7 +109,7 @@ class SeedServiceTest {
             learningPathRepository, learningPathStepRepository, tracingPatternRepository,
             worldHostRepository, worldNarrativeSituationRepository,
             worldDiscoveryElementRepository,
-            recognitionElementRepository, letterSimilarityPairRepository, objectMapper
+            recognitionElementRepository, recognitionSimilarityPairRepository, objectMapper
         );
     }
 

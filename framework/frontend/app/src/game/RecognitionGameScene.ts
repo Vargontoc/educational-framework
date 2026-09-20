@@ -14,7 +14,7 @@ import {
 import { RoundProgressBar } from "./ui/RoundProgressBar"
 import { ExitButton } from "./ui/ExitButton"
 import { DynamicAssetLoader } from "./utils/DynamicAssetLoader"
-import { LetterColorizer } from "./utils/LetterColorizer"
+import { RecognitionColorizer } from "./utils/RecognitionColorizer"
 import { ResponsiveLayout, type LayoutSizes, type OptionSlot } from "./utils/ResponsiveLayout"
 import { DEVICE_PROFILE_REGISTRY_KEY, detectDeviceProfile, type DeviceProfile } from "./utils/DeviceProfile"
 import { RoundAudioCache } from "./RoundAudioCache"
@@ -98,7 +98,7 @@ export class RecognitionGameScene extends Scene {
     private exitButton?: ExitButton
     private roundAudio = new RoundAudioCache()
     private assetLoader?: DynamicAssetLoader
-    private letterColorizer = new LetterColorizer()
+    private colorizer = new RecognitionColorizer()
     private roundLoadToken = 0
     private pendingAudioListener?: { id: string, handler: (audioId: string) => void }
     private reducedMotion: boolean = false
@@ -392,7 +392,7 @@ export class RecognitionGameScene extends Scene {
         const targetElement = items.find(e => e.id === targetElementId)
         const optionElements = items
         if (targetElement) {
-            this.renderTargetElement(targetElement, colors ? this.letterColorizer.pickStimulusColor(colors) : undefined)
+            this.renderTargetElement(targetElement, colors ? this.colorizer.pickStimulusColor(colors) : undefined)
         }
 
         const slots = this.layout.getOptionSlots(optionElements.length)
@@ -406,7 +406,7 @@ export class RecognitionGameScene extends Scene {
                 const img = this.add.image(slot.x, slot.y, imageKey)
 
                 if (colors && colors[i] !== undefined) {
-                    this.letterColorizer.applyTint(img, colors[i])
+                    this.colorizer.applyTint(img, colors[i])
                 }
 
                 optionElement = img
@@ -465,7 +465,7 @@ export class RecognitionGameScene extends Scene {
             const img = this.add.image(x, y, imageKey)
 
             if (tint !== undefined) {
-                this.letterColorizer.applyTint(img, tint)
+                this.colorizer.applyTint(img, tint)
             }
             stimulus = img
         } else {
@@ -764,7 +764,7 @@ export class RecognitionGameScene extends Scene {
             if (token !== this.roundLoadToken) return
 
             this.clearRoundVisuals()
-            const colors = type === 'LETTER' ? this.letterColorizer.assignColors(items.length) : undefined
+            const colors = RecognitionColorizer.appliesTo(type) ? this.colorizer.assignColors(items.length) : undefined
             this.renderElements(items, targetElementId, colors)
             this.startingGame = false
             this.assetLoader?.cleanupOldTextures(KEEP_RECENT_ROUNDS)
@@ -1009,9 +1009,9 @@ export class RecognitionGameScene extends Scene {
         }
         target.setAlpha(1 - CORRECT_TINT_ALPHA)
         this.time.delayedCall(FEEDBACK_SCALE_DURATION, () => {
-            const letterTint = this.letterColorizer.getTint(target)
-            if (letterTint !== undefined) {
-                (target as Phaser.GameObjects.Image).setTint(letterTint)
+            const tint = this.colorizer.getTint(target)
+            if (tint !== undefined) {
+                (target as Phaser.GameObjects.Image).setTint(tint)
             } else if ('clearTint' in target) {
                 (target as Phaser.GameObjects.Image).clearTint()
             }
@@ -1225,7 +1225,7 @@ export class RecognitionGameScene extends Scene {
         this.nubiLayer = undefined
         this.roundLoadToken++
         this.images.forEach(i => {
-            if (i instanceof GameObjects.Image) this.letterColorizer.clearTint(i)
+            if (i instanceof GameObjects.Image) this.colorizer.clearTint(i)
             i.destroy(true)
         })
         this.images = []

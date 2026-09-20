@@ -16,7 +16,7 @@ import java.util.function.Function;
 public class DistractorSelector {
 
     private final Random random;
-    private final LetterSimilarityService letterSimilarityService;
+    private final RecognitionSimilarityService recognitionSimilarityService;
 
     public DistractorSelector() {
         this(new Random(), null);
@@ -26,13 +26,13 @@ public class DistractorSelector {
         this(random, null);
     }
 
-    public DistractorSelector(LetterSimilarityService letterSimilarityService) {
-        this(new Random(), letterSimilarityService);
+    public DistractorSelector(RecognitionSimilarityService recognitionSimilarityService) {
+        this(new Random(), recognitionSimilarityService);
     }
 
-    public DistractorSelector(Random random, LetterSimilarityService letterSimilarityService) {
+    public DistractorSelector(Random random, RecognitionSimilarityService recognitionSimilarityService) {
         this.random = random;
-        this.letterSimilarityService = letterSimilarityService;
+        this.recognitionSimilarityService = recognitionSimilarityService;
     }
 
     /**
@@ -48,10 +48,10 @@ public class DistractorSelector {
     }
 
     /**
-     * Selects distractors with optional letter-similarity awareness.
+     * Selects distractors with optional recognition-similarity awareness.
      *
-     * When category is LETTER and letterSimilarityService is available:
-     * - EASY/MEDIUM (SEMANTICALLY_FAR, SAME_CATEGORY): exclude letters that appear in similarity pairs with target
+     * When category is LETTER or NUMBER and recognitionSimilarityService is available:
+     * - EASY/MEDIUM (SEMANTICALLY_FAR, SAME_CATEGORY): exclude elements that appear in similarity pairs with target
      * - HARD (SIMILAR_OUTLINE): use similarity table with priority strong -> moderate -> weak
      *
      * For other categories or when no service is available, falls back to existing strategy logic.
@@ -72,12 +72,13 @@ public class DistractorSelector {
             }
         }
 
-        // LETTER-specific logic
-        if (category == RecognitionCategory.LETTER && letterSimilarityService != null) {
-            return selectForLetter(target, pool, strategy, count, elementResolver);
+        // LETTER or NUMBER specific logic
+        if ((category == RecognitionCategory.LETTER || category == RecognitionCategory.NUMBER) 
+                && recognitionSimilarityService != null) {
+            return selectForRecognitionCategory(target, pool, strategy, count, category, elementResolver);
         }
 
-        // Non-letter or no service: existing strategy logic
+        // Non-letter/number or no service: existing strategy logic
         List<String> primary = filterByStrategy(target, pool, strategy, elementResolver);
         Collections.shuffle(primary, random);
 
@@ -85,42 +86,44 @@ public class DistractorSelector {
     }
 
     /**
-     * LETTER-specific distractor selection using the similarity table.
+     * Recognition category (LETTER/NUMBER) specific distractor selection using the similarity table.
      */
-    private List<String> selectForLetter(
+    private List<String> selectForRecognitionCategory(
             String target,
             List<String> pool,
             DistractorStrategy strategy,
             int count,
+            RecognitionCategory category,
             Function<String, CandidateMetadata> elementResolver) {
 
         String targetCode = resolveCode(target, elementResolver);
 
-        if (targetCode == null || !letterSimilarityService.hasSimilarityEntries(targetCode)) {
-            // No similarity entries for this letter: fallback to similarityGroup or random
+        if (targetCode == null || !recognitionSimilarityService.hasSimilarityEntries(category, targetCode)) {
+            // No similarity entries for this element: fallback to similarityGroup or random
             return selectWithFallback(target, pool, strategy, count, elementResolver);
         }
 
         if (strategy == DistractorStrategy.SIMILAR_OUTLINE) {
             // HARD: use similarity table with priority strong -> moderate -> weak
-            return selectHardDistractors(target, pool, count, targetCode, elementResolver);
+            return selectHardDistractors(target, pool, count, targetCode, category, elementResolver);
         } else {
-            // EASY/MEDIUM: exclude letters from similarity table, then random
-            return selectEasyMediumDistractors(target, pool, count, targetCode, elementResolver);
+            // EASY/MEDIUM: exclude elements from similarity table, then random
+            return selectEasyMediumDistractors(target, pool, count, targetCode, category, elementResolver);
         }
     }
 
     /**
-     * EASY/MEDIUM: exclude all letters that appear in similarity pairs with target, then random.
+     * EASY/MEDIUM: exclude all elements that appear in similarity pairs with target, then random.
      */
     private List<String> selectEasyMediumDistractors(
             String target,
             List<String> pool,
             int count,
             String targetCode,
+            RecognitionCategory category,
             Function<String, CandidateMetadata> elementResolver) {
 
-        Set<String> excluded = letterSimilarityService.getExcludedLetters(targetCode);
+        Set<String> excluded = recognitionSimilarityService.getExcludedElements(category, targetCode);
 
         // Build set of excluded candidate IDs by matching codes
         java.util.Set<String> excludedIds = new java.util.HashSet<>();
@@ -163,13 +166,14 @@ public class DistractorSelector {
 
     /**
      * HARD: select from similarity table with priority strong -> moderate -> weak.
-     * If not enough similar letters, fallback to random from remaining pool.
+     * If not enough similar elements, fallback to random from remaining pool.
      */
     private List<String> selectHardDistractors(
             String target,
             List<String> pool,
             int count,
             String targetCode,
+            RecognitionCategory category,
             Function<String, CandidateMetadata> elementResolver) {
 
         // Build code -> candidateId map for the pool
@@ -181,8 +185,8 @@ public class DistractorSelector {
             }
         }
 
-        // Get similar letters ordered by strength (request more than needed to account for missing candidates)
-        List<String> similarCodes = letterSimilarityService.getSimilarLetters(targetCode, count * 2);
+        // Get similar elements ordered by strength (request more than needed to account for missing candidates)
+        List<String> similarCodes = recognitionSimilarityService.getSimilarElements(category, targetCode, count * 2);
 
         List<String> selected = new ArrayList<>();
         List<String> usedIds = new ArrayList<>();

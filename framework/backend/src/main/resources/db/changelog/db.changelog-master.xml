@@ -49,4 +49,5 @@
     <include file="db/changelog/migrations/042__prevent_duplicate_active_child_sessions.xml"/>
     <include file="db/changelog/migrations/043__add_accessible_color_to_recognition_element.xml"/>
     <include file="db/changelog/migrations/044__create_letter_similarity_pair.xml"/>
+    <include file="db/changelog/migrations/045__refactor_letter_similarity_to_recognition_similarity.xml"/>
 </databaseChangeLog>
