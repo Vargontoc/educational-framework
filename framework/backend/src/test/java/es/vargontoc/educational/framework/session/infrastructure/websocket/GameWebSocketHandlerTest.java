@@ -6,8 +6,15 @@ import es.vargontoc.educational.framework.avatar.domain.AvatarLifecycleResult;
 import es.vargontoc.educational.framework.avatar.domain.GameAvatarEvent;
 import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
+import es.vargontoc.educational.framework.content.model.AccessibleColor;
+import es.vargontoc.educational.framework.content.model.AccessibleColorPalette;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
+import es.vargontoc.educational.framework.family.model.ChildProfile;
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
+import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.InvalidStateTransitionException;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
@@ -94,6 +101,15 @@ class GameWebSocketHandlerTest {
     private es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository worldExplorationStateRepository;
 
     @Mock
+    private ChildProfileUseCase childProfileUseCase;
+
+    @Mock
+    private AccessibleColorRepository accessibleColorRepository;
+
+    @Mock
+    private AccessibleColorPaletteRepository accessibleColorPaletteRepository;
+
+    @Mock
     private WebSocketSession session;
 
     private GameWebSocketHandler handler;
@@ -103,7 +119,8 @@ class GameWebSocketHandlerTest {
         handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarService,
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
-            recognitionElementRepository, worldExplorationStateRepository);
+            recognitionElementRepository, worldExplorationStateRepository,
+            childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))
@@ -1016,6 +1033,104 @@ class GameWebSocketHandlerTest {
 
         Map<String, Object> third = elements.stream().filter(e -> "300".equals(e.get("id"))).findFirst().orElseThrow();
         assertFalse(third.containsKey("resourceRefs"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_colorElementWithAccessibleColor_includesResolvedAccessibleColor() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+        state.setChildProfileId(200L);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.COLOR);
+        recognitionState.setRoundIndex(0);
+        recognitionState.setTotalRounds(5);
+        recognitionState.setTargetElementId("100");
+        recognitionState.setOptionIds(List.of("100"));
+        recognitionState.setHintActive(false);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            state.setEnginePayload(mapper.writeValueAsString(recognitionState));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        RecognitionElement colorElement = new RecognitionElement();
+        colorElement.setId(100L);
+        colorElement.setCode("color_red");
+        colorElement.setDisplayValue("Rojo");
+        colorElement.setAccessibleColorId(50L);
+
+        when(recognitionElementRepository.findAllById(org.mockito.ArgumentMatchers.<List<Long>>any()))
+            .thenReturn(List.of(colorElement));
+
+        ChildProfile profile = new ChildProfile();
+        profile.setColorVisionMode(ColorVisionMode.DEUTERANOPIA);
+        when(childProfileUseCase.getChild(200L)).thenReturn(profile);
+
+        AccessibleColor accessibleColor = new AccessibleColor();
+        accessibleColor.setId(50L);
+        accessibleColor.setShapeIcon("circle");
+        when(accessibleColorRepository.findById(50L)).thenReturn(Optional.of(accessibleColor));
+
+        AccessibleColorPalette palette = new AccessibleColorPalette();
+        palette.setAccessibleColorValue("#808000");
+        palette.setAccessibleLabelKey("color.red.deutan");
+        when(accessibleColorPaletteRepository.findByAccessibleColorIdAndColorVisionMode(50L, ColorVisionMode.DEUTERANOPIA))
+            .thenReturn(Optional.of(palette));
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        Map<String, Object> recPayload = (Map<String, Object>) payload.get("recognitionState");
+        List<Map<String, Object>> elements = (List<Map<String, Object>>) recPayload.get("elements");
+        Map<String, Object> entry = elements.get(0);
+
+        Map<String, Object> accessibleColorEntry = (Map<String, Object>) entry.get("accessibleColor");
+        assertNotNull(accessibleColorEntry);
+        assertEquals("#808000", accessibleColorEntry.get("value"));
+        assertEquals("circle", accessibleColorEntry.get("shapeIcon"));
+        assertEquals("color.red.deutan", accessibleColorEntry.get("labelKey"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_elementWithoutAccessibleColorId_omitsAccessibleColorKey() {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.LETTER);
+        recognitionState.setRoundIndex(0);
+        recognitionState.setTotalRounds(5);
+        recognitionState.setTargetElementId("100");
+        recognitionState.setOptionIds(List.of("100"));
+        recognitionState.setHintActive(false);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            state.setEnginePayload(mapper.writeValueAsString(recognitionState));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        RecognitionElement letterElement = new RecognitionElement();
+        letterElement.setId(100L);
+        letterElement.setCode("letter_a");
+        letterElement.setDisplayValue("A");
+
+        when(recognitionElementRepository.findAllById(org.mockito.ArgumentMatchers.<List<Long>>any()))
+            .thenReturn(List.of(letterElement));
+
+        Map<String, Object> payload = handler.gameStateToPayload(state);
+
+        Map<String, Object> recPayload = (Map<String, Object>) payload.get("recognitionState");
+        List<Map<String, Object>> elements = (List<Map<String, Object>>) recPayload.get("elements");
+        Map<String, Object> entry = elements.get(0);
+
+        assertFalse(entry.containsKey("accessibleColor"));
+        verify(childProfileUseCase, never()).getChild(any());
     }
 
     @SuppressWarnings("unchecked")

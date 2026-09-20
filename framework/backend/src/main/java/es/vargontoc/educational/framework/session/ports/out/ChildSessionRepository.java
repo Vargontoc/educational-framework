@@ -18,6 +18,8 @@ public interface ChildSessionRepository {
 
     ChildSession save(ChildSession session);
 
+    ChildSession saveAndFlush(ChildSession session);
+
     void saveAll(List<ChildSession> sessions);
 
     int deleteEndedBefore(LocalDateTime cutoff);

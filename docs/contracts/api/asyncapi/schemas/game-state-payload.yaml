@@ -105,6 +105,30 @@ properties:
               description: >-
                 Opaque JSON object with media references (e.g. {"audio":"tts://letter_a","image":"img://letter_a"}).
                 Structure is content-defined; client should handle missing keys gracefully.
+            accessibleColor:
+              type: object
+              description: >-
+                Accessible color rendering data, already resolved server-side for the child's
+                colorVisionMode preference. Only present for COLOR category elements linked to an
+                AccessibleColor (accessible_color / accessible_color_palette tables). Client must not
+                derive color or shape from resourceRefs/code for COLOR elements when this is present;
+                this is the single source of truth for accessible rendering.
+              properties:
+                value:
+                  type: string
+                  description: >-
+                    Accessible color value for the resolved colorVisionMode (hex string like "#FF0000",
+                    or the literal "GRAY" for fully achromatic modes).
+                shapeIcon:
+                  type: string
+                  description: Non-chromatic shape differentiator (e.g. "circle", "square", "triangle", "star").
+                labelKey:
+                  type: string
+                  description: i18n label key for the accessible color variant.
+              required:
+                - value
+                - shapeIcon
+                - labelKey
           required:
             - id
     required:

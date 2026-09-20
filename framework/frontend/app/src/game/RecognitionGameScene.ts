@@ -13,6 +13,10 @@ import {
 } from "./GameEvent"
 import { RoundProgressBar } from "./ui/RoundProgressBar"
 import { MinigameNubiLayer } from "./worldmap/layers/MinigameNubiLayer"
+import {
+    generateColorTexture,
+    type ColorShape
+} from "../utils/colorTextureGenerator"
 
 const VIEWPORT_WIDTH = 1280
 const VIEWPORT_HEIGHT = 720
@@ -58,6 +62,12 @@ const GUIDE_CHROM_ALPHA_MAX = 0.25
 const GUIDE_CHROM_PULSE_DURATION = 2000
 const GUIDE_CHROM_PADDING = 20
 const GUIDE_CHROM_DEPTH = 1
+const PATTERN_COLOR = 0x000000
+const PATTERN_ALPHA = 0.4
+const PATTERN_LINE_THICKNESS = 3
+const PATTERN_DEPTH = 2
+const PATTERN_TYPES = ['diagonal', 'dots', 'grid', 'waves', 'cross'] as const
+type PatternType = typeof PATTERN_TYPES[number]
 
 const BIOME_GRADIENTS: Record<string, [number, number]> = {
     meadow:    [0xc8e6c9, 0x81c784],
@@ -92,6 +102,8 @@ export class RecognitionGameScene extends Scene {
     private minElementHitSize = 80
     private stimulusCardGraphics?: Phaser.GameObjects.Graphics
     private _nonChromaticKeyRequired: boolean = false
+    private _recognitionCategory: string = ''
+    private nonChromaticPatternGraphics: Phaser.GameObjects.Graphics[] = []
     private guideChromGraphics?: Phaser.GameObjects.Graphics
     private guideChromPulseTween?: Phaser.Tweens.Tween
     private touchEnableTimer?: Phaser.Time.TimerEvent
@@ -100,6 +112,10 @@ export class RecognitionGameScene extends Scene {
 
     get nonChromaticKeyRequired(): boolean {
         return this._nonChromaticKeyRequired
+    }
+
+    get recognitionCategory(): string {
+        return this._recognitionCategory
     }
 
     init(data: {
@@ -247,34 +263,48 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
+    /**
+     * Resolve the texture key for an element, generating color textures dynamically if needed
+     */
+    private resolveTextureKey(element: RecognitionElement, size: number = this.minElementHitSize): string | null {
+        // COLOR elements render from the accessible color already resolved server-side
+        // (accessible_color / accessible_color_palette) — never derived client-side.
+        if (this._recognitionCategory === 'COLOR' && element.accessibleColor) {
+            const shape = (element.accessibleColor.shapeIcon || 'circle') as ColorShape
+            return generateColorTexture(this, element.accessibleColor.value, shape, size)
+        }
+
+        const imageRef = element.resourceRefs?.['image']
+        if (!imageRef) return null
+
+        return imageRef
+    }
+
     renderElements(items: RecognitionElement[], targetElementId: string) {
         this.images = []
         this.cleanupStimulusCard()
 
         const targetElement = items.find(e => e.id === targetElementId)
         const optionElements = items
-
+        console.log(items)
         if (targetElement) {
             this.renderTargetElement(targetElement)
         }
 
         const count = optionElements.length
         const spacing = count > 0 ? Math.max(this.minElementHitSize, VIEWPORT_WIDTH / (count + 1)) : 0
-        console.log("Elementos :" + count)
         optionElements.forEach((e, i) => {
             const x = spacing * (i + 1)
             const y = VIEWPORT_HEIGHT * OPTIONS_ZONE_Y
-            const imageKey = e.resourceRefs?.['image']
-            console.log(`Elemento ${e} | Posicion [X:${x}|Y:${y}]`)
+            const imageKey = this.resolveTextureKey(e)
             let optionElement: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
             let labelElement: Phaser.GameObjects.Text | undefined
 
             if (imageKey && this.textures.exists(imageKey)) {
                 const img = this.add.image(x, y, imageKey)
-                    .setScale(0.1, 0.1)
 
                 if (img.displayWidth < this.minElementHitSize || img.displayHeight < this.minElementHitSize) {
-                    const scale = this.minElementHitSize / Math.max(img.displayWidth, img.displayHeight) * 0.1
+                    const scale = this.minElementHitSize / Math.max(img.displayWidth, img.displayHeight)
                     img.setScale(scale, scale)
                 }
 
@@ -336,13 +366,12 @@ export class RecognitionGameScene extends Scene {
         )
         this.stimulusCardGraphics = cardGraphics
 
-        const imageKey = element.resourceRefs?.['image']
+        const imageKey = this.resolveTextureKey(element, STIMULUS_CARD_WIDTH)
         if (imageKey && this.textures.exists(imageKey)) {
             const img = this.add.image(x, y, imageKey)
-                .setScale(0.1, 0.1)
 
             if (img.displayWidth < STIMULUS_CARD_WIDTH || img.displayHeight < STIMULUS_CARD_HEIGHT) {
-                const scale = Math.min(STIMULUS_CARD_WIDTH, STIMULUS_CARD_HEIGHT) / Math.max(img.displayWidth, img.displayHeight) * 0.1
+                const scale = Math.min(STIMULUS_CARD_WIDTH, STIMULUS_CARD_HEIGHT) / Math.max(img.displayWidth, img.displayHeight)
                 img.setScale(scale, scale)
             }
 
@@ -477,6 +506,106 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
+    private createPatternGraphics(patternType: PatternType, width: number, height: number): Phaser.GameObjects.Graphics {
+        const graphics = this.add.graphics()
+        graphics.lineStyle(PATTERN_LINE_THICKNESS, PATTERN_COLOR, PATTERN_ALPHA)
+
+        switch (patternType) {
+            case 'diagonal': {
+                const lineSpacing = width / 4
+                for (let i = 1; i <= 3; i++) {
+                    const startX = i * lineSpacing - width / 4
+                    const startY = 0
+                    const endX = startX + height
+                    const endY = height
+                    graphics.moveTo(startX, startY)
+                    graphics.lineTo(endX, endY)
+                }
+                break
+            }
+            case 'dots': {
+                const radius = Math.min(width, height) * 0.06
+                const offsetX = width * 0.3
+                const offsetY = height * 0.3
+                const centerX = width / 2
+                const centerY = height / 2
+                const dotPositions = [
+                    { x: centerX - offsetX, y: centerY - offsetY },
+                    { x: centerX + offsetX, y: centerY - offsetY },
+                    { x: centerX - offsetX, y: centerY + offsetY },
+                    { x: centerX + offsetX, y: centerY + offsetY }
+                ]
+                graphics.fillStyle(PATTERN_COLOR, PATTERN_ALPHA)
+                dotPositions.forEach(pos => {
+                    graphics.fillCircle(pos.x, pos.y, radius)
+                })
+                break
+            }
+            case 'grid': {
+                const gridDivisions = 3
+                for (let i = 1; i < gridDivisions; i++) {
+                    const gx = (width / gridDivisions) * i
+                    graphics.moveTo(gx, 0)
+                    graphics.lineTo(gx, height)
+                    const gy = (height / gridDivisions) * i
+                    graphics.moveTo(0, gy)
+                    graphics.lineTo(width, gy)
+                }
+                break
+            }
+            case 'waves': {
+                const waveAmplitude = height * 0.1
+                const waveCount = 2
+                for (let w = 0; w < waveCount; w++) {
+                    const baseY = height * (0.35 + w * 0.3)
+                    const steps = 20
+                    for (let i = 0; i <= steps; i++) {
+                        const x = (i / steps) * width
+                        const y = baseY + Math.sin((i / steps) * Math.PI * 2) * waveAmplitude
+                        if (i === 0) {
+                            graphics.moveTo(x, y)
+                        } else {
+                            graphics.lineTo(x, y)
+                        }
+                    }
+                }
+                break
+            }
+            case 'cross': {
+                const midX = width / 2
+                const midY = height / 2
+                graphics.moveTo(midX, 0)
+                graphics.lineTo(midX, height)
+                graphics.moveTo(0, midY)
+                graphics.lineTo(width, midY)
+                break
+            }
+        }
+
+        graphics.strokePath()
+        return graphics
+    }
+
+    private renderNonChromaticPatterns(optionImages: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[]): void {
+        this.destroyNonChromaticPatterns()
+
+        if (!this._nonChromaticKeyRequired || this._recognitionCategory !== 'COLOR') return
+
+        optionImages.forEach((img, index) => {
+            const bounds = img.getBounds()
+            const patternType = PATTERN_TYPES[index % PATTERN_TYPES.length]
+            const graphics = this.createPatternGraphics(patternType, bounds.width, bounds.height)
+            graphics.setPosition(bounds.x, bounds.y)
+            graphics.setDepth(PATTERN_DEPTH)
+            this.nonChromaticPatternGraphics.push(graphics)
+        })
+    }
+
+    private destroyNonChromaticPatterns(): void {
+        this.nonChromaticPatternGraphics.forEach(g => g.destroy())
+        this.nonChromaticPatternGraphics = []
+    }
+
     private getOptionImages(): (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[] {
         return this.images.filter(img => !img.getData('isStimulus'))
     }
@@ -504,6 +633,14 @@ export class RecognitionGameScene extends Scene {
         const packKey = packKeyMap[type]
         if (!packKey) {
             this.renderPlaceholderElements(items, targetElementId)
+            this.startingGame = false
+            onReady?.()
+            return
+        }
+
+        // COLOR category generates textures dynamically, no need to load assets
+        if (type === 'COLOR') {
+            this.renderElements(items, targetElementId)
             this.startingGame = false
             onReady?.()
             return
@@ -602,6 +739,7 @@ export class RecognitionGameScene extends Scene {
                 if (event.payload.engine === "RECOGNITION" && event.payload.recognitionState?.recognitionCategory) {
                     const rs = event.payload.recognitionState
                     this._nonChromaticKeyRequired = rs.nonChromaticKeyRequired ?? false
+                    this._recognitionCategory = rs.recognitionCategory ?? ''
                     if (this.progressBar && rs.totalRounds > 0) {
                         this.progressBar.updateProgress(rs.roundIndex, rs.totalRounds)
                     }
@@ -614,6 +752,7 @@ export class RecognitionGameScene extends Scene {
                             this.renderGuideChrom()
                         }
                         const optionImages = this.getOptionImages()
+                        this.renderNonChromaticPatterns(optionImages)
                         this.applyTouchEnableDelay(rs.touchEnableDelayMs ?? 0, optionImages)
                     })
                     if (rs.hintActive) {
@@ -628,6 +767,7 @@ export class RecognitionGameScene extends Scene {
     applyActionToResultType(result: GAME_RESULT_TYPE, complete: boolean, state: RecognitionEnginePayload) {
         if (state.recognitionState) {
             this._nonChromaticKeyRequired = state.recognitionState.nonChromaticKeyRequired ?? false
+            this._recognitionCategory = state.recognitionState.recognitionCategory ?? ''
         }
 
         if (state.recognitionState && this.progressBar) {
@@ -666,6 +806,7 @@ export class RecognitionGameScene extends Scene {
                         this.images = []
                         this.cleanupStimulusCard()
                         this.destroyGuideChrom()
+                        this.destroyNonChromaticPatterns()
                         this.renderElements(state.recognitionState.elements, state.recognitionState.targetElementId ?? '')
                         if (currentHintActive && state.recognitionState.targetElementId) {
                             this.showVisualHint(state.recognitionState.targetElementId)
@@ -674,6 +815,7 @@ export class RecognitionGameScene extends Scene {
                             this.renderGuideChrom()
                         }
                         const optionImages = this.getOptionImages()
+                        this.renderNonChromaticPatterns(optionImages)
                         this.applyTouchEnableDelay(state.recognitionState.touchEnableDelayMs ?? 0, optionImages)
                     }
                     break
@@ -943,6 +1085,7 @@ export class RecognitionGameScene extends Scene {
         this.cleanupFeedbackTweens()
         this.removeVisualHint()
         this.destroyGuideChrom()
+        this.destroyNonChromaticPatterns()
         if (this.touchEnableTimer) {
             this.touchEnableTimer.remove(false)
             this.touchEnableTimer = undefined

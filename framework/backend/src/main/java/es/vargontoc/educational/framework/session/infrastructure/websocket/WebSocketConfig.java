@@ -2,7 +2,10 @@ package es.vargontoc.educational.framework.session.infrastructure.websocket;
 
 import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
+import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.stomp.StompConnectAuthInterceptor;
@@ -49,6 +52,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ThreadPoolTaskScheduler webSocketBrokerTaskScheduler;
     private final RecognitionElementRepository recognitionElementRepository;
     private final WorldExplorationStateRepository worldExplorationStateRepository;
+    private final ChildProfileUseCase childProfileUseCase;
+    private final AccessibleColorRepository accessibleColorRepository;
+    private final AccessibleColorPaletteRepository accessibleColorPaletteRepository;
 
     public WebSocketConfig(
             ChildSessionUseCase childSessionUseCase,
@@ -64,7 +70,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             WorldOrchestrator worldOrchestrator,
             ThreadPoolTaskScheduler webSocketBrokerTaskScheduler,
             RecognitionElementRepository recognitionElementRepository,
-            WorldExplorationStateRepository worldExplorationStateRepository) {
+            WorldExplorationStateRepository worldExplorationStateRepository,
+            ChildProfileUseCase childProfileUseCase,
+            AccessibleColorRepository accessibleColorRepository,
+            AccessibleColorPaletteRepository accessibleColorPaletteRepository) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.stompConnectAuthInterceptor = stompConnectAuthInterceptor;
@@ -79,6 +88,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.webSocketBrokerTaskScheduler = webSocketBrokerTaskScheduler;
         this.recognitionElementRepository = recognitionElementRepository;
         this.worldExplorationStateRepository = worldExplorationStateRepository;
+        this.childProfileUseCase = childProfileUseCase;
+        this.accessibleColorRepository = accessibleColorRepository;
+        this.accessibleColorPaletteRepository = accessibleColorPaletteRepository;
     }
 
     // ── STOMP (parental channel) ──────────────────────────────────────
@@ -124,6 +136,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         return new GameWebSocketHandler(childSessionUseCase, objectMapper, avatarService,
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
-            recognitionElementRepository, worldExplorationStateRepository);
+            recognitionElementRepository, worldExplorationStateRepository,
+            childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository);
     }
 }

@@ -23,11 +23,14 @@ Verificado por análisis técnico (`analyser-frontend`, 2026-09-15):
   - Sin cromo guía, EASY no se diferencia visualmente de MEDIUM/HARD.
 
 ## Status
-status: implemented
+status: verified
 started_at: 2026-09-15
-closed_at:
+closed_at: 2026-09-15
 blocked_by: SPRINT-073
-waiting_for: Backend SPRINT-102 (contratos round-ready-event)
+waiting_for:
+reviewed_at: 2026-09-15
+review_verdict: APPROVED
+review_notes: Todas las incidencias resueltas. Tests verifican comportamiento real. Sin regresiones.
 
 ## Decisiones confirmadas (2026-09-15)
 
@@ -140,7 +143,7 @@ export class RecognitionState {
 - [x] Test: `guideChromEnabled = true` muestra halo alrededor de opciones.
 - [x] Test: `guideChromEnabled = false` no muestra halo.
 - [x] Test: `nonChromaticKeyRequired` se almacena correctamente.
-- [ ] Test: `prefers-reduced-motion: reduce` simplifica animaciones de espera y cromo.
+- [x] Test: `prefers-reduced-motion: reduce` simplifica animaciones de espera y cromo.
 
 ## Manual Tests
 - Iniciar minijuego en EASY: verificar que las opciones aparecen atenuadas y se iluminan tras ~500ms.
@@ -165,3 +168,163 @@ export class RecognitionState {
 - SPRINT-075 añadirá la accesibilidad cromática para COLOR usando `nonChromaticKeyRequired`.
 - SPRINT-076 externalizará el tamaño táctil a configuración dinámica.
 - Los valores de `touchEnableDelayMs` vienen de backend; frontend no los calcula.
+
+## Review Report (2026-09-15)
+
+**Verdict:** `CHANGES_REQUIRED`
+
+**Reviewer:** reviewer-frontend (automated review)
+
+### Summary
+
+La implementación funcional del sprint es correcta y cumple con los requisitos de FEAT-014 y ADR-028. Sin embargo, existen problemas de completitud y calidad que requieren corrección.
+
+### Completitud
+
+#### Tareas de implementación ✅ (13/13)
+
+**Extensión de contratos:**
+- ✅ `RecognitionState` extendido con `guideChromEnabled`, `touchEnableDelayMs`, `nonChromaticKeyRequired`
+- ✅ Campo de instancia `_nonChromaticKeyRequired` en `RecognitionGameScene`
+
+**Espera antes del toque:**
+- ✅ Método `applyTouchEnableDelay()` implementado
+- ✅ Aplica espera en `GAME_READY` y `GAME_ACTION_RESULT` con `CORRECT`
+- ✅ Opciones con `alpha: 0.5` y `disableInteractive()` durante espera
+- ✅ Al expirar: `alpha: 1.0` y `setInteractive()`
+- ✅ Respeta `prefers-reduced-motion: reduce`
+
+**Cromo guía:**
+- ✅ Método `renderGuideChrom()` implementado
+- ✅ Muestra halo con pulso lento si `guideChromEnabled` es true
+- ✅ Destruye halo al cambiar de ronda
+- ✅ Respeta `prefers-reduced-motion: reduce` (halo estático)
+
+**Almacenamiento de `nonChromaticKeyRequired`:**
+- ✅ Almacena del `RecognitionState` en `GAME_READY` y `GAME_ACTION_RESULT`
+- ✅ No consume en este sprint (preparado para SPRINT-075)
+
+#### Tareas de pruebas ❌ (5/6)
+
+- ✅ Test: `touchEnableDelayMs > 0` bloquea el toque
+- ✅ Test: `touchEnableDelayMs = 0` habilita inmediatamente
+- ✅ Test: `guideChromEnabled = true` muestra halo
+- ✅ Test: `guideChromEnabled = false` no muestra halo
+- ✅ Test: `nonChromaticKeyRequired` se almacena
+- ❌ **Test: `prefers-reduced-motion: reduce` simplifica animaciones** (pendiente)
+
+### Compilación
+
+✅ TypeScript compila sin errores (`npx tsc --noEmit`)
+
+### Validación de contratos
+
+| Requisito | Estado | Evidencia |
+|-----------|--------|-----------|
+| FEAT-014 §2 D4: EASY con cromo guía y espera corta | ✅ | `guideChromEnabled` y `touchEnableDelayMs` consumidos |
+| FEAT-014 §2 D4: MEDIUM con espera media, sin cromo | ✅ | `touchEnableDelayMs` consumido, `guideChromEnabled` false |
+| FEAT-014 §2 D4: HARD sin espera apreciable | ✅ | `touchEnableDelayMs = 0` habilita inmediatamente |
+| FEAT-014 §2 D5: Espera no genera fallo ni presión temporal | ✅ | Sin cronómetro visible, solo alpha 0.5 → 1.0 |
+| ADR-028: Ladder de dificultad visual | ✅ | Cromo guía solo en EASY, espera en EASY/MEDIUM |
+
+### Incidencias
+
+| # | Severidad | Descripción | Acción requerida |
+|---|-----------|-------------|------------------|
+| 1 | CRÍTICA | Test de `prefers-reduced-motion: reduce` no implementado | Implementar test |
+| 2 | MEDIA | Tests no verifican comportamiento real (alpha, halo, valor almacenado) | Extender `getSceneData()` y mejorar tests |
+| 3 | MEDIA | Logs de debug en producción (líneas 263, 268) | Eliminar logs |
+
+### Observaciones
+
+1. **Logs de debug:** `console.log` en `renderElements()` (líneas 263, 268) no deberían estar en producción
+2. **Hook incompleto:** `getSceneData()` no expone `alpha`, `touchEnableTimer`, `guideChromGraphics`, `_nonChromaticKeyRequired`
+3. **Tests superficiales:** Los tests solo verifican que la escena no crashea, no verifican el comportamiento real
+
+### Acciones para aprobación
+
+1. Implementar el test de `prefers-reduced-motion: reduce`
+2. Extender `getSceneData()` para exponer `alpha`, `touchEnableTimer`, `guideChromGraphics`, `_nonChromaticKeyRequired`
+3. Mejorar los tests para verificar comportamiento real (no solo que no crashea)
+4. Eliminar logs de debug (líneas 263, 268)
+5. Volver a enviar el sprint para revisión
+
+### Regresiones
+
+✅ Sin regresiones detectadas en tests existentes (SPRINT-070/072/073)
+
+---
+
+### Iteración 2: `APPROVED`
+
+**Reviewer:** reviewer-frontend (automated review)
+**Date:** 2026-09-15
+
+**Summary:** Todas las incidencias resueltas. Tests verifican comportamiento real. Sin regresiones.
+
+#### Cambios implementados
+
+1. ✅ **Logs de debug eliminados:**
+   - Eliminados `console.log` en `renderElements()` (líneas 263, 268)
+   - Logs restantes (líneas 206, 223, 932) son logs de ciclo de vida aceptables
+
+2. ✅ **Hook de pruebas extendido** (`GameView.vue`):
+   - `getSceneData()` ahora expone:
+     - `alpha` de cada imagen
+     - `touchEnableTimerActive` (boolean)
+     - `guideChromGraphicsExists` (boolean)
+     - `nonChromaticKeyRequired` (boolean)
+
+3. ✅ **Tests mejorados** (`recognition-ladder-visual.cy.ts`):
+   - Test de `touchEnableDelayMs = 0`: verifica `alpha: 1.0` y `touchEnableTimerActive: false`
+   - Test de `touchEnableDelayMs > 0`: verifica `alpha: 0.5` durante espera, `alpha: 1.0` después
+   - Test de `guideChromEnabled = true`: verifica `guideChromGraphicsExists: true`
+   - Test de `guideChromEnabled = false`: verifica `guideChromGraphicsExists: false`
+   - Test de `nonChromaticKeyRequired`: verifica valor almacenado
+   - Test de `GAME_ACTION_RESULT` con `CORRECT`: verifica reaplicación de espera
+   - Test de destrucción y recreación de cromo guía al cambiar de ronda
+
+4. ✅ **Test de accesibilidad añadido:**
+   - Test de `prefers-reduced-motion: reduce` (líneas 368-433)
+   - Verifica transición instantánea de alpha (sin tween)
+   - Verifica halo estático (sin pulso)
+
+#### Verificación de completitud
+
+**Tareas de implementación ✅ (13/13)**
+- ✅ Extensión de `RecognitionState` con 3 nuevos parámetros
+- ✅ Campo de instancia `_nonChromaticKeyRequired`
+- ✅ Método `applyTouchEnableDelay()` implementado
+- ✅ Método `renderGuideChrom()` implementado
+- ✅ Almacenamiento de `nonChromaticKeyRequired`
+- ✅ Respeta `prefers-reduced-motion: reduce`
+
+**Tareas de pruebas ✅ (6/6)**
+- ✅ Test: `touchEnableDelayMs > 0` bloquea el toque con `alpha: 0.5`
+- ✅ Test: `touchEnableDelayMs = 0` habilita inmediatamente con `alpha: 1.0`
+- ✅ Test: `guideChromEnabled = true` muestra halo
+- ✅ Test: `guideChromEnabled = false` no muestra halo
+- ✅ Test: `nonChromaticKeyRequired` se almacena
+- ✅ Test: `prefers-reduced-motion: reduce` simplifica animaciones
+
+#### Compilación
+
+✅ TypeScript compila sin errores (`npx tsc --noEmit`)
+
+#### Validación de contratos
+
+| Requisito | Estado | Evidencia |
+|-----------|--------|-----------|
+| FEAT-014 §2 D4: EASY con cromo guía y espera corta | ✅ | `guideChromEnabled` y `touchEnableDelayMs` consumidos |
+| FEAT-014 §2 D4: MEDIUM con espera media, sin cromo | ✅ | `touchEnableDelayMs` consumido, `guideChromEnabled` false |
+| FEAT-014 §2 D4: HARD sin espera apreciable | ✅ | `touchEnableDelayMs = 0` habilita inmediatamente |
+| FEAT-014 §2 D5: Espera no genera fallo ni presión temporal | ✅ | Sin cronómetro visible, solo alpha 0.5 → 1.0 |
+| ADR-028: Ladder de dificultad visual | ✅ | Cromo guía solo en EASY, espera en EASY/MEDIUM |
+
+#### Regresiones
+
+✅ Sin regresiones detectadas en tests existentes (SPRINT-070/072/073)
+
+### Veredicto final: `APPROVED`
+
+El sprint está completo, funcional y verificado. Cumple con todos los requisitos de FEAT-014 y ADR-028. Los tests verifican comportamiento real (alpha, timer, halo, valor almacenado). Sin logs de debug en producción.

@@ -141,10 +141,16 @@ const loadPhaserGame = async () => {
                 displayWidth: img.displayWidth ?? img.width ?? 0,
                 displayHeight: img.displayHeight ?? img.height ?? 0,
                 inputEnabled: img.input?.enabled ?? false,
-                type: img.type ?? 'unknown'
+                type: img.type ?? 'unknown',
+                alpha: img.alpha ?? 1.0
               })),
               minElementHitSize: active.minElementHitSize ?? null,
-              startingGame: active.startingGame ?? null
+              startingGame: active.startingGame ?? null,
+              touchEnableTimerActive: !!active.touchEnableTimer,
+              guideChromGraphicsExists: !!active.guideChromGraphics,
+              nonChromaticKeyRequired: active.nonChromaticKeyRequired ?? false,
+              recognitionCategory: active.recognitionCategory ?? '',
+              nonChromaticPatternGraphicsExists: (active.nonChromaticPatternGraphics?.length ?? 0) > 0
             }
           } catch { return null }
         }

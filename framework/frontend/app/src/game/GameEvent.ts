@@ -208,11 +208,18 @@ export class BaseGameActionResult<P extends BaseEnginePayload> {
     updatedState?: P
 }
 
+export class AccessibleColor {
+    value: string = ''
+    shapeIcon: string = ''
+    labelKey: string = ''
+}
+
 export class RecognitionElement {
     id: string = ''
     code: string = ''
     displayValue: string = ''
     resourceRefs?: Record<string, string>
+    accessibleColor?: AccessibleColor
 }
 
 export class RecognitionState {

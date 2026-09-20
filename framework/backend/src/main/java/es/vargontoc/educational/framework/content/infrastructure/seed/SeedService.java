@@ -624,6 +624,15 @@ public class SeedService {
             element.setSortOrder(seed.sortOrder());
             element.setStatus(ContentStatus.valueOf(seed.status()));
             element.setSimilarityGroup(seed.similarityGroup());
+            if (seed.accessibleColorConceptualIdentity() != null) {
+                Long accessibleColorId = accessibleColorCache.get(seed.accessibleColorConceptualIdentity());
+                if (accessibleColorId == null) {
+                    log.warn("AccessibleColor not found for recognition element seed: {} (conceptualIdentity={})",
+                        seed.code(), seed.accessibleColorConceptualIdentity());
+                } else {
+                    element.setAccessibleColorId(accessibleColorId);
+                }
+            }
             element.setCreatedAt(LocalDateTime.now());
             recognitionElementRepository.save(element);
             markLoaded(key, file);

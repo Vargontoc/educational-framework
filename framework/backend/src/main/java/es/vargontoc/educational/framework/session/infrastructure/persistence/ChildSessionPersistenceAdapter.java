@@ -66,6 +66,11 @@ public class ChildSessionPersistenceAdapter implements ChildSessionRepository {
     }
 
     @Override
+    public ChildSession saveAndFlush(ChildSession session) {
+        return toDomain(jpaRepository.saveAndFlush(toJpa(session)));
+    }
+
+    @Override
     public void saveAll(List<ChildSession> sessions) {
         jpaRepository.saveAll(sessions.stream()
             .map(ChildSessionPersistenceAdapter::toJpa)

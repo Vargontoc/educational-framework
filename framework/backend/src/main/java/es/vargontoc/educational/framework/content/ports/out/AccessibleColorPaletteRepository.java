@@ -14,5 +14,8 @@ public interface AccessibleColorPaletteRepository {
 
     List<AccessibleColorPalette> findByColorVisionMode(ColorVisionMode colorVisionMode);
 
+    Optional<AccessibleColorPalette> findByAccessibleColorIdAndColorVisionMode(
+        Long accessibleColorId, ColorVisionMode colorVisionMode);
+
     AccessibleColorPalette save(AccessibleColorPalette palette);
 }

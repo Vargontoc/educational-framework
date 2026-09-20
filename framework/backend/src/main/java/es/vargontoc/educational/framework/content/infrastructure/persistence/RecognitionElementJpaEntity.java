@@ -30,6 +30,9 @@ public class RecognitionElementJpaEntity extends BaseEntity {
     @Column(name = "similarity_group", length = 50)
     private String similarityGroup;
 
+    @Column(name = "accessible_color_id")
+    private Long accessibleColorId;
+
     public Long getTopicId() {
         return topicId;
     }
@@ -84,5 +87,13 @@ public class RecognitionElementJpaEntity extends BaseEntity {
 
     public void setSimilarityGroup(String similarityGroup) {
         this.similarityGroup = similarityGroup;
+    }
+
+    public Long getAccessibleColorId() {
+        return accessibleColorId;
+    }
+
+    public void setAccessibleColorId(Long accessibleColorId) {
+        this.accessibleColorId = accessibleColorId;
     }
 }

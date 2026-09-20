@@ -7,6 +7,8 @@ import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.avatar.infrastructure.service.AvatarService;
 import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorPaletteRepository;
+import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepository;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
@@ -35,6 +37,9 @@ import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
+import es.vargontoc.educational.framework.family.model.ChildProfile;
+import es.vargontoc.educational.framework.family.model.ColorVisionMode;
+import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import jakarta.annotation.PreDestroy;
@@ -79,6 +84,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final WorldOrchestrator worldOrchestrator;
     private final RecognitionElementRepository recognitionElementRepository;
     private final WorldExplorationStateRepository worldExplorationStateRepository;
+    private final ChildProfileUseCase childProfileUseCase;
+    private final AccessibleColorRepository accessibleColorRepository;
+    private final AccessibleColorPaletteRepository accessibleColorPaletteRepository;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -97,7 +105,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                              WorldStateRegistry worldStateRegistry,
                              WorldOrchestrator worldOrchestrator,
                              RecognitionElementRepository recognitionElementRepository,
-                             WorldExplorationStateRepository worldExplorationStateRepository) {
+                             WorldExplorationStateRepository worldExplorationStateRepository,
+                             ChildProfileUseCase childProfileUseCase,
+                             AccessibleColorRepository accessibleColorRepository,
+                             AccessibleColorPaletteRepository accessibleColorPaletteRepository) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarservice = avatarService;
@@ -109,6 +120,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         this.worldOrchestrator = worldOrchestrator;
         this.recognitionElementRepository = recognitionElementRepository;
         this.worldExplorationStateRepository = worldExplorationStateRepository;
+        this.childProfileUseCase = childProfileUseCase;
+        this.accessibleColorRepository = accessibleColorRepository;
+        this.accessibleColorPaletteRepository = accessibleColorPaletteRepository;
     }
 
     @Override
@@ -649,6 +663,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             if (!elementIds.isEmpty()) {
                 List<RecognitionElement> elements = recognitionElementRepository.findAllById(new java.util.ArrayList<>(elementIds));
                 if (!elements.isEmpty()) {
+                    boolean hasAccessibleColorElement = elements.stream().anyMatch(el -> el.getAccessibleColorId() != null);
+                    ColorVisionMode colorVisionMode = hasAccessibleColorElement
+                        ? resolveColorVisionMode(state.getChildProfileId())
+                        : null;
+
                     List<Map<String, Object>> elementsArray = new java.util.ArrayList<>();
                     for (RecognitionElement el : elements) {
                         Map<String, Object> entry = new java.util.LinkedHashMap<>();
@@ -662,6 +681,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                                 entry.put("resourceRefs", el.getResourceRefs());
                             }
                         }
+                        if (el.getAccessibleColorId() != null) {
+                            Map<String, Object> accessibleColor = resolveAccessibleColor(el.getAccessibleColorId(), colorVisionMode);
+                            if (accessibleColor != null) {
+                                entry.put("accessibleColor", accessibleColor);
+                            }
+                        }
                         elementsArray.add(entry);
                     }
                     recognitionPayload.put("elements", elementsArray);
@@ -671,6 +696,37 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             payload.put("recognitionState", recognitionPayload);
         }
         return payload;
+    }
+
+    private ColorVisionMode resolveColorVisionMode(Long childProfileId) {
+        if (childProfileId == null) {
+            return ColorVisionMode.NONE;
+        }
+        try {
+            ChildProfile profile = childProfileUseCase.getChild(childProfileId);
+            return profile.getColorVisionMode() != null ? profile.getColorVisionMode() : ColorVisionMode.NONE;
+        } catch (ResourceNotFoundException e) {
+            LOGGER.warn("ChildProfile {} not found, defaulting to ColorVisionMode.NONE", childProfileId);
+            return ColorVisionMode.NONE;
+        }
+    }
+
+    private Map<String, Object> resolveAccessibleColor(Long accessibleColorId, ColorVisionMode colorVisionMode) {
+        return accessibleColorRepository.findById(accessibleColorId)
+            .flatMap(accessibleColor -> accessibleColorPaletteRepository
+                .findByAccessibleColorIdAndColorVisionMode(accessibleColorId, colorVisionMode)
+                .map(palette -> {
+                    Map<String, Object> result = new java.util.LinkedHashMap<>();
+                    result.put("value", palette.getAccessibleColorValue());
+                    result.put("shapeIcon", accessibleColor.getShapeIcon());
+                    result.put("labelKey", palette.getAccessibleLabelKey());
+                    return result;
+                }))
+            .orElseGet(() -> {
+                LOGGER.warn("No AccessibleColorPalette found for accessibleColorId={} colorVisionMode={}",
+                    accessibleColorId, colorVisionMode);
+                return null;
+            });
     }
 
     private RecognitionState deserializeRecognitionState(String payload) {

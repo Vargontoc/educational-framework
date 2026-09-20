@@ -12,6 +12,7 @@ public class RecognitionElement {
     private Integer sortOrder;
     private ContentStatus status;
     private String similarityGroup;
+    private Long accessibleColorId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -77,6 +78,14 @@ public class RecognitionElement {
 
     public void setSimilarityGroup(String similarityGroup) {
         this.similarityGroup = similarityGroup;
+    }
+
+    public Long getAccessibleColorId() {
+        return accessibleColorId;
+    }
+
+    public void setAccessibleColorId(Long accessibleColorId) {
+        this.accessibleColorId = accessibleColorId;
     }
 
     public LocalDateTime getCreatedAt() {

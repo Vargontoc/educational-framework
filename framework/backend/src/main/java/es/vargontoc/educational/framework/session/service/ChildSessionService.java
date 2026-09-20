@@ -46,7 +46,11 @@ public class ChildSessionService implements ChildSessionUseCase {
         childSessionRepository.findActiveByChildProfileId(childProfileId)
             .ifPresent(existing -> {
                 closeExistingSession(existing, now, ChildSessionStatus.CLOSED);
-                childSessionRepository.save(existing);
+                // Flushed immediately: Hibernate's default flush order runs pending INSERTs before
+                // pending UPDATEs regardless of call order, so without this the new session's INSERT
+                // below would hit the DB while this row is still ACTIVE in the same flush, tripping
+                // uq_child_session_active_per_child even for a normal, non-concurrent reconnect.
+                childSessionRepository.saveAndFlush(existing);
                 sessionEventPublisher.notifyChildWithFarewellAndParent(
                     existing.getId(),
                     existing.getFamilyId(),
@@ -66,7 +70,11 @@ public class ChildSessionService implements ChildSessionUseCase {
         session.setConnectionMeta(connectionMeta);
 
         try {
-            return childSessionRepository.save(session);
+            // Flush is forced here (rather than a plain save()) so a concurrent insert's unique
+            // constraint violation surfaces synchronously in this try/catch, instead of being
+            // deferred to transaction commit — where it would propagate past this method as an
+            // unhandled exception, after openSession() already returned control to the caller.
+            return childSessionRepository.saveAndFlush(session);
         } catch (DataIntegrityViolationException e) {
             throw new ConflictException(
                 "Another session was opened concurrently for this child profile. Please retry.");

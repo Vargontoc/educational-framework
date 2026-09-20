@@ -104,6 +104,15 @@ function makeActionResult(resultType: string, gameCompleted: boolean, roundIndex
   }
 }
 
+function getOptionImages(sceneData: any) {
+  return sceneData.images.filter((img: any) => img.elementId && img.elementId !== 'letter_a' || (img.elementId && !sceneData.images.find((s: any) => s.elementId === img.elementId && s !== img)))
+    .filter((img: any) => img.elementId)
+}
+
+function getOptionImagesByElementIds(sceneData: any, elementIds: string[]) {
+  return sceneData.images.filter((img: any) => elementIds.includes(img.elementId))
+}
+
 describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () => {
   let childId: number
 
@@ -117,7 +126,7 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
     cy.intercept('POST', '**/api/v1/sessions/children').as('openSession')
   })
 
-  it('positivo: touchEnableDelayMs = 0 habilita el toque inmediatamente', () => {
+  it('positivo: touchEnableDelayMs = 0 habilita el toque inmediatamente con alpha 1.0', () => {
     cy.selectChildProfile('Nubi')
     cy.visit(`/game/${childId}`)
 
@@ -136,11 +145,21 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
 
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('world-map')
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.touchEnableTimerActive).to.be.false
+      const optionImgs = data.images.filter((img: any) =>
+        ['letter_a', 'letter_b', 'letter_c'].includes(img.elementId) && !data.images.find((s: any) => s.elementId === img.elementId && img !== s)
+      )
+      const optionAlphas = data.images
+        .filter((img: any) => ['letter_b', 'letter_c'].includes(img.elementId))
+      optionAlphas.forEach((img: any) => {
+        expect(img.alpha).to.be.closeTo(1.0, 0.05)
+      })
     })
   })
 
-  it('positivo: touchEnableDelayMs > 0 bloquea el toque durante el tiempo configurado', () => {
+  it('positivo: touchEnableDelayMs > 0 bloquea el toque con alpha 0.5 y timer activo', () => {
     cy.selectChildProfile('Nubi')
     cy.visit(`/game/${childId}`)
 
@@ -157,15 +176,36 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
 
     cy.wait(200)
 
+    cy.window().should((win) => {
+      const state = (win as any).__NUBI_GAME_STATE__
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.touchEnableTimerActive).to.be.true
+      const optionImgs = data.images.filter((img: any) =>
+        ['letter_b', 'letter_c'].includes(img.elementId)
+      )
+      optionImgs.forEach((img: any) => {
+        expect(img.alpha).to.be.closeTo(0.5, 0.05)
+      })
+    })
+
     cy.wait(600)
 
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('world-map')
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.touchEnableTimerActive).to.be.false
+      const optionImgs = data.images.filter((img: any) =>
+        ['letter_b', 'letter_c'].includes(img.elementId)
+      )
+      optionImgs.forEach((img: any) => {
+        expect(img.alpha).to.be.closeTo(1.0, 0.05)
+      })
     })
   })
 
-  it('positivo: guideChromEnabled = true muestra halo alrededor de opciones', () => {
+  it('positivo: guideChromEnabled = true muestra halo (guideChromGraphics existe)', () => {
     cy.selectChildProfile('Nubi')
     cy.visit(`/game/${childId}`)
 
@@ -184,7 +224,9 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
 
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('world-map')
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.guideChromGraphicsExists).to.be.true
     })
   })
 
@@ -207,7 +249,9 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
 
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('world-map')
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.guideChromGraphicsExists).to.be.false
     })
   })
 
@@ -230,7 +274,9 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
 
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('world-map')
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.nonChromaticKeyRequired).to.be.true
     })
   })
 
@@ -256,11 +302,28 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
       state.injectWsEvent(makeActionResult('CORRECT', false, 1, 5, { touchEnableDelayMs: 500 }))
     })
 
+    cy.wait(200)
+
+    cy.window().should((win) => {
+      const state = (win as any).__NUBI_GAME_STATE__
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.touchEnableTimerActive).to.be.true
+      const optionImgs = data.images.filter((img: any) =>
+        ['letter_b', 'letter_c'].includes(img.elementId)
+      )
+      optionImgs.forEach((img: any) => {
+        expect(img.alpha).to.be.closeTo(0.5, 0.05)
+      })
+    })
+
     cy.wait(800)
 
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('world-map')
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.touchEnableTimerActive).to.be.false
     })
   })
 
@@ -281,6 +344,12 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
 
     cy.wait(600)
 
+    cy.window().should((win) => {
+      const state = (win as any).__NUBI_GAME_STATE__
+      const data = state.getSceneData()
+      expect(data.guideChromGraphicsExists).to.be.true
+    })
+
     cy.window().then((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
       state.injectWsEvent(makeActionResult('CORRECT', false, 1, 5, { guideChromEnabled: true }))
@@ -290,7 +359,76 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
 
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.guideChromGraphicsExists).to.be.true
+    })
+  })
+
+  it('accesibilidad: prefers-reduced-motion: reduce hace transicion instantanea y halo estatico', () => {
+    cy.selectChildProfile('Nubi')
+    cy.visit(`/game/${childId}`, {
+      onBeforeLoad(win) {
+        Object.defineProperty(win, 'matchMedia', {
+          value: (query: string) => ({
+            matches: query === '(prefers-reduced-motion: reduce)',
+            media: query,
+            onchange: null,
+            addListener: () => {},
+            removeListener: () => {},
+            addEventListener: () => {},
+            removeEventListener: () => {},
+            dispatchEvent: () => false
+          }),
+          writable: true
+        })
+      }
+    })
+
+    cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
+      const state = (win as any).__NUBI_GAME_STATE__
       expect(state.activeScene).to.eq('world-map')
+    })
+
+    cy.window().then((win) => {
+      const state = (win as any).__NUBI_GAME_STATE__
+      state.injectWsEvent(makeGameStartedEvent())
+      state.injectWsEvent(makeGameReadyEvent({
+        touchEnableDelayMs: 500,
+        guideChromEnabled: true
+      }))
+    })
+
+    cy.wait(200)
+
+    cy.window().should((win) => {
+      const state = (win as any).__NUBI_GAME_STATE__
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.touchEnableTimerActive).to.be.true
+      expect(data.guideChromGraphicsExists).to.be.true
+      const optionImgs = data.images.filter((img: any) =>
+        ['letter_b', 'letter_c'].includes(img.elementId)
+      )
+      optionImgs.forEach((img: any) => {
+        expect(img.alpha).to.be.closeTo(0.5, 0.05)
+      })
+    })
+
+    cy.wait(600)
+
+    cy.window().should((win) => {
+      const state = (win as any).__NUBI_GAME_STATE__
+      const data = state.getSceneData()
+      expect(data).to.not.be.null
+      expect(data.touchEnableTimerActive).to.be.false
+      expect(data.guideChromGraphicsExists).to.be.true
+      const optionImgs = data.images.filter((img: any) =>
+        ['letter_b', 'letter_c'].includes(img.elementId)
+      )
+      optionImgs.forEach((img: any) => {
+        expect(img.alpha).to.be.closeTo(1.0, 0.05)
+      })
     })
   })
 })

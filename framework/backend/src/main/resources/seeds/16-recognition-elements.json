@@ -78,7 +78,8 @@
     "resourceRefs": "{\"image\":\"img://color_red\"}",
     "sortOrder": 1,
     "status": "ACTIVE",
-    "similarityGroup": "warm"
+    "similarityGroup": "warm",
+    "accessibleColorConceptualIdentity": "RED"
   },
   {
     "topicName": "Colores",
@@ -87,7 +88,8 @@
     "resourceRefs": "{\"image\":\"img://color_yellow\"}",
     "sortOrder": 2,
     "status": "ACTIVE",
-    "similarityGroup": "warm"
+    "similarityGroup": "warm",
+    "accessibleColorConceptualIdentity": "YELLOW"
   },
   {
     "topicName": "Colores",
@@ -96,7 +98,8 @@
     "resourceRefs": "{\"image\":\"img://color_blue\"}",
     "sortOrder": 3,
     "status": "ACTIVE",
-    "similarityGroup": "cool"
+    "similarityGroup": "cool",
+    "accessibleColorConceptualIdentity": "BLUE"
   },
   {
     "topicName": "Colores",
@@ -105,7 +108,8 @@
     "resourceRefs": "{\"image\":\"img://color_green\"}",
     "sortOrder": 4,
     "status": "ACTIVE",
-    "similarityGroup": "cool"
+    "similarityGroup": "cool",
+    "accessibleColorConceptualIdentity": "GREEN"
   },
   {
     "topicName": "Formas",

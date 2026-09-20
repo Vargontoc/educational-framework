@@ -52,6 +52,7 @@ public class RecognitionElementPersistenceAdapter implements RecognitionElementR
         target.setSortOrder(source.getSortOrder());
         target.setStatus(ContentStatus.valueOf(source.getStatus()));
         target.setSimilarityGroup(source.getSimilarityGroup());
+        target.setAccessibleColorId(source.getAccessibleColorId());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
@@ -67,6 +68,7 @@ public class RecognitionElementPersistenceAdapter implements RecognitionElementR
         target.setSortOrder(source.getSortOrder());
         target.setStatus(source.getStatus().name());
         target.setSimilarityGroup(source.getSimilarityGroup());
+        target.setAccessibleColorId(source.getAccessibleColorId());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;

@@ -51,7 +51,7 @@ class ChildSessionServiceTest {
     @Test
     void openSession_withoutPriorSessionCreatesActiveSession() {
         when(childSessionRepository.findActiveByChildProfileId(10L)).thenReturn(Optional.empty());
-        when(childSessionRepository.save(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(childSessionRepository.saveAndFlush(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = childSessionService.openSession(10L, 1L, 30, "{\"deviceId\":\"tablet\"}");
 
@@ -70,7 +70,7 @@ class ChildSessionServiceTest {
         priorSession.setStartedAt(LocalDateTime.now().minusSeconds(5));
 
         when(childSessionRepository.findActiveByChildProfileId(10L)).thenReturn(Optional.of(priorSession));
-        when(childSessionRepository.save(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(childSessionRepository.saveAndFlush(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var result = childSessionService.openSession(10L, 1L, 30, null);
 
@@ -78,7 +78,7 @@ class ChildSessionServiceTest {
         assertNotNull(priorSession.getEndedAt());
         assertTrue(priorSession.getDurationSeconds() > 0);
         assertEquals(ChildSessionStatus.ACTIVE, result.getStatus());
-        verify(childSessionRepository).save(priorSession);
+        verify(childSessionRepository).saveAndFlush(priorSession);
     }
 
     @Test
@@ -89,7 +89,7 @@ class ChildSessionServiceTest {
         priorSession.setStartedAt(LocalDateTime.now().minusSeconds(5));
 
         when(childSessionRepository.findActiveByChildProfileId(10L)).thenReturn(Optional.of(priorSession));
-        when(childSessionRepository.save(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(childSessionRepository.saveAndFlush(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         childSessionService.openSession(10L, 1L, 30, null);
 
@@ -105,7 +105,7 @@ class ChildSessionServiceTest {
     @Test
     void openSession_concurrentInsertConflict_throwsConflictException() {
         when(childSessionRepository.findActiveByChildProfileId(10L)).thenReturn(Optional.empty());
-        when(childSessionRepository.save(any(ChildSession.class)))
+        when(childSessionRepository.saveAndFlush(any(ChildSession.class)))
             .thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint"));
 
         assertThrows(ConflictException.class,

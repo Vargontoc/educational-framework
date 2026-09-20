@@ -37,6 +37,13 @@ public class AccessibleColorPalettePersistenceAdapter implements AccessibleColor
     }
 
     @Override
+    public Optional<AccessibleColorPalette> findByAccessibleColorIdAndColorVisionMode(
+            Long accessibleColorId, ColorVisionMode colorVisionMode) {
+        return jpaRepository.findByAccessibleColorIdAndColorVisionMode(accessibleColorId, colorVisionMode)
+            .map(this::toDomain);
+    }
+
+    @Override
     public AccessibleColorPalette save(AccessibleColorPalette palette) {
         return toDomain(jpaRepository.save(toJpa(palette)));
     }

@@ -4,10 +4,14 @@ import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AccessibleColorPaletteJpaRepository extends JpaRepository<AccessibleColorPaletteJpaEntity, Long> {
 
     List<AccessibleColorPaletteJpaEntity> findByAccessibleColorId(Long accessibleColorId);
 
     List<AccessibleColorPaletteJpaEntity> findByColorVisionMode(ColorVisionMode colorVisionMode);
+
+    Optional<AccessibleColorPaletteJpaEntity> findByAccessibleColorIdAndColorVisionMode(
+        Long accessibleColorId, ColorVisionMode colorVisionMode);
 }

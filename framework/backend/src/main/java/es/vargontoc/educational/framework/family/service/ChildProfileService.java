@@ -9,6 +9,7 @@ import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
 import es.vargontoc.educational.framework.family.validation.ChildProfileValidator;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +40,7 @@ public class ChildProfileService implements ChildProfileUseCase {
     private final ChildSessionUseCase sessions;
     private final AvatarUseCase avatarUseCase;
 
-    public ChildProfileService(AvatarUseCase avatar, FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildSessionRepository childSessionRepository, SessionEventPublisher sessionEventPublisher, ChildProfileRepository childProfileRepository) {
+    public ChildProfileService(AvatarUseCase avatar, FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildSessionRepository childSessionRepository, @Lazy SessionEventPublisher sessionEventPublisher, ChildProfileRepository childProfileRepository) {
         this.familyRepository = familyRepository;
         this.childProfileRepository = childProfileRepository;
         this.childSessionRepository = childSessionRepository;
