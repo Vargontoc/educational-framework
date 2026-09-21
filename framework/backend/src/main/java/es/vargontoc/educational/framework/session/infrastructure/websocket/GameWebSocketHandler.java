@@ -21,6 +21,7 @@ import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.Game
 import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.GameActionResponse;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
 import es.vargontoc.educational.framework.game.model.GameState;
+import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.game.service.RoundAudioResult;
@@ -520,6 +521,15 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
 
             var existingGame = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+            if (existingGame != null && existingGame.getStatus() == GameStatus.WAITING
+                    && activityId.equals(existingGame.getActivityId())) {
+                // The world flow (world_discovery_interacted) already created this exact game: reuse it instead of
+                // discarding it and repeating the catalogue/candidate work.
+                LOGGER.debug("Reusing waiting game {} for activity {}", existingGame.getGameId(), activityId);
+                SessionEvent reused = SessionEvent.of(SessionEventType.GAME_STARTED, childSessionId, gameStateToPayload(existingGame));
+                sendToSession(childSessionId, objectMapper.writeValueAsString(reused));
+                return;
+            }
             if (existingGame != null) {
                 try {
                     gameOrchestrator.abandonGame(existingGame.getGameId());
@@ -567,13 +577,19 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            var updatedState = gameOrchestrator.readyGame(gameState.getGameId());
+            long startedAt = System.nanoTime();
+            // The client can draw the round without Nubi's audio: answer first, generate the audio (TTS) after.
+            var updatedState = gameOrchestrator.readyGame(gameState.getGameId(), false);
 
             SessionEvent event = SessionEvent.of(SessionEventType.GAME_READY, childSessionId, gameStateToPayload(updatedState));
             sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+            long readySentMs = (System.nanoTime() - startedAt) / 1_000_000;
 
             // Send round audio for the first round if available
-            sendRoundAudioIfPresent(childSessionId, session, updatedState.getRoundAudioResult());
+            var withAudio = gameOrchestrator.attachRoundAudio(gameState.getGameId());
+            sendRoundAudioIfPresent(childSessionId, session, withAudio.getRoundAudioResult());
+            LOGGER.info("game_ready childSessionId={}: GAME_READY sent after {} ms, round audio after {} ms",
+                childSessionId, readySentMs, (System.nanoTime() - startedAt) / 1_000_000);
 
         } catch (GameUnavailableException e) {
             LOGGER.debug("Game unavailable for childSessionId={}: reason={}", childSessionId, e.getReason());

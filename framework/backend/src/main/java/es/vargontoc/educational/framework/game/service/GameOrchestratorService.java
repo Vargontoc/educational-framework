@@ -192,6 +192,19 @@ public class GameOrchestratorService implements GameOrchestrator {
 
     @Override
     public GameState readyGame(Long gameId) {
+        return readyGame(gameId, true);
+    }
+
+    @Override
+    public GameState attachRoundAudio(Long gameId) {
+        GameState state = gameStateRegistry.findByGameId(gameId)
+            .orElseThrow(() -> new GameNotFoundException(gameId));
+        generateAndAttachRoundAudio(state);
+        return state;
+    }
+
+    @Override
+    public GameState readyGame(Long gameId, boolean withRoundAudio) {
         GameState state = gameStateRegistry.findByGameId(gameId)
             .orElseThrow(() -> new GameNotFoundException(gameId));
 
@@ -224,7 +237,9 @@ public class GameOrchestratorService implements GameOrchestrator {
         gameStateRegistry.save(state);
 
         // Generate round audio for the first round
-        generateAndAttachRoundAudio(state);
+        if (withRoundAudio) {
+            generateAndAttachRoundAudio(state);
+        }
 
         return state;
     }

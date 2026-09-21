@@ -1,4 +1,4 @@
-import { Scene, GameObjects, Scale } from "phaser"
+import { Scene, GameObjects, Scale, Time } from "phaser"
 import {
     AvatarEvent,
     GAME_RESULT_TYPE,
@@ -13,6 +13,7 @@ import {
 } from "./GameEvent"
 import { RoundProgressBar } from "./ui/RoundProgressBar"
 import { ExitButton } from "./ui/ExitButton"
+import { ViewportBackdrop } from "./ui/ViewportBackdrop"
 import { createSplashCompound, layoutSplashCompound } from "./ui/SplashCompound"
 import { DynamicAssetLoader } from "./utils/DynamicAssetLoader"
 import { RecognitionColorizer } from "./utils/RecognitionColorizer"
@@ -35,6 +36,8 @@ type RoundObject =
     | Phaser.GameObjects.Container
 
 const FADE_DURATION = 400
+// Si la primera ronda no llega a pintarse (error, sin elementos), no dejar la pantalla en negro para siempre.
+const INTRO_MAX_WAIT_MS = 10000
 const FEEDBACK_DELAY = 500
 const FEEDBACK_WOBBLE_PX = 8
 const FEEDBACK_WOBBLE_DURATION = 300
@@ -125,19 +128,30 @@ export class RecognitionGameScene extends Scene {
     private previousScaleMode?: Scale.ScaleModeType
     private hintTargetId: string = ''
     private fitActive = false
-    private onScaleResize = () => this.relayout()
+    private backdrop!: ViewportBackdrop
+    private introOverlay?: GameObjects.Rectangle
+    private introTimeout?: Time.TimerEvent
+    private introStartedAt = 0
+    private onScaleResize = () => {
+        this.backdrop?.update()
+        this.introOverlay?.setPosition(this.scale.width / 2, this.scale.height / 2).setSize(this.scale.width, this.scale.height)
+        this.relayout()
+    }
     // Paused = portrait: OrientationRequiredScene takes over and needs the normal (cover) scaling to stay legible.
     private onScenePause = () => {
         this.blockActions = true
+        this.backdrop?.clear()
         this.restoreScaling()
     }
     private onSceneResume = () => {
         this.blockActions = false
         this.enterFitScaling()
+        if (this.backgroundTextureKey && !this.introOverlay) this.backdrop?.apply(this.backgroundTextureKey)
     }
     private stimulusCardGraphics?: Phaser.GameObjects.Graphics
     private _nonChromaticKeyRequired: boolean = false
     private _recognitionCategory: string = ''
+    private backgroundTextureKey: string = ''
     private nonChromaticPatternGraphics: Phaser.GameObjects.Graphics[] = []
     private guideChromGraphics?: Phaser.GameObjects.Graphics
     private guideChromPulseTween?: Phaser.Tweens.Tween
@@ -152,6 +166,11 @@ export class RecognitionGameScene extends Scene {
 
     get nonChromaticKeyRequired(): boolean {
         return this._nonChromaticKeyRequired
+    }
+
+    /** Textura del mosaico de fondo en uso; vacia si se usa el degradado de respaldo. */
+    get backgroundKey(): string {
+        return this.backgroundTextureKey
     }
 
     get recognitionCategory(): string {
@@ -176,6 +195,8 @@ export class RecognitionGameScene extends Scene {
         this.previousHintActive = false
         this.roundAudio = new RoundAudioCache(this.registry.get('audioCache') as AudioCache | undefined)
         this.assetLoader = new DynamicAssetLoader(this)
+        // El manifest se pide ya, en paralelo a game_start/game_ready, en vez de al llegar la primera ronda.
+        DynamicAssetLoader.warmUp()
         this.roundLoadToken++
 
         let profile = this.registry.get(DEVICE_PROFILE_REGISTRY_KEY) as DeviceProfile | undefined
@@ -234,6 +255,7 @@ export class RecognitionGameScene extends Scene {
         this.exitInProgress = false
         this.previousHintActive = false
 
+        this.backdrop = new ViewportBackdrop(this)
         this.createBiomeBackground()
 
         this.refreshSizes()
@@ -249,7 +271,7 @@ export class RecognitionGameScene extends Scene {
         this.events.on('exit-button-double-tap', this.onExitDoubleTap)
         this.events.on('minigame-nubi-tap', this.onNubiTap)
 
-        this.fadeFromBlack()
+        this.holdIntroOverlay()
 
         this.events.on('pause', this.onScenePause)
         this.events.on('resume', this.onSceneResume)
@@ -263,8 +285,27 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
+    /**
+     * Fondo del minijuego: mosaico del bioma (`minigame-background-[bioma]`, cargado con el pack
+     * `biome-[bioma]` del mapa) repetido a tamano nativo. Si el bioma no lo tiene, degradado de color.
+     */
     private createBiomeBackground(): void {
         const normalizedBiome = (this.biome ?? 'meadow').toLowerCase()
+
+        const tileKey = `minigame-background-${normalizedBiome}`
+        if (this.textures.exists(tileKey)) {
+            this.backgroundTextureKey = tileKey
+            const tile = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, tileKey)
+                .setOrigin(0, 0)
+                .setDepth(-1)
+            tile.tilePositionX = ViewportBackdrop.tilePositionFor(this.scale.width, tile.texture.getSourceImage().width)
+            tile.tilePositionY = ViewportBackdrop.tilePositionFor(this.scale.height, tile.texture.getSourceImage().height)
+            // FIT deja franjas fuera del canvas: el mosaico continua por fuera como fondo CSS del contenedor.
+            // Se aplica al revelar la escena (revealIntro), no antes, para que la transicion en negro no muestre franjas.
+            return
+        }
+
+        this.backgroundTextureKey = ''
         const [colorTop, colorBottom] = BIOME_GRADIENTS[normalizedBiome] ?? BIOME_GRADIENTS['meadow']
 
         const graphics = this.add.graphics()
@@ -299,13 +340,32 @@ export class RecognitionGameScene extends Scene {
         this.fadeToBlackAndExit()
     }
 
-    private fadeFromBlack(): void {
-        const overlay = this.add.rectangle(
+    /**
+     * La transicion desde el mapa termina en negro; se mantiene hasta que la primera ronda esta pintada
+     * (`revealIntro`) para no ensenar un fondo vacio mientras llegan game_ready y las texturas.
+     */
+    private holdIntroOverlay(): void {
+        this.backdrop.hold()
+        this.introOverlay = this.add.rectangle(
             this.scale.width / 2, this.scale.height / 2,
             this.scale.width, this.scale.height, 0x000000, 1
         )
-        overlay.setDepth(100)
-        overlay.setScrollFactor(0)
+        this.introOverlay.setDepth(100)
+        this.introOverlay.setScrollFactor(0)
+        this.introStartedAt = performance.now()
+        this.introTimeout = this.time.delayedCall(INTRO_MAX_WAIT_MS, () => this.revealIntro())
+    }
+
+    /** Quita el negro de la transicion: monta el fondo y funde a la escena ya con los elementos. */
+    private revealIntro(): void {
+        const overlay = this.introOverlay
+        if (!overlay) return
+        this.introOverlay = undefined
+        this.introTimeout?.remove(false)
+        this.introTimeout = undefined
+        console.info(`[RecognitionGameScene] primera ronda lista ${Math.round(performance.now() - this.introStartedAt)} ms tras entrar en la escena`)
+
+        if (this.backgroundTextureKey) this.backdrop.apply(this.backgroundTextureKey)
 
         const duration = this.reducedMotion ? 200 : FADE_DURATION
         this.tweens.add({
@@ -859,6 +919,7 @@ export class RecognitionGameScene extends Scene {
                         this.progressBar.updateProgress(rs.roundIndex, rs.totalRounds)
                     }
                     this.loadResources(rs.recognitionCategory ?? null, rs.elements, rs.targetElementId ?? '', () => {
+                        this.revealIntro()
                         this.nubiLayer?.showPhrase('welcome')
                         if (rs.hintActive) {
                             this.showVisualHint(rs.targetElementId)
@@ -1259,6 +1320,7 @@ export class RecognitionGameScene extends Scene {
         this.scale.off('resize', this.onScaleResize)
         this.events.off('pause', this.onScenePause)
         this.events.off('resume', this.onSceneResume)
+        this.backdrop?.clear()
         this.restoreScaling()
         this.events.off('exit-button-double-tap', this.onExitDoubleTap)
         this.events.off('minigame-nubi-tap', this.onNubiTap)

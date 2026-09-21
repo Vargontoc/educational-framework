@@ -217,6 +217,36 @@ class GameOrchestratorServiceColorTest {
         verify(gameStateRegistry, never()).remove(GAME_ID);
     }
 
+    // ---- round audio is generated after the game is ready, not before
+
+    @Test
+    void readyGame_withoutRoundAudio_doesNotCallTts_andAttachRoundAudioDoes() throws Exception {
+        profile(ColorVisionMode.NONE, DifficultyCode.EASY);
+        waitingGame(RecognitionCategory.LETTER);
+        RoundAudioResult audio = RoundAudioResult.withAudio("audio-1", new byte[] {1, 2, 3}, "¿Dónde está?");
+        when(roundAudioService.generateRoundAudio(org.mockito.ArgumentMatchers.eq(CHILD_PROFILE_ID), any())).thenReturn(audio);
+
+        GameState ready = orchestrator.readyGame(GAME_ID, false);
+
+        assertEquals(GameStatus.IN_PROGRESS, ready.getStatus());
+        assertNull(ready.getRoundAudioResult());
+        verifyNoInteractions(roundAudioService);
+
+        GameState withAudio = orchestrator.attachRoundAudio(GAME_ID);
+
+        assertEquals("audio-1", withAudio.getRoundAudioResult().audioId());
+    }
+
+    @Test
+    void readyGame_default_stillGeneratesTheRoundAudio() throws Exception {
+        profile(ColorVisionMode.NONE, DifficultyCode.EASY);
+        waitingGame(RecognitionCategory.LETTER);
+        RoundAudioResult audio = RoundAudioResult.withAudio("audio-2", new byte[] {1}, "texto");
+        when(roundAudioService.generateRoundAudio(org.mockito.ArgumentMatchers.eq(CHILD_PROFILE_ID), any())).thenReturn(audio);
+
+        assertEquals("audio-2", orchestrator.readyGame(GAME_ID).getRoundAudioResult().audioId());
+    }
+
     // ---- other profiles: the game is available and rounds are colour-aware
 
     @Test

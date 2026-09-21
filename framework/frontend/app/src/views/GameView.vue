@@ -215,6 +215,7 @@ const loadPhaserGame = async () => {
               })),
               selectedColorItem: active.selectedColorItem ?? '',
               showIcon: active.showIcon ?? null,
+              backgroundKey: active.backgroundKey ?? null,
               minElementHitSize: active.minElementHitSize ?? null,
               startingGame: active.startingGame ?? null,
               touchEnableTimerActive: !!active.touchEnableTimer,

@@ -598,7 +598,7 @@ class GameWebSocketHandlerTest {
         handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_ready\"}"));
 
         verify(session).close(CloseStatus.POLICY_VIOLATION);
-        verify(gameOrchestrator, never()).readyGame(any());
+        verify(gameOrchestrator, never()).readyGame(any(), org.mockito.ArgumentMatchers.anyBoolean());
     }
 
     @Test
@@ -635,7 +635,8 @@ class GameWebSocketHandlerTest {
         when(gameStateRegistry.findByChildSessionId(14L)).thenReturn(Optional.of(existingGame));
 
         var readyGame = createGameState(1L, 14L, 100L, 5L, GameStatus.IN_PROGRESS);
-        when(gameOrchestrator.readyGame(1L)).thenReturn(readyGame);
+        when(gameOrchestrator.readyGame(1L, false)).thenReturn(readyGame);
+        when(gameOrchestrator.attachRoundAudio(1L)).thenReturn(readyGame);
 
         handler.handleTextMessage(session, new TextMessage(
             "{\"type\":\"game_ready\"}"));
@@ -649,6 +650,62 @@ class GameWebSocketHandlerTest {
     }
 
     @Test
+    void gameReady_sendsGAME_READYBeforeGeneratingTheRoundAudio() throws IOException {
+        var childSession = childSession(18L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(18L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":18}"));
+
+        var existingGame = createGameState(1L, 18L, 100L, 5L, GameStatus.WAITING);
+        when(gameStateRegistry.findByChildSessionId(18L)).thenReturn(Optional.of(existingGame));
+        var readyGame = createGameState(1L, 18L, 100L, 5L, GameStatus.IN_PROGRESS);
+        when(gameOrchestrator.readyGame(1L, false)).thenReturn(readyGame);
+        var audioSent = new java.util.concurrent.atomic.AtomicBoolean();
+        when(gameOrchestrator.attachRoundAudio(1L)).thenAnswer(invocation -> {
+            // by the time the TTS runs, GAME_READY must already be on the wire
+            try {
+                verify(session, org.mockito.Mockito.atLeastOnce()).sendMessage(
+                    argThat(m -> m instanceof TextMessage t && t.getPayload().contains("GAME_READY")));
+                audioSent.set(true);
+            } catch (Throwable notYet) {
+                audioSent.set(false);
+            }
+            return readyGame;
+        });
+
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_ready\"}"));
+
+        verify(gameOrchestrator).attachRoundAudio(1L);
+        assertTrue(audioSent.get(), "GAME_READY was not sent before the round audio was generated");
+    }
+
+    @Test
+    void gameStart_waitingGameOfTheSameActivity_isReusedInsteadOfRestarted() throws IOException {
+        var childSession = childSession(19L, ChildSessionStatus.ACTIVE);
+        when(childSessionUseCase.getSession(19L)).thenReturn(childSession);
+        when(session.isOpen()).thenReturn(true);
+
+        handler.afterConnectionEstablished(session);
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"auth\",\"childSessionId\":19}"));
+
+        // created by world_discovery_interacted for activity 3
+        var worldGame = createGameState(7L, 19L, 3L, 1L, GameStatus.WAITING);
+        when(gameStateRegistry.findByChildSessionId(19L)).thenReturn(Optional.of(worldGame));
+
+        handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_start\",\"activityId\":3}"));
+
+        verify(gameOrchestrator, never()).abandonGame(any());
+        verify(gameOrchestrator, never()).startGame(any(), any());
+        verify(gameOrchestrator, never()).startGame(any(), any(), any());
+        var captor = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, org.mockito.Mockito.atLeast(1)).sendMessage(captor.capture());
+        assertTrue(captor.getAllValues().stream()
+            .anyMatch(m -> m.getPayload().contains("GAME_STARTED") && m.getPayload().contains("WAITING")));
+    }
+
+    @Test
     void gameReady_gameUnavailable_sendsGAME_UNAVAILABLEInsteadOfGAME_ERROR() throws IOException {
         var childSession = childSession(17L, ChildSessionStatus.ACTIVE);
         when(childSessionUseCase.getSession(17L)).thenReturn(childSession);
@@ -659,7 +716,7 @@ class GameWebSocketHandlerTest {
 
         var existingGame = createGameState(1L, 17L, 100L, 5L, GameStatus.WAITING);
         when(gameStateRegistry.findByChildSessionId(17L)).thenReturn(Optional.of(existingGame));
-        when(gameOrchestrator.readyGame(1L)).thenThrow(new es.vargontoc.educational.framework.game.exception.GameUnavailableException(
+        when(gameOrchestrator.readyGame(1L, false)).thenThrow(new es.vargontoc.educational.framework.game.exception.GameUnavailableException(
             1L, 5L, es.vargontoc.educational.framework.game.model.enums.GameUnavailableReason.COLOR_VISION_ACHROMATIC));
 
         handler.handleTextMessage(session, new TextMessage("{\"type\":\"game_ready\"}"));

@@ -587,7 +587,7 @@ public class SeedService {
                 continue;
             }
 
-            audio.getAudio(AudioRequest.withPreset(seed.nubi(), TonePreset.CALM));
+            audio.getAudio(AudioRequest.withPreset(animalNubiAudio(seed), TonePreset.CALM));
 
             var element = new RecognitionElement();
             element.setTopicId(topicId);
@@ -611,15 +611,23 @@ public class SeedService {
     }
 
 
-    /** Narration text: {@code resourceRefs["nubi-audio"]} from the seed, falling back to the raw {@code nubi} text. */
+    /**
+     * Narration text of an animal: {@code resourceRefs["nubi-audio"]} from the seed, falling back to the raw
+     * {@code nubi} text. It is also the text warmed into the audio cache, which is keyed by the exact text
+     * {@code RoundAudioService} asks for at runtime.
+     */
     private String animalNubiAudio(RecognitionAnimalElementSeed seed) {
-        if (seed.resourceRefs() != null && !seed.resourceRefs().isBlank()) {
-            var text = objectMapper.readTree(seed.resourceRefs()).get("nubi-audio");
+        return nubiAudioText(seed.resourceRefs(), seed.nubi());
+    }
+
+    private String nubiAudioText(String resourceRefs, String fallback) {
+        if (resourceRefs != null && !resourceRefs.isBlank()) {
+            var text = objectMapper.readTree(resourceRefs).get("nubi-audio");
             if (text != null && !text.isNull() && !text.asString().isBlank()) {
                 return text.asString();
             }
         }
-        return seed.nubi();
+        return fallback;
     }
 
     private int loadRecognitionColors() {
@@ -641,7 +649,7 @@ public class SeedService {
                 continue;
             }
 
-            audio.getAudio(AudioRequest.withPreset(seed.nubi(), TonePreset.CALM));
+            audio.getAudio(AudioRequest.withPreset(nubiAudioText(seed.resourceRefs(), seed.nubi()), TonePreset.CALM));
 
             var element = new RecognitionElement();
             element.setTopicId(topicId);
@@ -690,7 +698,7 @@ public class SeedService {
                 continue;
             }
 
-            audio.getAudio(AudioRequest.withPreset(seed.nubi(), TonePreset.CALM));
+            audio.getAudio(AudioRequest.withPreset(nubiAudioText(seed.resourceRefs(), seed.nubi()), TonePreset.CALM));
 
             var element = new RecognitionElement();
             element.setTopicId(topicId);

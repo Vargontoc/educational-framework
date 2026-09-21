@@ -603,7 +603,7 @@ export class WorldMapScene extends Scene {
                     activityId: activityId,
                     biome: this.currentBiome,
                     sessionId: this.sessionId,
-                    childId: this.childId
+                    childId: this.childId,
                 })
             }
         })

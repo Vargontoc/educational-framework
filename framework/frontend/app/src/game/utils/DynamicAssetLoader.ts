@@ -99,6 +99,11 @@ export class DynamicAssetLoader {
         return `${block}/${item}`
     }
 
+    /** Pide el manifest por adelantado para que la primera ronda no espere a esa peticion. Nunca rechaza. */
+    static warmUp(): void {
+        fetchManifest().catch(() => undefined)
+    }
+
     /** Carga las texturas de la ronda que aun no estan en cache. Nunca rechaza. */
     async loadRoundAssets(items: RecognitionElement[], category: RECOGNITION_TYPE): Promise<void> {
         if (category === 'COLOR') {

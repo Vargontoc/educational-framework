@@ -104,6 +104,11 @@
                 "type" : "image",
                 "key" : "ground-meadow",
                 "url" : "/assets/images/biomes/meadow/ground.png"
+            },
+            {
+                "type" : "image",
+                "key" : "minigame-background-meadow",
+                "url" : "/assets/images/biomes/meadow/minigame_background.png"
             }
         ]
     },
@@ -123,6 +128,11 @@
                 "type" : "image",
                 "key" : "ground-farm",
                 "url" : "/assets/images/biomes/meadow/ground.png"
+            },
+            {
+                "type" : "image",
+                "key" : "minigame-background-farm",
+                "url" : "/assets/images/biomes/farm/minigame_background_.png"
             }
         ]
     },

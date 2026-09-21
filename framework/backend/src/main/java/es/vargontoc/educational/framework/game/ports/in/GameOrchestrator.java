@@ -12,6 +12,16 @@ public interface GameOrchestrator {
 
     GameState readyGame(Long gameId);
 
+    /**
+     * Same as {@link #readyGame(Long)}, optionally skipping the Nubi audio of the first round so the caller
+     * can answer the client first and attach the audio afterwards with {@link #attachRoundAudio(Long)}
+     * (TTS can take seconds and the round can already be drawn without it).
+     */
+    GameState readyGame(Long gameId, boolean withRoundAudio);
+
+    /** Generates the Nubi audio of the current round and attaches it to the game state. */
+    GameState attachRoundAudio(Long gameId);
+
     ActionProcessingResult processAction(Long gameId, String actionPayload, Long topicId, Integer responseTimeMs);
 
     GameState abandonGame(Long gameId);
