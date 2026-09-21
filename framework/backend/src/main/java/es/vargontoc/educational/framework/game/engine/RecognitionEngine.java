@@ -21,6 +21,8 @@ import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
 import es.vargontoc.educational.framework.game.model.recognition.CandidateMetadata;
+import es.vargontoc.educational.framework.game.model.recognition.ComparisonOption;
+import es.vargontoc.educational.framework.game.model.recognition.ComparisonScaleLadder;
 import es.vargontoc.educational.framework.game.model.recognition.DistractorStrategy;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionAttemptContext;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionDefaults;
@@ -92,8 +94,10 @@ public class RecognitionEngine implements GameEnginePort {
         List<String> candidates = parseCandidates(engineParams);
         RoundParameters roundParameters = parseRoundParameters(engineParams);
         List<CandidateMetadata> candidateMetadata = parseCandidateMetadata(engineParams);
+        RecognitionCategory category = parseRecognitionCategory(engineParams);
+        boolean comparisonMode = category == RecognitionCategory.COMPARISON || parseComparisonMode(engineParams);
         RecognitionState state = buildInitialState(
-                candidates, roundParameters, candidateMetadata, parseRecognitionCategory(engineParams));
+                candidates, roundParameters, candidateMetadata, category, comparisonMode);
         gameState.setEnginePayload(serializeState(state));
     }
 
@@ -108,8 +112,9 @@ public class RecognitionEngine implements GameEnginePort {
         String selectedOptionId = parseSelectedOptionId(actionPayload);
         Integer responseTimeMs = parseResponseTimeMs(actionPayload);
 
-        boolean correct = selectedOptionId != null
-                && selectedOptionId.equals(state.getTargetElementId());
+        boolean correct = state.isComparisonMode()
+                ? isBiggestOptionSelected(state, selectedOptionId, parseSelectedScalePercent(actionPayload))
+                : selectedOptionId != null && selectedOptionId.equals(state.getTargetElementId());
 
         state.setCurrentRoundAttemptCount(state.getCurrentRoundAttemptCount() + 1);
         state.setSelectedOptionId(selectedOptionId);
@@ -170,6 +175,9 @@ public class RecognitionEngine implements GameEnginePort {
             map.put("guideChromEnabled", state.isGuideChromEnabled());
             map.put("touchEnableDelayMs", state.getTouchEnableDelayMs());
             map.put("nonChromaticKeyRequired", state.isNonChromaticKeyRequired());
+            if (state.isComparisonMode()) {
+                map.put("comparisonOptions", state.getComparisonOptions());
+            }
             return OBJECT_MAPPER.writeValueAsString(map);
         } catch (JacksonException e) {
             throw new IllegalStateException("Failed to serialize next element", e);
@@ -266,6 +274,35 @@ public class RecognitionEngine implements GameEnginePort {
         }
     }
 
+    /**
+     * In comparison mode every option is the same element, so the element id cannot tell the options apart:
+     * the answer is correct when the child picked the option drawn at the biggest size.
+     */
+    private boolean isBiggestOptionSelected(RecognitionState state, String selectedOptionId, Double selectedScalePercent) {
+        if (selectedScalePercent == null || state.getComparisonOptions() == null
+                || state.getComparisonOptions().isEmpty()) {
+            return false;
+        }
+        if (selectedOptionId != null && !selectedOptionId.equals(state.getTargetElementId())) {
+            return false;
+        }
+        double biggest = state.getComparisonOptions().stream()
+                .mapToDouble(ComparisonOption::scalePercent).max().orElse(Double.NaN);
+        return Math.abs(selectedScalePercent - biggest) < 1e-6;
+    }
+
+    private boolean parseComparisonMode(String engineParams) {
+        if (engineParams == null || engineParams.isBlank()) {
+            return false;
+        }
+        try {
+            var modeNode = OBJECT_MAPPER.readTree(engineParams).get("comparisonMode");
+            return modeNode != null && !modeNode.isNull() && modeNode.asBoolean(false);
+        } catch (JacksonException e) {
+            return false;
+        }
+    }
+
     private RecognitionCategory parseRecognitionCategory(String engineParams) {
         if (engineParams == null || engineParams.isBlank()) {
             return null;
@@ -322,11 +359,13 @@ public class RecognitionEngine implements GameEnginePort {
             List<String> candidates,
             RoundParameters roundParameters,
             List<CandidateMetadata> candidateMetadata,
-            RecognitionCategory category) {
+            RecognitionCategory category,
+            boolean comparisonMode) {
         RecognitionState state = new RecognitionState();
         // The category must be known before the first round's options are built: category-specific
         // distractor selection (colour / letter / number similarity) depends on it.
         state.setRecognitionCategory(category);
+        state.setComparisonMode(comparisonMode);
         state.setRoundIndex(0);
         state.setTotalRounds(RecognitionDefaults.DEFAULT_TOTAL_ROUNDS);
         state.setRoundStartedAt(LocalDateTime.now());
@@ -348,6 +387,13 @@ public class RecognitionEngine implements GameEnginePort {
             state.setTouchEnableDelayMs(roundParameters.touchEnableDelayMs());
             state.setNonChromaticKeyRequired(roundParameters.nonChromaticKeyRequired());
             state.setShowIcon(roundParameters.showIcon());
+            if (comparisonMode && roundParameters.comparisonScales() != null
+                    && !roundParameters.comparisonScales().isEmpty()) {
+                state.setComparisonScales(List.copyOf(roundParameters.comparisonScales()));
+            }
+        }
+        if (comparisonMode && state.getComparisonScales() == null) {
+            state.setComparisonScales(ComparisonScaleLadder.DEFAULT);
         }
 
         String target = selectTarget(candidates, state.getRoundsShownElementIds());
@@ -379,6 +425,9 @@ public class RecognitionEngine implements GameEnginePort {
     }
 
     private List<String> buildOptionsForState(RecognitionState state, List<String> candidates, String target) {
+        if (state.isComparisonMode()) {
+            return buildOptionsForComparison(state, target);
+        }
         List<CandidateMetadata> metadata = state.getCandidateMetadata();
         java.util.Map<String, CandidateMetadata> byId = metadata == null
                 ? java.util.Map.of()
@@ -386,6 +435,29 @@ public class RecognitionEngine implements GameEnginePort {
                         c -> c.id(), java.util.function.Function.identity(), (a, b) -> a));
         return buildOptions(candidates, target, state.getDistractorStrategy(), state.getOptionCount(),
                 state.getRecognitionCategory(), byId::get);
+    }
+
+    /**
+     * Comparison round: the target element once per size of the ladder (ADR-029). Only the size tells the
+     * options apart, so their order is shuffled to keep the biggest one from always sitting in the same place.
+     * The options and their sizes are kept in {@code state.comparisonOptions}; the returned ids are the
+     * (identical) element ids.
+     */
+    private List<String> buildOptionsForComparison(RecognitionState state, String target) {
+        if (target == null) {
+            state.setComparisonOptions(new ArrayList<>());
+            return new ArrayList<>();
+        }
+        List<Double> scales = state.getComparisonScales() != null
+                ? state.getComparisonScales() : ComparisonScaleLadder.DEFAULT;
+        List<ComparisonOption> options = new ArrayList<>();
+        for (double scale : scales) {
+            options.add(new ComparisonOption(target, scale));
+        }
+        Collections.shuffle(options, random);
+        state.setComparisonOptions(options);
+        return options.stream().map(ComparisonOption::elementId)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 
     List<String> buildOptions(
@@ -455,6 +527,22 @@ public class RecognitionEngine implements GameEnginePort {
                 return null;
             }
             return selectedNode.asString();
+        } catch (JacksonException e) {
+            return null;
+        }
+    }
+
+    Double parseSelectedScalePercent(String actionPayload) {
+        if (actionPayload == null || actionPayload.isBlank()) {
+            return null;
+        }
+        try {
+            var node = OBJECT_MAPPER.readTree(actionPayload);
+            var scaleNode = node.get("selectedScalePercent");
+            if (scaleNode == null || scaleNode.isNull() || !scaleNode.isNumber()) {
+                return null;
+            }
+            return scaleNode.asDouble();
         } catch (JacksonException e) {
             return null;
         }

@@ -11,6 +11,7 @@ import es.vargontoc.educational.framework.content.infrastructure.persistence.Dev
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionAlphaNumericElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionAnimalElementSeed;
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionComparisonElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionColorElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.LetterSimilarityPairSeed;
 import es.vargontoc.educational.framework.content.model.Activity;
@@ -139,6 +140,7 @@ public class SeedService {
         loaded += loadRecognitionAlphaNumeric(true);
         loaded += loadRecognitionColors();
         loaded += loadRecognitionAnimals();
+        loaded += loadRecognitionComparison();
         loaded += loadLetterSimilarityPairs();
         loaded += loadNumberSimilarityPairs();
         log.info("Seed loading complete. {} records loaded.", loaded);
@@ -628,6 +630,49 @@ public class SeedService {
             }
         }
         return fallback;
+    }
+
+    private int loadRecognitionComparison() {
+        String file = "21-comparison-elements.json";
+        var seeds = readSeedFile(file, new TypeReference<List<RecognitionComparisonElementSeed>>() {});
+
+        int count = 0;
+
+        Long topicId = resolveTopicId("Comparación");
+        if(topicId == null){
+            log.warn("Topic not found for recognition element seed.");
+            return 0;
+        }
+
+        for(var seed : seeds) {
+            String key =  "recognition-element-comparison:" + seed.code();
+            if(alreadyLoaded(key)){
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+
+            String nubiAudio = nubiAudioText(seed.resourceRefs(), null);
+            if (nubiAudio != null) {
+                audio.getAudio(AudioRequest.withPreset(nubiAudio, TonePreset.CALM));
+            }
+
+            var element = new RecognitionElement();
+            element.setTopicId(topicId);
+            element.setCode(seed.code());
+            element.setDisplayValue(seed.displayValue());
+            element.setSortOrder(0);
+            element.setResourceRefs(seed.resourceRefs());
+            element.setSimilarityGroup(seed.similarityGroup());
+            element.setStatus(ContentStatus.ACTIVE);
+            element.setCreatedAt(LocalDateTime.now());
+            recognitionElementRepository.save(element);
+
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+
+        return count;
     }
 
     private int loadRecognitionColors() {

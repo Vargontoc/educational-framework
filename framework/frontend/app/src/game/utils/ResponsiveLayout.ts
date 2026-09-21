@@ -26,6 +26,11 @@ export interface OptionSlot extends Point {
     size: number
 }
 
+/** Opcion de comparacion: `size` es el lado dibujado (segun su escala) y `hitSize` el lado tactil. */
+export interface ComparisonSlot extends OptionSlot {
+    hitSize: number
+}
+
 export interface LayoutSizes {
     viewportWidth: number
     viewportHeight: number
@@ -72,6 +77,8 @@ const STIMULUS_ZONE_Y = 0.25
 const OPTIONS_ZONE_Y = 0.65
 const OPTION_FILL_OF_SLOT = 0.9
 const ELEMENT_GAP_CSS = 8
+/** Lado maximo (px CSS) de la opcion mas grande (100 %) de una ronda de comparacion. */
+const COMPARISON_BASE_MAX_CSS = 240
 const MIN_FONT_CSS = 14
 
 const clamp = (value: number, range: Range) => Math.min(Math.max(value, range.min), range.max)
@@ -156,6 +163,46 @@ export class ResponsiveLayout {
 
     getNubiSize(): number {
         return this.sizes.nubiSize
+    }
+
+    /**
+     * Opciones de una ronda de comparacion: el mismo objeto a `scales` (porcentajes) distintos.
+     *
+     * Van repartidas en la franja que deja libre Nubi (esquina inferior derecha) y bajo el estimulo,
+     * asi la opcion mas grande nunca la tapa ni la solapa. El lado del 100 % se ajusta al hueco y el
+     * resto se deriva de su porcentaje. El area tactil de cada opcion es al menos `hitSize` (44 px CSS
+     * o mas segun el dispositivo) aunque la opcion se vea mas pequena, sin invadir a sus vecinas.
+     */
+    getComparisonSlots(scales: number[]): ComparisonSlot[] {
+        const count = scales.length
+        if (count <= 0) return []
+
+        const s = this.sizes
+        const gap = s.displayScale * ELEMENT_GAP_CSS
+        const regionLeft = s.nubiMargin
+        const regionRight = s.viewportWidth - s.nubiSize - s.nubiMargin * 2
+        const spacing = (regionRight - regionLeft) / count
+
+        const bandTop = s.stimulusCenter.y + s.stimulusSize / 2 + gap
+        const bandBottom = s.viewportHeight - s.nubiMargin
+        const base = Math.min(
+            spacing * OPTION_FILL_OF_SLOT,
+            bandBottom - bandTop,
+            COMPARISON_BASE_MAX_CSS * s.displayScale
+        )
+
+        const centerY = Math.min(Math.max(s.optionsY, bandTop + base / 2), bandBottom - base / 2)
+        const maxHit = spacing * OPTION_FILL_OF_SLOT
+
+        return scales.map((scale, i) => {
+            const size = base * scale / 100
+            return {
+                x: regionLeft + spacing * (i + 0.5),
+                y: centerY,
+                size,
+                hitSize: Math.min(Math.max(size, s.hitSize), Math.max(maxHit, size))
+            }
+        })
     }
 
     /** Posiciones y tamaño de cada opcion: repartidas a lo ancho, sin solaparse entre si. */

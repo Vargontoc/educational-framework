@@ -63,7 +63,12 @@ payload:
           const: game_action
         action:
           type: string
-          description: "Action payload, e.g. 'CORRECT:answer' or 'INCORRECT:answer'"
+          description: >-
+            Action payload, e.g. 'CORRECT:answer' or 'INCORRECT:answer'. For RECOGNITION games it is a JSON string
+            with selectedOptionId and responseTimeMs. In comparison rounds (comparisonMode=true) every option shares
+            the same elementId, so it must also carry selectedScalePercent (the scalePercent of the tapped option):
+            the answer is correct only when it equals the biggest scale of the round. Without it the answer is
+            counted as not correct.
         topicId:
           type: integer
           format: int64

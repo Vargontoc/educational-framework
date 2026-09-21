@@ -12,11 +12,12 @@ class RecognitionCategoryTest {
     void recognitionCategory_hasAllExpectedValues() {
         var values = RecognitionCategory.values();
 
-        assertEquals(5, values.length);
+        assertEquals(6, values.length);
         assertEquals(RecognitionCategory.LETTER, RecognitionCategory.valueOf("LETTER"));
         assertEquals(RecognitionCategory.NUMBER, RecognitionCategory.valueOf("NUMBER"));
         assertEquals(RecognitionCategory.SHAPE, RecognitionCategory.valueOf("SHAPE"));
         assertEquals(RecognitionCategory.COLOR, RecognitionCategory.valueOf("COLOR"));
         assertEquals(RecognitionCategory.ANIMAL, RecognitionCategory.valueOf("ANIMAL"));
+        assertEquals(RecognitionCategory.COMPARISON, RecognitionCategory.valueOf("COMPARISON"));
     }
 }

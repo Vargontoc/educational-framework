@@ -127,4 +127,40 @@ class RecognitionDifficultyServiceTest {
                 DifficultyCode.HARD, RecognitionCategory.COLOR, ColorVisionMode.NONE).optionCount();
         assertTrue(hardOptions >= 3 && hardOptions <= 4, "HARD ladder is 3-4 options, was " + hardOptions);
     }
+
+    @Test
+    void resolveRoundParameters_comparison_followsTheSizeLadder() {
+        RoundParameters easy = service.resolveRoundParameters(
+                DifficultyCode.EASY, RecognitionCategory.COMPARISON, ColorVisionMode.NONE);
+        RoundParameters medium = service.resolveRoundParameters(
+                DifficultyCode.MEDIUM, RecognitionCategory.COMPARISON, ColorVisionMode.NONE);
+        RoundParameters hard = service.resolveRoundParameters(
+                DifficultyCode.HARD, RecognitionCategory.COMPARISON, ColorVisionMode.NONE);
+
+        assertEquals(java.util.List.of(100.0, 40.0), easy.comparisonScales());
+        assertEquals(2, easy.optionCount());
+        assertEquals(java.util.List.of(100.0, 65.0), medium.comparisonScales());
+        assertEquals(2, medium.optionCount());
+        assertEquals(java.util.List.of(100.0, 75.0, 50.0), hard.comparisonScales());
+        assertEquals(3, hard.optionCount());
+    }
+
+    @Test
+    void resolveRoundParameters_comparison_ignoresColourVisionProfile() {
+        RoundParameters result = service.resolveRoundParameters(
+                DifficultyCode.EASY, RecognitionCategory.COMPARISON, ColorVisionMode.PROTANOPIA);
+
+        assertFalse(result.nonChromaticKeyRequired());
+    }
+
+    @Test
+    void resolveRoundParameters_otherCategories_haveNoComparisonScales() {
+        for (RecognitionCategory category : RecognitionCategory.values()) {
+            if (category == RecognitionCategory.COMPARISON) {
+                continue;
+            }
+            assertEquals(null, service.resolveRoundParameters(
+                    DifficultyCode.EASY, category, ColorVisionMode.NONE).comparisonScales(), category.name());
+        }
+    }
 }

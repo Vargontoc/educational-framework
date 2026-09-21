@@ -2,7 +2,7 @@ import { Scene } from "phaser"
 import { WORLD_MAP_CONFIG } from "../config/worldMapConfig"
 
 const TRANSPORT_DEPTH = 5
-const TRANSPORT_ICON_SIZE = 64
+const TRANSPORT_ICON_SIZE = 120
 // A la IZQUIERDA del spawn de Nubi (más cerca de x=0), no a la derecha como
 // antes: los elementos de descubrimiento pueden autorarse con positionX
 // arbitrariamente bajo, así que colocar el transporte hacia el interior del

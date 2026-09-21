@@ -85,6 +85,11 @@
                 "type" : "image",
                 "key" : "exit-portal",
                 "url" : "assets/icons/exit.png"
+            },
+            {
+                "type" : "image",
+                "key" : "tablero-minigame",
+                "url" : "assets/images/tablero_minigame.png"
             }
         ]
     },
@@ -792,6 +797,60 @@
                 "key" : "item_5",
                 "url" : "assets/images/colors/white/white_5.png"
             }
+        ]
+    },
+    "recognition-comparison" : {
+        "files" : [
+                {
+                    "type": "image",
+                    "key": "apple",
+                    "url": "assets/images/comparison/apple.png"
+                },
+                {
+                    "type": "image",
+                    "key": "car",
+                    "url": "assets/images/comparison/car.png"
+                },
+                {
+                    "type": "image",
+                    "key": "house",
+                    "url": "assets/images/comparison/house.png"
+                },
+                {
+                    "type": "image",
+                    "key": "tree",
+                    "url": "assets/images/comparison/tree.png"
+                },
+                {
+                    "type": "image",
+                    "key": "flower",
+                    "url": "assets/images/comparison/flower.png"
+                },
+                {
+                    "type": "image",
+                    "key": "ball",
+                    "url": "assets/images/comparison/ball.png"
+                },
+                {
+                    "type": "image",
+                    "key": "book",
+                    "url": "assets/images/comparison/book.png"
+                },
+                {
+                    "type": "image",
+                    "key": "cup",
+                    "url": "assets/images/comparison/cup.png"
+                },
+                {
+                    "type": "image",
+                    "key": "hat",
+                    "url": "assets/images/comparison/hat.png"
+                },
+                {
+                    "type": "image",
+                    "key": "shoe",
+                    "url": "assets/images/comparison/shoe.png"
+                }
         ]
     }
 }

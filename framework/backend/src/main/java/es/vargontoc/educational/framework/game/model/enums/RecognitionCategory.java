@@ -5,5 +5,6 @@ public enum RecognitionCategory {
     NUMBER,
     SHAPE,
     COLOR,
-    ANIMAL
+    ANIMAL,
+    COMPARISON
 }

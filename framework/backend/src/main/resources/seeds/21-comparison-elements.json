@@ -1,0 +1,62 @@
+[
+  {
+    "code": "apple",
+    "displayValue": "Manzana",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es la manzana más grande?\", \"image\": \"apple\"}",
+    "similarityGroup": "fruit"
+  },
+  {
+    "code": "car",
+    "displayValue": "Coche",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es el coche más grande?\", \"image\": \"car\"}",
+    "similarityGroup": "vehicle"
+  },
+  {
+    "code": "house",
+    "displayValue": "Casa",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es la casa más grande?\", \"image\": \"house\"}",
+    "similarityGroup": "building"
+  },
+  {
+    "code": "tree",
+    "displayValue": "Árbol",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es el árbol más grande?\", \"image\": \"tree\"}",
+    "similarityGroup": "plant"
+  },
+  {
+    "code": "flower",
+    "displayValue": "Flor",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es la flor más grande?\", \"image\": \"flower\"}",
+    "similarityGroup": "plant"
+  },
+  {
+    "code": "ball",
+    "displayValue": "Pelota",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es la pelota más grande?\", \"image\": \"ball\"}",
+    "similarityGroup": "toy"
+  },
+  {
+    "code": "book",
+    "displayValue": "Libro",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es el libro más grande?\", \"image\": \"book\"}",
+    "similarityGroup": "object"
+  },
+  {
+    "code": "cup",
+    "displayValue": "Taza",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es la taza más grande?\", \"image\": \"cup\"}",
+    "similarityGroup": "object"
+  },
+  {
+    "code": "hat",
+    "displayValue": "Sombrero",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es el sombrero más grande?\", \"image\": \"hat\"}",
+    "similarityGroup": "clothing"
+  },
+  {
+    "code": "shoe",
+    "displayValue": "Zapato",
+    "resourceRefs": "{\"nubi-audio\": \"¿Cuál es el zapato más grande?\", \"image\": \"shoe\"}",
+    "similarityGroup": "clothing"
+  }
+]

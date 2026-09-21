@@ -50,3 +50,11 @@ properties:
       Si se muestra el icono de referencia del elemento (resourceRefs.icon). true en EASY y MEDIUM,
       false en HARD. Solo tiene efecto en la categoría COLOR; el resto de categorías puede ignorarlo.
       Los payloads anteriores a este campo se interpretan como true.
+  comparisonScales:
+    type: array
+    items:
+      type: number
+    description: >-
+      Solo en la categoría COMPARISON (ADR-029): tamaños relativos de las opciones de la ronda, uno por opción
+      (EASY [100, 40], MEDIUM [100, 65], HARD [100, 75, 50]). En ese caso optionCount es igual al número de
+      tamaños. Ausente en el resto de categorías.

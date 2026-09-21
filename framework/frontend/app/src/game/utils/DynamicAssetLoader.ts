@@ -25,7 +25,8 @@ const PACK_KEYS: Partial<Record<RECOGNITION_TYPE, string>> = {
     LETTER: 'recognition-letters',
     NUMBER: 'recognition-numbers',
     SHAPE: 'recognition-shapes',
-    ANIMAL: 'recognition-animals'
+    ANIMAL: 'recognition-animals',
+    COMPARISON: 'recognition-comparison'
 }
 
 let manifestPromise: Promise<Manifest> | undefined
@@ -73,7 +74,7 @@ export class DynamicAssetLoader {
 
     /**
      * LETTER, NUMBER y ANIMAL usan el `code` como key de textura; COLOR, el splash de su bloque;
-     * el resto, `resourceRefs['image']`.
+     * COMPARISON, `resourceRefs['image']` (o el `code`); el resto, `resourceRefs['image']`.
      */
     static textureKey(element: RecognitionElement, category: RECOGNITION_TYPE | null | undefined): string | null {
         if (category === 'COLOR') {
@@ -81,6 +82,7 @@ export class DynamicAssetLoader {
             return block ? DynamicAssetLoader.colorSplashKey(block) : null
         }
         if (category === 'LETTER' || category === 'NUMBER' || category === 'ANIMAL') return element.code || null
+        if (category === 'COMPARISON') return element.resourceRefs?.['image'] ?? (element.code || null)
         return element.resourceRefs?.['image'] ?? null
     }
 

@@ -58,5 +58,15 @@
     "maxAge": 6,
     "recognitionType": "COLOR",
     "habitatTag": null
+  },
+  {
+    "name": "Comparación",
+    "categoryName": "Matemáticas",
+    "description": "Comparar tamaños: grande y pequeño",
+    "status": "ACTIVE",
+    "minAge": 3,
+    "maxAge": 4,
+    "recognitionType": "COMPARISON",
+    "habitatTag": null
   }
 ]

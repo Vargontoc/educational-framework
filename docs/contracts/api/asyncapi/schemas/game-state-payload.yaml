@@ -54,6 +54,7 @@ properties:
           - SHAPE
           - COLOR
           - ANIMAL
+          - COMPARISON
       roundIndex:
         type: integer
         description: Zero-based index of the current round.
@@ -87,6 +88,31 @@ properties:
         description: >-
           Whether the reference icon (resourceRefs.icon of the elements) should be shown for this round. true in
           EASY and MEDIUM, false in HARD. Only meaningful for the COLOR category; other categories may ignore it.
+      comparisonMode:
+        type: boolean
+        description: >-
+          true when the round is a big/small comparison (category COMPARISON, ADR-029): every option is the same
+          element drawn at a different size and the child must pick the biggest. false otherwise; payloads that
+          do not carry the field are recognition rounds.
+      comparisonOptions:
+        type: array
+        description: >-
+          Options of the current round with their relative size. Only present when comparisonMode is true.
+          Every entry carries the same elementId (the target), so the options are told apart by scalePercent.
+          EASY: 100 and 40; MEDIUM: 100 and 65; HARD: 100, 75 and 50. The order is shuffled every round.
+          To answer, the client sends selectedScalePercent of the chosen option (see GameActionMessage).
+        items:
+          type: object
+          required:
+            - elementId
+            - scalePercent
+          properties:
+            elementId:
+              type: string
+              description: Element shown; identical for every option of the round.
+            scalePercent:
+              type: number
+              description: Relative size of the option (100, 75, 65, 50 or 40).
       elements:
         type: array
         description: >-

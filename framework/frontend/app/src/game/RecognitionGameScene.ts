@@ -1,4 +1,4 @@
-import { Scene, GameObjects, Scale, Time } from "phaser"
+import { Scene, GameObjects, Scale, Time, Geom } from "phaser"
 import {
     AvatarEvent,
     GAME_RESULT_TYPE,
@@ -9,7 +9,8 @@ import {
     RECOGNITION_TYPE,
     RecognitionElement,
     RecognitionEnginePayload,
-    ServerGameEvent
+    ServerGameEvent,
+    type ComparisonOption
 } from "./GameEvent"
 import { RoundProgressBar } from "./ui/RoundProgressBar"
 import { ExitButton } from "./ui/ExitButton"
@@ -17,7 +18,7 @@ import { ViewportBackdrop } from "./ui/ViewportBackdrop"
 import { createSplashCompound, layoutSplashCompound } from "./ui/SplashCompound"
 import { DynamicAssetLoader } from "./utils/DynamicAssetLoader"
 import { RecognitionColorizer } from "./utils/RecognitionColorizer"
-import { ResponsiveLayout, type LayoutSizes, type OptionSlot } from "./utils/ResponsiveLayout"
+import { ResponsiveLayout, type ComparisonSlot, type LayoutSizes, type OptionSlot } from "./utils/ResponsiveLayout"
 import { DEVICE_PROFILE_REGISTRY_KEY, detectDeviceProfile, type DeviceProfile } from "./utils/DeviceProfile"
 import { RoundAudioCache } from "./RoundAudioCache"
 import { MessageRouter } from "@/services/MessageRouter"
@@ -71,12 +72,17 @@ const STIMULUS_CARD_CORNER_RATIO = 0.1
 const STIMULUS_LABEL_RATIO = 0.4
 const OPTION_LABEL_RATIO = 0.45
 const KEEP_RECENT_ROUNDS = 3
-const GUIDE_CHROM_COLOR = 0xFFFFFF
-const GUIDE_CHROM_ALPHA_BASE = 0.2
-const GUIDE_CHROM_ALPHA_MAX = 0.25
-const GUIDE_CHROM_PULSE_DURATION = 2000
-const GUIDE_CHROM_PADDING = 20
-const GUIDE_CHROM_DEPTH = 1
+// Tablero de madera (9-slice): bordes en px de la imagen de 1024x1024 y escala a la que se dibujan.
+const BOARD_TEXTURE_KEY = 'tablero-minigame'
+const BOARD_SLICE_LEFT = 40
+const BOARD_SLICE_RIGHT = 40
+const BOARD_SLICE_TOP = 100
+const BOARD_SLICE_BOTTOM = 104
+const BOARD_BORDER_SCALE = 0.4
+const BOARD_DEPTH = -0.5
+const CONSIGNA_BIG_COLOR = 0x4CAF50
+const CONSIGNA_SMALL_COLOR = 0x90A4AE
+const CONSIGNA_OUTLINE_COLOR = 0xFFFFFF
 const PATTERN_COLOR = 0x000000
 const PATTERN_ALPHA = 0.4
 const PATTERN_LINE_THICKNESS = 3
@@ -113,6 +119,13 @@ export class RecognitionGameScene extends Scene {
     /** COLOR: item (`item_N`) elegido para la ronda, el mismo en todas las opciones y en el estimulo. */
     private selectedColorItem: string = ''
     private showIcon: boolean = true
+    /** COMPARISON: la ronda muestra el mismo elemento a distintos tamanos y hay que tocar el mayor. */
+    private comparisonMode: boolean = false
+    private comparisonOptions: ComparisonOption[] = []
+    /** Opcion tocada en una ronda de comparacion (todas comparten elementId, se distinguen por indice). */
+    private selectedOptionIndex: number = -1
+    private consignaGraphics?: Phaser.GameObjects.Graphics
+    private board?: Phaser.GameObjects.NineSlice
     private pendingAudioListener?: { id: string, handler: (audioId: string) => void }
     private reducedMotion: boolean = false
     private exitInProgress: boolean = false
@@ -126,6 +139,7 @@ export class RecognitionGameScene extends Scene {
     private layout!: ResponsiveLayout
     private sizes!: LayoutSizes
     private previousScaleMode?: Scale.ScaleModeType
+    private previousAutoCenter?: number
     private hintTargetId: string = ''
     private fitActive = false
     private backdrop!: ViewportBackdrop
@@ -133,7 +147,7 @@ export class RecognitionGameScene extends Scene {
     private introTimeout?: Time.TimerEvent
     private introStartedAt = 0
     private onScaleResize = () => {
-        this.backdrop?.update()
+        this.layoutBoard()
         this.introOverlay?.setPosition(this.scale.width / 2, this.scale.height / 2).setSize(this.scale.width, this.scale.height)
         this.relayout()
     }
@@ -153,8 +167,6 @@ export class RecognitionGameScene extends Scene {
     private _recognitionCategory: string = ''
     private backgroundTextureKey: string = ''
     private nonChromaticPatternGraphics: Phaser.GameObjects.Graphics[] = []
-    private guideChromGraphics?: Phaser.GameObjects.Graphics
-    private guideChromPulseTween?: Phaser.Tweens.Tween
     private touchEnableTimer?: Phaser.Time.TimerEvent
 
     constructor() { super({ key: 'recognition-game', active: false }) }
@@ -219,7 +231,23 @@ export class RecognitionGameScene extends Scene {
         this.previousScaleMode = this.scale.scaleMode
         this.scale.scaleMode = Scale.FIT
         this.scale.displaySize.setAspectMode(Scale.FIT)
+        this.disableAutoCenterInFlexParent()
         this.scale.refresh()
+    }
+
+    /**
+     * El contenedor del juego (`.game-view`) ya centra el canvas con flexbox. Con FIT el canvas es mas
+     * pequeno que el contenedor y `autoCenter` le anade ademas margenes para centrarlo: el centrado se suma
+     * y el canvas queda desplazado la mitad de ese margen (recortado por un lado en ventanas que no son 16:9).
+     * Mientras dura el minijuego el centrado lo hace solo el contenedor.
+     */
+    private disableAutoCenterInFlexParent(): void {
+        const parent = this.scale.canvas?.parentElement
+        if (!parent || getComputedStyle(parent).display !== 'flex') return
+        this.previousAutoCenter = this.scale.autoCenter
+        this.scale.autoCenter = Scale.NO_CENTER
+        this.scale.canvas.style.marginLeft = ''
+        this.scale.canvas.style.marginTop = ''
     }
 
     private restoreScaling(): void {
@@ -228,6 +256,10 @@ export class RecognitionGameScene extends Scene {
         this.scale.scaleMode = this.previousScaleMode
         this.scale.displaySize.setAspectMode(this.previousScaleMode)
         this.previousScaleMode = undefined
+        if (this.previousAutoCenter !== undefined) {
+            this.scale.autoCenter = this.previousAutoCenter
+            this.previousAutoCenter = undefined
+        }
         this.scale.refresh()
     }
 
@@ -257,6 +289,7 @@ export class RecognitionGameScene extends Scene {
 
         this.backdrop = new ViewportBackdrop(this)
         this.createBiomeBackground()
+        this.createBoard()
 
         this.refreshSizes()
         this.progressBar = new RoundProgressBar(this, this.sizes)
@@ -286,22 +319,18 @@ export class RecognitionGameScene extends Scene {
     }
 
     /**
-     * Fondo del minijuego: mosaico del bioma (`minigame-background-[bioma]`, cargado con el pack
-     * `biome-[bioma]` del mapa) repetido a tamano nativo. Si el bioma no lo tiene, degradado de color.
+     * Fondo del minijuego: la imagen del bioma (`minigame-background-[bioma]`, cargada con el pack
+     * `biome-[bioma]` del mapa) escalada al viewport del dispositivo. No se dibuja en el canvas: el canvas es
+     * transparente y la imagen va detras, en una capa a pantalla completa (ver ViewportBackdrop). Se monta al
+     * revelar la escena (revealIntro) para que la transicion en negro no la muestre antes de tiempo.
+     * Si el bioma no la tiene, degradado de color dentro del canvas.
      */
     private createBiomeBackground(): void {
         const normalizedBiome = (this.biome ?? 'meadow').toLowerCase()
 
-        const tileKey = `minigame-background-${normalizedBiome}`
-        if (this.textures.exists(tileKey)) {
-            this.backgroundTextureKey = tileKey
-            const tile = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, tileKey)
-                .setOrigin(0, 0)
-                .setDepth(-1)
-            tile.tilePositionX = ViewportBackdrop.tilePositionFor(this.scale.width, tile.texture.getSourceImage().width)
-            tile.tilePositionY = ViewportBackdrop.tilePositionFor(this.scale.height, tile.texture.getSourceImage().height)
-            // FIT deja franjas fuera del canvas: el mosaico continua por fuera como fondo CSS del contenedor.
-            // Se aplica al revelar la escena (revealIntro), no antes, para que la transicion en negro no muestre franjas.
+        const imageKey = `minigame-background-${normalizedBiome}`
+        if (this.textures.exists(imageKey)) {
+            this.backgroundTextureKey = imageKey
             return
         }
 
@@ -321,6 +350,28 @@ export class RecognitionGameScene extends Scene {
             graphics.fillStyle(color, 1)
             graphics.fillRect(0, i * stepHeight, this.scale.width, stepHeight + 1)
         }
+    }
+
+    /**
+     * Tablero del minijuego: cubre toda el area de juego (el canvas) por encima del fondo del bioma y por
+     * debajo de los elementos. Es 9-slice: las esquinas y los bordes de madera conservan su grosor y solo se
+     * estira el centro, asi se ve igual en cualquier relacion de aspecto. Sus bordes irregulares y esquinas
+     * transparentes dejan ver el fondo. Si la textura no esta cargada, no se dibuja.
+     */
+    private createBoard(): void {
+        if (!this.textures.exists(BOARD_TEXTURE_KEY)) return
+
+        this.board = this.add.nineslice(
+            0, 0, BOARD_TEXTURE_KEY, undefined, 0, 0,
+            BOARD_SLICE_LEFT, BOARD_SLICE_RIGHT, BOARD_SLICE_TOP, BOARD_SLICE_BOTTOM
+        )
+        this.board.setOrigin(0, 0).setDepth(BOARD_DEPTH).setScale(BOARD_BORDER_SCALE)
+        this.layoutBoard()
+    }
+
+    /** Ajusta el tablero al area de juego actual (el tamano se expresa en px de la imagen, antes de la escala). */
+    private layoutBoard(): void {
+        this.board?.setPosition(0, 0).setSize(this.scale.width / BOARD_BORDER_SCALE, this.scale.height / BOARD_BORDER_SCALE)
     }
 
     private onExitDoubleTap = () => this.sendAbandonAndExit()
@@ -530,6 +581,7 @@ export class RecognitionGameScene extends Scene {
                 if (this.blockActions) return
                 this.blockActions = true
                 this.selectedOptionId = e.id
+                this.selectedOptionIndex = -1
                 this.removeVisualHint()
                 if (this.websocket) {
                     const ev = new GameRecognitionActionEvent()
@@ -545,6 +597,163 @@ export class RecognitionGameScene extends Scene {
                 this.images.push(labelElement)
             }
         })
+    }
+
+    /**
+     * Ronda de comparacion (grande/pequeno): el mismo objeto una vez por opcion, cada una a su tamano.
+     * No hay tarjeta de estimulo con el objeto; la consigna es un icono (ver drawComparisonConsigna).
+     * Como todas las opciones comparten elementId, la respuesta lleva ademas el tamano de la opcion tocada.
+     */
+    private renderComparisonElements(items: RecognitionElement[]): void {
+        this.images = []
+        this.cleanupStimulusCard()
+        this.drawComparisonConsigna()
+
+        const slots = this.layout.getComparisonSlots(this.comparisonOptions.map(o => o.scalePercent))
+        this.comparisonOptions.forEach((option, i) => {
+            const element = items.find(e => e.id === option.elementId)
+            const slot = slots[i]
+            if (!element || !slot) return
+
+            const imageKey = DynamicAssetLoader.textureKey(element, 'COMPARISON')
+            let optionElement: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
+            let labelElement: Phaser.GameObjects.Text | undefined
+
+            if (imageKey && this.textures.exists(imageKey)) {
+                optionElement = this.add.image(slot.x, slot.y, imageKey)
+            } else {
+                if (imageKey) {
+                    console.warn('Texture not in cache, using placeholder for comparison option:', imageKey)
+                }
+                optionElement = this.add.rectangle(slot.x, slot.y, slot.size, slot.size, 0x90A4AE, 0.6)
+                labelElement = this.add.text(slot.x, slot.y, element.displayValue, {
+                    fontSize: `${slot.size * OPTION_LABEL_RATIO}px`,
+                    color: '#ffffff',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5, 0.5)
+            }
+
+            optionElement.setData('elementId', element.id)
+            optionElement.setData('optionIndex', i)
+            optionElement.setData('scalePercent', option.scalePercent)
+            if (labelElement) {
+                labelElement.setData('elementId', element.id)
+                labelElement.setData('optionIndex', i)
+            }
+            this.placeComparisonOption(optionElement, labelElement, slot)
+            this.makeTouchable(optionElement)
+
+            optionElement.on('pointerdown', () => {
+                if (this.startingGame) return
+                if (this.blockActions) return
+                this.blockActions = true
+                this.selectedOptionId = element.id
+                this.selectedOptionIndex = i
+                this.removeVisualHint()
+                if (this.websocket) {
+                    const ev = new GameRecognitionActionEvent()
+                    const diff = Date.now() - this.dateClick
+                    ev.setAction(element.id, diff, option.scalePercent)
+                    this.websocket.send(JSON.stringify(ev))
+                    this.dateClick = Date.now()
+                }
+            })
+
+            this.images.push(optionElement)
+            if (labelElement) {
+                this.images.push(labelElement)
+            }
+        })
+    }
+
+    /** Coloca una opcion de comparacion: su lado dibujado sale de su tamano relativo; el area tactil nunca baja del minimo. */
+    private placeComparisonOption(
+        option: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle,
+        label: Phaser.GameObjects.Text | undefined,
+        slot: ComparisonSlot
+    ): void {
+        option.setPosition(slot.x, slot.y)
+        if (option instanceof GameObjects.Image) {
+            option.setScale(slot.size / Math.max(option.width, option.height))
+        } else {
+            option.setSize(slot.size, slot.size)
+        }
+        option.setData('hitSize', slot.hitSize)
+        label?.setPosition(slot.x, slot.y).setFontSize(slot.size * OPTION_LABEL_RATIO)
+        if (option.input) this.applyComparisonHitArea(option)
+    }
+
+    /** Area tactil cuadrada de `hitSize` (unidades logicas) centrada en la opcion, expresada en su espacio local. */
+    private applyComparisonHitArea(option: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle): void {
+        const hit = option.getData('hitSize') as number
+        const scaleX = option.scaleX || 1
+        const scaleY = option.scaleY || 1
+        const localW = option.width
+        const localH = option.height
+        const hitW = hit / scaleX
+        const hitH = hit / scaleY
+        option.setInteractive(
+            new Geom.Rectangle((localW - hitW) / 2, (localH - hitH) / 2, hitW, hitH),
+            Geom.Rectangle.Contains
+        )
+    }
+
+    /** Habilita el toque de una opcion respetando el area tactil propia de las opciones de comparacion. */
+    private makeTouchable(obj: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Container): void {
+        if (obj.getData('hitSize') && !(obj instanceof GameObjects.Container)) {
+            this.applyComparisonHitArea(obj)
+        } else {
+            obj.setInteractive({ useHandCursor: false })
+        }
+    }
+
+    /** Recoloca las opciones de comparacion ya dibujadas con los tamanos actuales de pantalla. */
+    private layoutComparisonOptions(): void {
+        const options = this.getOptionImages()
+        const bases = options
+            .filter((o): o is Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle => !(o instanceof GameObjects.Text))
+            .sort((a, b) => (a.getData('optionIndex') as number) - (b.getData('optionIndex') as number))
+        const slots = this.layout.getComparisonSlots(bases.map(b => b.getData('scalePercent') as number))
+
+        bases.forEach((base, i) => {
+            const index = base.getData('optionIndex') as number
+            const label = options.find(
+                (o): o is Phaser.GameObjects.Text => o instanceof GameObjects.Text && o.getData('optionIndex') === index
+            )
+            this.placeComparisonOption(base, label, slots[i])
+        })
+    }
+
+    /**
+     * Consigna visual de la comparacion, sin texto ni audio: un circulo grande junto a uno pequeno y una flecha
+     * que senala el grande. Va en la tarjeta del estimulo, arriba y centrada.
+     */
+    private drawComparisonConsigna(): void {
+        this.drawStimulusCard()
+        const { x, y } = this.sizes.stimulusCenter
+        const size = this.sizes.stimulusSize
+
+        const g = this.consignaGraphics ?? this.add.graphics()
+        g.clear()
+
+        const bigX = x - size * 0.18
+        const bigY = y + size * 0.1
+        const bigR = size * 0.27
+        g.fillStyle(CONSIGNA_BIG_COLOR, 1)
+        g.fillCircle(bigX, bigY, bigR)
+        g.lineStyle(Math.max(2, size * 0.03), CONSIGNA_OUTLINE_COLOR, 1)
+        g.strokeCircle(bigX, bigY, bigR)
+
+        g.fillStyle(CONSIGNA_SMALL_COLOR, 1)
+        g.fillCircle(x + size * 0.27, y + size * 0.24, size * 0.11)
+
+        // Flecha hacia abajo sobre el circulo grande
+        const tipY = bigY - bigR - size * 0.03
+        const half = size * 0.09
+        g.fillStyle(CONSIGNA_OUTLINE_COLOR, 1)
+        g.fillTriangle(bigX - half, tipY - size * 0.17, bigX + half, tipY - size * 0.17, bigX, tipY)
+
+        this.consignaGraphics = g
     }
 
     private renderTargetElement(element: RecognitionElement, tint?: number): void {
@@ -590,6 +799,10 @@ export class RecognitionGameScene extends Scene {
     }
 
     private layoutStimulus(): void {
+        if (this.consignaGraphics) {
+            this.drawComparisonConsigna()
+            return
+        }
         const stimulus = this.images.find(o => o.getData('isStimulus'))
         if (!stimulus) return
 
@@ -608,6 +821,12 @@ export class RecognitionGameScene extends Scene {
 
     /** Recoloca lo ya renderizado con los tamaños actuales y redibuja los overlays. */
     private layoutRound(): void {
+        if (this.consignaGraphics) {
+            this.layoutComparisonOptions()
+            this.layoutStimulus()
+            if (this.hintBorderGraphics && this.hintTargetId) this.showVisualHint(this.hintTargetId)
+            return
+        }
         const options = this.getOptionImages()
         const bases = options.filter(
             (o): o is Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Container =>
@@ -625,11 +844,14 @@ export class RecognitionGameScene extends Scene {
         this.layoutStimulus()
 
         if (this.hintBorderGraphics && this.hintTargetId) this.showVisualHint(this.hintTargetId)
-        if (this.guideChromGraphics) this.renderGuideChrom()
         if (this.nonChromaticPatternGraphics.length > 0) this.renderNonChromaticPatterns(this.getOptionImages())
     }
 
     private cleanupStimulusCard(): void {
+        if (this.consignaGraphics) {
+            this.consignaGraphics.destroy()
+            this.consignaGraphics = undefined
+        }
         if (this.stimulusCardGraphics) {
             this.stimulusCardGraphics.destroy()
             this.stimulusCardGraphics = undefined
@@ -649,7 +871,7 @@ export class RecognitionGameScene extends Scene {
             optionImages.forEach(img => {
                 img.setAlpha(1.0)
                 if (isTappable(img)) {
-                    img.setInteractive({ useHandCursor: false })
+                    this.makeTouchable(img)
                 }
             })
             this.blockActions = false
@@ -669,7 +891,7 @@ export class RecognitionGameScene extends Scene {
                 optionImages.forEach(img => {
                     img.setAlpha(1.0)
                     if (isTappable(img)) {
-                        img.setInteractive({ useHandCursor: false })
+                        this.makeTouchable(img)
                     }
                 })
                 this.blockActions = false
@@ -685,63 +907,13 @@ export class RecognitionGameScene extends Scene {
                     ease: 'Sine.easeOut',
                     onComplete: () => {
                         tappableImages.forEach(img => {
-                            img.setInteractive({ useHandCursor: false })
+                            this.makeTouchable(img)
                         })
                         this.blockActions = false
                         this.touchEnableTimer = undefined
                     }
                 })
             })
-        }
-    }
-
-    private renderGuideChrom(): void {
-        this.destroyGuideChrom()
-
-        const optionImages = this.getOptionImages()
-        if (optionImages.length === 0) return
-
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-        optionImages.forEach(img => {
-            const bounds = img.getBounds()
-            if (bounds.x < minX) minX = bounds.x
-            if (bounds.x + bounds.width > maxX) maxX = bounds.x + bounds.width
-            if (bounds.y < minY) minY = bounds.y
-            if (bounds.y + bounds.height > maxY) maxY = bounds.y + bounds.height
-        })
-
-        const cx = (minX + maxX) / 2
-        const cy = (minY + maxY) / 2
-        const rx = (maxX - minX) / 2 + GUIDE_CHROM_PADDING
-        const ry = (maxY - minY) / 2 + GUIDE_CHROM_PADDING
-
-        const graphics = this.add.graphics()
-        graphics.setDepth(GUIDE_CHROM_DEPTH)
-        graphics.fillStyle(GUIDE_CHROM_COLOR, GUIDE_CHROM_ALPHA_BASE)
-        graphics.fillEllipse(cx, cy, rx * 2, ry * 2)
-
-        this.guideChromGraphics = graphics
-
-        if (!this.reducedMotion) {
-            this.guideChromPulseTween = this.tweens.add({
-                targets: graphics,
-                alpha: GUIDE_CHROM_ALPHA_MAX,
-                duration: GUIDE_CHROM_PULSE_DURATION / 2,
-                ease: 'Sine.inOut',
-                yoyo: true,
-                repeat: -1
-            })
-        }
-    }
-
-    private destroyGuideChrom(): void {
-        if (this.guideChromPulseTween) {
-            this.guideChromPulseTween.stop()
-            this.guideChromPulseTween = undefined
-        }
-        if (this.guideChromGraphics) {
-            this.guideChromGraphics.destroy()
-            this.guideChromGraphics = undefined
         }
     }
 
@@ -870,7 +1042,11 @@ export class RecognitionGameScene extends Scene {
             this.selectedColorItem = colorItem ?? ''
             this.clearRoundVisuals()
             const colors = RecognitionColorizer.appliesTo(type) ? this.colorizer.assignColors(items.length) : undefined
-            this.renderElements(items, targetElementId, colors)
+            if (this.comparisonMode && this.comparisonOptions.length > 0) {
+                this.renderComparisonElements(items)
+            } else {
+                this.renderElements(items, targetElementId, colors)
+            }
             this.startingGame = false
             this.assetLoader?.cleanupOldTextures(KEEP_RECENT_ROUNDS)
             onReady?.()
@@ -881,7 +1057,6 @@ export class RecognitionGameScene extends Scene {
         this.images.forEach(i => i.destroy(true))
         this.images = []
         this.cleanupStimulusCard()
-        this.destroyGuideChrom()
         this.destroyNonChromaticPatterns()
     }
 
@@ -915,6 +1090,8 @@ export class RecognitionGameScene extends Scene {
                     this._nonChromaticKeyRequired = rs.nonChromaticKeyRequired ?? false
                     this._recognitionCategory = rs.recognitionCategory ?? ''
                     this.showIcon = rs.showIcon ?? true
+                    this.comparisonMode = rs.comparisonMode ?? false
+                    this.comparisonOptions = rs.comparisonOptions ?? []
                     if (this.progressBar && rs.totalRounds > 0) {
                         this.progressBar.updateProgress(rs.roundIndex, rs.totalRounds)
                     }
@@ -923,9 +1100,6 @@ export class RecognitionGameScene extends Scene {
                         this.nubiLayer?.showPhrase('welcome')
                         if (rs.hintActive) {
                             this.showVisualHint(rs.targetElementId)
-                        }
-                        if (rs.guideChromEnabled) {
-                            this.renderGuideChrom()
                         }
                         const optionImages = this.getOptionImages()
                         this.renderNonChromaticPatterns(optionImages)
@@ -1006,6 +1180,8 @@ export class RecognitionGameScene extends Scene {
             this._nonChromaticKeyRequired = state.recognitionState.nonChromaticKeyRequired ?? false
             this._recognitionCategory = state.recognitionState.recognitionCategory ?? ''
             this.showIcon = state.recognitionState.showIcon ?? true
+            this.comparisonMode = state.recognitionState.comparisonMode ?? false
+            this.comparisonOptions = state.recognitionState.comparisonOptions ?? []
         }
 
         if (state.recognitionState && this.progressBar) {
@@ -1026,7 +1202,10 @@ export class RecognitionGameScene extends Scene {
             this.nubiLayer?.showPhrase('celebration')
         }
 
-        const selectedImage = this.images.find(img => img.getData('elementId') === this.selectedOptionId && !img.getData('isStimulus'))
+        // Comparison options share their elementId: the tapped one is told apart by its index.
+        const selectedImage = this.consignaGraphics && this.selectedOptionIndex >= 0
+            ? this.images.find(img => img.getData('optionIndex') === this.selectedOptionIndex && !(img instanceof GameObjects.Text))
+            : this.images.find(img => img.getData('elementId') === this.selectedOptionId && !img.getData('isStimulus'))
 
         if (complete) {
             this.removeVisualHint()
@@ -1051,9 +1230,6 @@ export class RecognitionGameScene extends Scene {
                 this.loadResources(nextCategory, nextState.elements, nextState.targetElementId ?? '', () => {
                     if (currentHintActive && nextState.targetElementId) {
                         this.showVisualHint(nextState.targetElementId)
-                    }
-                    if (nextState.guideChromEnabled) {
-                        this.renderGuideChrom()
                     }
                     const optionImages = this.getOptionImages()
                     this.renderNonChromaticPatterns(optionImages)
@@ -1198,7 +1374,9 @@ export class RecognitionGameScene extends Scene {
         if (!targetElementId) return
         this.hintTargetId = targetElementId
 
-        const targetImage = this.images.find(img => img.getData('elementId') === targetElementId && !img.getData('isStimulus'))
+        const targetImage = this.consignaGraphics
+            ? this.biggestComparisonOption()
+            : this.images.find(img => img.getData('elementId') === targetElementId && !img.getData('isStimulus'))
         if (!targetImage) return
 
         const graphics = this.add.graphics()
@@ -1228,6 +1406,18 @@ export class RecognitionGameScene extends Scene {
                 repeat: -1
             })
         }
+    }
+
+    /** In a comparison round the right answer is the option drawn at the biggest size, not "the target element". */
+    private biggestComparisonOption(): RoundObject | undefined {
+        let biggest: RoundObject | undefined
+        this.images.forEach(img => {
+            if (img instanceof GameObjects.Text) return
+            const scale = img.getData('scalePercent') as number | undefined
+            if (scale === undefined) return
+            if (!biggest || scale > (biggest.getData('scalePercent') as number)) biggest = img
+        })
+        return biggest
     }
 
     private removeVisualHint(): void {
@@ -1343,7 +1533,6 @@ export class RecognitionGameScene extends Scene {
         this.assetLoader = undefined
         this.cleanupFeedbackTweens()
         this.removeVisualHint()
-        this.destroyGuideChrom()
         this.destroyNonChromaticPatterns()
         if (this.touchEnableTimer) {
             this.touchEnableTimer.remove(false)

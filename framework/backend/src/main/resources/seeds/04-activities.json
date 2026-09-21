@@ -34,5 +34,14 @@
     "maxAge": 7,
     "status": "ACTIVE",
     "topicNames": ["Números"]
+  },
+  {
+    "name": "Comparación de Tamaño",
+    "description": "Encuentra el objeto más grande",
+    "gameEngineType": "RECOGNITION",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "topicNames": ["Comparación"]
   }
 ]

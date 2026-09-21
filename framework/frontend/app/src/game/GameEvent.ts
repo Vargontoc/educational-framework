@@ -19,7 +19,7 @@ export type SERVER_EVENT =
 export type GAME_RESULT_TYPE = 'CORRECT' | 'INCORRECT' | 'TIMEOUT'
 export type AVATAR_TYPE_EVENT = 'WELCOME' | 'FAREWELL' | 'BIOME_TRANSITION' | 'ROUND_PROMPT'
 export type GAME_ENGINE = 'RECOGNITION' | 'MEMORY' | 'ASSOCIATION' | 'COUNT' | 'COMPARE' | 'PUZZLE'
-export type RECOGNITION_TYPE = 'LETTER' | 'NUMBER' | 'SHAPE' | 'COLOR' | 'ANIMAL'
+export type RECOGNITION_TYPE = 'LETTER' | 'NUMBER' | 'SHAPE' | 'COLOR' | 'ANIMAL' | 'COMPARISON'
 
 class GameEvent {
 
@@ -125,8 +125,10 @@ export class GameRecognitionActionEvent extends GameEvent {
     // string and `responseTimeMs` as a separate integer field. This implementation
     // serializes both into a single JSON string in `action`. Deferred to a future
     // sprint for alignment — do not change without backend coordination.
-    setAction(id: string, time: number) {
-        this.action = `{"selectedOptionId" : "${id}", "responseTimeMs" : ${time}}`
+    setAction(id: string, time: number, scalePercent?: number) {
+        // COMPARISON: every option is the same element, so the tapped option is told apart by its size.
+        const scale = scalePercent === undefined ? '' : `, "selectedScalePercent" : ${scalePercent}`
+        this.action = `{"selectedOptionId" : "${id}", "responseTimeMs" : ${time}${scale}}`
     }
 }
 
@@ -222,6 +224,12 @@ export class RecognitionElement {
     accessibleColor?: AccessibleColor
 }
 
+/** Una opcion de una ronda de comparacion: siempre el mismo elemento, a distinto tamano relativo. */
+export class ComparisonOption {
+    elementId: string = ''
+    scalePercent: number = 100
+}
+
 export class RecognitionState {
     elements: RecognitionElement[] = []
     recognitionCategory?: RECOGNITION_TYPE
@@ -235,6 +243,9 @@ export class RecognitionState {
     nonChromaticKeyRequired: boolean = false
     /** COLOR: muestra el item de referencia (EASY/MEDIUM). Los payloads antiguos sin el campo cuentan como true. */
     showIcon: boolean = true
+    /** COMPARISON (grande/pequeno): todas las opciones son el mismo elemento a distinto tamano. */
+    comparisonMode: boolean = false
+    comparisonOptions: ComparisonOption[] = []
 }
 
 export class RecognitionEnginePayload extends BaseEnginePayload {

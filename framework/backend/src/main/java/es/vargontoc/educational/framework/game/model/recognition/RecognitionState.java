@@ -33,6 +33,9 @@ public class RecognitionState {
     private boolean nonChromaticKeyRequired;
     private List<CandidateMetadata> candidateMetadata;
     private boolean showIcon;
+    private boolean comparisonMode;
+    private List<ComparisonOption> comparisonOptions;
+    private List<Double> comparisonScales;
 
     public RecognitionState() {
         this.totalRounds = RecognitionDefaults.DEFAULT_TOTAL_ROUNDS;
@@ -232,6 +235,32 @@ public class RecognitionState {
 
     public void setCandidateMetadata(List<CandidateMetadata> candidateMetadata) {
         this.candidateMetadata = candidateMetadata;
+    }
+
+    public boolean isComparisonMode() {
+        return comparisonMode;
+    }
+
+    public void setComparisonMode(boolean comparisonMode) {
+        this.comparisonMode = comparisonMode;
+    }
+
+    /** Options of the current round with their sizes; only set in comparison mode. */
+    public List<ComparisonOption> getComparisonOptions() {
+        return comparisonOptions;
+    }
+
+    public void setComparisonOptions(List<ComparisonOption> comparisonOptions) {
+        this.comparisonOptions = comparisonOptions;
+    }
+
+    /** Size ladder of the game (same every round); only set in comparison mode. */
+    public List<Double> getComparisonScales() {
+        return comparisonScales;
+    }
+
+    public void setComparisonScales(List<Double> comparisonScales) {
+        this.comparisonScales = comparisonScales;
     }
 
     public boolean isShowIcon() {

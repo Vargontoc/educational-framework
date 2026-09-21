@@ -58,5 +58,20 @@
     "activityName": "Líneas de Números",
     "difficultyCode": "HARD",
     "engineParams": "{\"maxNumber\": 20, \"timeLimit\": 30}"
+  },
+  {
+    "activityName": "Comparación de Tamaño",
+    "difficultyCode": "EASY",
+    "engineParams": "{}"
+  },
+  {
+    "activityName": "Comparación de Tamaño",
+    "difficultyCode": "MEDIUM",
+    "engineParams": "{}"
+  },
+  {
+    "activityName": "Comparación de Tamaño",
+    "difficultyCode": "HARD",
+    "engineParams": "{}"
   }
 ]

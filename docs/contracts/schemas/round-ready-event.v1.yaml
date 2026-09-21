@@ -69,3 +69,23 @@ properties:
               Si se muestra el icono de referencia (resourceRefs.icon) de los
               elementos. true en EASY y MEDIUM, false en HARD; solo aplica a la
               categoría COLOR.
+          comparisonMode:
+            type: boolean
+            description: >-
+              true en rondas de comparación grande/pequeño (categoría COMPARISON): todas las opciones son el
+              mismo elemento a distinto tamaño. Ver comparisonOptions.
+          comparisonOptions:
+            type: array
+            description: >-
+              Solo con comparisonMode=true. Opciones de la ronda con su tamaño relativo; todas comparten
+              elementId (el objetivo) y se distinguen por scalePercent.
+            items:
+              type: object
+              required:
+                - elementId
+                - scalePercent
+              properties:
+                elementId:
+                  type: string
+                scalePercent:
+                  type: number

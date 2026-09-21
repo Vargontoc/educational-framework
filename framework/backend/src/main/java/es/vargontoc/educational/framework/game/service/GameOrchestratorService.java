@@ -525,6 +525,10 @@ public class GameOrchestratorService implements GameOrchestrator {
         if (state.getRecognitionCategory() != null) {
             root.put("recognitionCategory", state.getRecognitionCategory().name());
         }
+        if (state.getRecognitionCategory() == RecognitionCategory.COMPARISON) {
+            // The activity's topic is a comparison one: the engine builds same-element, different-size options.
+            root.put("comparisonMode", true);
+        }
 
         RoundParameters roundParameters = resolveRoundParameters(state);
         if (roundParameters != null) {
@@ -535,6 +539,9 @@ public class GameOrchestratorService implements GameOrchestrator {
             rp.put("touchEnableDelayMs", roundParameters.touchEnableDelayMs());
             rp.put("nonChromaticKeyRequired", roundParameters.nonChromaticKeyRequired());
             rp.put("showIcon", roundParameters.showIcon());
+            if (roundParameters.comparisonScales() != null) {
+                rp.put("comparisonScales", roundParameters.comparisonScales());
+            }
             root.put("roundParameters", rp);
             root.put("candidateMetadata", buildCandidateMetadata(candidates));
         }

@@ -984,6 +984,52 @@ class GameWebSocketHandlerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void gameStateToPayload_comparisonMode_includesComparisonOptions() throws Exception {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+        state.setStarsEarned(0);
+
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.COMPARISON);
+        recognitionState.setTargetElementId("7");
+        recognitionState.setOptionIds(List.of("7", "7"));
+        recognitionState.setComparisonMode(true);
+        recognitionState.setComparisonOptions(List.of(
+            new es.vargontoc.educational.framework.game.model.recognition.ComparisonOption("7", 40.0),
+            new es.vargontoc.educational.framework.game.model.recognition.ComparisonOption("7", 100.0)));
+        state.setEnginePayload(new ObjectMapper().writeValueAsString(recognitionState));
+
+        Map<String, Object> recPayload =
+            (Map<String, Object>) handler.gameStateToPayload(state).get("recognitionState");
+
+        assertEquals("COMPARISON", recPayload.get("recognitionCategory"));
+        assertEquals(true, recPayload.get("comparisonMode"));
+        List<Object> options = (List<Object>) recPayload.get("comparisonOptions");
+        assertEquals(2, options.size());
+        assertEquals(new es.vargontoc.educational.framework.game.model.recognition.ComparisonOption("7", 100.0), options.get(1));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_recognitionMode_hasNoComparisonOptions() throws Exception {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.RECOGNITION);
+        state.setStarsEarned(0);
+        RecognitionState recognitionState = new RecognitionState();
+        recognitionState.setRecognitionCategory(RecognitionCategory.ANIMAL);
+        recognitionState.setTargetElementId("1");
+        recognitionState.setOptionIds(List.of("1", "2"));
+        state.setEnginePayload(new ObjectMapper().writeValueAsString(recognitionState));
+
+        Map<String, Object> recPayload =
+            (Map<String, Object>) handler.gameStateToPayload(state).get("recognitionState");
+
+        assertEquals(false, recPayload.get("comparisonMode"));
+        assertFalse(recPayload.containsKey("comparisonOptions"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void gameStateToPayload_recognitionEngine_includesShowIcon() {
         for (boolean showIcon : new boolean[] {true, false}) {
             var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);

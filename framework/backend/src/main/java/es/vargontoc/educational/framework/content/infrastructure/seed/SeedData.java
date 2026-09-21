@@ -172,6 +172,8 @@ public final class SeedData {
 
     public record RecognitionAlphaNumericElementSeed(String code, String nubi, String resourceRefs) {}
     public record RecognitionColorElementSeed(String code, String nubi, String color, String resourceRefs) {}
+    public record RecognitionComparisonElementSeed(
+        String code, String displayValue, String resourceRefs, String similarityGroup) {}
     public record RecognitionAnimalElementSeed(String code, String nubi, String resourceRefs, String[] biome, String[] group) {}
 
     public record LetterSimilarityPairSeed(String[] pair, String strength) {}

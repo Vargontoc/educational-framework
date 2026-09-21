@@ -39,6 +39,9 @@ const loadPhaserGame = async () => {
       height: 720,
       parent: gameContainer.value,
       scene: [LoadingScene, BaseStateScene, WorldMapScene, RecognitionGameScene, FarewellScene, OrientationRequiredScene],
+      // Canvas transparente: el minijuego pone su fondo (imagen a viewport completo) detras del canvas.
+      // El resto de escenas se ven igual: el contenedor .game-view ya tiene el mismo azul.
+      transparent: true,
       backgroundColor: "#028af8",
       plugins: {
         scene: [
@@ -169,6 +172,24 @@ const loadPhaserGame = async () => {
           const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
           active?.nubiLayer?.nubiSprite?.emit('pointerdown')
         },
+        spyWsSend() {
+          const scenes = gameInstance.scene?.scenes ?? []
+          const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+          const ws = active?.websocket
+          if (!ws) return
+          const sent: string[] = []
+          const original = ws.send.bind(ws)
+          ws.send = (data: string) => { sent.push(String(data)) }
+          w.__NUBI_SENT__ = sent
+          void original
+        },
+        tapOption(optionIndex: number) {
+          const scenes = gameInstance.scene?.scenes ?? []
+          const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+          const target = active?.images?.find((img: any) =>
+            img.getData?.('optionIndex') === optionIndex && img.type !== 'Text')
+          target?.emit('pointerdown')
+        },
         tapExitButton() {
           const scenes = gameInstance.scene?.scenes ?? []
           const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
@@ -201,6 +222,10 @@ const loadPhaserGame = async () => {
                 isStimulus: img.getData?.('isStimulus') ?? false,
                 tint: img.isTinted ? img.tintTopLeft : null,
                 textureKey: img.texture?.key ?? null,
+                scalePercent: img.getData?.('scalePercent') ?? null,
+                optionIndex: img.getData?.('optionIndex') ?? null,
+                // tactile side in logical units (the hit area lives in the object's local, unscaled space)
+                hitDisplayWidth: img.input?.hitArea ? img.input.hitArea.width * Math.abs(img.scaleX ?? 1) : null,
                 // composite (COLOR): splash + item children, relative to the container centre
                 children: Array.isArray(img.list)
                   ? img.list.map((c: any) => ({
@@ -215,6 +240,7 @@ const loadPhaserGame = async () => {
               })),
               selectedColorItem: active.selectedColorItem ?? '',
               showIcon: active.showIcon ?? null,
+              comparisonMode: active.comparisonMode ?? false,
               backgroundKey: active.backgroundKey ?? null,
               minElementHitSize: active.minElementHitSize ?? null,
               startingGame: active.startingGame ?? null,

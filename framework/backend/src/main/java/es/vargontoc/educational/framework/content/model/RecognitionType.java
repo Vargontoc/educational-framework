@@ -5,5 +5,6 @@ public enum RecognitionType {
     NUMBER,
     SHAPE,
     COLOR,
-    ANIMAL
+    ANIMAL,
+    COMPARISON
 }

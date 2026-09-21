@@ -205,7 +205,7 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
     })
   })
 
-  it('positivo: guideChromEnabled = true muestra halo (guideChromGraphics existe)', () => {
+  it('positivo: guideChromEnabled = true ya no dibuja el halo sobre las opciones (el tablero lo sustituye)', () => {
     cy.selectChildProfile('Nubi')
     cy.visit(`/game/${childId}`)
 
@@ -226,7 +226,8 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
       const state = (win as any).__NUBI_GAME_STATE__
       const data = state.getSceneData()
       expect(data).to.not.be.null
-      expect(data.guideChromGraphicsExists).to.be.true
+      expect(data.guideChromGraphicsExists).to.be.false
+      expect(data.images.filter((img: any) => !img.isStimulus)).to.have.length.greaterThan(0)
     })
   })
 
@@ -327,7 +328,7 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
     })
   })
 
-  it('positivo: guideChrom se destruye y recrea al cambiar de ronda', () => {
+  it('positivo: guideChromEnabled = true no dibuja halo en ninguna ronda', () => {
     cy.selectChildProfile('Nubi')
     cy.visit(`/game/${childId}`)
 
@@ -347,7 +348,7 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
     cy.window().should((win) => {
       const state = (win as any).__NUBI_GAME_STATE__
       const data = state.getSceneData()
-      expect(data.guideChromGraphicsExists).to.be.true
+      expect(data.guideChromGraphicsExists).to.be.false
     })
 
     cy.window().then((win) => {
@@ -361,11 +362,11 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
       const state = (win as any).__NUBI_GAME_STATE__
       const data = state.getSceneData()
       expect(data).to.not.be.null
-      expect(data.guideChromGraphicsExists).to.be.true
+      expect(data.guideChromGraphicsExists).to.be.false
     })
   })
 
-  it('accesibilidad: prefers-reduced-motion: reduce hace transicion instantanea y halo estatico', () => {
+  it('accesibilidad: prefers-reduced-motion: reduce hace transicion instantanea', () => {
     cy.selectChildProfile('Nubi')
     cy.visit(`/game/${childId}`, {
       onBeforeLoad(win) {
@@ -406,7 +407,7 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
       const data = state.getSceneData()
       expect(data).to.not.be.null
       expect(data.touchEnableTimerActive).to.be.true
-      expect(data.guideChromGraphicsExists).to.be.true
+      expect(data.guideChromGraphicsExists).to.be.false
       const optionImgs = data.images.filter((img: any) =>
         ['letter_b', 'letter_c'].includes(img.elementId)
       )

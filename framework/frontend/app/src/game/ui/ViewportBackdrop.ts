@@ -1,32 +1,26 @@
 import type { Scene } from "phaser"
 
 /**
- * Prolonga el mosaico de fondo del minijuego por fuera del canvas.
+ * Fondo del minijuego a nivel de viewport del dispositivo.
  *
- * El minijuego usa Scale.FIT: el canvas 16:9 cabe entero en la ventana y, si esta no es 16:9,
- * quedan franjas alrededor que el canvas no puede pintar. Este fondo pinta el mismo mosaico como
- * `background` CSS del contenedor del canvas, a la misma escala y centrado igual que el TileSprite
- * (ver `tilePositionFor`), de modo que el patron continua sin costuras y la ventana queda cubierta.
+ * El minijuego usa Scale.FIT: el canvas 16:9 cabe entero en la ventana y a su alrededor quedan
+ * franjas. En vez de dibujar el fondo dentro del canvas (y depender de su tamano o del contenedor),
+ * la imagen se pone en una capa fija que ocupa todo el viewport, detras del canvas, y se estira a
+ * el (`100% 100%`, sin repetir ni recortar). No depende del tamano del canvas ni del mundo de juego:
+ * el canvas es transparente (`transparent: true` en la config del juego) y deja ver la capa.
  */
 export class ViewportBackdrop {
     private scene: Scene
     private container?: HTMLElement
-    private textureKey = ''
-    private tileSize = 0
+    private canvas?: HTMLCanvasElement
+    private layer?: HTMLDivElement
     private blobUrl?: string
+    private previousCanvasStyle?: { position: string, zIndex: string }
+    private textureKey = ''
     private applyToken = 0
 
     constructor(scene: Scene) {
         this.scene = scene
-    }
-
-    /**
-     * Posicion del patron para el TileSprite del canvas: un mosaico centrado en el centro del
-     * canvas, igual que `background-position: center` en el contenedor.
-     */
-    static tilePositionFor(canvasSize: number, tileSize: number): number {
-        const offset = (canvasSize - tileSize) / 2
-        return ((-offset % tileSize) + tileSize) % tileSize
     }
 
     /** Pone el contenedor en negro (las franjas de FIT) mientras dura la transicion, hasta `apply`. */
@@ -38,66 +32,88 @@ export class ViewportBackdrop {
     }
 
     /**
-     * Usa el mosaico `textureKey` como fondo del contenedor. Sin textura o sin contenedor no hace nada.
-     * Phaser carga las imagenes como blob y revoca su URL al terminar, asi que el mosaico se
-     * re-codifica desde la textura ya cargada (sin nueva peticion de red).
+     * Muestra la textura `textureKey` como fondo del viewport. Sin textura o sin contenedor no hace nada.
+     * Phaser carga las imagenes como blob y revoca su URL al terminar, asi que la imagen se re-codifica
+     * desde la textura ya cargada (sin nueva peticion de red).
      */
     apply(textureKey: string): void {
-        const container = this.scene.game.canvas?.parentElement
-        if (!container || !this.scene.textures.exists(textureKey)) return
+        const canvas = this.scene.game.canvas
+        const container = canvas?.parentElement
+        if (!canvas || !container || !this.scene.textures.exists(textureKey)) return
 
         const image = this.scene.textures.get(textureKey).getSourceImage() as HTMLImageElement
         if (!image?.width || !image?.height) return
 
-        const canvas = document.createElement('canvas')
-        canvas.width = image.width
-        canvas.height = image.height
-        canvas.getContext('2d')?.drawImage(image, 0, 0)
+        const source = document.createElement('canvas')
+        source.width = image.width
+        source.height = image.height
+        source.getContext('2d')?.drawImage(image, 0, 0)
 
         const token = ++this.applyToken
-        canvas.toBlob(blob => {
+        source.toBlob(blob => {
             // clear() o un nuevo apply() mientras se codificaba: descartar
             if (!blob || token !== this.applyToken) return
-            if (this.blobUrl) URL.revokeObjectURL(this.blobUrl)
-            this.blobUrl = URL.createObjectURL(blob)
-            this.container = container
-            this.textureKey = textureKey
-            this.tileSize = image.width
+            this.removeLayer()
 
-            container.style.backgroundImage = `url("${this.blobUrl}")`
-            container.style.backgroundRepeat = 'repeat'
-            container.style.backgroundPosition = 'center center'
-            this.update()
+            this.container = container
+            this.canvas = canvas
+            this.textureKey = textureKey
+            this.blobUrl = URL.createObjectURL(blob)
+
+            const layer = document.createElement('div')
+            layer.setAttribute('data-minigame-backdrop', textureKey)
+            Object.assign(layer.style, {
+                position: 'fixed',
+                inset: '0',
+                zIndex: '0',
+                pointerEvents: 'none',
+                backgroundImage: `url("${this.blobUrl}")`,
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                opacity: '0',
+                transition: 'opacity 400ms ease-out'
+            })
+            container.insertBefore(layer, container.firstChild)
+            this.layer = layer
+
+            // El canvas queda por encima de la capa
+            this.previousCanvasStyle = { position: canvas.style.position, zIndex: canvas.style.zIndex }
+            canvas.style.position = 'relative'
+            canvas.style.zIndex = '1'
+
+            requestAnimationFrame(() => { layer.style.opacity = '1' })
         })
     }
 
-    /** Reajusta el tamano del mosaico a la escala actual del canvas (cambia al redimensionar la ventana). */
-    update(): void {
-        if (!this.container || !this.tileSize) return
-        const displayScale = this.scene.scale.displayScale.x || 1
-        const cssTile = this.tileSize / displayScale
-        this.container.style.backgroundSize = `${cssTile}px ${cssTile}px`
-    }
-
-    /** Quita el fondo y deja el del contenedor como estaba. */
+    /** Quita el fondo y deja el contenedor y el canvas como estaban. */
     clear(): void {
         this.applyToken++
+        this.removeLayer()
+        if (this.container) {
+            this.container.style.backgroundColor = ''
+            this.container = undefined
+        }
+    }
+
+    private removeLayer(): void {
+        this.layer?.remove()
+        this.layer = undefined
         if (this.blobUrl) {
             URL.revokeObjectURL(this.blobUrl)
             this.blobUrl = undefined
         }
-        if (!this.container) return
-        this.container.style.backgroundColor = ''
-        this.container.style.backgroundImage = ''
-        this.container.style.backgroundRepeat = ''
-        this.container.style.backgroundPosition = ''
-        this.container.style.backgroundSize = ''
-        this.container = undefined
-        this.tileSize = 0
+        if (this.canvas && this.previousCanvasStyle) {
+            this.canvas.style.position = this.previousCanvasStyle.position
+            this.canvas.style.zIndex = this.previousCanvasStyle.zIndex
+        }
+        this.canvas = undefined
+        this.previousCanvasStyle = undefined
+        this.textureKey = ''
     }
 
     get active(): boolean {
-        return !!this.container
+        return !!this.layer
     }
 
     get key(): string {

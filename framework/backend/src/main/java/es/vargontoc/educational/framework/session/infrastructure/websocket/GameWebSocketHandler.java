@@ -724,6 +724,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             recognitionPayload.put("touchEnableDelayMs", recognitionState.getTouchEnableDelayMs());
             recognitionPayload.put("nonChromaticKeyRequired", recognitionState.isNonChromaticKeyRequired());
             recognitionPayload.put("showIcon", recognitionState.isShowIcon());
+            recognitionPayload.put("comparisonMode", recognitionState.isComparisonMode());
+            if (recognitionState.isComparisonMode()) {
+                recognitionPayload.put("comparisonOptions", recognitionState.getComparisonOptions());
+            }
 
             java.util.Set<Long> elementIds = new java.util.LinkedHashSet<>();
             if (recognitionState.getTargetElementId() != null) {
