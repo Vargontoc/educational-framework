@@ -1,7 +1,7 @@
 import { Scene } from "phaser"
 import { WORLD_MAP_CONFIG } from "../config/worldMapConfig"
 
-const NUBI_DEPTH = 4
+const NUBI_DEPTH = 3
 const NUBI_Y = 550
 
 // Placeholder único mientras no existan las animaciones reales walk-left/
@@ -41,9 +41,10 @@ export class NubiLayer {
         this.nubi?.setPosition(x, y)
     }
 
-    adjustToGroundTopY(groundTopY: number) {
+    /** `yOffset`: ajuste vertical del bioma (positivo = hacia abajo), ver BIOME_Y_OFFSETS. */
+    adjustToGroundTopY(groundTopY: number, yOffset: number = 0) {
         if (!this.nubi) return
-        this.nubi.y = groundTopY - this.nubi.displayHeight / 2
+        this.nubi.y = groundTopY - this.nubi.displayHeight / 2 + yOffset
     }
 
     runAnimation(animation: string) {
@@ -66,7 +67,7 @@ export class NubiLayer {
     // (0.5, 0.5, centrado) para no alterar el significado de setPosition() en
     // otros usos (p. ej. LoadingScene la trata como centro); el ajuste al
     // borde del suelo se hace aquí restando la mitad de su alto real.
-    create(npcEnabled: boolean, groundTopY: number = NUBI_Y) {
+    create(npcEnabled: boolean, groundTopY: number = NUBI_Y, yOffset: number = 0) {
         const { viewportWidth } = WORLD_MAP_CONFIG
         const x = viewportWidth / 6
         this.worldX = x
@@ -82,9 +83,11 @@ export class NubiLayer {
 
         this.nubi = this.scene.add.sprite(x, groundTopY, 'nubi-greetings')
         this.nubi.setDepth(NUBI_DEPTH)
-        this.nubi.y = groundTopY - this.nubi.displayHeight / 2
+        // La escala va ANTES de calcular la Y: displayHeight depende de ella, y con la escala aplicada despues
+        // Nubi quedaba flotando (Y calculada con el sprite a tamano completo) hasta que un ajuste posterior la corregia.
+        this.nubi.setScale(.4)
+        this.nubi.y = groundTopY - this.nubi.displayHeight / 2 + yOffset
         this.nubi.play(IDLE_ANIMATION_KEY)
-
         this.nubi.setInteractive({ useHandCursor: false })
         let lastTapTime = 0
         this.nubi.on('pointerdown', () => {
@@ -167,6 +170,11 @@ export class NubiLayer {
     // al portal de salida, fuera del ancho del nuevo mundo).
     resetToStart() {
         this.setWorldX(WORLD_MAP_CONFIG.viewportWidth / 6)
+    }
+
+    /** Posicion actual de Nubi en coordenadas de mundo (la que tiene ahora, aunque este caminando hacia otro punto). */
+    getWorldX(): number {
+        return this.worldX
     }
 
     // Coloca a Nubi en una coordenada de mundo concreta sin caminar — usado

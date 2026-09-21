@@ -17,7 +17,7 @@ import { EdgeHintLayer } from "./worldmap/layers/EdgeHintLayer";
 import { ExitPortalLayer, PORTAL_TOUCHED_EVENT, PORTAL_MARGIN, PORTAL_SIZE } from "./worldmap/layers/ExitPortalLayer";
 import { GradualScroller, WORLDMAP_TAP_EVENT } from "./worldmap/scroll/GradualScroller";
 import { EnvironmentReaction } from "./worldmap/reactions/EnvironmentReaction";
-import { WORLD_MAP_CONFIG } from "./worldmap/config/worldMapConfig";
+import { WORLD_MAP_CONFIG, biomeYOffset } from "./worldmap/config/worldMapConfig";
 import { fadeToBlack, fadeFromBlack } from "./worldmap/transitions/BiomeTransition";
 import { WorldTravelEvent } from "./GameEvent";
 
@@ -58,6 +58,9 @@ export class WorldMapScene extends Scene {
     private sessionResumed = false
     private transitioningToMinigame = false
     private pendingMinigameElement?: WorldDiscoveryElements
+    // Ultima posicion (camara y Nubi) antes de entrar a un minijuego. create() se re-ejecuta al volver y
+    // reconstruye la escena desde cero (Nubi en su punto de inicio, camara en 0): se restaura desde aqui.
+    private positionBeforeMinigame?: { biome: string, scrollOffset: number, nubiWorldX: number }
 
     constructor() { super({ key: 'world-map', active: false}) }
 
@@ -106,14 +109,14 @@ export class WorldMapScene extends Scene {
 
         this.backgroundLayer = new BackgroundLayer(this)
         this.backgroundLayer.buildFrom(bootBiome)
-
+        
         this.groundLayer = new GroundLayer(this)
         const groundContainer = this.groundLayer.create(bootBiome, this.activeWorldWidth)
-
+        
         this.parallaxLayer = new ParallaxLayer(this)
         const parallaxContainer = this.parallaxLayer.create(this.groundLayer.getBandHeight(), bootBiome, this.activeWorldWidth)
-
-        this.nubiLayer?.create(npcEnabled, this.getGroundTopY())
+        
+        this.nubiLayer?.create(npcEnabled, this.getGroundTopY(), biomeYOffset(bootBiome, 'nubi'))
 
         this.interactiveLayer = new InteractiveLayer(this)
         const interactiveContainer = this.interactiveLayer.create()
@@ -150,6 +153,10 @@ export class WorldMapScene extends Scene {
         this.scroller.registerLayer(transportContainer, 1)
         if (exitPortalContainer) {
             this.scroller.registerLayer(exitPortalContainer, 1)
+        }
+
+        if (isReturningFromMinigame) {
+            this.restorePositionAfterMinigame(bootBiome)
         }
 
         this.events.on(WORLDMAP_TAP_EVENT, (x: number) => this.nubiLayer?.walkTo(this.clampToWorldWidth(x + (this.scroller?.getOffset() ?? 0))))
@@ -515,7 +522,7 @@ export class WorldMapScene extends Scene {
             this.scroller?.registerLayer(exitPortalContainer, 1)
         }
 
-        this.nubiLayer?.adjustToGroundTopY(this.getGroundTopY())
+        this.nubiLayer?.adjustToGroundTopY(this.getGroundTopY(), biomeYOffset(biome, 'nubi'))
     }
 
     private handleTransportTouched() {
@@ -572,6 +579,29 @@ export class WorldMapScene extends Scene {
         }
     }
 
+    /** Guarda donde estaban la camara y Nubi justo antes de entrar al minijuego. */
+    private rememberPositionBeforeMinigame(): void {
+        if (!this.currentBiome || !this.scroller || !this.nubiLayer) return
+        this.positionBeforeMinigame = {
+            biome: this.currentBiome,
+            scrollOffset: this.scroller.getOffset(),
+            nubiWorldX: this.nubiLayer.getWorldX()
+        }
+    }
+
+    /**
+     * Al volver de un minijuego (por completarlo o por salir), deja la camara y a Nubi donde estaban antes de
+     * entrar, en vez de en el punto de inicio del bioma. Solo se aplica en el mismo bioma.
+     */
+    private restorePositionAfterMinigame(biome: string): void {
+        const saved = this.positionBeforeMinigame
+        this.positionBeforeMinigame = undefined
+        if (!saved || saved.biome !== biome) return
+
+        this.scroller?.setOffset(saved.scrollOffset)
+        this.nubiLayer?.setWorldX(saved.nubiWorldX)
+    }
+
     private startMinigameTransition(activityId: number): void {
         if (this.arrivalInProgress) return
         this.arrivalInProgress = true
@@ -598,6 +628,7 @@ export class WorldMapScene extends Scene {
             duration,
             ease: 'Linear',
             onComplete: () => {
+                this.rememberPositionBeforeMinigame()
                 this.scene.start('recognition-game', {
                     websocket: this.websocket,
                     activityId: activityId,

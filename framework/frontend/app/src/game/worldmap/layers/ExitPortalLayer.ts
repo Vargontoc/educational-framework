@@ -1,7 +1,8 @@
 import { Scene } from "phaser"
+import { biomeYOffset } from "../config/worldMapConfig"
 
 const PORTAL_DEPTH = 10
-export const PORTAL_SIZE = 96
+export const PORTAL_SIZE = 128
 const PORTAL_ROTATION_SPEED = 4000
 const PORTAL_PULSE_SCALE_TO = 1.08
 const PORTAL_PULSE_DURATION = 1800
@@ -49,7 +50,7 @@ export class ExitPortalLayer {
         this.container.setDepth(PORTAL_DEPTH)
 
         const x = worldWidth + PORTAL_MARGIN
-        const y = groundTopY - PORTAL_SIZE / 2
+        const y = groundTopY - PORTAL_SIZE / 2 + biomeYOffset(biome, 'exitPortal')
         const tint = BIOME_PORTAL_TINT[biome] ?? 0xcccccc
 
         const portal = this.createPortalVisual(x, y, tint)

@@ -1,5 +1,5 @@
 import { Scene } from "phaser"
-import { WORLD_MAP_CONFIG } from "../config/worldMapConfig"
+import { WORLD_MAP_CONFIG, biomeYOffset } from "../config/worldMapConfig"
 
 const PARALLAX_DEPTH = 1
 const GROUND_SEAM_OVERLAP = 4
@@ -41,7 +41,7 @@ export class ParallaxLayer {
         if (this.scene.textures.exists(hillsKey)) {
             const source = this.scene.textures.get(hillsKey).getSourceImage()
             const height = source.height || viewportHeight
-            const bottomY = viewportHeight - groundBandHeight + GROUND_SEAM_OVERLAP
+            const bottomY = viewportHeight - groundBandHeight + GROUND_SEAM_OVERLAP + biomeYOffset(effectiveBiome, 'hills')
             const tile = this.scene.add.tileSprite(0, bottomY, width, height, hillsKey)
             tile.setOrigin(0, 1)
             container.add(tile)

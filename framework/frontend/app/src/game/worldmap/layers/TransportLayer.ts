@@ -1,8 +1,8 @@
 import { Scene } from "phaser"
-import { WORLD_MAP_CONFIG } from "../config/worldMapConfig"
+import { WORLD_MAP_CONFIG, biomeYOffset } from "../config/worldMapConfig"
 
 const TRANSPORT_DEPTH = 5
-const TRANSPORT_ICON_SIZE = 120
+const TRANSPORT_ICON_SIZE = 128
 // A la IZQUIERDA del spawn de Nubi (más cerca de x=0), no a la derecha como
 // antes: los elementos de descubrimiento pueden autorarse con positionX
 // arbitrariamente bajo, así que colocar el transporte hacia el interior del
@@ -64,7 +64,7 @@ export class TransportLayer {
         this.container.setDepth(TRANSPORT_DEPTH)
 
         const x = Math.max(TRANSPORT_MIN_X, nubiStartX - TRANSPORT_OFFSET_FROM_NUBI)
-        const y = groundTopY - TRANSPORT_ICON_SIZE
+        const y = groundTopY - TRANSPORT_ICON_SIZE + biomeYOffset(biome, 'transport')
 
         const hitAreaSize = Math.max(WORLD_MAP_CONFIG.minHitAreaSize, TRANSPORT_ICON_SIZE + 16)
         const zone = this.scene.add.zone(x, y, hitAreaSize, hitAreaSize)

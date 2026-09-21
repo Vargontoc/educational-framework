@@ -26,7 +26,7 @@ Ofrecer una presentación visual básica, breve y amable de los minijuegos abier
 3. Si el NPC está desactivado, se aplica ADR-027: Nubi aparece solo dormido, con nube de diálogo en estado de sueño, como referencia visual de salida; no habla, se mueve ni acompaña el juego.
 4. Dos toques consecutivos sobre Nubi abandonan inmediatamente el minijuego, sin confirmación infantil, penalización ni feedback negativo.
 5. Un acierto provoca una animación visual de éxito y, cuando el audio está disponible y permitido, un sonido amable.
-6. Un fallo provoca un vaivén visual leve y, cuando el audio está disponible y permitido, un sonido de error suave. No se usan mensajes que califiquen al niño ni el intento como malo.
+6. Con carácter general, un fallo provoca un vaivén visual leve y, cuando el audio está disponible y permitido, un sonido de error suave. No se usan mensajes que califiquen al niño ni el intento como malo. Una especificación aceptada de minijuego puede establecer una excepción más protectora: en `MemoryEngine`, una pareja no coincidente solo vuelve boca abajo de forma neutra, sin vaivén ni sonido negativo, conforme a ADR-030.
 7. Tras varios fallos de contenido, cada minijuego puede ofrecer una pista visual breve. El umbral se define por actividad y la pista no debe revelar necesariamente la solución ni presentar los intentos previos como fracaso. El tiempo de respuesta no equivale a un fallo de contenido ni activa por sí mismo esta pista.
 8. El juego debe conservar sentido y ser jugable sin audio.
 9. Al completar todas las rondas, se muestra una celebración visual breve, sin premios gamificados, y se vuelve a WorldMap.
@@ -163,5 +163,6 @@ Ofrecer una presentación visual básica, breve y amable de los minijuegos abier
 - README.md.
 - ADR-021 — Configuración global de audio, NPC y PIN.
 - ADR-027 — Nubi dormido como salida de minijuegos.
+- ADR-030 — MemoryEngine: tablero y volteo neutro (excepción específica al feedback de no coincidencia).
 - FEAT-002 agentes — Acompañante de Juego Nubi.
 - FEAT-006 backend — Tracking Module.
