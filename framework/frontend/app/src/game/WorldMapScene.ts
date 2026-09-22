@@ -122,7 +122,13 @@ export class WorldMapScene extends Scene {
         const interactiveContainer = this.interactiveLayer.create()
         this.environmentReaction = new EnvironmentReaction(this)
         this.interactiveLayer.setOnTouch((element, shape, pointer) => {
-            this.environmentReaction?.play(shape)
+            // Los 14 elementos del bioma meadow (mariposas, daisy, cofre, seta...) tienen su propia animación
+            // de toque; cualquier otro elemento futuro sin animación propia sigue con la reacción genérica.
+            if (this.interactiveLayer?.hasCustomTapBehavior(element.visualAssetKey)) {
+                this.interactiveLayer.playTapAnimation(element, shape)
+            } else {
+                this.environmentReaction?.play(shape)
+            }
             this.nubiLayer?.walkTo(this.clampToWorldWidth(pointer.x + (this.scroller?.getOffset() ?? 0)))
 
             if (element.hasActivity && !this.arrivalInProgress) {
@@ -325,7 +331,7 @@ export class WorldMapScene extends Scene {
                     break;
                 case 'WORLD_ACTIVITY_STARTED':
                     if (event.payload?.activityId && this.pendingMinigameElement) {
-                        this.startMinigameTransition(event.payload.activityId)
+                        this.startMinigameTransition(event.payload.activityId, event.payload.engine)
                     }
                     break;
                 case 'CHILD_AGENT_ACTIVATED':
@@ -602,7 +608,12 @@ export class WorldMapScene extends Scene {
         this.nubiLayer?.setWorldX(saved.nubiWorldX)
     }
 
-    private startMinigameTransition(activityId: number): void {
+    /** Cada motor de juego tiene su escena: MEMORY tiene la suya y el resto (RECOGNITION) usa la de reconocimiento. */
+    private minigameSceneKey(engine?: string): string {
+        return engine === 'MEMORY' ? 'memory-game' : 'recognition-game'
+    }
+
+    private startMinigameTransition(activityId: number, engine?: string): void {
         if (this.arrivalInProgress) return
         this.arrivalInProgress = true
         this.transitioningToMinigame = true
@@ -629,7 +640,7 @@ export class WorldMapScene extends Scene {
             ease: 'Linear',
             onComplete: () => {
                 this.rememberPositionBeforeMinigame()
-                this.scene.start('recognition-game', {
+                this.scene.start(this.minigameSceneKey(engine), {
                     websocket: this.websocket,
                     activityId: activityId,
                     biome: this.currentBiome,

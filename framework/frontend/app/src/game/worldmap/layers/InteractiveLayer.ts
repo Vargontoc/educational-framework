@@ -1,34 +1,16 @@
 import { Scene } from "phaser"
 import { WorldDiscoveryElements } from "../../GameEvent"
 import { WORLD_MAP_CONFIG } from "../config/worldMapConfig"
+import * as InteractiveElementAnimations from "../reactions/InteractiveElementAnimations"
+import type { InteractiveVisual } from "../reactions/InteractiveElementAnimations"
 
 const INTERACTIVE_DEPTH = 3
-const SHAPE_SIZE = 56
 const LAYOUT_MARGIN = 200
 const PASSIVE_CUE_DURATION = 1400
+/** Margen (px lógicos) que se añade al tamaño visible del elemento para calcular su zona táctil. */
+const HIT_AREA_MARGIN = 30
 
-type ShapeKind = 'circle' | 'square' | 'triangle' | 'star'
-
-const SHAPE_ORDER: ShapeKind[] = ['circle', 'square', 'triangle', 'star']
-const COLOR_PALETTE = [0xff8a65, 0x64b5f6, 0xaed581, 0xffd54f, 0xba68c8, 0x4db6ac]
-
-function hashString(value: string): number {
-    let hash = 0
-    for (let i = 0; i < value.length; i++) {
-        hash = (hash * 31 + value.charCodeAt(i)) >>> 0
-    }
-    return hash
-}
-
-function shapeForType(elementType: string): ShapeKind {
-    return SHAPE_ORDER[hashString(elementType || 'default') % SHAPE_ORDER.length]
-}
-
-function colorForType(elementType: string): number {
-    return COLOR_PALETTE[hashString(elementType || 'default') % COLOR_PALETTE.length]
-}
-
-export type InteractiveVisual = Phaser.GameObjects.Shape | Phaser.GameObjects.Image
+export type { InteractiveVisual }
 export type ElementTouchHandler = (element: WorldDiscoveryElements, visual: InteractiveVisual, pointer: Phaser.Input.Pointer) => void
 
 export class InteractiveLayer {
@@ -51,11 +33,22 @@ export class InteractiveLayer {
 
         this.container = this.scene.add.container(0, 0)
         this.container.setDepth(INTERACTIVE_DEPTH)
+        InteractiveElementAnimations.ensureAnimations(this.scene)
         return this.container
     }
 
     setOnTouch(handler: ElementTouchHandler) {
         this.onTouch = handler
+    }
+
+    /** Si `assetKey` tiene una animación propia (de las 14 del bioma meadow), incluidas las "solo imagen". */
+    hasCustomTapBehavior(assetKey: string): boolean {
+        return InteractiveElementAnimations.hasBehavior(assetKey)
+    }
+
+    /** Reproduce la animación de toque propia de `element.visualAssetKey` (no-op para las "solo imagen"). */
+    playTapAnimation(element: WorldDiscoveryElements, visual: InteractiveVisual): void {
+        InteractiveElementAnimations.playTap(this.scene, visual, element.visualAssetKey)
     }
 
     // El contrato solo trae ancho de mundo (world_width), no una altura de
@@ -109,58 +102,59 @@ export class InteractiveLayer {
     private createElement(element: WorldDiscoveryElements, x: number, y: number) {
         if (!this.container) return
 
-        const elementContainer = this.scene.add.container(x, y)
+        const visual = this.createVisual(element)
+        if (!visual) return // sin textura: no se renderiza ningún fallback (ver createVisual)
 
-        const hitAreaSize = WORLD_MAP_CONFIG.minHitAreaSize
+        const elementContainer = this.scene.add.container(x, y)
+        elementContainer.setData('assetKey', element.visualAssetKey)
+
+        const hitAreaSize = this.hitAreaSizeFor(element.visualAssetKey)
         const zone = this.scene.add.zone(0, 0, hitAreaSize, hitAreaSize)
         zone.setInteractive({ useHandCursor: true })
 
-        const visual = this.createVisual(element)
         elementContainer.add([zone, visual])
 
         if (element.interactionCueType) {
             this.applyPassiveCue(visual)
         }
+        InteractiveElementAnimations.attachIdle(this.scene, visual, element.visualAssetKey)
 
         zone.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.onTouch?.(element, visual, pointer))
 
         this.container.add(elementContainer)
     }
 
-    private createVisual(element: WorldDiscoveryElements): InteractiveVisual {
-        const assetKey = element.visualAssetKey
-        if (assetKey && this.scene.textures.exists(assetKey)) {
-            return this.scene.add.image(0, 0, assetKey)
-        }
-
-        if (assetKey) {
-            console.debug(`InteractiveLayer: visualAssetKey "${assetKey}" no encontrado en caché de texturas, usando placeholder geométrico`)
-        }
-
-        return this.createShape(element.elementType)
+    /**
+     * Zona táctil del elemento: el tamaño al que se dibuja (ver `InteractiveElementAnimations`) más un margen,
+     * nunca por debajo del mínimo general (`minHitAreaSize`). Mismo criterio que `TransportLayer`/`ExitPortalLayer`.
+     * Una zona más grande que el mínimo fijo de antes también hace que, al tocar cerca del elemento, el toque
+     * gane a "caminar hasta el punto tocado" (`GradualScroller` no arranca el arrastre si el puntero ya está
+     * sobre una zona interactiva).
+     */
+    private hitAreaSizeFor(assetKey: string): number {
+        const targetSize = InteractiveElementAnimations.targetSizeFor(assetKey)
+        if (!targetSize) return WORLD_MAP_CONFIG.minHitAreaSize
+        return Math.max(WORLD_MAP_CONFIG.minHitAreaSize, targetSize + HIT_AREA_MARGIN)
     }
 
-    private createShape(elementType: string): Phaser.GameObjects.Shape {
-        const kind = shapeForType(elementType)
-        const color = colorForType(elementType)
-
-        switch (kind) {
-            case 'square':
-                return this.scene.add.rectangle(0, 0, SHAPE_SIZE, SHAPE_SIZE, color)
-            case 'triangle':
-                return this.scene.add.triangle(
-                    0, 0,
-                    0, -SHAPE_SIZE / 2,
-                    SHAPE_SIZE / 2, SHAPE_SIZE / 2,
-                    -SHAPE_SIZE / 2, SHAPE_SIZE / 2,
-                    color
-                )
-            case 'star':
-                return this.scene.add.star(0, 0, 5, SHAPE_SIZE / 4, SHAPE_SIZE / 2, color)
-            case 'circle':
-            default:
-                return this.scene.add.circle(0, 0, SHAPE_SIZE / 2, color)
+    /**
+     * Crea la imagen del elemento a partir de `visualAssetKey`. Si la textura no está cargada no se dibuja
+     * ningún placeholder: se registra en consola y el elemento entero se omite (sin zona interactiva).
+     * Los assetKey con animación propia (ver InteractiveElementAnimations) necesitan un Sprite para poder
+     * reproducir sus animaciones; el resto son imágenes estáticas.
+     */
+    private createVisual(element: WorldDiscoveryElements): InteractiveVisual | undefined {
+        const assetKey = element.visualAssetKey
+        if (!assetKey || !this.scene.textures.exists(assetKey)) {
+            console.log(`InteractiveLayer: no existe el assetKey "${assetKey}", se omite el elemento`)
+            return undefined
         }
+
+        const visual = InteractiveElementAnimations.needsSprite(assetKey)
+            ? this.scene.add.sprite(0, 0, assetKey)
+            : this.scene.add.image(0, 0, assetKey)
+        InteractiveElementAnimations.applyTargetSize(visual, assetKey)
+        return visual
     }
 
     private applyPassiveCue(visual: InteractiveVisual) {

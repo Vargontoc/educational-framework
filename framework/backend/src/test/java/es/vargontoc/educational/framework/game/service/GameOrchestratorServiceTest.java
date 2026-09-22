@@ -339,34 +339,15 @@ class GameOrchestratorServiceTest {
     }
 
     @Test
-    void readyGame_notDevProfile_throwsEngineNotAvailable() {
-        orchestratorService = new GameOrchestratorService(
-            gameCatalogUseCase,
-            gameStateRegistry,
-            sessionAntiRepetitionRegistry,
-            registerActivityAttemptUseCase,
-            evaluateGameCompletionAchievementsUseCase,
-            registerGameSessionSummaryUseCase,
-            eventPublisher,
-            topicUseCase,
-            filterAllowedRecognitionCategoriesUseCase,
-            elementProgressPort,
-            recognitionElementRepository,
-            difficultyLevelUseCase,
-            childProfileUseCase,
-            recognitionDifficultyService,
-            recognitionSimilarityService,
-            roundAudioService,
-            null,
-            null
-        );
-
-        GameState storedState = createRealGameState(1L, 100L, 200L, 1L, 5L, GameStatus.WAITING);
-        storedState.setEngine(EngineType.MEMORY);
-        when(gameStateRegistry.findByGameId(1L)).thenReturn(Optional.of(storedState));
+    void startGame_unknownEngineType_throwsEngineNotAvailable() {
+        Activity activity = createActivity(1L);
+        activity.setGameEngineType("MEMORY_GAME");
+        DifficultyLevel difficultyLevel = createDifficultyLevel(5L);
+        when(gameCatalogUseCase.getGameReadiness(100L, 1L))
+            .thenReturn(new GameCatalogReadiness(activity, difficultyLevel, true));
 
         assertThrows(es.vargontoc.educational.framework.game.exception.EngineNotAvailableException.class,
-            () -> orchestratorService.readyGame(1L));
+            () -> orchestratorService.startGame(100L, 1L));
     }
 
     @Test

@@ -13,6 +13,7 @@ import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.R
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionAnimalElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionComparisonElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionColorElementSeed;
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionMemoryElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.LetterSimilarityPairSeed;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Category;
@@ -141,6 +142,7 @@ public class SeedService {
         loaded += loadRecognitionColors();
         loaded += loadRecognitionAnimals();
         loaded += loadRecognitionComparison();
+        loaded += loadRecognitionMemory();
         loaded += loadLetterSimilarityPairs();
         loaded += loadNumberSimilarityPairs();
         log.info("Seed loading complete. {} records loaded.", loaded);
@@ -651,6 +653,50 @@ public class SeedService {
                 continue;
             }
 
+            String nubiAudio = nubiAudioText(seed.resourceRefs(), null);
+            if (nubiAudio != null) {
+                audio.getAudio(AudioRequest.withPreset(nubiAudio, TonePreset.CALM));
+            }
+
+            var element = new RecognitionElement();
+            element.setTopicId(topicId);
+            element.setCode(seed.code());
+            element.setDisplayValue(seed.displayValue());
+            element.setSortOrder(0);
+            element.setResourceRefs(seed.resourceRefs());
+            element.setSimilarityGroup(seed.similarityGroup());
+            element.setStatus(ContentStatus.ACTIVE);
+            element.setCreatedAt(LocalDateTime.now());
+            recognitionElementRepository.save(element);
+
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+
+        return count;
+    }
+
+    private int loadRecognitionMemory() {
+        String file = "22-memory-elements.json";
+        var seeds = readSeedFile(file, new TypeReference<List<RecognitionMemoryElementSeed>>() {});
+
+        int count = 0;
+
+        Long topicId = resolveTopicId("Memoria");
+        if(topicId == null){
+            log.warn("Topic not found for memory element seed.");
+            return 0;
+        }
+
+        for(var seed : seeds) {
+            String key =  "recognition-element-memory:" + seed.code();
+            if(alreadyLoaded(key)){
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+
+            // Same prompt for every element: warm the audio cache with the text asked for at runtime.
             String nubiAudio = nubiAudioText(seed.resourceRefs(), null);
             if (nubiAudio != null) {
                 audio.getAudio(AudioRequest.withPreset(nubiAudio, TonePreset.CALM));

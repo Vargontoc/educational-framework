@@ -21,7 +21,13 @@ payload:
         - WELCOME
         - FAREWELL
         - BIOME_TRANSITION
-      description: Lifecycle subtype. WELCOME: welcome after auth. FAREWELL: farewell before backend-initiated close. BIOME_TRANSITION: avatar narration when the child travels to a new biome.
+        - ROUND_PROMPT
+      description: >-
+        Lifecycle subtype. WELCOME: welcome after auth. FAREWELL: farewell before backend-initiated close.
+        BIOME_TRANSITION: avatar narration when the child travels to a new biome. ROUND_PROMPT: Nubi's prompt for
+        the round (RECOGNITION: once per round, after GAME_READY and after each correct answer; MEMORY: once per
+        game, after GAME_READY, taken from the nubi-audio of the first card's element). It is only sent when audio
+        is available and always after the state event, so the game can be drawn and played without it.
     audioAvailable:
       type: boolean
       description: True when audio binary frame will follow.

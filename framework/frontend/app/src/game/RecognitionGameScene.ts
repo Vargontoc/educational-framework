@@ -15,6 +15,7 @@ import {
 import { RoundProgressBar } from "./ui/RoundProgressBar"
 import { ExitButton } from "./ui/ExitButton"
 import { ViewportBackdrop } from "./ui/ViewportBackdrop"
+import { FireworksCelebration } from "./ui/FireworksCelebration"
 import { createSplashCompound, layoutSplashCompound } from "./ui/SplashCompound"
 import { DynamicAssetLoader } from "./utils/DynamicAssetLoader"
 import { RecognitionColorizer } from "./utils/RecognitionColorizer"
@@ -55,16 +56,6 @@ const HINT_PULSE_DURATION = 1500
 const HINT_PULSE_ALPHA_MIN = 0.4
 const HINT_PULSE_ALPHA_MAX = 1.0
 const HINT_STATIC_ALPHA = 0.7
-const CELEBRATION_STAR_COUNT_MIN = 3
-const CELEBRATION_STAR_COUNT_MAX = 5
-const CELEBRATION_STAR_POINTS = 5
-const CELEBRATION_STAR_INNER_RADIUS = 12
-const CELEBRATION_STAR_OUTER_RADIUS = 30
-const CELEBRATION_STAR_SCALE_UP_DURATION = 300
-const CELEBRATION_STAR_WAIT_DURATION = 1000
-const CELEBRATION_STAR_FADE_DURATION = 500
-const CELEBRATION_TOTAL_DURATION = 1500
-const CELEBRATION_STAR_COLORS = [0xFFC107, 0x42A5F5, 0x66BB6A]
 const HINT_DEPTH = 4
 const CELEBRATION_DEPTH = 50
 const STIMULUS_CARD_ALPHA = 0.15
@@ -300,6 +291,8 @@ export class RecognitionGameScene extends Scene {
 
         this.exitButton = new ExitButton(this, this.sizes)
         this.scale.on('resize', this.onScaleResize)
+        // The celebration spritesheet loads while the child plays.
+        FireworksCelebration.preload(this)
 
         this.events.on('exit-button-double-tap', this.onExitDoubleTap)
         this.events.on('minigame-nubi-tap', this.onNubiTap)
@@ -1076,7 +1069,7 @@ export class RecognitionGameScene extends Scene {
                 }
                 break
             case 'GAME_ACTION_RESULT':
-                if (event.payload.resultType && event.payload.updatedState) {
+                if (event.payload.resultType && event.payload.updatedState && event.payload.updatedState.engine !== 'MEMORY') {
                     this.applyActionToResultType(
                         event.payload.resultType,
                         event.payload.gameCompleted,
@@ -1435,52 +1428,8 @@ export class RecognitionGameScene extends Scene {
     private playCelebration(): void {
         this.playCelebrationSound()
 
-        const starCount = CELEBRATION_STAR_COUNT_MIN + Math.floor(
-            Math.random() * (CELEBRATION_STAR_COUNT_MAX - CELEBRATION_STAR_COUNT_MIN + 1)
-        )
-
-        const stars: Phaser.GameObjects.Star[] = []
-        for (let i = 0; i < starCount; i++) {
-            const x = this.scale.width * (0.2 + Math.random() * 0.6)
-            const y = this.scale.height * (0.2 + Math.random() * 0.4)
-            const color = CELEBRATION_STAR_COLORS[i % CELEBRATION_STAR_COLORS.length]
-
-            const star = this.add.star(x, y, CELEBRATION_STAR_POINTS, CELEBRATION_STAR_INNER_RADIUS, CELEBRATION_STAR_OUTER_RADIUS, color)
-            star.setDepth(CELEBRATION_DEPTH)
-            star.setScrollFactor(0)
-            stars.push(star)
-        }
-
-        if (this.reducedMotion) {
-            stars.forEach(star => star.setAlpha(1))
-            this.time.delayedCall(CELEBRATION_TOTAL_DURATION, () => {
-                this.fadeToBlackAndExit()
-            })
-            return
-        }
-
-        stars.forEach(star => {
-            star.setScale(0)
-            this.tweens.add({
-                targets: star,
-                scaleX: 1,
-                scaleY: 1,
-                duration: CELEBRATION_STAR_SCALE_UP_DURATION,
-                ease: 'Back.out',
-                onComplete: () => {
-                    this.time.delayedCall(CELEBRATION_STAR_WAIT_DURATION, () => {
-                        this.tweens.add({
-                            targets: star,
-                            alpha: 0,
-                            duration: CELEBRATION_STAR_FADE_DURATION,
-                            ease: 'Sine.in'
-                        })
-                    })
-                }
-            })
-        })
-
-        this.time.delayedCall(CELEBRATION_TOTAL_DURATION, () => {
+        const { durationMs } = FireworksCelebration.play(this, { reducedMotion: this.reducedMotion, depth: CELEBRATION_DEPTH })
+        this.time.delayedCall(durationMs, () => {
             this.fadeToBlackAndExit()
         })
     }

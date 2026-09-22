@@ -31,6 +31,17 @@ export interface ComparisonSlot extends OptionSlot {
     hitSize: number
 }
 
+/** Tablero de memoria: tamaño de cada carta y esquina superior izquierda de la rejilla (unidades logicas). */
+export interface MemoryGrid {
+    rows: number
+    columns: number
+    cardWidth: number
+    cardHeight: number
+    gap: number
+    left: number
+    top: number
+}
+
 export interface LayoutSizes {
     viewportWidth: number
     viewportHeight: number
@@ -80,6 +91,13 @@ const ELEMENT_GAP_CSS = 8
 /** Lado maximo (px CSS) de la opcion mas grande (100 %) de una ronda de comparacion. */
 const COMPARISON_BASE_MAX_CSS = 240
 const MIN_FONT_CSS = 14
+/** Relacion ancho/alto de la carta (297x451). */
+export const MEMORY_CARD_ASPECT = 297 / 451
+/** Lado mayor maximo (px CSS) de una carta de memoria. */
+const MEMORY_CARD_MAX_HEIGHT_CSS = 230
+const MEMORY_GAP_CSS = 12
+/** Hueco inferior (fraccion del alto) que deja el borde de madera del tablero. */
+const MEMORY_BOTTOM_MARGIN_RATIO = 0.07
 
 const clamp = (value: number, range: Range) => Math.min(Math.max(value, range.min), range.max)
 
@@ -203,6 +221,51 @@ export class ResponsiveLayout {
                 hitSize: Math.min(Math.max(size, s.hitSize), Math.max(maxHit, size))
             }
         })
+    }
+
+    /**
+     * Rejilla del juego de memoria: las cartas (mismo aspecto que la imagen) se reparten centradas entre la
+     * barra de progreso y el borde inferior, con el mismo margen a cada lado (el de Nubi) para que la
+     * rejilla quede centrada y la esquina de Nubi libre. Ninguna carta baja de `hitSize` de ancho salvo que la
+     * pantalla no de mas de si; en los dispositivos objetivo (movil apaisado) siempre pasa de 44 px CSS.
+     */
+    getMemoryGrid(rows: number, columns: number): MemoryGrid {
+        const s = this.sizes
+        const gap = s.displayScale * MEMORY_GAP_CSS
+        const sideMargin = s.nubiSize + s.nubiMargin * 2
+        const top = s.progressBarTop + s.progressBarHeight + gap * 2
+        const bottom = s.viewportHeight * (1 - MEMORY_BOTTOM_MARGIN_RATIO)
+        const regionWidth = s.viewportWidth - sideMargin * 2
+        const regionHeight = bottom - top
+
+        const safeRows = Math.max(rows, 1)
+        const safeColumns = Math.max(columns, 1)
+        const cardHeight = Math.min(
+            (regionHeight - (safeRows - 1) * gap) / safeRows,
+            (regionWidth - (safeColumns - 1) * gap) / safeColumns / MEMORY_CARD_ASPECT,
+            MEMORY_CARD_MAX_HEIGHT_CSS * s.displayScale
+        )
+        const cardWidth = cardHeight * MEMORY_CARD_ASPECT
+        const gridWidth = safeColumns * cardWidth + (safeColumns - 1) * gap
+        const gridHeight = safeRows * cardHeight + (safeRows - 1) * gap
+
+        return {
+            rows,
+            columns,
+            cardWidth,
+            cardHeight,
+            gap,
+            left: (s.viewportWidth - gridWidth) / 2,
+            top: top + (regionHeight - gridHeight) / 2
+        }
+    }
+
+    /** Centro de la carta de una rejilla de memoria. */
+    static memoryCardCenter(grid: MemoryGrid, row: number, column: number): Point {
+        return {
+            x: grid.left + column * (grid.cardWidth + grid.gap) + grid.cardWidth / 2,
+            y: grid.top + row * (grid.cardHeight + grid.gap) + grid.cardHeight / 2
+        }
     }
 
     /** Posiciones y tamaño de cada opcion: repartidas a lo ancho, sin solaparse entre si. */

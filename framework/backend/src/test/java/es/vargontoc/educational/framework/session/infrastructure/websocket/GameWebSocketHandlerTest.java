@@ -982,6 +982,96 @@ class GameWebSocketHandlerTest {
         assertEquals(true, recPayload.get("nonChromaticKeyRequired"));
     }
 
+    private es.vargontoc.educational.framework.game.model.GameState memoryGameState() throws Exception {
+        var state = createGameState(1L, 10L, 100L, 1L, GameStatus.IN_PROGRESS);
+        state.setEngine(EngineType.MEMORY);
+        state.setStarsEarned(0);
+
+        var memory = new es.vargontoc.educational.framework.game.model.memory.MemoryState();
+        memory.setRows(2);
+        memory.setColumns(2);
+        memory.setTotalPairs(2);
+        memory.setMatchedPairs(1);
+        memory.setFlipDelayMs(2000);
+        memory.setWaitingForFlipBack(true);
+        memory.setFlipBackCardIds(List.of("card-2", "card-3"));
+        memory.setPairAttempts(3);
+        memory.setTotalResponseTimeMs(4321);
+        var c0 = new es.vargontoc.educational.framework.game.model.memory.MemoryCard("card-0", "7", 0, 0);
+        c0.setFaceUp(true);
+        c0.setMatched(true);
+        var c1 = new es.vargontoc.educational.framework.game.model.memory.MemoryCard("card-1", "7", 0, 1);
+        c1.setFaceUp(true);
+        c1.setMatched(true);
+        var c2 = new es.vargontoc.educational.framework.game.model.memory.MemoryCard("card-2", "8", 1, 0);
+        c2.setFaceUp(true);
+        var c3 = new es.vargontoc.educational.framework.game.model.memory.MemoryCard("card-3", "9", 1, 1);
+        memory.setCards(List.of(c0, c1, c2, c3));
+        state.setEnginePayload(new ObjectMapper().writeValueAsString(memory));
+        return state;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_memoryEngine_includesTheBoardWithoutRevealingFaceDownCards() throws Exception {
+        RecognitionElement seven = new RecognitionElement();
+        seven.setId(7L);
+        seven.setCode("banana");
+        seven.setResourceRefs("{\"image\": \"banana\"}");
+        when(recognitionElementRepository.findAllById(org.mockito.ArgumentMatchers.<List<Long>>any()))
+            .thenReturn(List.of(seven));
+
+        Map<String, Object> payload = handler.gameStateToPayload(memoryGameState());
+        Map<String, Object> memory = (Map<String, Object>) payload.get("memoryState");
+
+        assertEquals("MEMORY", payload.get("engine"));
+        assertFalse(payload.containsKey("recognitionState"));
+        assertEquals(2, memory.get("rows"));
+        assertEquals(2, memory.get("columns"));
+        assertEquals(2, memory.get("totalPairs"));
+        assertEquals(1, memory.get("matchedPairs"));
+        assertEquals(2000, memory.get("flipBackDelayMs"));
+        assertEquals(true, memory.get("waitingForFlipBack"));
+        assertEquals(List.of("card-2", "card-3"), memory.get("flipBackCardIds"));
+
+        List<Map<String, Object>> cards = (List<Map<String, Object>>) memory.get("cards");
+        assertEquals(4, cards.size());
+        assertEquals("7", cards.get(0).get("elementId"));
+        assertEquals("8", cards.get(2).get("elementId"), "a face-up card shows its element");
+        assertNull(cards.get(3).get("elementId"), "a face-down card does not disclose its element");
+        assertEquals(true, cards.get(1).get("matched"));
+
+        List<Map<String, Object>> elements = (List<Map<String, Object>>) memory.get("elements");
+        assertEquals("banana", elements.get(0).get("code"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_memoryEngine_hidesInternalTrackingFields() throws Exception {
+        Map<String, Object> memory = (Map<String, Object>) handler.gameStateToPayload(memoryGameState()).get("memoryState");
+
+        assertFalse(memory.containsKey("roundAttempts"));
+        assertFalse(memory.containsKey("pairAttempts"));
+        assertFalse(memory.containsKey("totalResponseTimeMs"));
+        assertFalse(memory.containsKey("mismatchedElementIds"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void gameStateToPayload_memoryEngine_withoutPendingFlipBackHasNoCardsToTurnBack() throws Exception {
+        var state = memoryGameState();
+        var memory = new ObjectMapper().readValue(state.getEnginePayload(),
+            es.vargontoc.educational.framework.game.model.memory.MemoryState.class);
+        memory.setWaitingForFlipBack(false);
+        memory.setFlipBackCardIds(List.of());
+        state.setEnginePayload(new ObjectMapper().writeValueAsString(memory));
+
+        Map<String, Object> payload = (Map<String, Object>) handler.gameStateToPayload(state).get("memoryState");
+
+        assertEquals(false, payload.get("waitingForFlipBack"));
+        assertEquals(List.of(), payload.get("flipBackCardIds"));
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     void gameStateToPayload_comparisonMode_includesComparisonOptions() throws Exception {

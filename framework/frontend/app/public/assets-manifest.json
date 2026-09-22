@@ -114,6 +114,88 @@
                 "type" : "image",
                 "key" : "minigame-background-meadow",
                 "url" : "/assets/images/biomes/meadow/minigame_background.png"
+            },
+            {
+                "type" : "image",
+                "key" : "burrow",
+                "url" : "/assets/images/biomes/meadow/burrow-hole.png"
+            },
+            {
+                "type" : "image",
+                "key" : "butterfly-1",
+                "url" : "/assets/images/biomes/meadow/butterfly-1.png"
+            },
+            {
+                "type" : "image",
+                "key" : "butterfly-2",
+                "url" : "/assets/images/biomes/meadow/butterfly-2.png"
+            },
+            {
+                "type" : "image",
+                "key" : "butterfly-3",
+                "url" : "/assets/images/biomes/meadow/butterfly-3.png"
+            },
+            {
+                "type" : "image",
+                "key" : "door",
+                "url" : "/assets/images/biomes/meadow/door.png"
+            },
+            {
+                "type" : "image",
+                "key" : "shaperbox",
+                "url" : "/assets/images/biomes/meadow/shaper-box.png"
+            },
+            {
+                "type" : "image",
+                "key" : "mushroom",
+                "url" : "/assets/images/biomes/meadow/mushroom.png"
+            },
+            {
+                "type" : "image",
+                "key" : "stump",
+                "url" : "/assets/images/biomes/meadow/stump.png"
+            },
+            {
+                "type" : "spritesheet",
+                "key" : "beehive",
+                "url" :"/assets/images/biomes/meadow/beehive.png",
+                "frameConfig" : { "frameWidth" : 260, "frameHeight" : 290 }
+            },
+            {
+                "type" : "spritesheet",
+                "key" : "chest",
+                "url" :"/assets/images/biomes/meadow/chest.png",
+                "frameConfig" : { "frameWidth" : 300, "frameHeight" : 300 }
+            },
+            {
+                "type" : "spritesheet",
+                "key" : "rainbow",
+                "url" :"/assets/images/biomes/meadow/rainbow.png",
+                "frameConfig" : { "frameWidth" : 500, "frameHeight" : 400 }
+            },
+            {
+                "type" : "spritesheet",
+                "key" : "swing",
+                "url" :"/assets/images/biomes/meadow/swing.png",
+                "frameConfig" : { "frameWidth" : 400, "frameHeight" : 400 }
+            },
+            {
+                "type" : "spritesheet",
+                "key" : "worn",
+                "url" :"/assets/images/biomes/meadow/worn.png",
+                "frameConfig" : { "frameWidth" : 500, "frameHeight" : 500 }
+            },
+            {
+                "type" : "spritesheet",
+                "key" : "daisy",
+                "url" :"/assets/images/biomes/meadow/daisy/daisy-idle.png",
+                "frameConfig" : { "frameWidth" : 500, "frameHeight" : 500 }
+            },
+            {
+                "type" : "spritesheet",
+                "key" : "daisy-anim",
+                "url" :"/assets/images/biomes/meadow/daisy/daisy-tap.png",
+                "frameConfig" : { "frameWidth" : 500, "frameHeight" : 500 }
             }
         ]
     },
@@ -850,6 +932,70 @@
                     "type": "image",
                     "key": "shoe",
                     "url": "assets/images/comparison/shoe.png"
+                }
+        ]
+    },
+    "recognition-memory" : {
+        "files" : [
+                {
+                    "type": "image",
+                    "key": "memory-card-cover",
+                    "url": "assets/images/memory/card_cover.png"
+                },
+                {
+                    "type": "image",
+                    "key": "memory-card-reverse",
+                    "url": "assets/images/memory/card_reverse.png"
+                },
+                {
+                    "type": "image",
+                    "key": "banana",
+                    "url": "assets/images/memory/banana.png"
+                },
+                {
+                    "type": "image",
+                    "key": "pear",
+                    "url": "assets/images/memory/pear.png"
+                },
+                {
+                    "type": "image",
+                    "key": "orange",
+                    "url": "assets/images/memory/orange.png"
+                },
+                {
+                    "type": "image",
+                    "key": "strawberry",
+                    "url": "assets/images/memory/strawberry.png"
+                },
+                {
+                    "type": "image",
+                    "key": "cherry",
+                    "url": "assets/images/memory/cherry.png"
+                },
+                {
+                    "type": "image",
+                    "key": "bus",
+                    "url": "assets/images/memory/bus.png"
+                },
+                {
+                    "type": "image",
+                    "key": "bicycle",
+                    "url": "assets/images/memory/bicycle.png"
+                },
+                {
+                    "type": "image",
+                    "key": "train",
+                    "url": "assets/images/memory/train.png"
+                },
+                {
+                    "type": "image",
+                    "key": "boat",
+                    "url": "assets/images/memory/boat.png"
+                },
+                {
+                    "type": "image",
+                    "key": "plane",
+                    "url": "assets/images/memory/plane.png"
                 }
         ]
     }

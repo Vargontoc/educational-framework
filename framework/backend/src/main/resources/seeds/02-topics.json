@@ -68,5 +68,15 @@
     "maxAge": 4,
     "recognitionType": "COMPARISON",
     "habitatTag": null
+  },
+  {
+    "name": "Memoria",
+    "categoryName": "Matemáticas",
+    "description": "Encontrar parejas de objetos",
+    "status": "ACTIVE",
+    "minAge": 3,
+    "maxAge": 4,
+    "recognitionType": "MEMORY",
+    "habitatTag": null
   }
 ]

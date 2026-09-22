@@ -7,7 +7,7 @@ const REDUCED_MOTION_FADE_DURATION = 400
 const FLASH_COLOR = 0xffffff
 const PARTICLE_COLOR = 0xffffff
 
-export type ReactionTarget = Phaser.GameObjects.Shape | Phaser.GameObjects.Image
+export type ReactionTarget = Phaser.GameObjects.Shape | Phaser.GameObjects.Image | Phaser.GameObjects.Sprite
 
 export class EnvironmentReaction {
     private scene: Scene

@@ -19,7 +19,7 @@ export type SERVER_EVENT =
 export type GAME_RESULT_TYPE = 'CORRECT' | 'INCORRECT' | 'TIMEOUT'
 export type AVATAR_TYPE_EVENT = 'WELCOME' | 'FAREWELL' | 'BIOME_TRANSITION' | 'ROUND_PROMPT'
 export type GAME_ENGINE = 'RECOGNITION' | 'MEMORY' | 'ASSOCIATION' | 'COUNT' | 'COMPARE' | 'PUZZLE'
-export type RECOGNITION_TYPE = 'LETTER' | 'NUMBER' | 'SHAPE' | 'COLOR' | 'ANIMAL' | 'COMPARISON'
+export type RECOGNITION_TYPE = 'LETTER' | 'NUMBER' | 'SHAPE' | 'COLOR' | 'ANIMAL' | 'COMPARISON' | 'MEMORY'
 
 class GameEvent {
 
@@ -52,9 +52,9 @@ export type ChildAgentDeactivatedEvent = BaseServerGameEvent<'CHILD_AGENT_DEACTI
 export type GameErrorEvent = BaseServerGameEvent<'GAME_ERROR', GameErrorPayload | null>
 export type WorldStateSyncEvent = BaseServerGameEvent<'WORLD_STATE_SYNC', WorldSync>
 export type GameStateEvent = BaseServerGameEvent<'WORLD_ACTIVITY_STARTED', GameState>
-export type GameStartedEvent = BaseServerGameEvent<'GAME_STARTED', RecognitionEnginePayload>
-export type GameSetEvent = BaseServerGameEvent<'GAME_READY', RecognitionEnginePayload>
-export type GameResultEvent = BaseServerGameEvent<'GAME_ACTION_RESULT', BaseGameActionResult<RecognitionEnginePayload>>
+export type GameStartedEvent = BaseServerGameEvent<'GAME_STARTED', RecognitionEnginePayload | MemoryEnginePayload>
+export type GameSetEvent = BaseServerGameEvent<'GAME_READY', RecognitionEnginePayload | MemoryEnginePayload>
+export type GameResultEvent = BaseServerGameEvent<'GAME_ACTION_RESULT', BaseGameActionResult<RecognitionEnginePayload | MemoryEnginePayload>>
 
 // Añade aquí un nuevo BaseServerGameEvent<'NUEVO_EVENTO', PayloadType> por cada evento del servidor
 // y súmalo a esta unión: el resto del código estrechará payload automáticamente por event.event
@@ -129,6 +129,16 @@ export class GameRecognitionActionEvent extends GameEvent {
         // COMPARISON: every option is the same element, so the tapped option is told apart by its size.
         const scale = scalePercent === undefined ? '' : `, "selectedScalePercent" : ${scalePercent}`
         this.action = `{"selectedOptionId" : "${id}", "responseTimeMs" : ${time}${scale}}`
+    }
+}
+
+/** Accion del juego de memoria: la carta que el nino ha tocado. */
+export class GameMemoryActionEvent extends GameEvent {
+    constructor() { super('game_action') }
+    action: string = ''
+
+    setAction(cardId: string, time: number) {
+        this.action = JSON.stringify({ cardId, responseTimeMs: time })
     }
 }
 
@@ -249,8 +259,43 @@ export class RecognitionState {
 }
 
 export class RecognitionEnginePayload extends BaseEnginePayload {
+    declare engine: 'RECOGNITION'
     constructor() { super('RECOGNITION') }
     recognitionState?: RecognitionState
+}
+
+/**
+ * Una carta del tablero de memoria. El servidor solo envia `elementId` mientras la carta esta boca arriba o
+ * emparejada: una carta boca abajo no revela que hay debajo.
+ */
+export class MemoryCard {
+    cardId: string = ''
+    elementId?: string | null = null
+    faceUp: boolean = false
+    matched: boolean = false
+    row: number = 0
+    column: number = 0
+}
+
+export class MemoryState {
+    rows: number = 0
+    columns: number = 0
+    totalPairs: number = 0
+    matchedPairs: number = 0
+    /** Tiempo que una pareja que no coincide permanece a la vista antes de volver boca abajo. */
+    flipBackDelayMs: number = 0
+    /** Hay una pareja que no coincide a la vista; `flipBackCardIds` son sus cartas. */
+    waitingForFlipBack: boolean = false
+    flipBackCardIds: string[] = []
+    cards: MemoryCard[] = []
+    /** Todos los elementos del tablero (sin decir donde esta cada uno), para cargar sus imagenes. */
+    elements: RecognitionElement[] = []
+}
+
+export class MemoryEnginePayload extends BaseEnginePayload {
+    declare engine: 'MEMORY'
+    constructor() { super('MEMORY') }
+    memoryState?: MemoryState
 }
 
 

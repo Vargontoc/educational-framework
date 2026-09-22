@@ -1,0 +1,62 @@
+[
+  {
+    "code": "banana",
+    "displayValue": "Plátano",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"banana\"}",
+    "similarityGroup": "fruit"
+  },
+  {
+    "code": "pear",
+    "displayValue": "Pera",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"pear\"}",
+    "similarityGroup": "fruit"
+  },
+  {
+    "code": "orange",
+    "displayValue": "Naranja",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"orange\"}",
+    "similarityGroup": "fruit"
+  },
+  {
+    "code": "strawberry",
+    "displayValue": "Fresa",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"strawberry\"}",
+    "similarityGroup": "fruit"
+  },
+  {
+    "code": "cherry",
+    "displayValue": "Cereza",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"cherry\"}",
+    "similarityGroup": "fruit"
+  },
+  {
+    "code": "bus",
+    "displayValue": "Autobús",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"bus\"}",
+    "similarityGroup": "vehicle"
+  },
+  {
+    "code": "bicycle",
+    "displayValue": "Bicicleta",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"bicycle\"}",
+    "similarityGroup": "vehicle"
+  },
+  {
+    "code": "train",
+    "displayValue": "Tren",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"train\"}",
+    "similarityGroup": "vehicle"
+  },
+  {
+    "code": "boat",
+    "displayValue": "Barco",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"boat\"}",
+    "similarityGroup": "vehicle"
+  },
+  {
+    "code": "plane",
+    "displayValue": "Avión",
+    "resourceRefs": "{\"nubi-audio\": \"Encuentra las parejas\", \"image\": \"plane\"}",
+    "similarityGroup": "vehicle"
+  }
+]

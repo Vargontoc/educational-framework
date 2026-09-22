@@ -13,6 +13,7 @@ import { FarewellScene } from '@/game/FarewellScene';
 import { OrientationRequiredScene } from '@/game/OrientationRequiredScene';
 import { WorldMapScene } from '@/game/WorldMapScene';
 import { RecognitionGameScene } from '@/game/RecognitionGameScene';
+import { MemoryGameScene } from '@/game/MemoryGameScene';
 import { useRoute } from 'vue-router';
 import { useGlobalConfig } from '@/composables/useGlobalConfig';
 import { useGameOrientation } from '@/composables/useGameOrientation';
@@ -38,7 +39,7 @@ const loadPhaserGame = async () => {
       width: 1280,
       height: 720,
       parent: gameContainer.value,
-      scene: [LoadingScene, BaseStateScene, WorldMapScene, RecognitionGameScene, FarewellScene, OrientationRequiredScene],
+      scene: [LoadingScene, BaseStateScene, WorldMapScene, RecognitionGameScene, MemoryGameScene, FarewellScene, OrientationRequiredScene],
       // Canvas transparente: el minijuego pone su fondo (imagen a viewport completo) detras del canvas.
       // El resto de escenas se ven igual: el contenedor .game-view ya tiene el mismo azul.
       transparent: true,
@@ -137,6 +138,31 @@ const loadPhaserGame = async () => {
               childId: active.childId
             })
           } catch { /* noop */ }
+        },
+        startMemoryScene() {
+          try {
+            const scenes = gameInstance.scene?.scenes ?? []
+            const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+            if (!active) return
+            active.scene.start('memory-game', {
+              websocket: active.websocket,
+              biome: active.currentBiome,
+              sessionId: active.sessionId,
+              childId: active.childId
+            })
+          } catch { /* noop */ }
+        },
+        getMemoryData() {
+          try {
+            const scenes = gameInstance.scene?.scenes ?? []
+            const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+            return active?.getBoardSnapshot?.() ?? null
+          } catch { return null }
+        },
+        tapCard(cardId: string) {
+          const scenes = gameInstance.scene?.scenes ?? []
+          const active = scenes.find((s: any) => s.scene?.isActive?.()) as any
+          active?.cards?.get?.(cardId)?.container?.emit('pointerdown')
         },
         seedAudioBuffer(audioId: string) {
           const cache = gameInstance.registry?.get('audioCache')

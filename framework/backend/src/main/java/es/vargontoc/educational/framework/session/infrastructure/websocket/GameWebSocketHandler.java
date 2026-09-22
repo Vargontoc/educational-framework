@@ -59,6 +59,8 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
+import es.vargontoc.educational.framework.game.model.memory.MemoryCard;
+import es.vargontoc.educational.framework.game.model.memory.MemoryState;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 
 import java.io.IOException;
@@ -710,6 +712,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         if (state.getStarsEarned() != null) {
             payload.put("starsEarned", state.getStarsEarned());
         }
+        if (state.getEnginePayload() != null && state.getEngine() == EngineType.MEMORY) {
+            Map<String, Object> memoryPayload = memoryStatePayload(state.getEnginePayload());
+            if (memoryPayload != null) {
+                payload.put("memoryState", memoryPayload);
+            }
+        }
         if (state.getEnginePayload() != null && state.getEngine() == EngineType.RECOGNITION) {
             RecognitionState recognitionState = deserializeRecognitionState(state.getEnginePayload());
             Map<String, Object> recognitionPayload = new java.util.HashMap<>();
@@ -806,6 +814,69 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     accessibleColorId, colorVisionMode);
                 return null;
             });
+    }
+
+    /**
+     * Child-facing memory board. The element of a card is only sent while the card is face up or matched, so the
+     * layout is not disclosed; {@code elements} describes every element of the board (for loading the images)
+     * without saying where each one is. Internal fields (attempt buffer, counters, response times) are excluded.
+     */
+    private Map<String, Object> memoryStatePayload(String enginePayload) {
+        MemoryState memory;
+        try {
+            memory = objectMapper.readValue(enginePayload, MemoryState.class);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to deserialize MemoryState from enginePayload: {}", e.getMessage());
+            return null;
+        }
+
+        List<Map<String, Object>> cards = new java.util.ArrayList<>();
+        java.util.Set<Long> elementIds = new java.util.LinkedHashSet<>();
+        for (MemoryCard card : memory.getCards()) {
+            Map<String, Object> entry = new java.util.LinkedHashMap<>();
+            entry.put("cardId", card.getCardId());
+            entry.put("row", card.getRow());
+            entry.put("column", card.getColumn());
+            entry.put("faceUp", card.isFaceUp());
+            entry.put("matched", card.isMatched());
+            entry.put("elementId", card.isFaceUp() || card.isMatched() ? card.getElementId() : null);
+            cards.add(entry);
+            try {
+                elementIds.add(Long.parseLong(card.getElementId()));
+            } catch (NumberFormatException ignored) {
+                // not a persisted element: nothing to resolve
+            }
+        }
+
+        List<Map<String, Object>> elements = new java.util.ArrayList<>();
+        if (!elementIds.isEmpty()) {
+            for (RecognitionElement el : recognitionElementRepository.findAllById(new java.util.ArrayList<>(elementIds))) {
+                Map<String, Object> entry = new java.util.LinkedHashMap<>();
+                entry.put("id", String.valueOf(el.getId()));
+                entry.put("code", el.getCode());
+                entry.put("displayValue", el.getDisplayValue());
+                if (el.getResourceRefs() != null && !el.getResourceRefs().isBlank()) {
+                    try {
+                        entry.put("resourceRefs", objectMapper.readTree(el.getResourceRefs()));
+                    } catch (Exception e) {
+                        entry.put("resourceRefs", el.getResourceRefs());
+                    }
+                }
+                elements.add(entry);
+            }
+        }
+
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("rows", memory.getRows());
+        result.put("columns", memory.getColumns());
+        result.put("totalPairs", memory.getTotalPairs());
+        result.put("matchedPairs", memory.getMatchedPairs());
+        result.put("flipBackDelayMs", memory.getFlipDelayMs());
+        result.put("waitingForFlipBack", memory.isWaitingForFlipBack());
+        result.put("flipBackCardIds", memory.isWaitingForFlipBack() ? memory.getFlipBackCardIds() : List.of());
+        result.put("cards", cards);
+        result.put("elements", elements);
+        return result;
     }
 
     private RecognitionState deserializeRecognitionState(String payload) {

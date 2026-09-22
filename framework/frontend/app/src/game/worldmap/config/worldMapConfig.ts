@@ -63,3 +63,30 @@ export const BIOME_Y_OFFSETS: Readonly<Record<string, Readonly<Partial<Record<Bi
 export function biomeYOffset(biome: string | undefined, target: BiomeYOffsetTarget): number {
     return (biome ? BIOME_Y_OFFSETS[biome]?.[target] : undefined) ?? 0
 }
+
+/**
+ * Tamaño (lado mayor, en px lógicos del canvas de 1280x720) al que se reduce cada elemento interactivo del
+ * bioma meadow (mariposas, daisy, cofre...; ver `InteractiveLayer`/`InteractiveElementAnimations`). Los assets
+ * llegan en tamaños nativos muy dispares (de 400 a 2500 px) y nunca se amplían por encima de su tamaño nativo,
+ * solo se reducen. La zona táctil del elemento se calcula a partir de este mismo valor (+30px de margen).
+ *
+ * Para ajustar el tamaño de un elemento, cambia su valor aquí; no hace falta tocar ningún otro fichero.
+ * Referencia de otros elementos del mapa ya calibrados: el transporte y el portal de salida miden ~128, Nubi se
+ * ve a ~160.
+ */
+export const MEADOW_ELEMENT_SIZE: Readonly<Record<string, number>> = {
+    'butterfly-1': 64,
+    'butterfly-2': 64,
+    'butterfly-3': 64,
+    daisy: 90,
+    chest: 130,
+    mushroom: 80,
+    beehive: 130,
+    burrow: 110,
+    door: 150,
+    swing: 170,
+    worn: 120,
+    shaperbox: 130,
+    rainbow: 220,
+    stump: 120
+}

@@ -68,7 +68,10 @@ payload:
             with selectedOptionId and responseTimeMs. In comparison rounds (comparisonMode=true) every option shares
             the same elementId, so it must also carry selectedScalePercent (the scalePercent of the tapped option):
             the answer is correct only when it equals the biggest scale of the round. Without it the answer is
-            counted as not correct.
+            counted as not correct. For MEMORY games it is a JSON string {"cardId": "card-3", "responseTimeMs": 800}:
+            the id of the card the child touched (card ids come from the board) and the client-measured time.
+            Touching a card that is unknown, already face up or already matched is ignored. Touching a card while a
+            non-matching pair is still on show turns that pair back first, so no touch is lost.
         topicId:
           type: integer
           format: int64

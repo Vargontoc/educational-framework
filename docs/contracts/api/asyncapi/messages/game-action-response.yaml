@@ -52,4 +52,13 @@ payload:
           description: Achievements unlocked by this action. Contains achievementCode, activityId, and topicId.
         attemptContext:
           type: string
-          description: "Contextual info about the attempt, e.g. 'streak:3'."
+          description: >-
+            Contextual info about the attempt, a JSON string. RECOGNITION: recognitionCategory, roundIndex,
+            targetElementId, selectedOptionId, optionIds, firstTry, hintActive, attemptNumberInRound, responseTimeMs.
+            MEMORY (engineType MEMORY): event (FIRST_FLIP | MATCH | MISMATCH | IGNORED), memoryCategory (shared
+            thematic group of the board, MIXED when several), cardId1, cardId2 (null until the pair is complete),
+            elementId (only for a MATCH), match, attemptNumber, responseTimeMs, firstTry. In MEMORY, resultType is
+            CORRECT for FIRST_FLIP, MATCH and IGNORED, and INCORRECT for a MISMATCH: it is a technical value and must
+            not be shown to the child as a failure (ADR-030: no negative sound, no shake, no failure counter).
+            Only MATCH and MISMATCH are attempts; they are buffered on the server and registered in tracking when
+            the game completes, never before (an abandoned or discarded game registers no attempts).

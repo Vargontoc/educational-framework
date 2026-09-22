@@ -43,5 +43,14 @@
     "maxAge": 4,
     "status": "ACTIVE",
     "topicNames": ["Comparación"]
+  },
+  {
+    "name": "Memoria de Parejas",
+    "description": "Encuentra las parejas de cartas iguales",
+    "gameEngineType": "MEMORY",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "topicNames": ["Memoria"]
   }
 ]

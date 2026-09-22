@@ -73,5 +73,20 @@
     "activityName": "Comparación de Tamaño",
     "difficultyCode": "HARD",
     "engineParams": "{}"
+  },
+  {
+    "activityName": "Memoria de Parejas",
+    "difficultyCode": "EASY",
+    "engineParams": "{}"
+  },
+  {
+    "activityName": "Memoria de Parejas",
+    "difficultyCode": "MEDIUM",
+    "engineParams": "{}"
+  },
+  {
+    "activityName": "Memoria de Parejas",
+    "difficultyCode": "HARD",
+    "engineParams": "{}"
   }
 ]

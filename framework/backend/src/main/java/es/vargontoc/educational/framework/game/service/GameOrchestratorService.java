@@ -16,6 +16,7 @@ import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRe
 import es.vargontoc.educational.framework.family.model.ChildProfile;
 import es.vargontoc.educational.framework.family.model.ColorVisionMode;
 import es.vargontoc.educational.framework.family.ports.in.ChildProfileUseCase;
+import es.vargontoc.educational.framework.game.engine.MemoryEngine;
 import es.vargontoc.educational.framework.game.engine.RecognitionEngine;
 import es.vargontoc.educational.framework.game.exception.EngineNotAvailableException;
 import es.vargontoc.educational.framework.game.exception.GameNotFoundException;
@@ -30,6 +31,11 @@ import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.model.LaunchContext;
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
+import es.vargontoc.educational.framework.game.model.memory.MemoryBoardConfig;
+import es.vargontoc.educational.framework.game.model.memory.MemoryCard;
+import es.vargontoc.educational.framework.game.model.memory.MemoryDifficultyLadder;
+import es.vargontoc.educational.framework.game.model.memory.MemoryRoundAttemptRecord;
+import es.vargontoc.educational.framework.game.model.memory.MemoryState;
 import es.vargontoc.educational.framework.game.model.event.GameSessionCompletedEvent;
 import es.vargontoc.educational.framework.game.model.event.GameSessionDiscardedEvent;
 import es.vargontoc.educational.framework.game.model.recognition.CandidateMetadata;
@@ -136,6 +142,8 @@ public class GameOrchestratorService implements GameOrchestrator {
         // Default engine without color validator (will be overridden per-game if needed)
         this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(),
                 new RecognitionEngine(new java.util.Random(), recognitionSimilarityService, null, null, animalGroupService));
+        // Stateless (the board lives in GameState.enginePayload): one instance serves every memory game.
+        this.engineInstances.putIfAbsent(EngineType.MEMORY.name(), new MemoryEngine());
     }
 
     @Override
@@ -164,6 +172,8 @@ public class GameOrchestratorService implements GameOrchestrator {
             List<String> candidates = resolveCandidates(childProfileId, activity, launchContext);
             state.setCandidates(candidates);
             state.setRecognitionCategory(resolveRecognitionCategory(activity));
+        } else if (state.getEngine() == EngineType.MEMORY) {
+            state.setCandidates(resolveMemoryCandidates(activity));
         }
 
         gameStateRegistry.save(state);
@@ -272,6 +282,11 @@ public class GameOrchestratorService implements GameOrchestrator {
 
             GameEnginePort engine = resolveEngine(state);
 
+            if (state.getEngine() == EngineType.MEMORY) {
+                // The memory prompt is spoken once, when the game is ready: never resend it with an action.
+                state.setRoundAudioResult(null);
+            }
+
             String targetBeforeAction = null;
             if (state.getEngine() == EngineType.RECOGNITION && state.getEnginePayload() != null) {
                 RecognitionState recStateBefore = deserializeRecognitionState(state.getEnginePayload());
@@ -342,6 +357,10 @@ public class GameOrchestratorService implements GameOrchestrator {
                             difficultyChanged = true;
                             newDifficultyLevelId = flushResult.newDifficultyLevelId();
                             state.setDifficultyLevelId(newDifficultyLevelId);
+                        }
+
+                        if (topicId == null && state.getEngine() == EngineType.MEMORY) {
+                            topicId = resolveMemoryTopicId(state);
                         }
 
                         List<UnlockedAchievement> completionAchievements = evaluateGameCompletionAchievementsUseCase.evaluate(
@@ -415,6 +434,9 @@ public class GameOrchestratorService implements GameOrchestrator {
             state.setLastActivityAt(LocalDateTime.now());
 
             if (!state.isRepetition()) {
+                // Progress is only consolidated when the game completes: the memory engine keeps running counters
+                // in the state, but an abandoned game reports none of them.
+                boolean noProgress = state.getEngine() == EngineType.MEMORY;
                 try {
                     registerGameSessionSummaryUseCase.registerGameSessionSummary(
                         state.getChildProfileId(),
@@ -422,10 +444,10 @@ public class GameOrchestratorService implements GameOrchestrator {
                         state.getActivityId(),
                         state.getDifficultyLevelId(),
                         state.getDifficultyLevelId(),
-                        state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
-                        getValue(state.getAttempts(), 0),
-                        getValue(state.getCorrectAttempts(), 0),
-                        getValue(state.getTimeoutAttempts(), 0),
+                        !noProgress && state.getCurrentScore() != null ? state.getCurrentScore().intValue() : 0,
+                        noProgress ? 0 : getValue(state.getAttempts(), 0),
+                        noProgress ? 0 : getValue(state.getCorrectAttempts(), 0),
+                        noProgress ? 0 : getValue(state.getTimeoutAttempts(), 0),
                         state.getStartedAt(),
                         LocalDateTime.now(),
                         GameSessionFinalStatus.ABANDONED,
@@ -520,6 +542,10 @@ public class GameOrchestratorService implements GameOrchestrator {
     private String getEngineParams(GameState state) {
         List<String> candidates = state.getCandidates() != null ? state.getCandidates() : List.of();
 
+        if (state.getEngine() == EngineType.MEMORY) {
+            return getMemoryEngineParams(state, candidates);
+        }
+
         var root = new java.util.LinkedHashMap<String, Object>();
         root.put("candidates", candidates);
         if (state.getRecognitionCategory() != null) {
@@ -546,6 +572,31 @@ public class GameOrchestratorService implements GameOrchestrator {
             root.put("candidateMetadata", buildCandidateMetadata(candidates));
         }
 
+        try {
+            return OBJECT_MAPPER.writeValueAsString(root);
+        } catch (JacksonException e) {
+            throw new IllegalStateException("Failed to serialize engineParams", e);
+        }
+    }
+
+    /**
+     * Memory params: the board of the level (ADR-030 ladder) plus the candidates with their thematic group, which
+     * the engine needs to deal a same-category board in HARD. The level's {@code engineParams} are not used: the
+     * ladder is fixed by the ADR.
+     */
+    private String getMemoryEngineParams(GameState state, List<String> candidates) {
+        MemoryBoardConfig board = MemoryDifficultyLadder.forDifficulty(resolveDifficultyCode(state.getDifficultyLevelId()));
+
+        var memory = new java.util.LinkedHashMap<String, Object>();
+        memory.put("rows", board.rows());
+        memory.put("columns", board.columns());
+        memory.put("flipDelayMs", board.flipDelayMs());
+        memory.put("contentMode", board.contentMode().name());
+
+        var root = new java.util.LinkedHashMap<String, Object>();
+        root.put("candidates", candidates);
+        root.put("candidateMetadata", buildCandidateMetadata(candidates));
+        root.put("memoryParams", memory);
         try {
             return OBJECT_MAPPER.writeValueAsString(root);
         } catch (JacksonException e) {
@@ -610,6 +661,23 @@ public class GameOrchestratorService implements GameOrchestrator {
             log.warn("ChildProfile {} not found, defaulting to ColorVisionMode.NONE", childProfileId);
             return ColorVisionMode.NONE;
         }
+    }
+
+    /** Every active element of the activity's topics is a candidate for the memory board. */
+    private List<String> resolveMemoryCandidates(Activity activity) {
+        List<String> candidates = new ArrayList<>();
+        List<Long> topicIds = activity.getTopicIds() != null ? activity.getTopicIds() : List.of();
+        for (Long topicId : topicIds) {
+            List<RecognitionElement> elements = recognitionElementRepository.findByTopicIdAndStatus(topicId, ContentStatus.ACTIVE);
+            if (elements.isEmpty()) {
+                log.warn("Topic {} has zero active elements for the memory game, skipping", topicId);
+                continue;
+            }
+            for (RecognitionElement element : elements) {
+                candidates.add(String.valueOf(element.getId()));
+            }
+        }
+        return candidates;
     }
 
     private List<String> resolveCandidates(Long childProfileId, Activity activity, LaunchContext launchContext) {
@@ -820,8 +888,7 @@ public class GameOrchestratorService implements GameOrchestrator {
         boolean difficultyChanged = false;
         Long newDifficultyLevelId = null;
 
-        RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
-        for (RoundAttemptRecord attempt : recState.getRoundAttempts()) {
+        for (RoundAttemptRecord attempt : bufferedAttemptsOf(state)) {
             try {
                 AttemptRegistrationResult result = registerActivityAttemptUseCase.register(
                         state.getChildProfileId(),
@@ -850,6 +917,93 @@ public class GameOrchestratorService implements GameOrchestrator {
         return new FlushResult(achievements, difficultyChanged, newDifficultyLevelId);
     }
 
+    /** The attempts the engine buffered during the game, in the shape tracking registers them. */
+    private List<RoundAttemptRecord> bufferedAttemptsOf(GameState state) {
+        if (state.getEngine() == EngineType.MEMORY) {
+            return bufferedMemoryAttempts(state);
+        }
+        if (state.getEngine() != EngineType.RECOGNITION) {
+            return List.of();
+        }
+        return deserializeRecognitionState(state.getEnginePayload()).getRoundAttempts();
+    }
+
+    /**
+     * Memory attempts carry no topic nor difficulty (the engine does not know them): the topic is the one of the
+     * matched element, or the board's topic for a pair that did not match (no element to attribute it to).
+     */
+    private List<RoundAttemptRecord> bufferedMemoryAttempts(GameState state) {
+        MemoryState memoryState = deserializeMemoryState(state.getEnginePayload());
+        Map<String, Long> topicByElementId = memoryTopicsByElementId(memoryState);
+        Long boardTopicId = topicByElementId.values().stream().findFirst().orElse(null);
+
+        List<RoundAttemptRecord> attempts = new ArrayList<>();
+        for (MemoryRoundAttemptRecord attempt : memoryState.getRoundAttempts()) {
+            Long elementId = null;
+            Long topicId = boardTopicId;
+            if (attempt.elementId() != null) {
+                try {
+                    elementId = Long.valueOf(attempt.elementId());
+                    topicId = topicByElementId.getOrDefault(attempt.elementId(), boardTopicId);
+                } catch (NumberFormatException e) {
+                    log.debug("Memory elementId '{}' is not numeric, skipping element tracking", attempt.elementId());
+                }
+            }
+            attempts.add(new RoundAttemptRecord(topicId, elementId, state.getDifficultyLevelId(),
+                    attempt.result(), attempt.responseTimeMs(), attempt.attemptContext()));
+        }
+        return attempts;
+    }
+
+    /** Topic of each element on the board, in card order (the first entry is the first card's topic). */
+    private Map<String, Long> memoryTopicsByElementId(MemoryState memoryState) {
+        Map<String, Long> topics = new java.util.LinkedHashMap<>();
+        List<Long> ids = new ArrayList<>();
+        for (MemoryCard card : memoryState.getCards()) {
+            try {
+                ids.add(Long.valueOf(card.getElementId()));
+            } catch (NumberFormatException e) {
+                log.debug("Memory elementId '{}' is not numeric", card.getElementId());
+            }
+        }
+        if (ids.isEmpty()) {
+            return topics;
+        }
+        Map<Long, Long> topicById = new HashMap<>();
+        for (RecognitionElement element : recognitionElementRepository.findAllById(ids)) {
+            topicById.put(element.getId(), element.getTopicId());
+        }
+        for (MemoryCard card : memoryState.getCards()) {
+            try {
+                Long topicId = topicById.get(Long.valueOf(card.getElementId()));
+                if (topicId != null) {
+                    topics.putIfAbsent(card.getElementId(), topicId);
+                }
+            } catch (NumberFormatException ignored) {
+                // skipped above
+            }
+        }
+        return topics;
+    }
+
+    private Long resolveMemoryTopicId(GameState state) {
+        try {
+            return memoryTopicsByElementId(deserializeMemoryState(state.getEnginePayload()))
+                    .values().stream().findFirst().orElse(null);
+        } catch (Exception e) {
+            log.debug("Could not resolve the memory topic for gameId={}: {}", state.getGameId(), e.getMessage());
+            return null;
+        }
+    }
+
+    private MemoryState deserializeMemoryState(String payload) {
+        try {
+            return OBJECT_MAPPER.readValue(payload, MemoryState.class);
+        } catch (JacksonException e) {
+            throw new IllegalStateException("Failed to deserialize MemoryState", e);
+        }
+    }
+
     private RecognitionState deserializeRecognitionState(String payload) {
         try {
             return OBJECT_MAPPER.readValue(payload, RecognitionState.class);
@@ -872,6 +1026,10 @@ public class GameOrchestratorService implements GameOrchestrator {
      * a transient field for the WebSocket handler to consume.
      */
     private void generateAndAttachRoundAudio(GameState state) {
+        if (state.getEngine() == EngineType.MEMORY && state.getEnginePayload() != null) {
+            generateAndAttachMemoryPromptAudio(state);
+            return;
+        }
         if (state.getEngine() != EngineType.RECOGNITION || state.getEnginePayload() == null) {
             return;
         }
@@ -886,6 +1044,24 @@ public class GameOrchestratorService implements GameOrchestrator {
             state.setRoundAudioResult(audioResult);
         } catch (Exception e) {
             log.warn("Failed to generate round audio for gameId={}: {}", state.getGameId(), e.getMessage());
+        }
+    }
+
+    /**
+     * The memory game has one prompt for the whole game ("encuentra las parejas"), stored in the
+     * {@code nubi-audio} of the board's elements: the first card's element supplies it. Best effort: without
+     * audio the game is played the same (it is playable without sound, ADR-030).
+     */
+    private void generateAndAttachMemoryPromptAudio(GameState state) {
+        try {
+            List<MemoryCard> cards = deserializeMemoryState(state.getEnginePayload()).getCards();
+            if (cards.isEmpty()) {
+                return;
+            }
+            state.setRoundAudioResult(roundAudioService.generateRoundAudio(
+                    state.getChildProfileId(), cards.get(0).getElementId()));
+        } catch (Exception e) {
+            log.warn("Failed to generate memory prompt audio for gameId={}: {}", state.getGameId(), e.getMessage());
         }
     }
 }

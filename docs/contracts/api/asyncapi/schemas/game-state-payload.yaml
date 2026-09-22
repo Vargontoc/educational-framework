@@ -35,7 +35,10 @@ properties:
     enum:
       - RECOGNITION
       - MEMORY
-    description: Engine type running the game session. Only present when an engine is assigned.
+    description: >-
+      Engine type running the game session. Only present when an engine is assigned. RECOGNITION games carry
+      recognitionState; MEMORY games carry memoryState. For MEMORY, attempts counts the pairs of cards turned so
+      far; it is not a child-facing value and must not be shown as a failure counter.
   starsEarned:
     type: integer
     description: Child-facing completion result (0-3 stars). Present when the game assigns a star rating.
@@ -172,3 +175,86 @@ properties:
       - touchEnableDelayMs
       - nonChromaticKeyRequired
       - showIcon
+  memoryState:
+    type: object
+    description: >-
+      Child-facing memory board. Only present when engine is MEMORY. The element of a card is only sent while the
+      card is face up or matched (a face-down card does not disclose what is under it); `elements` describes every
+      element of the board, without saying where each one is, so the client can load their images. Internal fields
+      (attempt buffer, counters, response times, first-try data) are intentionally excluded.
+      The client draws this state: it turns back a non-matching pair on its own after flipBackDelayMs (neutral, no
+      failure feedback) and the server applies that turn-back with the next action.
+    properties:
+      rows:
+        type: integer
+      columns:
+        type: integer
+      totalPairs:
+        type: integer
+      matchedPairs:
+        type: integer
+        description: Pairs found so far. Matched cards stay face up until the game ends.
+      flipBackDelayMs:
+        type: integer
+        description: Time a non-matching pair stays face up before turning back (EASY 2000, MEDIUM 1500, HARD 1000).
+      waitingForFlipBack:
+        type: boolean
+        description: True while a non-matching pair is on show.
+      flipBackCardIds:
+        type: array
+        description: Cards of the non-matching pair on show; empty when waitingForFlipBack is false.
+        items:
+          type: string
+      cards:
+        type: array
+        items:
+          type: object
+          properties:
+            cardId:
+              type: string
+              description: Id the client sends in the game_action (e.g. "card-3").
+            row:
+              type: integer
+            column:
+              type: integer
+            faceUp:
+              type: boolean
+            matched:
+              type: boolean
+            elementId:
+              type: string
+              nullable: true
+              description: Element of the card. Null while the card is face down.
+          required:
+            - cardId
+            - row
+            - column
+            - faceUp
+            - matched
+      elements:
+        type: array
+        description: >-
+          Every element of the board (id, code, displayValue, resourceRefs). The image to draw is
+          resourceRefs.image (falling back to code). Not tied to any card position.
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            code:
+              type: string
+            displayValue:
+              type: string
+            resourceRefs:
+              type: object
+              additionalProperties: true
+          required:
+            - id
+    required:
+      - rows
+      - columns
+      - totalPairs
+      - matchedPairs
+      - flipBackDelayMs
+      - waitingForFlipBack
+      - cards
