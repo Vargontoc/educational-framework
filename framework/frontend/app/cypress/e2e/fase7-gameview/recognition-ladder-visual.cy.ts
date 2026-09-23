@@ -22,7 +22,6 @@ function makeGameStartedEvent() {
         optionIds: ['letter_a', 'letter_b', 'letter_c'],
         guideChromEnabled: false,
         touchEnableDelayMs: 0,
-        nonChromaticKeyRequired: false,
         elements: []
       }
     }
@@ -32,7 +31,6 @@ function makeGameStartedEvent() {
 function makeGameReadyEvent(opts: {
   guideChromEnabled?: boolean
   touchEnableDelayMs?: number
-  nonChromaticKeyRequired?: boolean
 } = {}) {
   return {
     event: 'GAME_READY',
@@ -52,7 +50,6 @@ function makeGameReadyEvent(opts: {
         optionIds: ['letter_a', 'letter_b', 'letter_c'],
         guideChromEnabled: opts.guideChromEnabled ?? false,
         touchEnableDelayMs: opts.touchEnableDelayMs ?? 0,
-        nonChromaticKeyRequired: opts.nonChromaticKeyRequired ?? false,
         elements: [
           { id: 'letter_a', code: 'letter_a', displayValue: 'A', resourceRefs: { image: 'letter-a' } },
           { id: 'letter_b', code: 'letter_b', displayValue: 'B', resourceRefs: { image: 'letter-b' } },
@@ -66,7 +63,6 @@ function makeGameReadyEvent(opts: {
 function makeActionResult(resultType: string, gameCompleted: boolean, roundIndex: number, totalRounds: number, opts: {
   guideChromEnabled?: boolean
   touchEnableDelayMs?: number
-  nonChromaticKeyRequired?: boolean
 } = {}) {
   return {
     event: 'GAME_ACTION_RESULT',
@@ -92,7 +88,6 @@ function makeActionResult(resultType: string, gameCompleted: boolean, roundIndex
           optionIds: roundIndex < totalRounds ? ['letter_a', 'letter_b', 'letter_c'] : [],
           guideChromEnabled: opts.guideChromEnabled ?? false,
           touchEnableDelayMs: opts.touchEnableDelayMs ?? 0,
-          nonChromaticKeyRequired: opts.nonChromaticKeyRequired ?? false,
           elements: roundIndex < totalRounds ? [
             { id: 'letter_a', code: 'letter_a', displayValue: 'A', resourceRefs: { image: 'letter-a' } },
             { id: 'letter_b', code: 'letter_b', displayValue: 'B', resourceRefs: { image: 'letter-b' } },
@@ -253,31 +248,6 @@ describe('RecognitionGameScene — ladder visual parameters (SPRINT-074)', () =>
       const data = state.getSceneData()
       expect(data).to.not.be.null
       expect(data.guideChromGraphicsExists).to.be.false
-    })
-  })
-
-  it('positivo: nonChromaticKeyRequired se almacena correctamente', () => {
-    cy.selectChildProfile('Nubi')
-    cy.visit(`/game/${childId}`)
-
-    cy.window({ timeout: GAME_TIMEOUT }).should((win) => {
-      const state = (win as any).__NUBI_GAME_STATE__
-      expect(state.activeScene).to.eq('world-map')
-    })
-
-    cy.window().then((win) => {
-      const state = (win as any).__NUBI_GAME_STATE__
-      state.injectWsEvent(makeGameStartedEvent())
-      state.injectWsEvent(makeGameReadyEvent({ nonChromaticKeyRequired: true }))
-    })
-
-    cy.wait(800)
-
-    cy.window().should((win) => {
-      const state = (win as any).__NUBI_GAME_STATE__
-      const data = state.getSceneData()
-      expect(data).to.not.be.null
-      expect(data.nonChromaticKeyRequired).to.be.true
     })
   })
 

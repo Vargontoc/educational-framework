@@ -1,0 +1,62 @@
+[
+    {
+        "code": "circle",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"circle\"}",
+        "similarityGroup": ["rounded"]
+    },
+    {
+        "code": "oval",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"oval\"}",
+        "similarityGroup": ["rounded"]
+    },
+    {
+        "code": "rectangle",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"rectangle\"}",
+        "similarityGroup": ["angle"]
+    },
+    {
+        "code": "square",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"square\"}",
+        "similarityGroup": ["angle"]
+    },
+    {
+        "code": "rhombus",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"rhombus\"}",
+        "similarityGroup": ["angle"]
+    },
+    {
+        "code": "triangle",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"triangle\"}",
+        "similarityGroup": []
+    },
+    {
+        "code": "pentagon",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"pentagon\"}",
+        "similarityGroup": []
+    },
+    {
+        "code": "star",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"star\"}",
+        "similarityGroup": []
+    },
+    {
+        "code": "arrow",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"arrow\"}",
+        "similarityGroup": []
+    },
+    {
+        "code": "heart",
+        "nubi" : "¿Cuál encaja aquí?",
+        "resourceRefs": "{\"nubi-audio\": \"¿Cuál encaja aquí?\", \"image\": \"heart\"}",
+        "similarityGroup": []
+    }
+]

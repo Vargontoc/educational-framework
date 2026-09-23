@@ -89,7 +89,7 @@ public class MemoryEngine implements GameEnginePort {
 
         MemoryBoardConfig config = parseBoardConfig(engineParams);
         List<String> candidates = parseCandidates(engineParams);
-        Map<String, String> groupByElementId = parseGroupsByElementId(engineParams);
+        Map<String, List<String>> groupByElementId = parseGroupsByElementId(engineParams);
 
         gameState.setEnginePayload(serializeState(buildInitialState(config, candidates, groupByElementId)));
     }
@@ -291,7 +291,7 @@ public class MemoryEngine implements GameEnginePort {
     // --- Board -------------------------------------------------------------------------------------------------
 
     private MemoryState buildInitialState(
-            MemoryBoardConfig config, List<String> candidates, Map<String, String> groupByElementId) {
+            MemoryBoardConfig config, List<String> candidates, Map<String, List<String>> groupByElementId) {
         List<String> elements = selectElements(candidates, groupByElementId, config.pairCount(), config.contentMode());
         int pairs = elements.size();
 
@@ -328,12 +328,12 @@ public class MemoryEngine implements GameEnginePort {
     }
 
     /** The group all the elements share, "MIXED" when there are several, null when none is known. */
-    private String memoryCategoryOf(List<String> elements, Map<String, String> groupByElementId) {
+    private String memoryCategoryOf(List<String> elements, Map<String, List<String>> groupByElementId) {
         Set<String> groups = new LinkedHashSet<>();
         for (String element : elements) {
-            String group = groupByElementId.get(element);
-            if (group != null && !group.isBlank()) {
-                groups.add(group);
+            List<String> group = groupByElementId.get(element);
+            if (group != null && !group.isEmpty()) {
+                groups.addAll(group);
             }
         }
         if (groups.isEmpty()) {
@@ -347,7 +347,7 @@ public class MemoryEngine implements GameEnginePort {
      * mode (no group with enough elements, elements without group) it degrades to a plain random selection.
      */
     List<String> selectElements(
-            List<String> candidates, Map<String, String> groupByElementId, int pairs, MemoryContentMode mode) {
+            List<String> candidates, Map<String, List<String>> groupByElementId, int pairs, MemoryContentMode mode) {
         List<String> distinct = new ArrayList<>(new LinkedHashSet<>(candidates));
         int wanted = Math.min(pairs, distinct.size());
         if (wanted == 0) {
@@ -368,13 +368,22 @@ public class MemoryEngine implements GameEnginePort {
         return new ArrayList<>(distinct.subList(0, wanted));
     }
 
-    /** All the elements from one randomly chosen group that has enough of them, or null when no group does. */
-    private List<String> selectFromOneGroup(List<String> elements, Map<String, String> groupByElementId, int wanted) {
+    /**
+     * All the elements from one randomly chosen group that has enough of them, or null when no group does.
+     * An element can belong to several groups (its {@code resourceRefs.group}); it is bucketed into every one
+     * of them, so it can help fill more than one candidate group.
+     */
+    private List<String> selectFromOneGroup(List<String> elements, Map<String, List<String>> groupByElementId, int wanted) {
         Map<String, List<String>> byGroup = new LinkedHashMap<>();
         for (String element : elements) {
-            String group = groupByElementId.get(element);
-            if (group != null && !group.isBlank()) {
-                byGroup.computeIfAbsent(group, g -> new ArrayList<>()).add(element);
+            List<String> groups = groupByElementId.get(element);
+            if (groups == null) {
+                continue;
+            }
+            for (String group : groups) {
+                if (group != null && !group.isBlank()) {
+                    byGroup.computeIfAbsent(group, g -> new ArrayList<>()).add(element);
+                }
             }
         }
         List<List<String>> eligible = byGroup.values().stream().filter(members -> members.size() >= wanted).toList();
@@ -386,11 +395,16 @@ public class MemoryEngine implements GameEnginePort {
         return new ArrayList<>(members.subList(0, wanted));
     }
 
-    /** Takes elements round-robin over the groups, so the board mixes as many different groups as possible. */
-    private List<String> selectAcrossGroups(List<String> elements, Map<String, String> groupByElementId, int wanted) {
+    /**
+     * Takes elements round-robin over the groups, so the board mixes as many different groups as possible.
+     * An element with several groups only needs one bucket here (it must land in exactly one, or it could be
+     * picked twice), so its first group is used as its group for this purpose.
+     */
+    private List<String> selectAcrossGroups(List<String> elements, Map<String, List<String>> groupByElementId, int wanted) {
         Map<String, List<String>> byGroup = new LinkedHashMap<>();
         for (String element : elements) {
-            String group = groupByElementId.get(element);
+            List<String> groups = groupByElementId.get(element);
+            String group = groups != null && !groups.isEmpty() ? groups.get(0) : null;
             // An element without group counts as a group of its own.
             String key = group != null && !group.isBlank() ? "group:" + group : "element:" + element;
             byGroup.computeIfAbsent(key, k -> new ArrayList<>()).add(element);
@@ -452,12 +466,12 @@ public class MemoryEngine implements GameEnginePort {
 
     private List<String> distinctElementIds(MemoryState state) {
         return new ArrayList<>(state.getCards().stream()
-                .map(MemoryCard::getElementId)
+                .map(m -> m.getElementId())
                 .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)));
     }
 
     private ActionResult buildResult(GameState gameState, MemoryState state, ActionResultType resultType,
-                                     Integer responseTimeMs, MemoryAttemptContext context) {
+                                    Integer responseTimeMs, MemoryAttemptContext context) {
         gameState.setEnginePayload(serializeState(state));
 
         ActionResult result = new ActionResult();
@@ -552,10 +566,10 @@ public class MemoryEngine implements GameEnginePort {
         return OBJECT_MAPPER.convertValue(candidates, new TypeReference<List<String>>() {});
     }
 
-    private Map<String, String> parseGroupsByElementId(String engineParams) {
+    private Map<String, List<String>> parseGroupsByElementId(String engineParams) {
         JsonNode node = readTree(engineParams);
         JsonNode metadata = node != null ? node.get("candidateMetadata") : null;
-        Map<String, String> groups = new LinkedHashMap<>();
+        Map<String, List<String>> groups = new LinkedHashMap<>();
         if (metadata == null || !metadata.isArray()) {
             return groups;
         }

@@ -272,9 +272,7 @@ const loadPhaserGame = async () => {
               startingGame: active.startingGame ?? null,
               touchEnableTimerActive: !!active.touchEnableTimer,
               guideChromGraphicsExists: !!active.guideChromGraphics,
-              nonChromaticKeyRequired: active.nonChromaticKeyRequired ?? false,
-              recognitionCategory: active.recognitionCategory ?? '',
-              nonChromaticPatternGraphicsExists: (active.nonChromaticPatternGraphics?.length ?? 0) > 0
+              recognitionCategory: active.recognitionCategory ?? ''
             }
           } catch { return null }
         }

@@ -1,4 +1,4 @@
-import type { GameObjects } from "phaser"
+import { TintModes, type GameObjects } from "phaser"
 import type { RECOGNITION_TYPE } from "../GameEvent"
 
 export const RECOGNITION_PALETTE = [
@@ -11,9 +11,10 @@ export const RECOGNITION_PALETTE = [
 ] as const
 
 const TINT_DATA_KEY = 'recognitionTint'
+const TINT_FILL_DATA_KEY = 'recognitionTintFill'
 
-/** Categorias cuyas imagenes son glifos claros pensados para recibir tint. */
-const TINTED_CATEGORIES: readonly RECOGNITION_TYPE[] = ['LETTER', 'NUMBER']
+/** Categorias cuyas imagenes son glifos claros (trazo negro, sin relleno) pensados para recibir tint. */
+const TINTED_CATEGORIES: readonly RECOGNITION_TYPE[] = ['LETTER', 'NUMBER', 'SHAPE']
 
 export class RecognitionColorizer {
     static appliesTo(category: RECOGNITION_TYPE | null | undefined): boolean {
@@ -48,19 +49,38 @@ export class RecognitionColorizer {
         return free[Math.floor(Math.random() * free.length)]
     }
 
-    applyTint(image: GameObjects.Image, color: number): void {
+    /**
+     * `fill=true` (SHAPE) sustituye el color de cada pixel opaco por el tint (modo `FILL`), en vez
+     * de multiplicarlo (modo `MULTIPLY`, el normal). Los glifos de forma son solo trazo negro sobre
+     * transparente (sin relleno claro como letras/numeros), y negro * cualquier tint sigue siendo
+     * negro: en modo MULTIPLY no se ve ningun color.
+     */
+    applyTint(image: GameObjects.Image, color: number, fill: boolean = false): void {
         image.setTint(color)
+        image.setTintMode(fill ? TintModes.FILL : TintModes.MULTIPLY)
         image.setData(TINT_DATA_KEY, color)
+        image.setData(TINT_FILL_DATA_KEY, fill)
     }
 
     clearTint(image: GameObjects.Image): void {
         image.clearTint()
         image.setData(TINT_DATA_KEY, undefined)
+        image.setData(TINT_FILL_DATA_KEY, undefined)
     }
 
     /** Tint asignado a la ronda (para restaurarlo tras un feedback temporal). */
     getTint(image: GameObjects.GameObject): number | undefined {
         return image.getData(TINT_DATA_KEY) as number | undefined
+    }
+
+    /** Reaplica el tint asignado a la ronda (o lo limpia si no habia ninguno), respetando su modo. */
+    restoreTint(image: GameObjects.Image): void {
+        const color = this.getTint(image)
+        if (color === undefined) {
+            image.clearTint()
+            return
+        }
+        this.applyTint(image, color, !!image.getData(TINT_FILL_DATA_KEY))
     }
 
     private shuffle<T>(items: T[]): T[] {

@@ -20,7 +20,6 @@ import es.vargontoc.educational.framework.game.infrastructure.websocket.GameErro
 import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.GameActionRequest;
 import es.vargontoc.educational.framework.game.infrastructure.websocket.dto.GameActionResponse;
 import es.vargontoc.educational.framework.game.model.ActionProcessingResult;
-import es.vargontoc.educational.framework.game.model.GameState;
 import es.vargontoc.educational.framework.game.model.GameStatus;
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
@@ -105,18 +104,18 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     });
 
     public GameWebSocketHandler(ChildSessionUseCase childSessionUseCase, ObjectMapper objectMapper,
-                             AvatarService avatarService,
-                             GameOrchestrator gameOrchestrator,
-                             GameStateRegistry gameStateRegistry,
-                             WorldHeartbeatUseCase worldHeartbeatUseCase,
-                             WorldGameStartUseCase worldGameStartUseCase,
-                             WorldStateRegistry worldStateRegistry,
-                             WorldOrchestrator worldOrchestrator,
-                             RecognitionElementRepository recognitionElementRepository,
-                             WorldExplorationStateRepository worldExplorationStateRepository,
-                             ChildProfileUseCase childProfileUseCase,
-                             AccessibleColorRepository accessibleColorRepository,
-                             AccessibleColorPaletteRepository accessibleColorPaletteRepository) {
+                            AvatarService avatarService,
+                            GameOrchestrator gameOrchestrator,
+                            GameStateRegistry gameStateRegistry,
+                            WorldHeartbeatUseCase worldHeartbeatUseCase,
+                            WorldGameStartUseCase worldGameStartUseCase,
+                            WorldStateRegistry worldStateRegistry,
+                            WorldOrchestrator worldOrchestrator,
+                            RecognitionElementRepository recognitionElementRepository,
+                            WorldExplorationStateRepository worldExplorationStateRepository,
+                            ChildProfileUseCase childProfileUseCase,
+                            AccessibleColorRepository accessibleColorRepository,
+                            AccessibleColorPaletteRepository accessibleColorPaletteRepository) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarservice = avatarService;

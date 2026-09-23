@@ -144,14 +144,13 @@ class ContentModuleConfiguration {
             TracingPatternRepository tracingPatternRepository,
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
-            WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             RecognitionElementRepository recognitionElementRepository,
             RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository,
             ObjectMapper objectMapper) {
         return new SeedService(audio, seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
             learningPathStepRepository, tracingPatternRepository,
-            worldHostRepository, worldNarrativeSituationRepository, worldDiscoveryElementRepository, recognitionElementRepository,
+            worldHostRepository, worldNarrativeSituationRepository, recognitionElementRepository,
             recognitionSimilarityPairRepository, objectMapper);
     }
 

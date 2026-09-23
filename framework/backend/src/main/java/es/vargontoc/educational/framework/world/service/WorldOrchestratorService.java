@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -47,6 +48,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
     private final WorldEngagementEvaluator worldEngagementEvaluator;
     private final WorldStateRegistry worldStateRegistry;
     private final WorldExplorationConfig worldExplorationConfig;
+    private final Random random;
 
     public WorldOrchestratorService(SelectTopicsForDifficultyUseCase selectTopicsForDifficultyUseCase,
                                 WorldCatalogUseCase worldCatalogUseCase,
@@ -54,12 +56,24 @@ public class WorldOrchestratorService implements WorldOrchestrator {
                                 WorldEngagementEvaluator worldEngagementEvaluator,
                                 WorldStateRegistry worldStateRegistry,
                                 WorldExplorationConfig worldExplorationConfig) {
+        this(selectTopicsForDifficultyUseCase, worldCatalogUseCase, engagementThresholdConfigUseCase,
+            worldEngagementEvaluator, worldStateRegistry, worldExplorationConfig, new Random());
+    }
+
+    public WorldOrchestratorService(SelectTopicsForDifficultyUseCase selectTopicsForDifficultyUseCase,
+                                WorldCatalogUseCase worldCatalogUseCase,
+                                EngagementThresholdConfigUseCase engagementThresholdConfigUseCase,
+                                WorldEngagementEvaluator worldEngagementEvaluator,
+                                WorldStateRegistry worldStateRegistry,
+                                WorldExplorationConfig worldExplorationConfig,
+                                Random random) {
         this.selectTopicsForDifficultyUseCase = selectTopicsForDifficultyUseCase;
         this.worldCatalogUseCase = worldCatalogUseCase;
         this.engagementThresholdConfigUseCase = engagementThresholdConfigUseCase;
         this.worldEngagementEvaluator = worldEngagementEvaluator;
         this.worldStateRegistry = worldStateRegistry;
         this.worldExplorationConfig = worldExplorationConfig;
+        this.random = random;
     }
 
     @Override
@@ -129,8 +143,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
         return worldCatalogUseCase.listCompatibleActivitiesByTopic(topicId, childAge);
     }
 
-    private SelectedWorldActivity selectActivity(List<CompatibleActivityProjection> activities,
-                                                 List<WorldEnginePriorityAdjustment> adjustments) {
+    private SelectedWorldActivity selectActivity(List<CompatibleActivityProjection> activities, List<WorldEnginePriorityAdjustment> adjustments) {
         if (activities == null || activities.isEmpty()) {
             return null;
         }
@@ -285,8 +298,12 @@ public class WorldOrchestratorService implements WorldOrchestrator {
             }
         }
 
-        // Candidate priority order: not-recently-shown first (rotation/variety), then already
-        // shown. Both passes below walk this same order.
+        // Random pick within each priority group: not-recently-shown first (rotation/variety),
+        // then already shown. Shuffling inside each group keeps the anti-repetition ordering
+        // while avoiding always surfacing the same (lowest-sortOrder) elements every time.
+        Collections.shuffle(notRecentlyShown, random);
+        Collections.shuffle(recentlyShown, random);
+
         List<WorldDiscoveryElementProjection> candidateOrder = new ArrayList<>(notRecentlyShown);
         candidateOrder.addAll(recentlyShown);
 

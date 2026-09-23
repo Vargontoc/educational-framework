@@ -52,5 +52,14 @@
     "maxAge": 4,
     "status": "ACTIVE",
     "topicNames": ["Memoria"]
+  },
+    {
+    "name": "Reconocer Formas",
+    "description": "Reconocimiento de las formas básicas",
+    "gameEngineType": "RECOGNITION",
+    "minAge": 3,
+    "maxAge": 4,
+    "status": "ACTIVE",
+    "topicNames": ["Formas"]
   }
 ]

@@ -16,7 +16,7 @@ function colorElements(colors: string[], extra: (color: string) => object = () =
   }))
 }
 
-function recognitionState(elements: any[], roundIndex: number, showIcon: boolean, nonChromaticKeyRequired = false) {
+function recognitionState(elements: any[], roundIndex: number, showIcon: boolean) {
   return {
     recognitionCategory: 'COLOR',
     roundIndex,
@@ -25,17 +25,16 @@ function recognitionState(elements: any[], roundIndex: number, showIcon: boolean
     targetElementId: elements[0].id,
     optionIds: elements.map(e => e.id),
     elements,
-    nonChromaticKeyRequired,
     showIcon
   }
 }
 
-const gameReady = (elements: any[], showIcon: boolean, nonChromaticKeyRequired = false) => ({
+const gameReady = (elements: any[], showIcon: boolean) => ({
   event: 'GAME_READY',
   sessionId: 1,
   payload: {
     engine: 'RECOGNITION', activityId: 1, gameId: 1, difficultyLevelId: 1, status: 'IN_PROGRESS',
-    recognitionState: recognitionState(elements, 0, showIcon, nonChromaticKeyRequired)
+    recognitionState: recognitionState(elements, 0, showIcon)
   }
 })
 
@@ -74,9 +73,9 @@ describe('RecognitionGameScene — colores: assets dinamicos y splash + item (SP
       .then((res) => { childId = res.body.data.id })
   })
 
-  function play(elements: any[], showIcon: boolean, nonChromaticKeyRequired = false) {
+  function play(elements: any[], showIcon: boolean) {
     openRecognitionScene(childId)
-    cy.window().then((win) => state(win).injectWsEvent(gameReady(elements, showIcon, nonChromaticKeyRequired)))
+    cy.window().then((win) => state(win).injectWsEvent(gameReady(elements, showIcon)))
     cy.window({ timeout: GAME_TIMEOUT }).should((win) => expect(options(win)).to.have.length(elements.length))
   }
 
@@ -177,20 +176,6 @@ describe('RecognitionGameScene — colores: assets dinamicos y splash + item (SP
       expect(options(win).map(o => o.elementId).sort()).to.deep.eq(['color_orange', 'color_yellow'])
       expect(part(stimulus(win), 'item')).to.not.exist
       expect(state(win).textureExists('recognition-color-yellow/splash')).to.eq(true)
-    })
-  })
-
-  it('perfil con vision cromatica: conserva el color accesible como fondo y anade el item', () => {
-    const accessible = (c: string) => ({
-      accessibleColor: { value: c === 'red' ? '#FF0000' : '#0000FF', shapeIcon: c === 'red' ? 'circle' : 'square', labelKey: c }
-    })
-    play(colorElements(['red', 'blue'], accessible), true, true)
-
-    cy.window().should((win) => {
-      const [red, blue] = options(win)
-      expect(part(red, 'splash').key).to.eq('color_FF0000_circle')
-      expect(part(blue, 'splash').key).to.eq('color_0000FF_square')
-      expect(part(red, 'item'), 'item sobre el fondo accesible').to.exist
     })
   })
 

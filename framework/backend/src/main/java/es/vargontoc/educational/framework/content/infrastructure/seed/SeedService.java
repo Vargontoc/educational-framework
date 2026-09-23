@@ -14,6 +14,7 @@ import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.R
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionComparisonElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionColorElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionMemoryElementSeed;
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.RecognitionShapeElementSeed;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.LetterSimilarityPairSeed;
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Category;
@@ -26,7 +27,7 @@ import es.vargontoc.educational.framework.content.model.LearningPathStep;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.model.TracingPattern;
-import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
+
 import es.vargontoc.educational.framework.content.model.WorldHost;
 import es.vargontoc.educational.framework.content.model.WorldNarrativeSituation;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
@@ -39,7 +40,6 @@ import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepo
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
-import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
 import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaEntity;
@@ -73,7 +73,6 @@ public class SeedService {
     private final TracingPatternRepository tracingPatternRepository;
     private final WorldHostRepository worldHostRepository;
     private final WorldNarrativeSituationRepository worldNarrativeSituationRepository;
-    private final WorldDiscoveryElementRepository worldDiscoveryElementRepository;
     private final RecognitionElementRepository recognitionElementRepository;
     private final RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository;
     private final ObjectMapper objectMapper;
@@ -99,7 +98,6 @@ public class SeedService {
             TracingPatternRepository tracingPatternRepository,
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
-            WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             RecognitionElementRepository recognitionElementRepository,
             RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository,
             ObjectMapper objectMapper) {
@@ -115,7 +113,6 @@ public class SeedService {
         this.tracingPatternRepository = tracingPatternRepository;
         this.worldHostRepository = worldHostRepository;
         this.worldNarrativeSituationRepository = worldNarrativeSituationRepository;
-        this.worldDiscoveryElementRepository = worldDiscoveryElementRepository;
         this.recognitionElementRepository = recognitionElementRepository;
         this.recognitionSimilarityPairRepository = recognitionSimilarityPairRepository;
         this.objectMapper = objectMapper;
@@ -136,13 +133,13 @@ public class SeedService {
         loaded += loadTracingPatterns();
         loaded += loadWorldHosts();
         loaded += loadWorldNarrativeSituations();
-        loaded += loadWorldDiscoveryElements();
         loaded += loadRecognitionAlphaNumeric(false);
         loaded += loadRecognitionAlphaNumeric(true);
         loaded += loadRecognitionColors();
         loaded += loadRecognitionAnimals();
         loaded += loadRecognitionComparison();
         loaded += loadRecognitionMemory();
+        loaded += loadRecognitionShapes();
         loaded += loadLetterSimilarityPairs();
         loaded += loadNumberSimilarityPairs();
         log.info("Seed loading complete. {} records loaded.", loaded);
@@ -492,42 +489,6 @@ public class SeedService {
         return count;
     }
 
-    private int loadWorldDiscoveryElements() {
-        String file = "14-world-discovery-elements.json";
-        var seeds = readSeedFile(file, new TypeReference<List<SeedData.WorldDiscoveryElementSeed>>() {});
-        int count = 0;
-        for (var seed : seeds) {
-            String key = "world-discovery-element:" + seed.code().toLowerCase();
-            if (alreadyLoaded(key)) {
-                log.debug("Skipping already loaded seed: {}", key);
-                continue;
-            }
-            var element = new WorldDiscoveryElement();
-            element.setCode(seed.code());
-            element.setDisplayName(seed.displayName());
-            element.setElementType(es.vargontoc.educational.framework.content.model.ElementType.valueOf(seed.elementType()));
-            element.setBiome(es.vargontoc.educational.framework.content.model.Biome.valueOf(seed.biome()));
-            element.setMinAge(seed.minAge());
-            element.setMaxAge(seed.maxAge());
-            element.setStatus(ContentStatus.valueOf(seed.status()));
-            element.setActivityId(seed.activityId());
-            element.setTopicId(seed.topicId());
-            element.setVisualAssetKey(seed.visualAssetKey());
-            element.setInteractionCueType(seed.interactionCueType() != null
-                    ? es.vargontoc.educational.framework.content.model.InteractionCueType.valueOf(seed.interactionCueType())
-                    : null);
-            element.setSortOrder(seed.sortOrder());
-            element.setPositionX(seed.positionX());
-            element.setPositionY(seed.positionY());
-            element.setCreatedAt(LocalDateTime.now());
-            worldDiscoveryElementRepository.save(element);
-            markLoaded(key, file);
-            count++;
-            log.info("Loaded seed: {}", key);
-        }
-        return count;
-    }
-
     private Long resolveCategoryId(String name) {
         if (categoryCache.containsKey(name)) {
             return categoryCache.get(name);
@@ -571,8 +532,49 @@ public class SeedService {
             .findFirst()
             .orElse(null);
     }
+
+    private int loadRecognitionShapes() {
+        String file = "23-recognition-elements-shapes.json";
+        var seeds = readSeedFile(file, new TypeReference<List<RecognitionShapeElementSeed>>() {});
+
+        int count = 0;
+
+        Long topicId = resolveTopicId("Formas");
+        if(topicId == null) {
+            log.warn("Topic not found for recognition seed");
+            return count;
+        }
+
+        for(var seed : seeds) {
+            String key = "recognition-element-shape:" + seed.code();
+            if(alreadyLoaded(key)){
+                log.debug("Skipping already loaded seed: {}", key);
+                continue;
+            }
+
+            audio.getAudio(AudioRequest.withPreset(shapeNubiAudio(seed), TonePreset.CALM));
+
+            var element = new RecognitionElement();
+            element.setTopicId(topicId);
+            element.setCode(seed.code());
+            element.setSortOrder(0);
+            // Keep the seed's own resourceRefs (it already carries "image", which the frontend needs to resolve
+            // the texture). The group metadata used for distractor selection is read straight from the seed
+            // file by ShapeGroupService, not from here, so it does not need to be duplicated into resourceRefs.
+            element.setResourceRefs(seed.resourceRefs());
+            element.setStatus(ContentStatus.ACTIVE);
+            element.setCreatedAt(LocalDateTime.now());
+            recognitionElementRepository.save(element);
+
+            markLoaded(key, file);
+            count++;
+            log.info("Loaded seed: {}", key);
+        }
+
+        return count;
+    }
     
-        private int loadRecognitionAnimals() {
+    private int loadRecognitionAnimals() {
         String file = "20-recognition-elements-animals.json";
         var seeds = readSeedFile(file, new TypeReference<List<RecognitionAnimalElementSeed>>() {});
 
@@ -621,6 +623,10 @@ public class SeedService {
      * {@code RoundAudioService} asks for at runtime.
      */
     private String animalNubiAudio(RecognitionAnimalElementSeed seed) {
+        return nubiAudioText(seed.resourceRefs(), seed.nubi());
+    }
+
+    private String shapeNubiAudio(RecognitionShapeElementSeed  seed) {
         return nubiAudioText(seed.resourceRefs(), seed.nubi());
     }
 

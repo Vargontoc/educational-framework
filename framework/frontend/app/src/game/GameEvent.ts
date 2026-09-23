@@ -220,18 +220,11 @@ export class BaseGameActionResult<P extends BaseEnginePayload> {
     updatedState?: P
 }
 
-export class AccessibleColor {
-    value: string = ''
-    shapeIcon: string = ''
-    labelKey: string = ''
-}
-
 export class RecognitionElement {
     id: string = ''
     code: string = ''
     displayValue: string = ''
     resourceRefs?: Record<string, string>
-    accessibleColor?: AccessibleColor
 }
 
 /** Una opcion de una ronda de comparacion: siempre el mismo elemento, a distinto tamano relativo. */
@@ -248,9 +241,9 @@ export class RecognitionState {
     hintActive: boolean = false
     targetElementId: string = ''
     optionIds: string[] = []
+    /** Ya no dibuja el halo (retirado): solo distingue EASY (unica dificultad en la que va a true por defecto). */
     guideChromEnabled: boolean = false
     touchEnableDelayMs: number = 0
-    nonChromaticKeyRequired: boolean = false
     /** COLOR: muestra el item de referencia (EASY/MEDIUM). Los payloads antiguos sin el campo cuentan como true. */
     showIcon: boolean = true
     /** COMPARISON (grande/pequeno): todas las opciones son el mismo elemento a distinto tamano. */

@@ -166,7 +166,6 @@ class SeedServiceTest {
 
         when(worldHostRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(worldNarrativeSituationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(worldDiscoveryElementRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(accessibleColorRepository.save(any())).thenAnswer(inv -> {
             var c = inv.getArgument(0, es.vargontoc.educational.framework.content.model.AccessibleColor.class);
             c.setId(1L);

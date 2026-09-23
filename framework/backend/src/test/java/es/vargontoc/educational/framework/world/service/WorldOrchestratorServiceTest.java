@@ -28,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -375,11 +377,12 @@ class WorldOrchestratorServiceTest {
         when(worldEngagementEvaluator.evaluateAdjustments(any()))
             .thenReturn(Collections.emptyList());
 
-        // First build: no previous state yet, expect elements 1,2,3 (lowest sortOrder).
+        // First build: no previous state yet, so selection is a random pick of 3 out of the pool of 6.
         when(worldStateRegistry.findByChildSessionId(100L)).thenReturn(Optional.empty());
         WorldDestinationSelectionResult first = orchestrator.selectDestination(100L, 1L, null, 5);
         Set<Long> firstIds = idsOf(first.getDestination().getDiscoveryProposals());
-        assertEquals(Set.of(1L, 2L, 3L), firstIds);
+        assertEquals(3, firstIds.size());
+        assertTrue(Set.of(1L, 2L, 3L, 4L, 5L, 6L).containsAll(firstIds));
 
         // Simulate the caller persisting the first selection as "last shown".
         WorldState stateAfterFirstBuild = new WorldState();
@@ -389,7 +392,11 @@ class WorldOrchestratorServiceTest {
         WorldDestinationSelectionResult second = orchestrator.selectDestination(100L, 1L, null, 5);
         Set<Long> secondIds = idsOf(second.getDestination().getDiscoveryProposals());
 
-        assertEquals(Set.of(4L, 5L, 6L), secondIds);
+        // The pool has exactly 6 elements and the cap is 3: the second build must be filled
+        // entirely by the 3 elements left unseen from the first build (rotation/anti-repetition).
+        Set<Long> expectedSecondIds = new HashSet<>(Set.of(1L, 2L, 3L, 4L, 5L, 6L));
+        expectedSecondIds.removeAll(firstIds);
+        assertEquals(expectedSecondIds, secondIds);
         assertTrue(Collections.disjoint(firstIds, secondIds));
     }
 
@@ -534,8 +541,10 @@ class WorldOrchestratorServiceTest {
 
         WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, 5);
 
-        assertEquals(Set.of(1L, 3L), idsOf(result.getDestination().getDiscoveryProposals()),
-            "element 2 must be skipped for being too close to element 1, element 3 tried next");
+        Set<Long> ids = idsOf(result.getDestination().getDiscoveryProposals());
+        assertEquals(2, ids.size());
+        assertFalse(ids.containsAll(Set.of(1L, 2L)),
+            "elements 1 and 2 are too close to each other to both be selected");
     }
 
     @Test
@@ -570,8 +579,12 @@ class WorldOrchestratorServiceTest {
 
         WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, 5);
 
-        assertEquals(Set.of(1L, 3L), idsOf(result.getDestination().getDiscoveryProposals()),
-            "already-shown element 3 must fill the slot instead of the too-close unseen element 2");
+        Set<Long> ids = idsOf(result.getDestination().getDiscoveryProposals());
+        assertEquals(2, ids.size());
+        assertTrue(ids.contains(3L),
+            "already-shown element 3 must fill the slot left open by the too-close unseen pair");
+        assertFalse(ids.containsAll(Set.of(1L, 2L)),
+            "elements 1 and 2 are too close to each other to both be selected");
     }
 
     @Test

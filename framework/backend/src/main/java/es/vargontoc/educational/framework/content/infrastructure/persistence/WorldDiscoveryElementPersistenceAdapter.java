@@ -1,103 +1,108 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
+import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.WorldDiscoveryElementSeed;
 import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
-import es.vargontoc.educational.framework.content.model.ElementType;
-import es.vargontoc.educational.framework.content.model.InteractionCueType;
 import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Repository
 public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryElementRepository {
 
-    private final WorldDiscoveryElementJpaRepository jpaRepository;
 
-    public WorldDiscoveryElementPersistenceAdapter(WorldDiscoveryElementJpaRepository jpaRepository) {
-        this.jpaRepository = jpaRepository;
-    }
 
-    @Override
-    public Optional<WorldDiscoveryElement> findByCode(String code) {
-        return jpaRepository.findByCode(code).map(this::toDomain);
-    }
+    @Value("classpath:/seeds/14-world-discovery-elements.json")
+    private Resource jsonFile;
 
-    @Override
-    public WorldDiscoveryElement save(WorldDiscoveryElement worldDiscoveryElement) {
-        WorldDiscoveryElementJpaEntity entity = toJpa(worldDiscoveryElement);
-        WorldDiscoveryElementJpaEntity saved = jpaRepository.save(entity);
-        return toDomain(saved);
-    }
+    private final ObjectMapper mapper = new ObjectMapper();
+    private static final  List<WorldElement> interactiveElements = new ArrayList<>();
+    
+    
+    @PostConstruct
+    private void load() throws IOException
+    {
+        if(!interactiveElements.isEmpty())
+            return;
 
-    @Override
-    public boolean existsByCode(String code) {
-        return jpaRepository.existsByCode(code);
+        log.info("Loading World Discovery Elements");
+        try {
+            Path path =  jsonFile.getFilePath();
+            if(!Files.exists(path))
+                return;
+            
+            byte[] data =  Files.readAllBytes(path);
+            var items = mapper.readValue(data, new TypeReference<List<WorldDiscoveryElementSeed>>() {});
+            long count = 0L;
+            for(WorldDiscoveryElementSeed seed: items) {
+                try {
+                    Biome biome =  Biome.valueOf(seed.biome());
+                    if(biome != null)
+                        interactiveElements.add(new WorldElement(++count, biome, seed.code(), seed.visualAssetKey(), seed.activityId(), seed.minAge(), seed.maxAge(), seed.positionX(), seed.positionY()));
+    
+                }catch(Exception e) {
+                    log.error("Error reading seed", e.getMessage(), e);
+                }
+            }
+        }catch(IOException e) {
+            log.error("Error loading: {}", e.getMessage(), e);
+        }
     }
 
     @Override
     public List<WorldDiscoveryElement> findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
         ContentStatus status, Integer targetAge) {
-        return jpaRepository.findByStatusAndAgeRange(
-                status.name(), targetAge
-            ).stream().map(this::toDomain).toList();
+    
+        return  interactiveElements.stream().
+            filter(x -> targetAge >= x.minAge &&  targetAge <= x.maxAge).map(this::toDomain).toList();
     }
 
     @Override
     public List<WorldDiscoveryElement> findByStatusAndBiomeAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
         ContentStatus status, Biome biome, Integer targetAge) {
-        return jpaRepository.findByStatusAndBiomeAndAgeRange(
-                status.name(), biome.name(), targetAge
-            ).stream().map(this::toDomain).toList();
+        
+        return  interactiveElements.stream().
+            filter(x -> x.biome() == biome &&  targetAge >= x.minAge &&  targetAge <= x.maxAge).map(this::toDomain).toList();
     }
 
-    private WorldDiscoveryElement toDomain(WorldDiscoveryElementJpaEntity source) {
+
+
+
+    private WorldDiscoveryElement toDomain(WorldElement source) {
         WorldDiscoveryElement target = new WorldDiscoveryElement();
-        target.setId(source.getId());
-        target.setCode(source.getCode());
-        target.setDisplayName(source.getDisplayName());
-        target.setElementType(ElementType.valueOf(source.getElementType()));
-        target.setBiome(Biome.valueOf(source.getBiome()));
-        target.setMinAge(source.getMinAge());
-        target.setMaxAge(source.getMaxAge());
-        target.setStatus(ContentStatus.valueOf(source.getStatus()));
-        target.setActivityId(source.getActivityId());
-        target.setTopicId(source.getTopicId());
-        target.setVisualAssetKey(source.getVisualAssetKey());
-        target.setInteractionCueType(
-                source.getInteractionCueType() != null
-                        ? InteractionCueType.valueOf(source.getInteractionCueType())
-                        : null);
-        target.setSortOrder(source.getSortOrder());
-        target.setPositionX(source.getPositionX());
-        target.setPositionY(source.getPositionY());
-        target.setCreatedAt(source.getCreatedAt());
-        target.setUpdatedAt(source.getUpdatedAt());
+        target.setId(source.id());
+        target.setCode(source.code());
+        target.setBiome(source.biome());
+        target.setMinAge(source.minAge());
+        target.setMaxAge(source.maxAge());
+        target.setStatus(ContentStatus.ACTIVE);
+        target.setActivityId(source.activity());
+
+        target.setVisualAssetKey(source.asset());
+        target.setSortOrder(0);
+        target.setPositionX(source.posX());
+        target.setPositionY(source.posY());
         return target;
     }
 
-    private WorldDiscoveryElementJpaEntity toJpa(WorldDiscoveryElement source) {
-        WorldDiscoveryElementJpaEntity target = new WorldDiscoveryElementJpaEntity();
-        target.setId(source.getId());
-        target.setCode(source.getCode());
-        target.setDisplayName(source.getDisplayName());
-        target.setElementType(source.getElementType().name());
-        target.setBiome(source.getBiome().name());
-        target.setMinAge(source.getMinAge());
-        target.setMaxAge(source.getMaxAge());
-        target.setStatus(source.getStatus().name());
-        target.setActivityId(source.getActivityId());
-        target.setTopicId(source.getTopicId());
-        target.setVisualAssetKey(source.getVisualAssetKey());
-        target.setInteractionCueType(
-                source.getInteractionCueType() != null
-                        ? source.getInteractionCueType().name()
-                        : null);
-        target.setSortOrder(source.getSortOrder());
-        target.setPositionX(source.getPositionX());
-        target.setPositionY(source.getPositionY());
-        return target;
-    }
+
+    private record WorldElement(Long id, Biome biome, String code, String asset, Long activity, Integer minAge, Integer maxAge, Double posX, Double posY) {}
+
 }

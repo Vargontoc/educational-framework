@@ -118,7 +118,6 @@ function comparisonState(scales: number[], roundIndex: number, hintActive = fals
     elements: [ELEMENT],
     guideChromEnabled: false,
     touchEnableDelayMs: 0,
-    nonChromaticKeyRequired: false,
     showIcon: true,
     comparisonMode: true,
     comparisonOptions: scales.map(scalePercent => ({ elementId: ELEMENT.id, scalePercent }))

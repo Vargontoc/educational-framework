@@ -11,8 +11,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import es.vargontoc.educational.framework.agents.application.ports.in.ContentGenerationUseCase;
+import es.vargontoc.educational.framework.agents.domain.request.GenerateCuriosityRequest;
 import es.vargontoc.educational.framework.agents.domain.request.GenerateGameAvatarRequest;
 import es.vargontoc.educational.framework.agents.domain.response.GenerateAvatarEventResponse;
+import es.vargontoc.educational.framework.agents.domain.response.GenerateCuriosityResponse;
 import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
 import es.vargontoc.educational.framework.avatar.domain.enums.AvatarEventType;
 import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
@@ -26,6 +28,9 @@ public class ContentGenerationAdapter implements ContentGenerationUseCase {
 
     @Value("classpath:prompts/request_events.st")
     private Resource userEventPrompt;
+
+    @Value("classpath:prompts/request_curiosities.st")
+    private Resource curiosityPrompt;
 
     private final ChatClient client;
     private final AvatarEventCatalogService eventService;
@@ -63,6 +68,15 @@ public class ContentGenerationAdapter implements ContentGenerationUseCase {
             case FAREWELL -> "Evento de despedida al niño cuando termina la sesión de juego";
             default -> throw new NotImplementedException("Type not implemented yet");
         };
+    }
+
+
+
+    @Override
+    public GenerateCuriosityResponse generateCuriosity(GenerateCuriosityRequest request) {
+        return client.prompt().user(u -> u.text(curiosityPrompt)
+            .param("element", request.element())
+        ).call().entity(GenerateCuriosityResponse.class);
     }
     
     

@@ -2,11 +2,6 @@
     "dev": {
         "files" : [
             {
-                "type" : "image",
-                "key" : "element_shiny_flower",
-                "url" : "assets/images/Simple_Flower_Bush.webp"
-            },
-            {
                 "type" : "audio",
                 "key" : "welcome",
                 "url" : "audio/welcome.wav"
@@ -879,6 +874,60 @@
                 "key" : "item_5",
                 "url" : "assets/images/colors/white/white_5.png"
             }
+        ]
+    },
+    "recognition-shapes" : {
+        "files" : [
+                {
+                    "type": "image",
+                    "key": "circle",
+                    "url": "assets/images/shapes/circle.png"
+                },
+                {
+                    "type": "image",
+                    "key": "oval",
+                    "url": "assets/images/shapes/oval.png"
+                },
+                {
+                    "type": "image",
+                    "key": "rectangle",
+                    "url": "assets/images/shapes/rectangle.png"
+                },
+                {
+                    "type": "image",
+                    "key": "square",
+                    "url": "assets/images/shapes/square.png"
+                },
+                {
+                    "type": "image",
+                    "key": "rhombus",
+                    "url": "assets/images/shapes/rhombus.png"
+                },
+                {
+                    "type": "image",
+                    "key": "triangle",
+                    "url": "assets/images/shapes/triangle.png"
+                },
+                {
+                    "type": "image",
+                    "key": "pentagon",
+                    "url": "assets/images/shapes/pentagon.png"
+                },
+                {
+                    "type": "image",
+                    "key": "star",
+                    "url": "assets/images/shapes/star.png"
+                },
+                {
+                    "type": "image",
+                    "key": "arrow",
+                    "url": "assets/images/shapes/arrow.png"
+                },
+                {
+                    "type": "image",
+                    "key": "heart",
+                    "url": "assets/images/shapes/heart.png"
+                }
         ]
     },
     "recognition-comparison" : {

@@ -97,6 +97,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     private final RoundAudioService roundAudioService;
     private final ColorSimilarityValidator colorSimilarityValidator;
     private final AnimalGroupService animalGroupService;
+    private final ShapeGroupService shapeGroupService;
     private final Map<String, GameEnginePort> engineInstances = new ConcurrentHashMap<>();
     private final Map<Long, ReentrantLock> gameLocks = new ConcurrentHashMap<>();
     private final Map<Long, Set<Long>> completedActivitiesBySession = new ConcurrentHashMap<>();
@@ -119,7 +120,7 @@ public class GameOrchestratorService implements GameOrchestrator {
             RecognitionSimilarityService recognitionSimilarityService,
             RoundAudioService roundAudioService,
             ColorSimilarityValidator colorSimilarityValidator,
-            AnimalGroupService animalGroupService) {
+            AnimalGroupService animalGroupService, ShapeGroupService shapeGroupService) {
         this.gameCatalogUseCase = gameCatalogUseCase;
         this.gameStateRegistry = gameStateRegistry;
         this.sessionAntiRepetitionRegistry = sessionAntiRepetitionRegistry;
@@ -138,10 +139,10 @@ public class GameOrchestratorService implements GameOrchestrator {
         this.roundAudioService = roundAudioService;
         this.colorSimilarityValidator = colorSimilarityValidator;
         this.animalGroupService = animalGroupService;
-
+        this.shapeGroupService = shapeGroupService;
         // Default engine without color validator (will be overridden per-game if needed)
         this.engineInstances.putIfAbsent(EngineType.RECOGNITION.name(),
-                new RecognitionEngine(new java.util.Random(), recognitionSimilarityService, null, null, animalGroupService));
+                new RecognitionEngine(new java.util.Random(), recognitionSimilarityService, null, null, animalGroupService, shapeGroupService));
         // Stateless (the board lives in GameState.enginePayload): one instance serves every memory game.
         this.engineInstances.putIfAbsent(EngineType.MEMORY.name(), new MemoryEngine());
     }
@@ -524,7 +525,7 @@ public class GameOrchestratorService implements GameOrchestrator {
                     && colorSimilarityValidator != null) {
                 ColorVisionMode cvm = resolveColorVisionMode(state.getChildProfileId());
                 return new RecognitionEngine(new java.util.Random(), recognitionSimilarityService,
-                        colorSimilarityValidator, cvm, animalGroupService);
+                        colorSimilarityValidator, cvm, null, null);
             }
 
             GameEnginePort engine = engineInstances.get(state.getEngine().name());
@@ -615,13 +616,15 @@ public class GameOrchestratorService implements GameOrchestrator {
                 .map(id -> {
                     RecognitionElement element = elementsById.get(Long.valueOf(id));
                     String colorHex = null;
+                    List<String> groups = new ArrayList<>();
                     if (element != null && element.getResourceRefs() != null) {
                         colorHex = RecognitionResourceRefs.colorHex(element.getResourceRefs());
+                        groups = RecognitionResourceRefs.group(element.getResourceRefs());
                     }
                     return new CandidateMetadata(
                             id,
                             element != null ? element.getTopicId() : null,
-                            element != null ? element.getSimilarityGroup() : null,
+                            groups,
                             element != null ? element.getCode() : null,
                             colorHex);
                 })

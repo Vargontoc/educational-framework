@@ -78,7 +78,7 @@ export class DynamicAssetLoader {
     }
 
     /**
-     * LETTER, NUMBER y ANIMAL usan el `code` como key de textura; COLOR, el splash de su bloque;
+     * LETTER, NUMBER, ANIMAL y SHAPE usan el `code` como key de textura; COLOR, el splash de su bloque;
      * COMPARISON y MEMORY, `resourceRefs['image']` (o el `code`); el resto, `resourceRefs['image']`.
      */
     static textureKey(element: RecognitionElement, category: RECOGNITION_TYPE | null | undefined): string | null {
@@ -86,7 +86,7 @@ export class DynamicAssetLoader {
             const block = DynamicAssetLoader.colorBlock(element)
             return block ? DynamicAssetLoader.colorSplashKey(block) : null
         }
-        if (category === 'LETTER' || category === 'NUMBER' || category === 'ANIMAL') return element.code || null
+        if (category === 'LETTER' || category === 'NUMBER' || category === 'ANIMAL' || category === 'SHAPE') return element.code || null
         if (category === 'COMPARISON' || category === 'MEMORY') return element.resourceRefs?.['image'] ?? (element.code || null)
         return element.resourceRefs?.['image'] ?? null
     }

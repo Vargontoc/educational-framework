@@ -21,6 +21,7 @@ public class DistractorSelector {
     private final ColorSimilarityValidator colorSimilarityValidator;
     private final ColorVisionMode colorVisionMode;
     private final AnimalGroupService animalGroupService;
+    private final ShapeGroupService shapeGroupService;
 
     public DistractorSelector() {
         this(new Random(), null, null, null);
@@ -39,18 +40,19 @@ public class DistractorSelector {
     }
 
     public DistractorSelector(Random random, RecognitionSimilarityService recognitionSimilarityService,
-                              ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode) {
-        this(random, recognitionSimilarityService, colorSimilarityValidator, colorVisionMode, null);
+                            ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode) {
+        this(random, recognitionSimilarityService, colorSimilarityValidator, colorVisionMode, null, null);
     }
 
     public DistractorSelector(Random random, RecognitionSimilarityService recognitionSimilarityService,
-                              ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode,
-                              AnimalGroupService animalGroupService) {
+                            ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode,
+                            AnimalGroupService animalGroupService, ShapeGroupService shapeGroupService) {
         this.random = random;
         this.recognitionSimilarityService = recognitionSimilarityService;
         this.colorSimilarityValidator = colorSimilarityValidator;
         this.colorVisionMode = colorVisionMode;
         this.animalGroupService = animalGroupService;
+        this.shapeGroupService = shapeGroupService;
     }
 
     /**
@@ -81,6 +83,9 @@ public class DistractorSelector {
      * - HARD (SIMILAR_OUTLINE): prioritise animals of the target's groups, completing with the rest of the pool
      * The candidates are expected to be already filtered by the player's biome.
      *
+     * When category is SHAPE and shapeGroupService is available:
+     * - EASY/MEDIUM (SEMANTICALLY_FAR, SAME_CATEGORY): exclude shapes that share a group with the target
+     * - HARD (SIMILAR_OUTLINE): prioritise shapes of the target's group, completing with the rest of the pool
      * For other categories or when no service is available, falls back to existing strategy logic.
      */
     public List<String> select(
@@ -116,11 +121,53 @@ public class DistractorSelector {
             return selectForAnimal(target, pool, strategy, count, elementResolver);
         }
 
-        // Non-letter/number/color/animal or no service: existing strategy logic
+        // SHAPE specific logic
+        if(category == RecognitionCategory.SHAPE && shapeGroupService != null){
+            return selectForShape(target, pool, strategy, count, elementResolver);
+        }
+
+        // Non-letter/number/color/animal/shape or no service: existing strategy logic
         List<String> primary = filterByStrategy(target, pool, strategy, elementResolver);
         Collections.shuffle(primary, random);
 
         return fillFromPrimary(primary, pool, count);
+    }
+
+    private List<String> selectForShape(String target, List<String> pool, DistractorStrategy strategy, int count, Function<String, CandidateMetadata> elementResolver){
+        String targetCode = resolveCode(target, elementResolver);
+        if(targetCode == null || !shapeGroupService.isKnown(targetCode))
+            return selectWithFallback(target, pool, strategy, count, elementResolver);
+
+        Set<String> groupMates = Set.copyOf(shapeGroupService.getShapesInSameGroup(targetCode));
+        List<String> sameGroup = new ArrayList<>();
+        List<String> otherGroups = new ArrayList<>();
+
+        for (String candidateId : pool) {
+            String code = resolveCode(candidateId, elementResolver);
+            if (code != null && groupMates.contains(code)) {
+                sameGroup.add(candidateId);
+            } else {
+                otherGroups.add(candidateId);
+            }
+        }
+        Collections.shuffle(sameGroup, random);
+        Collections.shuffle(otherGroups, random);
+
+        boolean hard = strategy == DistractorStrategy.SIMILAR_OUTLINE;
+        List<String> preferred = hard ? sameGroup : otherGroups;
+        List<String> fallback = hard ? otherGroups : sameGroup;
+
+        List<String> selected = new ArrayList<>();
+        for (String candidate : preferred) {
+            if (selected.size() >= count) break;
+            selected.add(candidate);
+        }
+        for (String candidate : fallback) {
+            if (selected.size() >= count) break;
+            selected.add(candidate);
+        }
+        return selected;
+
     }
 
     /**

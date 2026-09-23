@@ -13,10 +13,11 @@ public class AudioAdapter implements AudioUseCase {
 
     private final AudioPort port;
     private final AudioCacheStorage cache;
-    
-    public AudioAdapter(AudioPort port, AudioCacheStorage cache) {
+    private final AudioAsync audioAsync;
+    public AudioAdapter(AudioPort port, AudioAsync audioAsync, AudioCacheStorage cache) {
         this.port = port;
         this.cache = cache;
+        this.audioAsync = audioAsync;
     }
 
     @Override
@@ -29,13 +30,9 @@ public class AudioAdapter implements AudioUseCase {
             return cached;
         }
 
-        log.info("Cache miss, calling audio service: text={}", request.text());
-        byte[] audioData = port.synthesizeAudio(request);
+        audioAsync.generateAudio(key, request, port, cache);
 
-        cache.put(key, audioData);
-        log.info("Stored audio in cache: key={}", key);
-
-        return audioData;
+        return null;
     }
 
     private AudioCache build(String text, ToneParams toneParams) {

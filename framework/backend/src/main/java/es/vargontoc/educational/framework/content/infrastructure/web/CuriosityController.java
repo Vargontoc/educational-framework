@@ -1,8 +1,13 @@
 package es.vargontoc.educational.framework.content.infrastructure.web;
 
+import es.vargontoc.educational.framework.agents.application.ports.in.ContentGenerationUseCase;
+import es.vargontoc.educational.framework.agents.domain.request.GenerateCuriosityRequest;
+import es.vargontoc.educational.framework.agents.domain.request.GenerateGameAvatarRequest;
+import es.vargontoc.educational.framework.agents.domain.response.GenerateCuriosityResponse;
 import es.vargontoc.educational.framework.content.infrastructure.dto.CreateCuriosityRequest;
 import es.vargontoc.educational.framework.content.infrastructure.dto.CuriosityResponse;
 import es.vargontoc.educational.framework.content.infrastructure.dto.UpdateCuriosityRequest;
+import es.vargontoc.educational.framework.content.model.AvatarEventCatalog;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.Curiosity;
 import es.vargontoc.educational.framework.content.ports.in.CuriosityUseCase;
@@ -26,9 +31,10 @@ import java.util.List;
 public class CuriosityController {
 
     private final CuriosityUseCase curiosityUseCase;
-
-    public CuriosityController(CuriosityUseCase curiosityUseCase) {
+    private final ContentGenerationUseCase generator;
+    public CuriosityController(CuriosityUseCase curiosityUseCase, ContentGenerationUseCase generator) {
         this.curiosityUseCase = curiosityUseCase;
+        this.generator = generator;
     }
 
     @PostMapping
@@ -45,6 +51,12 @@ public class CuriosityController {
         );
         return ResponseEntity.status(201).body(ApiResponse.created(toResponse(curiosity)));
     }
+
+    @PostMapping("/generate")
+    public ResponseEntity<ApiResponse<GenerateCuriosityResponse>> generate(@RequestBody GenerateCuriosityRequest request){
+        return ResponseEntity.ok(ApiResponse.ok(generator.generateCuriosity(request)));
+    }
+
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CuriosityResponse>>> listCuriosities(

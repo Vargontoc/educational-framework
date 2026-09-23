@@ -1,4 +1,4 @@
-import { Scene, GameObjects, Scale, Time, Geom } from "phaser"
+import { Scene, GameObjects, Scale, Time, Geom, TintModes } from "phaser"
 import {
     AvatarEvent,
     GAME_RESULT_TYPE,
@@ -26,10 +26,6 @@ import { MessageRouter } from "@/services/MessageRouter"
 import type { AudioService } from "@/services/AudioService"
 import type { AudioCache } from "@/services/AudioCache"
 import { MinigameNubiLayer } from "./worldmap/layers/MinigameNubiLayer"
-import {
-    generateColorTexture,
-    type ColorShape
-} from "../utils/colorTextureGenerator"
 
 type RoundObject =
     Phaser.GameObjects.Image
@@ -74,12 +70,8 @@ const BOARD_DEPTH = -0.5
 const CONSIGNA_BIG_COLOR = 0x4CAF50
 const CONSIGNA_SMALL_COLOR = 0x90A4AE
 const CONSIGNA_OUTLINE_COLOR = 0xFFFFFF
-const PATTERN_COLOR = 0x000000
-const PATTERN_ALPHA = 0.4
-const PATTERN_LINE_THICKNESS = 3
-const PATTERN_DEPTH = 2
-const PATTERN_TYPES = ['diagonal', 'dots', 'grid', 'waves', 'cross'] as const
-type PatternType = typeof PATTERN_TYPES[number]
+// SHAPE + EASY: la pieza tocada vuela hasta el hueco del estimulo en vez del pulso generico en el sitio.
+const SHAPE_FIT_DURATION = 380
 
 const BIOME_GRADIENTS: Record<string, [number, number]> = {
     meadow:    [0xc8e6c9, 0x81c784],
@@ -154,21 +146,21 @@ export class RecognitionGameScene extends Scene {
         if (this.backgroundTextureKey && !this.introOverlay) this.backdrop?.apply(this.backgroundTextureKey)
     }
     private stimulusCardGraphics?: Phaser.GameObjects.Graphics
-    private _nonChromaticKeyRequired: boolean = false
     private _recognitionCategory: string = ''
     private backgroundTextureKey: string = ''
-    private nonChromaticPatternGraphics: Phaser.GameObjects.Graphics[] = []
     private touchEnableTimer?: Phaser.Time.TimerEvent
+    /**
+     * La ronda es de la dificultad EASY. El backend no manda el codigo de dificultad al cliente; `guideChromEnabled`
+     * (antes usado para el halo, ya retirado) sigue llegando y solo va a true en EASY, asi que es la unica senal
+     * de dificultad que tenemos sin tocar el backend. Hoy solo la usa la animacion de encaje de SHAPE.
+     */
+    private isEasyDifficulty: boolean = false
 
     constructor() { super({ key: 'recognition-game', active: false }) }
 
     /** Tamaño táctil de las opciones (unidades lógicas), calculado por ResponsiveLayout. */
     get minElementHitSize(): number {
         return this.sizes?.hitSize ?? 0
-    }
-
-    get nonChromaticKeyRequired(): boolean {
-        return this._nonChromaticKeyRequired
     }
 
     /** Textura del mosaico de fondo en uso; vacia si se usa el degradado de respaldo. */
@@ -473,23 +465,8 @@ export class RecognitionGameScene extends Scene {
     /**
      * Resolve the texture key for an element, generating color textures dynamically if needed
      */
-    private resolveTextureKey(element: RecognitionElement, size: number = this.minElementHitSize): string | null {
+    private resolveTextureKey(element: RecognitionElement): string | null {
         const category = this._recognitionCategory as RECOGNITION_TYPE
-
-        if (category === 'COLOR') {
-            // Profiles with a colour vision preference keep the accessible colour + shape resolved
-            // server-side (SPRINT-075) as the splash; the rest use the block's splash image.
-            const accessible = element.accessibleColor
-            const generate = () => generateColorTexture(
-                this, accessible!.value, (accessible!.shapeIcon || 'circle') as ColorShape, size)
-
-            if (accessible && this._nonChromaticKeyRequired) return generate()
-
-            const splashKey = DynamicAssetLoader.textureKey(element, category)
-            if (splashKey && this.textures.exists(splashKey)) return splashKey
-            return accessible ? generate() : splashKey
-        }
-
         return DynamicAssetLoader.textureKey(element, category)
     }
 
@@ -531,7 +508,7 @@ export class RecognitionGameScene extends Scene {
         const slots = this.layout.getOptionSlots(optionElements.length)
         optionElements.forEach((e, i) => {
             const slot = slots[i]
-            const imageKey = this.resolveTextureKey(e, Math.round(slot.size))
+            const imageKey = this.resolveTextureKey(e)
             let optionElement: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Container
             let labelElement: Phaser.GameObjects.Text | undefined
 
@@ -541,7 +518,7 @@ export class RecognitionGameScene extends Scene {
                 const img = this.add.image(slot.x, slot.y, imageKey)
 
                 if (colors && colors[i] !== undefined) {
-                    this.colorizer.applyTint(img, colors[i])
+                    this.colorizer.applyTint(img, colors[i], this._recognitionCategory === 'SHAPE')
                 }
 
                 optionElement = img
@@ -753,7 +730,7 @@ export class RecognitionGameScene extends Scene {
         const { x, y } = this.sizes.stimulusCenter
         this.drawStimulusCard()
 
-        const imageKey = this.resolveTextureKey(element, Math.round(this.sizes.stimulusSize))
+        const imageKey = this.resolveTextureKey(element)
         let stimulus: Phaser.GameObjects.Image | Phaser.GameObjects.Text | Phaser.GameObjects.Container
         if (imageKey && this.textures.exists(imageKey) && this._recognitionCategory === 'COLOR') {
             // The target's item is the hint (EASY/MEDIUM): the option showing the same item is the right one.
@@ -763,7 +740,7 @@ export class RecognitionGameScene extends Scene {
             const img = this.add.image(x, y, imageKey)
 
             if (tint !== undefined) {
-                this.colorizer.applyTint(img, tint)
+                this.colorizer.applyTint(img, tint, this._recognitionCategory === 'SHAPE')
             }
             stimulus = img
         } else {
@@ -837,7 +814,6 @@ export class RecognitionGameScene extends Scene {
         this.layoutStimulus()
 
         if (this.hintBorderGraphics && this.hintTargetId) this.showVisualHint(this.hintTargetId)
-        if (this.nonChromaticPatternGraphics.length > 0) this.renderNonChromaticPatterns(this.getOptionImages())
     }
 
     private cleanupStimulusCard(): void {
@@ -910,106 +886,6 @@ export class RecognitionGameScene extends Scene {
         }
     }
 
-    private createPatternGraphics(patternType: PatternType, width: number, height: number): Phaser.GameObjects.Graphics {
-        const graphics = this.add.graphics()
-        graphics.lineStyle(PATTERN_LINE_THICKNESS, PATTERN_COLOR, PATTERN_ALPHA)
-
-        switch (patternType) {
-            case 'diagonal': {
-                const lineSpacing = width / 4
-                for (let i = 1; i <= 3; i++) {
-                    const startX = i * lineSpacing - width / 4
-                    const startY = 0
-                    const endX = startX + height
-                    const endY = height
-                    graphics.moveTo(startX, startY)
-                    graphics.lineTo(endX, endY)
-                }
-                break
-            }
-            case 'dots': {
-                const radius = Math.min(width, height) * 0.06
-                const offsetX = width * 0.3
-                const offsetY = height * 0.3
-                const centerX = width / 2
-                const centerY = height / 2
-                const dotPositions = [
-                    { x: centerX - offsetX, y: centerY - offsetY },
-                    { x: centerX + offsetX, y: centerY - offsetY },
-                    { x: centerX - offsetX, y: centerY + offsetY },
-                    { x: centerX + offsetX, y: centerY + offsetY }
-                ]
-                graphics.fillStyle(PATTERN_COLOR, PATTERN_ALPHA)
-                dotPositions.forEach(pos => {
-                    graphics.fillCircle(pos.x, pos.y, radius)
-                })
-                break
-            }
-            case 'grid': {
-                const gridDivisions = 3
-                for (let i = 1; i < gridDivisions; i++) {
-                    const gx = (width / gridDivisions) * i
-                    graphics.moveTo(gx, 0)
-                    graphics.lineTo(gx, height)
-                    const gy = (height / gridDivisions) * i
-                    graphics.moveTo(0, gy)
-                    graphics.lineTo(width, gy)
-                }
-                break
-            }
-            case 'waves': {
-                const waveAmplitude = height * 0.1
-                const waveCount = 2
-                for (let w = 0; w < waveCount; w++) {
-                    const baseY = height * (0.35 + w * 0.3)
-                    const steps = 20
-                    for (let i = 0; i <= steps; i++) {
-                        const x = (i / steps) * width
-                        const y = baseY + Math.sin((i / steps) * Math.PI * 2) * waveAmplitude
-                        if (i === 0) {
-                            graphics.moveTo(x, y)
-                        } else {
-                            graphics.lineTo(x, y)
-                        }
-                    }
-                }
-                break
-            }
-            case 'cross': {
-                const midX = width / 2
-                const midY = height / 2
-                graphics.moveTo(midX, 0)
-                graphics.lineTo(midX, height)
-                graphics.moveTo(0, midY)
-                graphics.lineTo(width, midY)
-                break
-            }
-        }
-
-        graphics.strokePath()
-        return graphics
-    }
-
-    private renderNonChromaticPatterns(optionImages: RoundObject[]): void {
-        this.destroyNonChromaticPatterns()
-
-        if (!this._nonChromaticKeyRequired || this._recognitionCategory !== 'COLOR') return
-
-        optionImages.forEach((img, index) => {
-            const bounds = img.getBounds()
-            const patternType = PATTERN_TYPES[index % PATTERN_TYPES.length]
-            const graphics = this.createPatternGraphics(patternType, bounds.width, bounds.height)
-            graphics.setPosition(bounds.x, bounds.y)
-            graphics.setDepth(PATTERN_DEPTH)
-            this.nonChromaticPatternGraphics.push(graphics)
-        })
-    }
-
-    private destroyNonChromaticPatterns(): void {
-        this.nonChromaticPatternGraphics.forEach(g => g.destroy())
-        this.nonChromaticPatternGraphics = []
-    }
-
     private getOptionImages(): RoundObject[] {
         return this.images.filter(img => !img.getData('isStimulus'))
     }
@@ -1050,7 +926,6 @@ export class RecognitionGameScene extends Scene {
         this.images.forEach(i => i.destroy(true))
         this.images = []
         this.cleanupStimulusCard()
-        this.destroyNonChromaticPatterns()
     }
 
     readEvent(event: ServerGameEvent | AvatarEvent) {
@@ -1080,9 +955,9 @@ export class RecognitionGameScene extends Scene {
             case 'GAME_READY':
                 if (event.payload.engine === "RECOGNITION" && event.payload.recognitionState?.recognitionCategory) {
                     const rs = event.payload.recognitionState
-                    this._nonChromaticKeyRequired = rs.nonChromaticKeyRequired ?? false
                     this._recognitionCategory = rs.recognitionCategory ?? ''
                     this.showIcon = rs.showIcon ?? true
+                    this.isEasyDifficulty = rs.guideChromEnabled ?? false
                     this.comparisonMode = rs.comparisonMode ?? false
                     this.comparisonOptions = rs.comparisonOptions ?? []
                     if (this.progressBar && rs.totalRounds > 0) {
@@ -1095,7 +970,6 @@ export class RecognitionGameScene extends Scene {
                             this.showVisualHint(rs.targetElementId)
                         }
                         const optionImages = this.getOptionImages()
-                        this.renderNonChromaticPatterns(optionImages)
                         this.applyTouchEnableDelay(rs.touchEnableDelayMs ?? 0, optionImages)
                     })
                     if (rs.hintActive) {
@@ -1170,9 +1044,9 @@ export class RecognitionGameScene extends Scene {
 
     applyActionToResultType(result: GAME_RESULT_TYPE, complete: boolean, state: RecognitionEnginePayload) {
         if (state.recognitionState) {
-            this._nonChromaticKeyRequired = state.recognitionState.nonChromaticKeyRequired ?? false
             this._recognitionCategory = state.recognitionState.recognitionCategory ?? ''
             this.showIcon = state.recognitionState.showIcon ?? true
+            this.isEasyDifficulty = state.recognitionState.guideChromEnabled ?? false
             this.comparisonMode = state.recognitionState.comparisonMode ?? false
             this.comparisonOptions = state.recognitionState.comparisonOptions ?? []
         }
@@ -1225,7 +1099,6 @@ export class RecognitionGameScene extends Scene {
                         this.showVisualHint(nextState.targetElementId)
                     }
                     const optionImages = this.getOptionImages()
-                    this.renderNonChromaticPatterns(optionImages)
                     this.applyTouchEnableDelay(nextState.touchEnableDelayMs ?? 0, optionImages)
                 })
                 return
@@ -1269,6 +1142,11 @@ export class RecognitionGameScene extends Scene {
             return
         }
 
+        if (this._recognitionCategory === 'SHAPE' && this.isEasyDifficulty && targetImage) {
+            this.playShapeFitAnimation(target, onComplete)
+            return
+        }
+
         this.tweens.add({
             targets: target,
             scaleX: target.scaleX * FEEDBACK_SCALE_TO,
@@ -1281,16 +1159,11 @@ export class RecognitionGameScene extends Scene {
             }
         })
 
-        if ('setTint' in target) {
-            (target as Phaser.GameObjects.Image).setTint(CORRECT_TINT)
-        }
+        this.applyFeedbackTint(target, CORRECT_TINT)
         target.setAlpha(1 - CORRECT_TINT_ALPHA)
         this.time.delayedCall(FEEDBACK_SCALE_DURATION, () => {
-            const tint = this.colorizer.getTint(target)
-            if (tint !== undefined) {
-                (target as Phaser.GameObjects.Image).setTint(tint)
-            } else if ('clearTint' in target) {
-                (target as Phaser.GameObjects.Image).clearTint()
+            if ('setTint' in target) {
+                this.colorizer.restoreTint(target as Phaser.GameObjects.Image)
             }
             target.setAlpha(1)
         })
@@ -1311,6 +1184,68 @@ export class RecognitionGameScene extends Scene {
         this.time.delayedCall(Math.max(FEEDBACK_SCALE_DURATION, PARTICLE_DURATION), onComplete)
     }
 
+    /**
+     * SHAPE: aplica un tint de feedback (correcto/rechazo) a una pieza en modo `FILL` (ver
+     * RecognitionColorizer.applyTint) porque su trazo es negro puro sobre transparente; el resto
+     * de categorias usa el modo `MULTIPLY` normal.
+     */
+    private applyFeedbackTint(target: RoundObject, color: number): void {
+        if (!('setTint' in target)) return
+        const img = target as Phaser.GameObjects.Image
+        img.setTint(color)
+        img.setTintMode(this._recognitionCategory === 'SHAPE' ? TintModes.FILL : TintModes.MULTIPLY)
+    }
+
+    /**
+     * SHAPE + EASY: en vez del pulso generico en el sitio, la pieza tocada "encaja" en el hueco del estimulo —
+     * vuela hasta su posicion y se reduce a su tamano, como una caja de formas. Solo en EASY (la unica dificultad
+     * con el gesto mas simple: 2 opciones, con icono de referencia) y solo con movimiento no reducido (el llamador
+     * ya ha descartado `reducedMotion`).
+     */
+    private playShapeFitAnimation(target: RoundObject, onComplete: () => void): void {
+        const { x, y } = this.sizes.stimulusCenter
+        const fitScale = this.sizes.stimulusSize / Math.max(target.width, target.height)
+
+        this.applyFeedbackTint(target, CORRECT_TINT)
+
+        this.tweens.add({
+            targets: target,
+            x,
+            y,
+            scaleX: fitScale,
+            scaleY: fitScale,
+            duration: SHAPE_FIT_DURATION,
+            ease: 'Cubic.inOut',
+            onComplete
+        })
+    }
+
+    /**
+     * SHAPE + EASY, opcion incorrecta: la pieza tocada tambien vuela hacia el hueco del estimulo (mismo
+     * gesto que al acertar) pero solo llega a medio camino y vuelve a su sitio (`yoyo`), como si no encajara.
+     * Asi el nino ve el intento de encaje pase lo que pase, no solo cuando acierta.
+     */
+    private playShapeRejectAnimation(target: RoundObject, onComplete: () => void): void {
+        const { x, y } = this.sizes.stimulusCenter
+        const fitScale = this.sizes.stimulusSize / Math.max(target.width, target.height)
+        const originalX = target.x
+        const originalY = target.y
+        const originalScaleX = target.scaleX
+        const originalScaleY = target.scaleY
+
+        this.tweens.add({
+            targets: target,
+            x: (originalX + x) / 2,
+            y: (originalY + y) / 2,
+            scaleX: (originalScaleX + fitScale) / 2,
+            scaleY: (originalScaleY + fitScale) / 2,
+            duration: SHAPE_FIT_DURATION / 2,
+            ease: 'Cubic.out',
+            yoyo: true,
+            onComplete
+        })
+    }
+
     private playIncorrectAnimation(targetImage: RoundObject | undefined, onComplete: () => void): void {
         const target = targetImage ?? this.images[0]
         if (!target) {
@@ -1328,6 +1263,11 @@ export class RecognitionGameScene extends Scene {
                 yoyo: true,
                 onComplete
             })
+            return
+        }
+
+        if (this._recognitionCategory === 'SHAPE' && this.isEasyDifficulty && targetImage) {
+            this.playShapeRejectAnimation(target, onComplete)
             return
         }
 
@@ -1482,7 +1422,6 @@ export class RecognitionGameScene extends Scene {
         this.assetLoader = undefined
         this.cleanupFeedbackTweens()
         this.removeVisualHint()
-        this.destroyNonChromaticPatterns()
         if (this.touchEnableTimer) {
             this.touchEnableTimer.remove(false)
             this.touchEnableTimer = undefined

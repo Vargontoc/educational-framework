@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClient;
 import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.audio.application.ports.out.AudioPort;
 import es.vargontoc.educational.framework.audio.infrastructure.adapters.in.AudioAdapter;
+import es.vargontoc.educational.framework.audio.infrastructure.adapters.in.AudioAsync;
 import es.vargontoc.educational.framework.audio.infrastructure.cache.AudioCacheStorage;
 
 @Configuration
@@ -39,7 +40,7 @@ public class AudioConfiguration {
     }
 
     @Bean
-    public AudioUseCase audioUseCase(AudioPort audioPort, AudioCacheStorage audioCacheStorage) {
-        return new AudioAdapter(audioPort, audioCacheStorage);
+    public AudioUseCase audioUseCase(AudioPort audioPort, AudioAsync async, AudioCacheStorage audioCacheStorage) {
+        return new AudioAdapter(audioPort, async, audioCacheStorage);
     }
 }

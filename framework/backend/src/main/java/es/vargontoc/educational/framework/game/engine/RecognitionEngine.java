@@ -33,6 +33,7 @@ import es.vargontoc.educational.framework.game.service.AnimalGroupService;
 import es.vargontoc.educational.framework.game.service.ColorSimilarityValidator;
 import es.vargontoc.educational.framework.game.service.DistractorSelector;
 import es.vargontoc.educational.framework.game.service.RecognitionSimilarityService;
+import es.vargontoc.educational.framework.game.service.ShapeGroupService;
 
 public class RecognitionEngine implements GameEnginePort {
 
@@ -40,9 +41,6 @@ public class RecognitionEngine implements GameEnginePort {
 
     private final Random random;
     private final DistractorSelector distractorSelector;
-    private final RecognitionSimilarityService recognitionSimilarityService;
-    private final ColorSimilarityValidator colorSimilarityValidator;
-    private final ColorVisionMode colorVisionMode;
 
     public RecognitionEngine() {
         this(new Random(), null, null, null);
@@ -61,19 +59,17 @@ public class RecognitionEngine implements GameEnginePort {
     }
 
     public RecognitionEngine(Random random, RecognitionSimilarityService recognitionSimilarityService,
-                             ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode) {
-        this(random, recognitionSimilarityService, colorSimilarityValidator, colorVisionMode, null);
+                            ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode) {
+        this(random, recognitionSimilarityService, colorSimilarityValidator, colorVisionMode, null, null);
     }
 
     public RecognitionEngine(Random random, RecognitionSimilarityService recognitionSimilarityService,
-                             ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode,
-                             AnimalGroupService animalGroupService) {
+                            ColorSimilarityValidator colorSimilarityValidator, ColorVisionMode colorVisionMode,
+                            AnimalGroupService animalGroupService, ShapeGroupService shapeGroupService) {
         this.random = random;
-        this.recognitionSimilarityService = recognitionSimilarityService;
-        this.colorSimilarityValidator = colorSimilarityValidator;
-        this.colorVisionMode = colorVisionMode;
+
         this.distractorSelector = new DistractorSelector(random, recognitionSimilarityService,
-                colorSimilarityValidator, colorVisionMode, animalGroupService);
+                colorSimilarityValidator, colorVisionMode, animalGroupService, shapeGroupService);
     }
 
     @Override
@@ -287,7 +283,7 @@ public class RecognitionEngine implements GameEnginePort {
             return false;
         }
         double biggest = state.getComparisonOptions().stream()
-                .mapToDouble(ComparisonOption::scalePercent).max().orElse(Double.NaN);
+                .mapToDouble(c -> c.scalePercent()).max().orElse(Double.NaN);
         return Math.abs(selectedScalePercent - biggest) < 1e-6;
     }
 
@@ -456,7 +452,7 @@ public class RecognitionEngine implements GameEnginePort {
         }
         Collections.shuffle(options, random);
         state.setComparisonOptions(options);
-        return options.stream().map(ComparisonOption::elementId)
+        return options.stream().map(c -> c.elementId())
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 
