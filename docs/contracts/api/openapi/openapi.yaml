@@ -218,3 +218,13 @@ paths:
   /tracking/children/{childProfileId}/achievements:
     get:
       $ref: "./paths/tracking/achievements.yaml"
+
+  /diary/children/{childProfileId}/summary:
+    get:
+      $ref: "./paths/diary/summary.yaml"
+  /diary/children/{childProfileId}/activities:
+    get:
+      $ref: "./paths/diary/activities.yaml"
+  /diary/children/{childProfileId}/abandonment-signal:
+    get:
+      $ref: "./paths/diary/abandonment-signal.yaml"

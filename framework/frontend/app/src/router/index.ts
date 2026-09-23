@@ -53,6 +53,12 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresParentalAuth: true }
       },
       {
+        path: 'ninos/:id/diary',
+        name: 'PanelNinoDiary',
+        component: () => import('../views/parental/DiaryView.vue'),
+        meta: { requiresParentalAuth: true }
+      },
+      {
         path: 'chatbot',
         name: 'PanelChatbot',
         component: () => import('../views/ChatbotView.vue')

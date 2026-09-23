@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+
+properties:
+  activityId:
+    type: integer
+    format: int64
+  name:
+    type: string
+  category:
+    type: string
+    enum: [RECOGNITION, COMPARISON, MEMORY]
+  engine:
+    type: string
+  currentDifficulty:
+    type: string
+    enum: [EASY, MEDIUM, HARD]

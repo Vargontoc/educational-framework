@@ -6,6 +6,7 @@ import es.vargontoc.educational.framework.tracking.model.GameSessionFinalStatus;
 import es.vargontoc.educational.framework.tracking.ports.out.GameSessionSummaryRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -25,6 +26,20 @@ public class GameSessionSummaryPersistenceAdapter implements GameSessionSummaryR
     @Override
     public List<GameSessionSummary> findByChildProfileId(Long childProfileId) {
         return jpaRepository.findByChildProfileId(childProfileId).stream()
+            .map(GameSessionSummaryPersistenceAdapter::toDomain)
+            .toList();
+    }
+
+    @Override
+    public List<GameSessionSummary> findByChildProfileIdAndStartedAtBetween(Long childProfileId, LocalDateTime start, LocalDateTime end) {
+        return jpaRepository.findByChildProfileIdAndStartedAtBetween(childProfileId, start, end).stream()
+            .map(GameSessionSummaryPersistenceAdapter::toDomain)
+            .toList();
+    }
+
+    @Override
+    public List<GameSessionSummary> findRecentInitialAbandonmentsByChildAndActivity(Long childProfileId, Long activityId, int limit) {
+        return jpaRepository.findRecentInitialAbandonmentsByChildAndActivity(childProfileId, activityId, limit).stream()
             .map(GameSessionSummaryPersistenceAdapter::toDomain)
             .toList();
     }

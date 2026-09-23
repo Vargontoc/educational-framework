@@ -1,0 +1,25 @@
+summary: Get diary summary by period
+operationId: getDiarySummary
+tags:
+  - diary-controller
+parameters:
+  - name: childProfileId
+    in: path
+    required: true
+    schema:
+      type: integer
+      format: int64
+  - name: period
+    in: query
+    required: false
+    schema:
+      type: string
+      enum: [TODAY, WEEK, MONTH, ALL]
+      default: WEEK
+responses:
+  "200":
+    description: OK
+    content:
+      "*/*":
+        schema:
+          $ref: "../../schemas/diary/api-diary-summary-response.yaml"

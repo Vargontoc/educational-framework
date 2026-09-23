@@ -1,0 +1,6 @@
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "./abandonment-signal-response.yaml"

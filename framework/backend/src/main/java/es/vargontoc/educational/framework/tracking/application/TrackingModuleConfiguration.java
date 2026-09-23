@@ -35,6 +35,7 @@ import es.vargontoc.educational.framework.tracking.service.AchievementEvaluation
 import es.vargontoc.educational.framework.tracking.service.ChildAchievementService;
 import es.vargontoc.educational.framework.tracking.service.ChildLearningProgressService;
 import es.vargontoc.educational.framework.tracking.service.CuriosityViewedService;
+import es.vargontoc.educational.framework.tracking.service.DiaryService;
 import es.vargontoc.educational.framework.tracking.service.GameCompletionAchievementService;
 import es.vargontoc.educational.framework.tracking.service.GameSessionSummaryService;
 import es.vargontoc.educational.framework.tracking.service.NumberUnlockReadinessService;
@@ -170,5 +171,13 @@ class TrackingModuleConfiguration {
             RecognitionElementRepository recognitionElementRepository) {
         return new es.vargontoc.educational.framework.tracking.infrastructure.persistence.ElementProgressPortAdapter(
                 elementSummaryRepository, recognitionElementRepository);
+    }
+
+    @Bean
+    DiaryService diaryService(
+            GameSessionSummaryRepository gameSessionSummaryRepository,
+            ActivitySummaryRepository activitySummaryRepository,
+            ActivityInformationPort activityInformationPort) {
+        return new DiaryService(gameSessionSummaryRepository, activitySummaryRepository, activityInformationPort);
     }
 }

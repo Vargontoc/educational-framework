@@ -8,7 +8,9 @@ import tools.jackson.databind.ObjectMapper;
 import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.content.infrastructure.ActivityInformationPortImpl;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.ActivityJpaRepository;
+import es.vargontoc.educational.framework.content.infrastructure.persistence.ActivityTopicJpaRepository;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
+import es.vargontoc.educational.framework.content.infrastructure.persistence.TopicJpaRepository;
 import es.vargontoc.educational.framework.content.infrastructure.seed.SeedService;
 import es.vargontoc.educational.framework.content.ports.in.ActivityUseCase;
 import es.vargontoc.educational.framework.content.ports.in.DifficultyLevelUseCase;
@@ -156,7 +158,10 @@ class ContentModuleConfiguration {
 
     @Bean
     ActivityInformationPort activityInformationPort(
-            ActivityJpaRepository activityJpaRepository) {
-        return new ActivityInformationPortImpl(activityJpaRepository);
+            ActivityJpaRepository activityJpaRepository,
+            ActivityTopicJpaRepository activityTopicJpaRepository,
+            TopicJpaRepository topicJpaRepository,
+            DifficultyLevelRepository difficultyLevelRepository) {
+        return new ActivityInformationPortImpl(activityJpaRepository, activityTopicJpaRepository, topicJpaRepository, difficultyLevelRepository);
     }
 }

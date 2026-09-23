@@ -1,0 +1,10 @@
+type: object
+additionalProperties: false
+
+properties:
+  activityId:
+    type: integer
+    format: int64
+  abandonmentCount:
+    type: integer
+    format: int32

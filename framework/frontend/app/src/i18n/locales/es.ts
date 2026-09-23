@@ -479,6 +479,7 @@ export default {
         saveButton: 'Guardar cambios',
         deleteButton: 'Eliminar',
         dashboardButton: 'Dashboard',
+        diaryButton: 'Diario',
         disabledByFamily: 'Deshabilitado a nivel familiar',
         saveSuccess: 'Cambios guardados correctamente',
         saveError: 'No se pudieron guardar los cambios',
@@ -513,6 +514,45 @@ export default {
       },
       dashboard: {
         placeholder: 'Próximamente disponible'
+      },
+      diary: {
+        title: 'Diario',
+        error: 'No se pudo cargar el diario. Inténtalo de nuevo.',
+        emptyToday: 'Hoy todavía no ha jugado',
+        emptyActivities: 'Todavía no hay actividades completadas en este periodo',
+        periodFilter: {
+          ariaLabel: 'Periodo del diario',
+          today: 'Hoy',
+          week: 'Semana',
+          month: 'Mes',
+          all: 'Total'
+        },
+        summary: {
+          playedMinutes: 'Minutos jugados',
+          uniqueActivities: 'Actividades distintas completadas'
+        },
+        category: {
+          recognition: 'Reconocimiento',
+          comparison: 'Comparación',
+          memory: 'Memoria'
+        },
+        subcategory: {
+          letter: 'Letras',
+          number: 'Números',
+          shape: 'Formas',
+          color: 'Colores',
+          animal: 'Animales'
+        },
+        difficulty: {
+          easy: 'Fácil',
+          medium: 'Normal',
+          hard: 'Difícil',
+          sentence: 'Nivel actual de esta actividad: {level}. El juego lo ajusta automáticamente para que pueda jugar a gusto.',
+          ariaLabel: 'Nivel actual: {level}'
+        },
+        abandonment: {
+          message: 'Esta actividad ha sido abandonada varias veces recientemente'
+        }
       }
     },
     errors: {

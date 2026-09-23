@@ -108,6 +108,13 @@
         >
           {{ t('views.ninos.edit.dashboardButton') }}
         </NubiButton>
+
+        <NubiButton
+          variant="secondary"
+          @click="handleDiary"
+        >
+          {{ t('views.ninos.edit.diaryButton') }}
+        </NubiButton>
       </div>
     </div>
 
@@ -210,6 +217,14 @@ async function confirmDelete() {
 function handleDashboard() {
   router.push({
     name: 'PanelNinoDashboard',
+    params: { id: String(childId.value) },
+    state: { name: profile.value?.name }
+  })
+}
+
+function handleDiary() {
+  router.push({
+    name: 'PanelNinoDiary',
     params: { id: String(childId.value) },
     state: { name: profile.value?.name }
   })

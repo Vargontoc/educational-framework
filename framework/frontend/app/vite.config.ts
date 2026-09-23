@@ -32,7 +32,10 @@ export default defineConfig(({ mode }) => {
           enabled: true
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,svg,png,ico}']
+          globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+          // daisy-tap.png (sprite sheet de animacion, ~2.3MB) supera el limite de precache
+          // de workbox (2MB por defecto): se carga bajo demanda en vez de precachearse.
+          globIgnores: ['**/assets/images/biomes/meadow/daisy/daisy-tap.png']
         }
       })
     ],
