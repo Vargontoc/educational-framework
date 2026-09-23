@@ -8,6 +8,8 @@
 - **Historia de usuario:** Como adulto autenticado de la familia, quiero consultar a Nubi sobre My Friend Nubi y sobre la actividad orientativa de perfiles autorizados, con respuestas seguras que no sustituyan a profesionales.
 - **Depende de:** ADR-003, acceso al panel parental y disponibilidad autorizada de información orientativa.
 
+> **Actualización de alcance:** ADR-031 y FEAT-004 agentes concretan las consultas parentales de Diario. La prohibición de mostrar niveles como capacidad se mantiene; el chatbot puede comunicar exclusivamente el nivel actual de una actividad con la explicación no evaluativa aprobada, nunca como logro, máximo histórico o clasificación.
+
 ## 1. Objetivo y valor para la familia
 
 Ofrecer una conversación adulta, amable y fuertemente limitada al producto. El chatbot ayuda a entender My Friend Nubi y la información familiar disponible sin convertir el progreso infantil en una evaluación, ni sustituir consejo sanitario, psicológico, educativo profesional o de seguridad.

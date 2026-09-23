@@ -8,6 +8,8 @@
 - **Historia de usuario:** Como adulto autenticado, quiero consultar y gestionar los perfiles infantiles de mi familia, adaptar sus configuraciones individuales y controlar su acceso al juego para mantener una experiencia adecuada y bajo control parental.
 - **Depende de:** ADR-022; ADR-023 — Selector visual de accesibilidad cromática; FEAT-003 — Selección y alta de perfiles infantiles; FEAT-004 — Estructura visual y navegación del panel parental; FEAT-005 — Configuración global de audio, NPC y PIN; acceso parental mediante PIN vigente.
 
+> **Actualización de alcance:** las referencias de esta especificación al destino «Dashboard» quedan sustituidas por «Diario» conforme a ADR-031 y FEAT-015. La fecha de nacimiento se minimiza a mes y año y se usa exclusivamente para filtrar actividades conjuntas; no adapta la experiencia de juego. Las decisiones específicas de Diario, limpieza de tracking y adaptación prevalecen en ADR-031.
+
 ## 1. Objetivo y valor para la familia
 
 Permitir que el adulto de la familia gestione perfiles infantiles desde una sección parental claramente separada del juego: consultar los perfiles, editar datos y preferencias individuales, terminar una sesión activa, bloquear temporalmente el acceso al juego, eliminar por completo un perfil y acceder a su dashboard como destino placeholder.
