@@ -29,4 +29,6 @@ public interface GameOrchestrator {
     void discardGameForSession(Long childSessionId);
 
     void clearSessionData(Long childSessionId);
+
+    int activeLockCount();
 }

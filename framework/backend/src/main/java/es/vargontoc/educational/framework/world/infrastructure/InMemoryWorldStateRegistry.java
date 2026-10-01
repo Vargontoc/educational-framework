@@ -50,4 +50,9 @@ public class InMemoryWorldStateRegistry implements WorldStateRegistry {
             entry.getValue().getStatus() == WorldRuntimeStatus.CLOSED
         );
     }
+
+    @Override
+    public int size() {
+        return stateByChildSession.size();
+    }
 }

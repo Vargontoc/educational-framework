@@ -37,7 +37,7 @@ class MemoryRecognitionSeedTest {
         for (JsonNode element : seed) {
             String code = element.get("code").asString();
             assertTrue(codes.add(code), "duplicated code " + code);
-            assertEquals(code, RecognitionResourceRefs.get(element.get("resourceRefs").asString(), "image"));
+            assertEquals(code, RecognitionResourceRefs.icon(element.get("resourceRefs").asString()));
             assertEquals("Encuentra las parejas", RecognitionResourceRefs.nubiAudio(element.get("resourceRefs").asString()), code);
             assertTrue(!element.get("displayValue").asString().isBlank(), code);
             perGroup.merge(element.get("similarityGroup").asString(), 1, Integer::sum);

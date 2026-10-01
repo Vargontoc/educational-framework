@@ -34,6 +34,9 @@ import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.session.model.ChildSessionStatus;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
+import es.vargontoc.educational.framework.shared.config.WebSocketGameProperties;
+import es.vargontoc.educational.framework.shared.infrastructure.SqlStatementCounter;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -116,11 +119,13 @@ class GameWebSocketHandlerTest {
 
     @BeforeEach
     void setUp() {
+        WebSocketGameProperties wsProps = new WebSocketGameProperties();
         handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarService,
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
             recognitionElementRepository, worldExplorationStateRepository,
-            childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository);
+            childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
+            new WebSocketMetrics(new SimpleMeterRegistry()), SqlStatementCounter.NOOP, wsProps);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))

@@ -10,6 +10,7 @@ import org.springframework.ai.rag.preretrieval.query.transformation.TranslationQ
 import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,15 +29,36 @@ public class VectorsConfiguration {
     private Resource contextTemplate;
 
 
-    @Bean("content-vector")
-    public RetrievalAugmentationAdvisor chatbotVector(ChatClient.Builder builder, ResourceLoaderPort loader, JdbcTemplate template, EmbeddingModel model) {
-        VectorStore v = PgVectorStore.builder(template, model)
+    // PgVectorStore solo crea su extension/tabla (initializeSchema) dentro de afterPropertiesSet()
+    // (implementa InitializingBean). Construirlo con .build() y usarlo como variable local, sin
+    // exponerlo el mismo como @Bean, hace que Spring nunca llame a ese callback: la tabla no se
+    // crea nunca y las consultas fallan con "relation ... does not exist". Por eso cada VectorStore
+    // se declara aqui como su propio bean.
+    @Bean("chatbot-knowledge-base-store")
+    public VectorStore chatbotKnowledgeBaseStore(JdbcTemplate template, EmbeddingModel model) {
+        return PgVectorStore.builder(template, model)
             .vectorTableName("chatbot_knowledge_base")
             .dimensions(1024)
             .distanceType(PgVectorStore.PgDistanceType.COSINE_DISTANCE)
             .indexType(PgVectorStore.PgIndexType.HNSW)
-            .initializeSchema(true)
+            .initializeSchema(false)
             .build();
+    }
+
+    @Bean("content-generated-store")
+    public VectorStore contentGeneratedStore(JdbcTemplate template, EmbeddingModel model) {
+        return PgVectorStore.builder(template, model)
+            .vectorTableName("content_generated")
+            .dimensions(1024)
+            .distanceType(PgVectorStore.PgDistanceType.COSINE_DISTANCE)
+            .indexType(PgVectorStore.PgIndexType.HNSW)
+            .initializeSchema(false)
+            .build();
+    }
+
+    @Bean("content-vector")
+    public RetrievalAugmentationAdvisor chatbotVector(ChatClient.Builder builder,
+            @Qualifier("chatbot-knowledge-base-store") VectorStore v) {
         return RetrievalAugmentationAdvisor.builder()
             .queryTransformers(TranslationQueryTransformer.builder()
             .chatClientBuilder(builder.clone()
@@ -54,17 +76,10 @@ public class VectorsConfiguration {
                 .build())
             .build();
     }
-    
+
     @Bean("chatbot-vector")
-    public RetrievalAugmentationAdvisor contentVector(ChatClient.Builder builder, ResourceLoaderPort loader, JdbcTemplate template, EmbeddingModel model) {
-        
-        VectorStore v = PgVectorStore.builder(template, model)
-            .vectorTableName("content_generated")
-            .dimensions(1024)
-            .distanceType(PgVectorStore.PgDistanceType.COSINE_DISTANCE)
-            .indexType(PgVectorStore.PgIndexType.HNSW)
-            .initializeSchema(true)
-            .build();
+    public RetrievalAugmentationAdvisor contentVector(ChatClient.Builder builder, ResourceLoaderPort loader,
+            @Qualifier("content-generated-store") VectorStore v) {
 
         loader.loadResourcesForChatbot(v);
         return RetrievalAugmentationAdvisor.builder()
@@ -85,5 +100,5 @@ public class VectorsConfiguration {
             .build();
     }
 
-    
+
 }

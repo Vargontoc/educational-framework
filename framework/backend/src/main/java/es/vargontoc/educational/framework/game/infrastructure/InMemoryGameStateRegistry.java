@@ -51,6 +51,13 @@ public class InMemoryGameStateRegistry implements GameStateRegistry {
         return findByChildSessionId(childSessionId).isPresent();
     }
 
+    @Override
+    public int activeGameCount() {
+        return (int) gameById.values().stream()
+            .filter(state -> isActive(state.getStatus()))
+            .count();
+    }
+
     private boolean isActive(GameStatus status) {
         return status == GameStatus.WAITING
             || status == GameStatus.STARTING

@@ -38,7 +38,7 @@ class DistractorSelectorAnimalTest {
     }
 
     private List<String> select(long seed, List<String> codes, String targetCode, DistractorStrategy strategy, int count) {
-        DistractorSelector selector = new DistractorSelector(new Random(seed), null, null, null, animals);
+        DistractorSelector selector = new DistractorSelector(new Random(seed), null, null, null, animals, null);
         Map<String, CandidateMetadata> metadata = metadata(codes);
         String targetId = String.valueOf(codes.indexOf(targetCode));
         List<String> selectedIds = selector.select(targetId, ids(codes.size()), strategy, count,

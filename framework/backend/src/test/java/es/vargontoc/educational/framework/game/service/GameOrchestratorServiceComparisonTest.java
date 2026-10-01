@@ -96,7 +96,7 @@ class GameOrchestratorServiceComparisonTest {
                 filterAllowedRecognitionCategoriesUseCase, elementProgressPort, recognitionElementRepository,
                 difficultyLevelUseCase, childProfileUseCase,
                 new RecognitionDifficultyService(new RecognitionDifficultyConfig(new RecognitionProperties())),
-                recognitionSimilarityService, roundAudioService, null, null);
+                recognitionSimilarityService, roundAudioService, null, null, null);
 
         ChildProfile child = new ChildProfile();
         child.setId(CHILD_PROFILE_ID);

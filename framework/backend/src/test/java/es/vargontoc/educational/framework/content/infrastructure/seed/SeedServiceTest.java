@@ -108,7 +108,6 @@ class SeedServiceTest {
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository,
             learningPathRepository, learningPathStepRepository, tracingPatternRepository,
             worldHostRepository, worldNarrativeSituationRepository,
-            worldDiscoveryElementRepository,
             recognitionElementRepository, recognitionSimilarityPairRepository, objectMapper
         );
     }

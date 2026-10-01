@@ -15,6 +15,7 @@ import es.vargontoc.educational.framework.audio.application.ports.out.AudioPort;
 import es.vargontoc.educational.framework.audio.infrastructure.adapters.in.AudioAdapter;
 import es.vargontoc.educational.framework.audio.infrastructure.adapters.in.AudioAsync;
 import es.vargontoc.educational.framework.audio.infrastructure.cache.AudioCacheStorage;
+import io.micrometer.core.instrument.MeterRegistry;
 
 @Configuration
 @EnableConfigurationProperties(AudioCacheConfiguration.class)
@@ -40,7 +41,7 @@ public class AudioConfiguration {
     }
 
     @Bean
-    public AudioUseCase audioUseCase(AudioPort audioPort, AudioAsync async, AudioCacheStorage audioCacheStorage) {
-        return new AudioAdapter(audioPort, async, audioCacheStorage);
+    public AudioUseCase audioUseCase(AudioPort audioPort, AudioAsync async, AudioCacheStorage audioCacheStorage, MeterRegistry meterRegistry) {
+        return new AudioAdapter(audioPort, async, audioCacheStorage, meterRegistry);
     }
 }

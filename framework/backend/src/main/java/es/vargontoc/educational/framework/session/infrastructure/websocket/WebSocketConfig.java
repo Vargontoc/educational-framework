@@ -11,6 +11,7 @@ import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.stomp.StompConnectAuthInterceptor;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.stomp.StompSubscribeInterceptor;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
+import es.vargontoc.educational.framework.shared.config.WebSocketGameProperties;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository;
@@ -32,7 +33,10 @@ import org.springframework.web.socket.server.support.WebSocketHttpRequestHandler
 
 import java.util.Map;
 
+import es.vargontoc.educational.framework.shared.infrastructure.SqlStatementCounter;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
+
+import io.micrometer.core.instrument.MeterRegistry;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -55,6 +59,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final ChildProfileUseCase childProfileUseCase;
     private final AccessibleColorRepository accessibleColorRepository;
     private final AccessibleColorPaletteRepository accessibleColorPaletteRepository;
+    private final MeterRegistry meterRegistry;
+    private final SqlStatementCounter sqlStatementCounter;
+    private final WebSocketGameProperties wsGameProperties;
 
     public WebSocketConfig(
             ChildSessionUseCase childSessionUseCase,
@@ -73,7 +80,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             WorldExplorationStateRepository worldExplorationStateRepository,
             ChildProfileUseCase childProfileUseCase,
             AccessibleColorRepository accessibleColorRepository,
-            AccessibleColorPaletteRepository accessibleColorPaletteRepository) {
+            AccessibleColorPaletteRepository accessibleColorPaletteRepository,
+            MeterRegistry meterRegistry,
+            SqlStatementCounter sqlStatementCounter,
+            WebSocketGameProperties wsGameProperties) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.stompConnectAuthInterceptor = stompConnectAuthInterceptor;
@@ -91,9 +101,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.childProfileUseCase = childProfileUseCase;
         this.accessibleColorRepository = accessibleColorRepository;
         this.accessibleColorPaletteRepository = accessibleColorPaletteRepository;
+        this.meterRegistry = meterRegistry;
+        this.sqlStatementCounter = sqlStatementCounter;
+        this.wsGameProperties = wsGameProperties;
     }
-
-    // ── STOMP (parental channel) ──────────────────────────────────────
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -113,8 +124,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(stompConnectAuthInterceptor, stompSubscribeInterceptor);
     }
-
-    // ── Native WebSocket (game channel) ───────────────────────────────
 
     @Bean
     public HandlerMapping nativeWebSocketHandlerMapping() {
@@ -137,6 +146,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
             recognitionElementRepository, worldExplorationStateRepository,
-            childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository);
+            childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
+            new WebSocketMetrics(meterRegistry), sqlStatementCounter, wsGameProperties);
     }
 }

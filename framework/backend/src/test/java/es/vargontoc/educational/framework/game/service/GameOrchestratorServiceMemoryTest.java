@@ -105,7 +105,7 @@ class GameOrchestratorServiceMemoryTest {
                 filterAllowedRecognitionCategoriesUseCase, elementProgressPort, recognitionElementRepository,
                 difficultyLevelUseCase, childProfileUseCase,
                 new RecognitionDifficultyService(new RecognitionDifficultyConfig(new RecognitionProperties())),
-                recognitionSimilarityService, roundAudioService, null, null);
+                recognitionSimilarityService, roundAudioService, null, null, null);
 
         // Ten elements in two groups of five: ids 1..5 fruit, 6..10 vehicle.
         List<RecognitionElement> elements = new ArrayList<>();

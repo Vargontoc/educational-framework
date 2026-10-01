@@ -42,6 +42,9 @@ class ChildProfileServiceTest {
     @Mock
     private SessionEventPublisher sessionEventPublisher;
 
+    @Mock
+    private es.vargontoc.educational.framework.avatar.application.ports.in.AvatarUseCase avatarUseCase;
+
     @InjectMocks
     private ChildProfileService childProfileService;
 

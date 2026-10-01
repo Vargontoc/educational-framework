@@ -67,7 +67,7 @@ class RecognitionEngineAnimalTest {
 
     /** Plays a whole game answering correctly and returns, per round, the target code and the distractor codes. */
     private List<Map.Entry<String, List<String>>> playGame(long seed, int optionCount, String strategy) throws Exception {
-        RecognitionEngine engine = new RecognitionEngine(new Random(seed), null, null, null, animals);
+        RecognitionEngine engine = new RecognitionEngine(new Random(seed), null, null, null, animals, null);
         GameState gs = new GameState();
         engine.initGame(gs, engineParams(optionCount, strategy));
 

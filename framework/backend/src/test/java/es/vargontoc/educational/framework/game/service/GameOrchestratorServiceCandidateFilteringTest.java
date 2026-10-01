@@ -118,6 +118,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
             recognitionSimilarityService,
             roundAudioService,
             null,
+            null,
             null
         );
     }
@@ -496,7 +497,8 @@ class GameOrchestratorServiceCandidateFilteringTest {
             recognitionSimilarityService,
             roundAudioService,
             null,
-            AnimalGroupService.fromSeed()
+            AnimalGroupService.fromSeed(),
+            null
         );
     }
 

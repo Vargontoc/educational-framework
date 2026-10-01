@@ -17,4 +17,6 @@ public interface WorldStateRegistry {
     Optional<WorldState> removeByChildSessionId(Long childSessionId);
 
     void clearClosed();
+
+    int size();
 }

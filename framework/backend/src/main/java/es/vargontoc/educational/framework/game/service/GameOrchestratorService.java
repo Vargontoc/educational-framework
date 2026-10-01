@@ -72,12 +72,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class GameOrchestratorService implements GameOrchestrator {
 
     private static final Logger log = LoggerFactory.getLogger(GameOrchestratorService.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final AtomicLong GAME_ID_SEQUENCE = new AtomicLong(System.currentTimeMillis());
 
     private final GameCatalogUseCase gameCatalogUseCase;
     private final GameStateRegistry gameStateRegistry;
@@ -398,6 +400,7 @@ public class GameOrchestratorService implements GameOrchestrator {
                 }
 
                 gameStateRegistry.remove(gameId);
+                gameLocks.remove(gameId);
 
                 publishGameCompletedEvent(gameId, state.getChildSessionId(), state.getActivityId(), GameSessionFinalStatus.COMPLETED);
             } else {
@@ -460,6 +463,7 @@ public class GameOrchestratorService implements GameOrchestrator {
             }
 
             gameStateRegistry.remove(gameId);
+            gameLocks.remove(gameId);
 
             publishGameCompletedEvent(gameId, state.getChildSessionId(), state.getActivityId(), GameSessionFinalStatus.ABANDONED);
 
@@ -498,6 +502,7 @@ public class GameOrchestratorService implements GameOrchestrator {
             state.setLastActivityAt(LocalDateTime.now());
 
             gameStateRegistry.remove(gameId);
+            gameLocks.remove(gameId);
 
             publishGameDiscardedEvent(gameId, state.getChildSessionId(), state.getActivityId());
             log.info("Game {} discarded due to system event for childSessionId={} (no tracking)", gameId, childSessionId);
@@ -511,6 +516,11 @@ public class GameOrchestratorService implements GameOrchestrator {
     public void clearSessionData(Long childSessionId) {
         sessionAntiRepetitionRegistry.clearSession(childSessionId);
         completedActivitiesBySession.remove(childSessionId);
+    }
+
+    @Override
+    public int activeLockCount() {
+        return gameLocks.size();
     }
 
     private ReentrantLock getLock(Long gameId) {
@@ -617,9 +627,17 @@ public class GameOrchestratorService implements GameOrchestrator {
                     RecognitionElement element = elementsById.get(Long.valueOf(id));
                     String colorHex = null;
                     List<String> groups = new ArrayList<>();
-                    if (element != null && element.getResourceRefs() != null) {
-                        colorHex = RecognitionResourceRefs.colorHex(element.getResourceRefs());
-                        groups = RecognitionResourceRefs.group(element.getResourceRefs());
+                    if (element != null) {
+                        if (element.getResourceRefs() != null) {
+                            colorHex = RecognitionResourceRefs.colorHex(element.getResourceRefs());
+                            List<String> refsGroups = RecognitionResourceRefs.group(element.getResourceRefs());
+                            if (refsGroups != null) {
+                                groups.addAll(refsGroups);
+                            }
+                        }
+                        if (groups.isEmpty() && element.getSimilarityGroup() != null && !element.getSimilarityGroup().isBlank()) {
+                            groups.add(element.getSimilarityGroup());
+                        }
                     }
                     return new CandidateMetadata(
                             id,
@@ -827,7 +845,7 @@ public class GameOrchestratorService implements GameOrchestrator {
     }
 
     private Long generateGameId() {
-        return System.currentTimeMillis();
+        return GAME_ID_SEQUENCE.incrementAndGet();
     }
 
     private AttemptResult mapToTrackingResult(ActionResultType actionResultType) {

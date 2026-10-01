@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class RecognitionResourceRefsTest {
 
     private static final String COLOR_REFS =
-            "{\"nubi-audio\": \"¿Dónde está el color rojo?\", \"color\": \"#FF0000\", \"icon\": \"apple\"}";
+            "{\"nubi-audio\": \"¿Dónde está el color rojo?\", \"color\": \"#FF0000\", \"image\": \"apple\"}";
 
     @Test
     void extractsEachKnownField() {
@@ -40,6 +40,6 @@ class RecognitionResourceRefsTest {
 
     @Test
     void nonStringValue_isReadAsText() {
-        assertEquals("3", RecognitionResourceRefs.get("{\"n\": 3}", "n"));
+        assertEquals("3", RecognitionResourceRefs.icon("{\"image\": 3}"));
     }
 }

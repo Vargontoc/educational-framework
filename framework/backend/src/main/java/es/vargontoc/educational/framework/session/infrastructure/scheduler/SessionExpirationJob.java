@@ -2,6 +2,7 @@ package es.vargontoc.educational.framework.session.infrastructure.scheduler;
 
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.shared.config.SessionProperties;
+import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,10 +19,13 @@ public class SessionExpirationJob {
 
     private final ChildSessionUseCase childSessionUseCase;
     private final SessionProperties sessionProperties;
+    private final WorldStateRegistry worldStateRegistry;
 
-    public SessionExpirationJob(ChildSessionUseCase childSessionUseCase, SessionProperties sessionProperties) {
+    public SessionExpirationJob(ChildSessionUseCase childSessionUseCase, SessionProperties sessionProperties,
+                                WorldStateRegistry worldStateRegistry) {
         this.childSessionUseCase = childSessionUseCase;
         this.sessionProperties = sessionProperties;
+        this.worldStateRegistry = worldStateRegistry;
     }
 
     @Scheduled(cron = "0 */5 * * * *")
@@ -30,6 +34,7 @@ public class SessionExpirationJob {
             * sessionProperties.getHeartbeatGraceMultiplier();
         var cutoff = LocalDateTime.now().minusSeconds(graceSeconds);
         var expired = childSessionUseCase.expireInactiveSessions(cutoff);
+        worldStateRegistry.clearClosed();
 
         LOGGER.info("Expired inactive child sessions: count={}, cutoff={}", expired, cutoff);
     }

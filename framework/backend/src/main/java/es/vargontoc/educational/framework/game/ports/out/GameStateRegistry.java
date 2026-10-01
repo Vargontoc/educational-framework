@@ -15,4 +15,6 @@ public interface GameStateRegistry {
     void remove(Long gameId);
 
     boolean hasActiveGameForChildSession(Long childSessionId);
+
+    int activeGameCount();
 }

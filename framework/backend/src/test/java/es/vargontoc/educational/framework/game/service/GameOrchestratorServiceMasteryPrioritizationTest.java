@@ -103,6 +103,7 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
             recognitionSimilarityService,
             roundAudioService,
             null,
+            null,
             null
         );
     }

@@ -28,7 +28,11 @@ public class ResourceLoaderAdapter implements ResourceLoaderPort {
     @Override
     public void loadResourcesForChatbot(VectorStore vector) {
 
-        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM vector_store", Integer.class);
+        // "content_generated" es la tabla real configurada en VectorsConfiguration para este vector
+        // store; "vector_store" es el nombre por defecto de PgVectorStore (de antes de nombrar la
+        // tabla explicitamente) y ya no existe, así que la comprobación de "ya cargado" nunca
+        // funcionaba.
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM content_generated", Integer.class);
         if (count != null && count > 0) {
             return;
         }

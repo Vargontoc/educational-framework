@@ -73,7 +73,7 @@ class MemoryEngineTest {
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("id", id);
             entry.put("topicId", 1);
-            entry.put("similarityGroup", groupOf(id));
+            entry.put("similarityGroup", List.of(groupOf(id)));
             metadata.add(entry);
         }
 

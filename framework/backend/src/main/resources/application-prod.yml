@@ -18,3 +18,12 @@ logging:
   level:
     "[es.vargontoc]": ${LOGGING_LEVEL_ES_VARGONTOC:INFO}
     "[org.springframework.ai]": WARN
+
+app:
+  ws:
+    game:
+      send-time-limit-ms: ${APP_WS_GAME_SEND_TIME_LIMIT_MS:15000}
+      buffer-size-limit: ${APP_WS_GAME_BUFFER_SIZE_LIMIT:1048576}
+      max-session-idle-timeout-ms: ${APP_WS_GAME_MAX_SESSION_IDLE_TIMEOUT_MS:120000}
+      max-text-message-buffer-size: ${APP_WS_GAME_MAX_TEXT_MESSAGE_BUFFER_SIZE:65536}
+      max-binary-message-buffer-size: ${APP_WS_GAME_MAX_BINARY_MESSAGE_BUFFER_SIZE:1048576}

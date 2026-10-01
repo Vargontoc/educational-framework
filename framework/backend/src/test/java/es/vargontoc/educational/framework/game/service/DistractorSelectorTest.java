@@ -21,7 +21,7 @@ class DistractorSelectorTest {
     private final DistractorSelector selector = new DistractorSelector(new Random(42));
 
     private CandidateMetadata element(Long topicId, String similarityGroup) {
-        return new CandidateMetadata("unused", topicId, similarityGroup);
+        return new CandidateMetadata("unused", topicId, similarityGroup != null ? List.of(similarityGroup) : null);
     }
 
     private Function<String, CandidateMetadata> resolverOf(Map<String, CandidateMetadata> elements) {

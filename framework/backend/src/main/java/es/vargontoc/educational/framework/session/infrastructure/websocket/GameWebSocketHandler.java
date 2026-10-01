@@ -62,6 +62,10 @@ import es.vargontoc.educational.framework.game.model.memory.MemoryCard;
 import es.vargontoc.educational.framework.game.model.memory.MemoryState;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 
+import es.vargontoc.educational.framework.shared.infrastructure.SqlStatementCounter;
+
+import es.vargontoc.educational.framework.shared.config.WebSocketGameProperties;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -72,6 +76,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class GameWebSocketHandler extends TextWebSocketHandler {
@@ -79,6 +84,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(GameWebSocketHandler.class);
     private static final String ATTR_CHILD_SESSION_ID = "childSessionId";
     private static final int AUTH_TIMEOUT_SECONDS = 15;
+    private static final AtomicLong GAME_ID_SEQ = new AtomicLong(System.currentTimeMillis());
 
     private final ChildSessionUseCase childSessionUseCase;
     private final ObjectMapper objectMapper;
@@ -94,6 +100,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final ChildProfileUseCase childProfileUseCase;
     private final AccessibleColorRepository accessibleColorRepository;
     private final AccessibleColorPaletteRepository accessibleColorPaletteRepository;
+    private final WebSocketMetrics metrics;
+    private final SqlStatementCounter sqlStatementCounter;
+    private final WebSocketGameProperties wsGameProperties;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -115,7 +124,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                             WorldExplorationStateRepository worldExplorationStateRepository,
                             ChildProfileUseCase childProfileUseCase,
                             AccessibleColorRepository accessibleColorRepository,
-                            AccessibleColorPaletteRepository accessibleColorPaletteRepository) {
+                            AccessibleColorPaletteRepository accessibleColorPaletteRepository,
+                            WebSocketMetrics metrics,
+                            SqlStatementCounter sqlStatementCounter,
+                            WebSocketGameProperties wsGameProperties) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarservice = avatarService;
@@ -130,6 +142,17 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         this.childProfileUseCase = childProfileUseCase;
         this.accessibleColorRepository = accessibleColorRepository;
         this.accessibleColorPaletteRepository = accessibleColorPaletteRepository;
+        this.metrics = metrics;
+        this.sqlStatementCounter = sqlStatementCounter;
+        this.wsGameProperties = wsGameProperties;
+        registerGauges();
+    }
+
+    private void registerGauges() {
+        metrics.registerGauge("ws.sessions.open", "ws", () -> sessionsByChildSessionId.size());
+        metrics.registerGauge("ws.games.active", "game", gameStateRegistry::activeGameCount);
+        metrics.registerGauge("ws.games.locks", "lock", gameOrchestrator::activeLockCount);
+        metrics.registerGauge("ws.world.states", "world", worldStateRegistry::size);
     }
 
     @Override
@@ -146,77 +169,49 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+        if (message.getPayloadLength() > wsGameProperties.getMaxTextMessageBufferSize()) {
+            LOGGER.warn("Text message exceeds limit from session={}, closing", session.getId());
+            closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+            return;
+        }
         try {
             JsonNode root = objectMapper.readTree(message.getPayload());
             String type = root.has("type") ? root.get("type").asString() : "";
 
-            switch (type) {
-                case "auth" -> handleAuth(session, root);
-                case "heartbeat" -> {
-                    if (!isAuthenticated(session)) {
-                        LOGGER.warn("Heartbeat received before auth from session {}", session.getId());
-                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                        return;
-                    }
-                    handleHeartbeat(getChildSessionId(session));
+            if (!"auth".equals(type) && !isAuthenticated(session)) {
+                LOGGER.warn("Message type '{}' received before auth from session {}", type, session.getId());
+                closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+                return;
+            }
+
+            long startNanos = System.nanoTime();
+            long sqlBefore = sqlStatementCounter.snapshot();
+            String outcome = "ok";
+            try {
+                switch (type) {
+                    case "auth" -> handleAuth(session, root);
+                    case "heartbeat" -> handleHeartbeat(getChildSessionId(session));
+                    case "game_start" -> handleGameStart(session, getChildSessionId(session), root);
+                    case "game_ready" -> handleGameReady(session, getChildSessionId(session), root);
+                    case "game_abandon" -> handleGameAbandon(session, getChildSessionId(session), root);
+                    case "game_action" -> handleGameAction(session, getChildSessionId(session), root);
+                    case "world_heartbeat" -> handleWorldHeartbeat(session, getChildSessionId(session), root);
+                    case "world_discovery_interacted" -> handleWorldDiscoveryInteracted(session, getChildSessionId(session), root);
+                    case "world_travel" -> handleWorldTravel(session, getChildSessionId(session), root);
+                    default -> LOGGER.warn("Unknown game message type from session={}", session.getId());
                 }
-                case "game_start" -> {
-                    if (!isAuthenticated(session)) {
-                        LOGGER.warn("game_start received before auth from session {}", session.getId());
-                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                        return;
+            } catch (Exception innerEx) {
+                outcome = "error";
+                throw innerEx;
+            } finally {
+                long durationNanos = System.nanoTime() - startNanos;
+                if (!type.isEmpty()) {
+                    metrics.recordMessageDuration(type, outcome, durationNanos);
+                    long sqlCount = sqlStatementCounter.countSince(sqlBefore);
+                    if (sqlCount > 0) {
+                        metrics.recordSqlStatements(type, sqlCount);
                     }
-                    handleGameStart(session, getChildSessionId(session), root);
                 }
-                case "game_ready" -> {
-                    if (!isAuthenticated(session)) {
-                        LOGGER.warn("game_ready received before auth from session {}", session.getId());
-                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                        return;
-                    }
-                    handleGameReady(session, getChildSessionId(session), root);
-                }
-                case "game_abandon" -> {
-                    if (!isAuthenticated(session)) {
-                        LOGGER.warn("game_abandon received before auth from session {}", session.getId());
-                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                        return;
-                    }
-                    handleGameAbandon(session, getChildSessionId(session), root);
-                }
-                case "game_action" -> {
-                    if (!isAuthenticated(session)) {
-                        LOGGER.warn("game_action received before auth from session {}", session.getId());
-                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                        return;
-                    }
-                    handleGameAction(session, getChildSessionId(session), root);
-                }
-                case "world_heartbeat" -> {
-                    if (!isAuthenticated(session)) {
-                        LOGGER.warn("world_heartbeat received before auth from session {}", session.getId());
-                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                        return;
-                    }
-                    handleWorldHeartbeat(session, getChildSessionId(session), root);
-                }
-                case "world_discovery_interacted" -> {
-                    if (!isAuthenticated(session)) {
-                        LOGGER.warn("world_discovery_interacted received before auth from session {}", session.getId());
-                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                        return;
-                    }
-                    handleWorldDiscoveryInteracted(session, getChildSessionId(session), root);
-                }
-                case "world_travel" -> {
-                    if (!isAuthenticated(session)) {
-                        LOGGER.warn("world_travel received before auth from session {}", session.getId());
-                        closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                        return;
-                    }
-                    handleWorldTravel(session, getChildSessionId(session), root);
-                }
-                default -> LOGGER.warn("Unknown game message type: {} from session={}", type, session.getId());
             }
         } catch (Exception exception) {
             LOGGER.error("Error processing game message from session={}: {}", session.getId(), exception.getMessage());
@@ -229,10 +224,18 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         Long childSessionId = getChildSessionId(session);
         if (childSessionId != null) {
             sessionsByChildSessionId.remove(childSessionId);
+            markWorldForExpiration(childSessionId);
             LOGGER.info("Game WebSocket disconnected: childSessionId={}, status={}", childSessionId, status);
         } else {
             LOGGER.debug("Game WebSocket closed before auth: sessionId={}, status={}", session.getId(), status);
         }
+    }
+
+    private void markWorldForExpiration(Long childSessionId) {
+        worldStateRegistry.findByChildSessionId(childSessionId).ifPresent(worldState -> {
+            worldState.setStatus(WorldRuntimeStatus.CLOSED);
+            LOGGER.debug("Marked world as CLOSED for childSessionId={}", childSessionId);
+        });
     }
 
     @Override
@@ -249,9 +252,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return false;
         }
         try {
-            synchronized (session) {
-                session.sendMessage(new TextMessage(payload));
-            }
+            session.sendMessage(new TextMessage(payload));
             return true;
         } catch (IOException exception) {
             LOGGER.error("Failed to send message to childSessionId={}: {}", childSessionId, exception.getMessage());
@@ -380,9 +381,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             buffer.putInt(audioIdBytes.length);
             buffer.put(audioIdBytes);
             buffer.put(audioData);
-            synchronized (session) {
-                session.sendMessage(new BinaryMessage(buffer.array()));
-            }
+            session.sendMessage(new BinaryMessage(buffer.array()));
             return true;
         } catch (IOException e) {
             LOGGER.error("Failed to send binary frame: {}", e.getMessage());
@@ -403,22 +402,41 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
         long childSessionId = root.get("childSessionId").asLong();
         try {
+            long phaseStart = System.nanoTime();
             var childSession = childSessionUseCase.getSession(childSessionId);
             if (childSession.getStatus() != ChildSessionStatus.ACTIVE) {
                 LOGGER.warn("Auth rejected: child session {} is not ACTIVE", childSessionId);
                 closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
                 return;
             }
+
+            WebSocketSession previousSession = sessionsByChildSessionId.get(childSessionId);
+            if (previousSession != null && previousSession.isOpen() && previousSession != session) {
+                LOGGER.info("Closing previous WebSocket for childSessionId={} (reconnection)", childSessionId);
+                closeSessionQuietly(previousSession, CloseStatus.NORMAL);
+            }
+
             session.getAttributes().put(ATTR_CHILD_SESSION_ID, childSessionId);
-            sessionsByChildSessionId.put(childSessionId, session);
+            WebSocketSession decoratedSession = new org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator(
+                session,
+                wsGameProperties.getSendTimeLimitMs(),
+                wsGameProperties.getBufferSizeLimit());
+            sessionsByChildSessionId.put(childSessionId, decoratedSession);
             cancelPendingTimeout(session);
             LOGGER.info("Game WebSocket authenticated: childSessionId={}", childSessionId);
             worldStateRegistry.save(getNewWorld(childSessionId));
+            metrics.recordPhaseDuration("auth", "db", "ok", System.nanoTime() - phaseStart);
 
+            phaseStart = System.nanoTime();
             SessionEvent ack = SessionEvent.of(SessionEventType.AUTH_ACK, childSessionId);
             sendToSession(childSessionId, objectMapper.writeValueAsString(ack));
+            metrics.recordPhaseDuration("auth", "send", "ok", System.nanoTime() - phaseStart);
+
+            phaseStart = System.nanoTime();
             sendWelcomeAvatar(childSessionId);
+            metrics.recordPhaseDuration("auth", "audio", "ok", System.nanoTime() - phaseStart);
         } catch (ResourceNotFoundException e) {
+            metrics.recordPhaseDuration("auth", "db", "error", 0);
             LOGGER.warn("Auth rejected: child session {} not found", childSessionId);
             closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
         } catch (Exception e) {
@@ -439,7 +457,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleGameAction(WebSocketSession session, Long childSessionId, JsonNode root) {
-        LOGGER.debug("Game action received from childSessionId={}: {}", childSessionId, root);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Game action received from childSessionId={}", childSessionId);
+        }
 
         GameActionRequest request;
         try {
@@ -466,21 +486,26 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
 
         try {
+            long phaseStart = System.nanoTime();
             ActionProcessingResult result = gameOrchestrator.processAction(
                 request.gameId(),
                 request.action(),
                 request.topicId(),
                 request.responseTimeMs()
             );
+            metrics.recordPhaseDuration("game_action", "db", "ok", System.nanoTime() - phaseStart);
 
+            phaseStart = System.nanoTime();
             GameActionResponse response = GameActionResponse.fromProcessingResult(result);
             SessionEvent event = SessionEvent.of(SessionEventType.GAME_ACTION_RESULT, childSessionId, toPayload(response));
             sendToSession(childSessionId, objectMapper.writeValueAsString(event));
+            metrics.recordPhaseDuration("game_action", "send", "ok", System.nanoTime() - phaseStart);
 
-            // Send round audio for the next round if the answer was correct and game not completed
             if (result.resultType() == es.vargontoc.educational.framework.game.model.ActionResultType.CORRECT
                     && !result.gameCompleted()) {
+                phaseStart = System.nanoTime();
                 sendRoundAudioIfPresent(childSessionId, session, result.updatedState().getRoundAudioResult());
+                metrics.recordPhaseDuration("game_action", "audio", "ok", System.nanoTime() - phaseStart);
             }
 
             if (result.gameCompleted()) {
@@ -510,7 +535,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleGameStart(WebSocketSession session, Long childSessionId, JsonNode root) {
-        LOGGER.debug("Game start received from childSessionId={}: {}", childSessionId, root);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Game start received from childSessionId={}", childSessionId);
+        }
 
         try {
             Long activityId = root.has("activityId") && !root.get("activityId").isNull()
@@ -569,28 +596,30 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleGameReady(WebSocketSession session, Long childSessionId, JsonNode root) {
-        LOGGER.debug("Game ready received from childSessionId={}: {}", childSessionId, root);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Game ready received from childSessionId={}", childSessionId);
+        }
 
         try {
+            long phaseStart = System.nanoTime();
             var gameState = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);
             if (gameState == null) {
                 sendGameError(childSessionId, GameErrorCode.NO_ACTIVE_GAME, null);
                 return;
             }
 
-            long startedAt = System.nanoTime();
-            // The client can draw the round without Nubi's audio: answer first, generate the audio (TTS) after.
             var updatedState = gameOrchestrator.readyGame(gameState.getGameId(), false);
+            metrics.recordPhaseDuration("game_ready", "db", "ok", System.nanoTime() - phaseStart);
 
+            phaseStart = System.nanoTime();
             SessionEvent event = SessionEvent.of(SessionEventType.GAME_READY, childSessionId, gameStateToPayload(updatedState));
             sendToSession(childSessionId, objectMapper.writeValueAsString(event));
-            long readySentMs = (System.nanoTime() - startedAt) / 1_000_000;
+            metrics.recordPhaseDuration("game_ready", "send", "ok", System.nanoTime() - phaseStart);
 
-            // Send round audio for the first round if available
+            phaseStart = System.nanoTime();
             var withAudio = gameOrchestrator.attachRoundAudio(gameState.getGameId());
             sendRoundAudioIfPresent(childSessionId, session, withAudio.getRoundAudioResult());
-            LOGGER.info("game_ready childSessionId={}: GAME_READY sent after {} ms, round audio after {} ms",
-                childSessionId, readySentMs, (System.nanoTime() - startedAt) / 1_000_000);
+            metrics.recordPhaseDuration("game_ready", "audio", "ok", System.nanoTime() - phaseStart);
 
         } catch (GameUnavailableException e) {
             LOGGER.debug("Game unavailable for childSessionId={}: reason={}", childSessionId, e.getReason());
@@ -611,7 +640,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void handleGameAbandon(WebSocketSession session, Long childSessionId, JsonNode root) {
-        LOGGER.debug("Game abandon received from childSessionId={}: {}", childSessionId, root);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Game abandon received from childSessionId={}", childSessionId);
+        }
 
         try {
             var gameState = gameStateRegistry.findByChildSessionId(childSessionId).orElse(null);

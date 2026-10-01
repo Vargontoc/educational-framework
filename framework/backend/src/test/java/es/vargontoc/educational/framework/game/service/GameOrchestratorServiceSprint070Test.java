@@ -115,6 +115,7 @@ class GameOrchestratorServiceSprint070Test {
             recognitionSimilarityService,
             roundAudioService,
             null,
+            null,
             null
         );
     }

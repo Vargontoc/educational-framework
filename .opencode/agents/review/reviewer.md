@@ -59,6 +59,7 @@ Las tareas no implementadas no se consideran fallos de test: son incumplimientos
 - `dev-agents/skills/code-review/SKILL.md`
 - `dev-agents/skills/defect-reporting/SKILL.md`
 - `dev-agents/skills/sprint-review/SKILL.md`
+- `dev-agents/skill/prometheus-analisys/SKILL.md`
 
 ## Referencias
 

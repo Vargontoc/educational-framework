@@ -36,7 +36,7 @@ class ComparisonRecognitionSeedTest {
             codes.add(code);
             String refs = element.get("resourceRefs").asString();
 
-            assertEquals(code, RecognitionResourceRefs.get(refs, "image"), code + ": image key is the code");
+            assertEquals(code, RecognitionResourceRefs.icon(refs), code + ": image key is the code");
             String nubi = RecognitionResourceRefs.nubiAudio(refs);
             assertNotNull(nubi, code);
             assertTrue(nubi.contains("más grande"), code + ": the prompt always asks for the biggest, was " + nubi);

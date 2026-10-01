@@ -1,3 +1,8 @@
+spring:
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true
 app:
   recognition:
     touch-target-size-px: 96

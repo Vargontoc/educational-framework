@@ -108,6 +108,7 @@ class GameOrchestratorServiceColorTest {
                 recognitionSimilarityService,
                 roundAudioService,
                 new ColorSimilarityValidator(colorService),
+                null,
                 null);
 
         when(recognitionElementRepository.findAllById(any())).thenAnswer(invocation -> {

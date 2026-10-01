@@ -128,6 +128,7 @@ class GameOrchestratorServiceTest {
             recognitionSimilarityService,
             roundAudioService,
             null,
+            null,
             null
         );
     }

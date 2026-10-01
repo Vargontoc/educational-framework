@@ -57,6 +57,7 @@ No implementas ni corriges codigo de produccion. Compruebas con evidencia que el
 - `dev-agents/skills/defect-reporting/SKILL.md`
 - `dev-agents/skills/backend-review/SKILL.md`
 - `dev-agents/skills/sprint-review/SKILL.md`
+- `dev-agents/skill/prometheus-analisys/SKILL.md`
 
 ## Referencias
 

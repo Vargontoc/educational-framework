@@ -91,6 +91,13 @@ app:
     retention-days: 30
     scheduling:
       enabled: ${APP_SESSION_SCHEDULING_ENABLED:true}
+  ws:
+    game:
+      send-time-limit-ms: ${APP_WS_GAME_SEND_TIME_LIMIT_MS:10000}
+      buffer-size-limit: ${APP_WS_GAME_BUFFER_SIZE_LIMIT:524288}
+      max-session-idle-timeout-ms: ${APP_WS_GAME_MAX_SESSION_IDLE_TIMEOUT_MS:120000}
+      max-text-message-buffer-size: ${APP_WS_GAME_MAX_TEXT_MESSAGE_BUFFER_SIZE:65536}
+      max-binary-message-buffer-size: ${APP_WS_GAME_MAX_BINARY_MESSAGE_BUFFER_SIZE:524288}
   audio:
     base-url: ${CHATTERBOX_BASE_URL:http://localhost:4123}
     cache:

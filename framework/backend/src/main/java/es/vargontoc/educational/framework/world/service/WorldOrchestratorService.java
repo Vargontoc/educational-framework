@@ -223,7 +223,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
             destination.setHostId(matchedHost.id());
             destination.setHostCode(matchedHost.code());
             destination.setHostDisplayName(matchedHost.displayName());
-            destination.setWorldWidth(matchedHost.worldWidth());
+            destination.setWorldWidth(matchedHost.worldWidth() != null ? matchedHost.worldWidth() : DEFAULT_WORLD_WIDTH);
             destination.setHostSequenceOrder(matchedHost.sortOrder());
         } else {
             destination.setWorldWidth(DEFAULT_WORLD_WIDTH);
