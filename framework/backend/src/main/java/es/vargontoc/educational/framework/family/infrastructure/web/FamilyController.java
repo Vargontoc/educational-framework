@@ -29,8 +29,8 @@ public class FamilyController {
         var family = familyUseCase.createFamily(
             request.name(),
             request.pin(),
-            request.ttsEnabled(),
-            request.agentEnabled()
+            request.ttsEnabledOrDefault(),
+            request.agentEnabledOrDefault()
         );
         return ResponseEntity.status(201).body(ApiResponse.created(toResponse(family)));
     }

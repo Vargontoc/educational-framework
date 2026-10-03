@@ -5,7 +5,7 @@
     "description": "Criaturas del mundo animal",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 8,
+    "maxAge": 4,
     "recognitionType": "ANIMAL",
     "habitatTag": null
   },
@@ -15,7 +15,7 @@
     "description": "Flora y vegetación",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 7,
+    "maxAge": 4,
     "recognitionType": null,
     "habitatTag": null
   },
@@ -25,7 +25,7 @@
     "description": "Contar y calcular",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 6,
+    "maxAge": 4,
     "recognitionType": "NUMBER",
     "habitatTag": null
   },
@@ -35,7 +35,7 @@
     "description": "Figuras geométricas básicas",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 6,
+    "maxAge": 4,
     "recognitionType": "SHAPE",
     "habitatTag": null
   },
@@ -45,7 +45,7 @@
     "description": "Reconocimiento de letras del abecedario",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 6,
+    "maxAge": 4,
     "recognitionType": "LETTER",
     "habitatTag": null
   },
@@ -55,23 +55,13 @@
     "description": "Colores básicos",
     "status": "ACTIVE",
     "minAge": 3,
-    "maxAge": 6,
+    "maxAge": 4,
     "recognitionType": "COLOR",
     "habitatTag": null
   },
   {
-    "name": "Comparación",
-    "categoryName": "Matemáticas",
-    "description": "Comparar tamaños: grande y pequeño",
-    "status": "ACTIVE",
-    "minAge": 3,
-    "maxAge": 4,
-    "recognitionType": "COMPARISON",
-    "habitatTag": null
-  },
-  {
     "name": "Memoria",
-    "categoryName": "Matemáticas",
+    "categoryName": "Habilidad",
     "description": "Encontrar parejas de objetos",
     "status": "ACTIVE",
     "minAge": 3,

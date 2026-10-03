@@ -5,7 +5,7 @@ import es.vargontoc.educational.framework.content.model.Biome;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.WorldDiscoveryElement;
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
-import jakarta.annotation.PostConstruct;
+import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +21,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 
+import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -35,35 +36,27 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
     private final ObjectMapper mapper = new ObjectMapper();
     private static final  List<WorldElement> interactiveElements = new ArrayList<>();
     
-    
-    @PostConstruct
-    private void load() throws IOException
-    {
-        if(!interactiveElements.isEmpty())
-            return;
+    final ActivityRepository activities;
 
-        log.info("Loading World Discovery Elements");
-        try {
-            Path path =  jsonFile.getFilePath();
-            if(!Files.exists(path))
-                return;
-            
-            byte[] data =  Files.readAllBytes(path);
-            var items = mapper.readValue(data, new TypeReference<List<WorldDiscoveryElementSeed>>() {});
-            long count = 0L;
-            for(WorldDiscoveryElementSeed seed: items) {
-                try {
-                    Biome biome =  Biome.valueOf(seed.biome());
-                    if(biome != null)
-                        interactiveElements.add(new WorldElement(++count, biome, seed.code(), seed.visualAssetKey(), seed.activityId(), seed.minAge(), seed.maxAge(), seed.positionX(), seed.positionY()));
     
-                }catch(Exception e) {
-                    log.error("Error reading seed", e.getMessage(), e);
-                }
-            }
-        }catch(IOException e) {
-            log.error("Error loading: {}", e.getMessage(), e);
-        }
+    
+    public WorldDiscoveryElementPersistenceAdapter(ActivityRepository activities) {
+        this.activities = activities;
+    }
+
+    private Long getActivityByName(String activityName) {
+        if(activityName == null || activityName.trim().isBlank())
+            return null;
+
+        var acts = activities.findByName(activityName);
+
+        if(acts.isEmpty())
+            throw new ResourceNotFoundException("No se ha encontrado una actividad con el nombre: " + activityName);
+
+        if(acts.size() != 1)
+            throw new IllegalStateException("Hay mas de una actividad con el mismo nombre: " + activityName);
+
+        return acts.get(0).getId();
     }
 
     @Override
@@ -104,5 +97,35 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
 
 
     private record WorldElement(Long id, Biome biome, String code, String asset, Long activity, Integer minAge, Integer maxAge, Double posX, Double posY) {}
+
+
+    @Override
+    public void loadOnMemory() {
+        if(!interactiveElements.isEmpty())
+            return;
+
+        log.info("Loading World Discovery Elements");
+        try {
+            Path path =  jsonFile.getFilePath();
+            if(!Files.exists(path))
+                return;
+            
+            byte[] data =  Files.readAllBytes(path);
+            var items = mapper.readValue(data, new TypeReference<List<WorldDiscoveryElementSeed>>() {});
+            long count = 0L;
+            for(WorldDiscoveryElementSeed seed: items) {
+                try {
+                    Biome biome =  Biome.valueOf(seed.biome());
+                    if(biome != null)
+                        interactiveElements.add(new WorldElement(++count, biome, seed.code(), seed.visualAssetKey(), getActivityByName(seed.activityName()), seed.minAge(), seed.maxAge(), seed.positionX(), seed.positionY()));
+    
+                }catch(Exception e) {
+                    log.error("Error reading seed", e.getMessage(), e);
+                }
+            }
+        }catch(IOException e) {
+            log.error("Error loading: {}", e.getMessage(), e);
+        }
+    }
 
 }

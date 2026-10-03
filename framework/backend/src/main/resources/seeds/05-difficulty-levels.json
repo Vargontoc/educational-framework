@@ -1,92 +1,30 @@
 [
-  {
-    "activityName": "Contar Animales",
-    "difficultyCode": "EASY",
-    "engineParams": "{\"maxCount\": 5, \"timeLimit\": 60}"
-  },
-  {
-    "activityName": "Contar Animales",
-    "difficultyCode": "MEDIUM",
-    "engineParams": "{\"maxCount\": 10, \"timeLimit\": 45}"
-  },
-  {
-    "activityName": "Contar Animales",
-    "difficultyCode": "HARD",
-    "engineParams": "{\"maxCount\": 15, \"timeLimit\": 30}"
-  },
-  {
-    "activityName": "Formas del Bosque",
-    "difficultyCode": "EASY",
-    "engineParams": "{\"shapes\": [\"circle\", \"square\"], \"timeLimit\": 60}"
-  },
-  {
-    "activityName": "Formas del Bosque",
-    "difficultyCode": "MEDIUM",
-    "engineParams": "{\"shapes\": [\"circle\", \"square\", \"triangle\"], \"timeLimit\": 45}"
-  },
-  {
-    "activityName": "Formas del Bosque",
-    "difficultyCode": "HARD",
-    "engineParams": "{\"shapes\": [\"circle\", \"square\", \"triangle\", \"star\"], \"timeLimit\": 30}"
-  },
-  {
-    "activityName": "Memoria de Animales",
-    "difficultyCode": "EASY",
-    "engineParams": "{\"pairs\": 3, \"timeLimit\": 60}"
-  },
-  {
-    "activityName": "Memoria de Animales",
-    "difficultyCode": "MEDIUM",
-    "engineParams": "{\"pairs\": 6, \"timeLimit\": 45}"
-  },
-  {
-    "activityName": "Memoria de Animales",
-    "difficultyCode": "HARD",
-    "engineParams": "{\"pairs\": 8, \"timeLimit\": 30}"
-  },
-  {
-    "activityName": "Líneas de Números",
-    "difficultyCode": "EASY",
-    "engineParams": "{\"maxNumber\": 5, \"timeLimit\": 60}"
-  },
-  {
-    "activityName": "Líneas de Números",
-    "difficultyCode": "MEDIUM",
-    "engineParams": "{\"maxNumber\": 10, \"timeLimit\": 45}"
-  },
-  {
-    "activityName": "Líneas de Números",
-    "difficultyCode": "HARD",
-    "engineParams": "{\"maxNumber\": 20, \"timeLimit\": 30}"
-  },
-  {
-    "activityName": "Comparación de Tamaño",
-    "difficultyCode": "EASY",
-    "engineParams": "{}"
-  },
-  {
-    "activityName": "Comparación de Tamaño",
-    "difficultyCode": "MEDIUM",
-    "engineParams": "{}"
-  },
-  {
-    "activityName": "Comparación de Tamaño",
-    "difficultyCode": "HARD",
-    "engineParams": "{}"
-  },
-  {
-    "activityName": "Memoria de Parejas",
-    "difficultyCode": "EASY",
-    "engineParams": "{}"
-  },
-  {
-    "activityName": "Memoria de Parejas",
-    "difficultyCode": "MEDIUM",
-    "engineParams": "{}"
-  },
-  {
-    "activityName": "Memoria de Parejas",
-    "difficultyCode": "HARD",
-    "engineParams": "{}"
-  }
+  { "activityName" : "Reconocer letras", "difficultyCode" : "EASY", "engineParams" : "{}" },
+  { "activityName" : "Reconocer letras", "difficultyCode" : "MEDIUM", "engineParams" : "{}" },
+  { "activityName" : "Reconocer letras", "difficultyCode" : "HARD", "engineParams" : "{}" },
+
+  { "activityName" : "Reconocer números", "difficultyCode" : "EASY", "engineParams" : "{}" },
+  { "activityName" : "Reconocer números", "difficultyCode" : "MEDIUM", "engineParams" : "{}" },
+  { "activityName" : "Reconocer números", "difficultyCode" : "HARD", "engineParams" : "{}" },
+
+  { "activityName" : "Reconocer animales", "difficultyCode" : "EASY", "engineParams" : "{}" },
+  { "activityName" : "Reconocer anumales", "difficultyCode" : "MEDIUM", "engineParams" : "{}" },
+  { "activityName" : "Reconocer animales", "difficultyCode" : "HARD", "engineParams" : "{}" },
+
+
+  { "activityName" : "Reconocer formas", "difficultyCode" : "EASY", "engineParams" : "{}" },
+  { "activityName" : "Reconocer formas", "difficultyCode" : "MEDIUM", "engineParams" : "{}" },
+  { "activityName" : "Reconocer formas", "difficultyCode" : "HARD", "engineParams" : "{}" },
+
+  { "activityName" : "Reconocer colores", "difficultyCode" : "EASY", "engineParams" : "{}" },
+  { "activityName" : "Reconocer colores", "difficultyCode" : "MEDIUM", "engineParams" : "{}" },
+  { "activityName" : "Reconocer colores", "difficultyCode" : "HARD", "engineParams" : "{}" },
+
+  { "activityName" : "Comparación de tamaños", "difficultyCode" : "EASY", "engineParams" : "{}" },
+  { "activityName" : "Comparación de tamaños", "difficultyCode" : "MEDIUM", "engineParams" : "{}" },
+  { "activityName" : "Comparación de tamaños", "difficultyCode" : "HARD", "engineParams" : "{}" },
+
+  { "activityName" : "Memoria de parejas", "difficultyCode" : "EASY", "engineParams" : "{}" },
+  { "activityName" : "Memoria de parejas", "difficultyCode" : "MEDIUM", "engineParams" : "{}" },
+  { "activityName" : "Memoria de parejas", "difficultyCode" : "HARD", "engineParams" : "{}" }
 ]

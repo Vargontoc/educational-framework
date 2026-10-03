@@ -51,6 +51,19 @@ class FamilyControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void createFamily_withoutOptionalFlags_returnsCreated() throws Exception {
+        // El frontend solo envia name y pin; ttsEnabled/agentEnabled son opcionales.
+        var body = objectMapper.writeValueAsString(Map.of(
+            "name", "Family One",
+            "pin", "1234"
+        ));
+
+        mockMvc.perform(post("/api/v1/family").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.data.name", is("Family One")));
+    }
+
+    @Test
     void getFamily_whenMissing_returns404() throws Exception {
         mockMvc.perform(get("/api/v1/family"))
             .andExpect(status().isNotFound());

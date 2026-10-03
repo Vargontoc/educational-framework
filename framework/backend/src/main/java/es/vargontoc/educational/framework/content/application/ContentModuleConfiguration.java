@@ -3,8 +3,6 @@ package es.vargontoc.educational.framework.content.application;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import tools.jackson.databind.ObjectMapper;
-
 import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.content.infrastructure.ActivityInformationPortImpl;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.ActivityJpaRepository;
@@ -20,7 +18,6 @@ import es.vargontoc.educational.framework.content.ports.out.ActivityResourceRepo
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
 import es.vargontoc.educational.framework.content.ports.out.ContentLocaleRepository;
-import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
@@ -33,9 +30,7 @@ import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituat
 import es.vargontoc.educational.framework.content.service.ActivityResourceService;
 import es.vargontoc.educational.framework.content.service.ActivityService;
 import es.vargontoc.educational.framework.content.service.AvatarEventCatalogService;
-import es.vargontoc.educational.framework.content.service.CategoryService;
 import es.vargontoc.educational.framework.content.service.ContentLocaleService;
-import es.vargontoc.educational.framework.content.service.CuriosityService;
 import es.vargontoc.educational.framework.content.service.DifficultyLevelService;
 import es.vargontoc.educational.framework.content.service.GameCatalogService;
 import es.vargontoc.educational.framework.content.service.LearningPathService;
@@ -47,73 +42,65 @@ import es.vargontoc.educational.framework.content.service.WorldCatalogService;
 import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
+import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 class ContentModuleConfiguration {
 
     @Bean
-    CategoryService categoryService(CategoryRepository categoryRepository) {
-        return new CategoryService(categoryRepository);
-    }
-
-    @Bean
-    TopicService topicService(TopicRepository topicRepository, CategoryRepository categoryRepository) {
+    public TopicService topicService(TopicRepository topicRepository, CategoryRepository categoryRepository) {
         return new TopicService(topicRepository, categoryRepository);
     }
 
     @Bean
-    RecognitionElementService recognitionElementService(RecognitionElementRepository recognitionElementRepository) {
+    public RecognitionElementService recognitionElementService(RecognitionElementRepository recognitionElementRepository) {
         return new RecognitionElementService(recognitionElementRepository);
     }
 
     @Bean
-    ActivityService activityService(ActivityRepository activityRepository, TopicRepository topicRepository) {
+    public ActivityService activityService(ActivityRepository activityRepository, TopicRepository topicRepository) {
         return new ActivityService(activityRepository, topicRepository);
     }
 
     @Bean
-    DifficultyLevelService difficultyLevelService(DifficultyLevelRepository difficultyLevelRepository, ActivityRepository activityRepository) {
+    public DifficultyLevelService difficultyLevelService(DifficultyLevelRepository difficultyLevelRepository, ActivityRepository activityRepository) {
         return new DifficultyLevelService(difficultyLevelRepository, activityRepository);
     }
 
     @Bean
-    ActivityResourceService activityResourceService(ActivityResourceRepository activityResourceRepository, ActivityRepository activityRepository) {
+    public ActivityResourceService activityResourceService(ActivityResourceRepository activityResourceRepository, ActivityRepository activityRepository) {
         return new ActivityResourceService(activityResourceRepository, activityRepository);
     }
 
     @Bean
-    ContentLocaleService contentLocaleService(ContentLocaleRepository contentLocaleRepository) {
+    public ContentLocaleService contentLocaleService(ContentLocaleRepository contentLocaleRepository) {
         return new ContentLocaleService(contentLocaleRepository);
     }
 
-    @Bean
-    CuriosityService curiosityService(CuriosityRepository curiosityRepository, TopicRepository topicRepository) {
-        return new CuriosityService(curiosityRepository, topicRepository);
-    }
 
     @Bean
-    AvatarEventCatalogService avatarEventCatalogService(AvatarEventCatalogRepository avatarEventCatalogRepository) {
+    public AvatarEventCatalogService avatarEventCatalogService(AvatarEventCatalogRepository avatarEventCatalogRepository) {
         return new AvatarEventCatalogService(avatarEventCatalogRepository);
     }
 
     @Bean
-    LearningPathService learningPathService(LearningPathRepository learningPathRepository) {
+    public LearningPathService learningPathService(LearningPathRepository learningPathRepository) {
         return new LearningPathService(learningPathRepository);
     }
 
     @Bean
-    LearningPathStepService learningPathStepService(LearningPathStepRepository learningPathStepRepository, LearningPathRepository learningPathRepository, ActivityRepository activityRepository) {
+    public LearningPathStepService learningPathStepService(LearningPathStepRepository learningPathStepRepository, LearningPathRepository learningPathRepository, ActivityRepository activityRepository) {
         return new LearningPathStepService(learningPathStepRepository, learningPathRepository, activityRepository);
     }
 
     @Bean
-    TracingPatternService tracingPatternService(TracingPatternRepository tracingPatternRepository, TopicRepository topicRepository) {
+    public TracingPatternService tracingPatternService(TracingPatternRepository tracingPatternRepository, TopicRepository topicRepository) {
         return new TracingPatternService(tracingPatternRepository, topicRepository);
     }
 
 
     @Bean
-    GameCatalogService gameCatalogService(
+    public GameCatalogService gameCatalogService(
             ActivityUseCase activityUseCase,
             DifficultyLevelUseCase difficultyLevelUseCase,
             ActivitySummaryRepository activitySummaryRepository) {
@@ -121,7 +108,7 @@ class ContentModuleConfiguration {
     }
 
     @Bean
-    WorldCatalogUseCase worldCatalogUseCase(
+    public WorldCatalogUseCase worldCatalogUseCase(
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
@@ -132,32 +119,30 @@ class ContentModuleConfiguration {
     }
 
     @Bean
-    SeedService seedService(
+    public SeedService seedService(
             AudioUseCase audio,
             DevSeedStateJpaRepository seedStateRepository,
             CategoryRepository categoryRepository,
             TopicRepository topicRepository,
-            CuriosityRepository curiosityRepository,
             ActivityRepository activityRepository,
             DifficultyLevelRepository difficultyLevelRepository,
             AvatarEventCatalogRepository avatarEventCatalogRepository,
             LearningPathRepository learningPathRepository,
             LearningPathStepRepository learningPathStepRepository,
             TracingPatternRepository tracingPatternRepository,
-            WorldHostRepository worldHostRepository,
-            WorldNarrativeSituationRepository worldNarrativeSituationRepository,
+            WorldHostRepository worldHostRepository, WorldDiscoveryElementRepository worldElementsRepository,
             RecognitionElementRepository recognitionElementRepository,
             RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository,
             ObjectMapper objectMapper) {
-        return new SeedService(audio, seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
+        return new SeedService(audio, seedStateRepository, categoryRepository, topicRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository, learningPathRepository,
             learningPathStepRepository, tracingPatternRepository,
-            worldHostRepository, worldNarrativeSituationRepository, recognitionElementRepository,
+            worldHostRepository, worldElementsRepository,  recognitionElementRepository,
             recognitionSimilarityPairRepository, objectMapper);
     }
 
     @Bean
-    ActivityInformationPort activityInformationPort(
+    public ActivityInformationPort activityInformationPort(
             ActivityJpaRepository activityJpaRepository,
             ActivityTopicJpaRepository activityTopicJpaRepository,
             TopicJpaRepository topicJpaRepository,

@@ -1,13 +1,14 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
-import es.vargontoc.educational.framework.content.model.Activity;
-import es.vargontoc.educational.framework.content.model.ContentStatus;
-import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import es.vargontoc.educational.framework.content.model.Activity;
+import es.vargontoc.educational.framework.content.model.ContentStatus;
+import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 
 @Repository
 public class ActivityPersistenceAdapter implements ActivityRepository {
@@ -112,5 +113,11 @@ public class ActivityPersistenceAdapter implements ActivityRepository {
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
+    }
+
+    @Override
+    public List<Activity> findByName(String activityName) {
+        return jpaRepository.findByName(activityName).stream()
+            .map(entity ->  toDomain(entity, getActivityTopicIds(entity.getId()))).toList();
     }
 }

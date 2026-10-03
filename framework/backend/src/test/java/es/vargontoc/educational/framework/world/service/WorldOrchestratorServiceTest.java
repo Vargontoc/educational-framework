@@ -106,6 +106,31 @@ class WorldOrchestratorServiceTest {
     }
 
     @Test
+    void selectDestination_nullAge_usesDefaultAge() {
+        when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(eq(1L), eq(DifficultyLevel.EASY), eq(1)))
+            .thenReturn(new TopicSelectionResult(List.of(10L)));
+        when(worldCatalogUseCase.listCompatibleActivitiesByTopic(eq(10L), eq(3)))
+            .thenReturn(List.of(createActivity(1L, "PUZZLE")));
+        when(worldCatalogUseCase.listActiveHostsForAge(eq(3)))
+            .thenReturn(List.of(createHost(1L)));
+        when(worldCatalogUseCase.listActiveSituationsForAge(eq(3)))
+            .thenReturn(List.of(createSituation(1L)));
+        when(worldCatalogUseCase.listActiveElementsByBiomeAndAge(eq(Biome.MEADOW), eq(3)))
+            .thenReturn(List.of(createElement(1L, 1)));
+        when(engagementThresholdConfigUseCase.engagementThresholdConfig(any()))
+            .thenReturn(new WorldEngagementThresholdConfig());
+        when(worldEngagementEvaluator.evaluatePatterns(any(), any()))
+            .thenReturn(Collections.emptyList());
+        when(worldEngagementEvaluator.evaluateAdjustments(any()))
+            .thenReturn(Collections.emptyList());
+
+        WorldDestinationSelectionResult result = orchestrator.selectDestination(100L, 1L, null, null);
+
+        assertNotNull(result.getDestination());
+        verify(worldCatalogUseCase).listCompatibleActivitiesByTopic(10L, 3);
+    }
+
+    @Test
     void selectDestination_compatibleActivity_isSelected() {
         when(selectTopicsForDifficultyUseCase.selectTopicsForDifficulty(any(), any(), any()))
             .thenReturn(new TopicSelectionResult(List.of(10L)));

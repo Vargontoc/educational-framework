@@ -134,7 +134,7 @@ public final class SeedData {
         Integer minAge,
         Integer maxAge,
         String status,
-        Long activityId,
+        String activityName,
         Long topicId,
         String visualAssetKey,
         String interactionCueType,
@@ -176,7 +176,7 @@ public final class SeedData {
         String code, String displayValue, String resourceRefs, String similarityGroup) {}
     public record RecognitionMemoryElementSeed(
         String code, String displayValue, String resourceRefs, String similarityGroup) {}
-    public record RecognitionAnimalElementSeed(String code, String nubi, String resourceRefs, String[] biome, String[] group) {}
+    public record RecognitionAnimalElementSeed(String code, String nubi, String resourceRefs, String[] biome, String[] group, String[] curiosities) {}
     public record RecognitionShapeElementSeed(String code, String nubi, String resourceRefs, String[] similarityGroup) {}
     public record LetterSimilarityPairSeed(String[] pair, String strength) {}
 

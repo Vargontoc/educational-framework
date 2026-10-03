@@ -1,19 +1,31 @@
 package es.vargontoc.educational.framework.content.infrastructure.persistence;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import org.springframework.stereotype.Repository;
+
+import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
+import es.vargontoc.educational.framework.audio.domain.AudioRequest;
+import es.vargontoc.educational.framework.audio.domain.enums.TonePreset;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.model.RecognitionElement;
 import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRepository;
-import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public class RecognitionElementPersistenceAdapter implements RecognitionElementRepository {
 
     private final RecognitionElementJpaRepository jpaRepository;
+    private final AudioUseCase audio;
 
-    public RecognitionElementPersistenceAdapter(RecognitionElementJpaRepository jpaRepository) {
+    final Map<String, List<AudioRequest>> curiosities = new HashMap<>();
+
+    public RecognitionElementPersistenceAdapter(RecognitionElementJpaRepository jpaRepository, AudioUseCase audio) {
         this.jpaRepository = jpaRepository;
+        this.audio = audio;
     }
 
     @Override
@@ -72,5 +84,27 @@ public class RecognitionElementPersistenceAdapter implements RecognitionElementR
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());
         return target;
+    }
+
+    @Override
+    public void addCuriosity(String code, String[] curiosities) {
+        this.curiosities.put(code, new ArrayList<>());
+        for(String c : curiosities) {
+            AudioRequest r = AudioRequest.withPreset(c, TonePreset.ADVENTURE);
+
+            this.curiosities.get(code).add(r);
+            audio.getAudio(r);
+        }
+        
+    }
+
+    @Override
+    public byte[] getCuriosityAudio(String code) {
+        if(!curiosities.containsKey(code) || curiosities.get(code).isEmpty())
+            return new byte[] {};
+
+        Random rng = new Random();
+        int v = rng.nextInt(0, curiosities.get(code).size());
+        return audio.getAudio(curiosities.get(code).get(v));
     }
 }

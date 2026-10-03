@@ -17,8 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import tools.jackson.databind.ObjectMapper;
-
+import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaEntity;
 import es.vargontoc.educational.framework.content.infrastructure.persistence.DevSeedStateJpaRepository;
 import es.vargontoc.educational.framework.content.model.Category;
@@ -28,7 +27,6 @@ import es.vargontoc.educational.framework.content.ports.out.AccessibleColorRepos
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
-import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
@@ -37,8 +35,8 @@ import es.vargontoc.educational.framework.content.ports.out.TracingPatternReposi
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
-import es.vargontoc.educational.framework.audio.application.ports.in.AudioUseCase;
 import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
+import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -52,9 +50,6 @@ class SeedServiceTest {
 
     @Mock
     private TopicRepository topicRepository;
-
-    @Mock
-    private CuriosityRepository curiosityRepository;
 
     @Mock
     private ActivityRepository activityRepository;
@@ -78,10 +73,10 @@ class SeedServiceTest {
     private WorldHostRepository worldHostRepository;
 
     @Mock
-    private WorldNarrativeSituationRepository worldNarrativeSituationRepository;
+    private WorldDiscoveryElementRepository worldDiscoveryElementRepository;
 
     @Mock
-    private WorldDiscoveryElementRepository worldDiscoveryElementRepository;
+    private WorldNarrativeSituationRepository worldNarrativeSituationRepository;
 
     @Mock
     private AccessibleColorRepository accessibleColorRepository;
@@ -104,10 +99,10 @@ class SeedServiceTest {
     void setUp() {
         ObjectMapper objectMapper = new ObjectMapper();
         seedService = new SeedService(
-            audioUseCase, seedStateRepository, categoryRepository, topicRepository, curiosityRepository,
+            audioUseCase, seedStateRepository, categoryRepository, topicRepository,
             activityRepository, difficultyLevelRepository, avatarEventCatalogRepository,
             learningPathRepository, learningPathStepRepository, tracingPatternRepository,
-            worldHostRepository, worldNarrativeSituationRepository,
+            worldHostRepository, worldDiscoveryElementRepository,
             recognitionElementRepository, recognitionSimilarityPairRepository, objectMapper
         );
     }
@@ -151,7 +146,7 @@ class SeedServiceTest {
             try { obj.getClass().getMethod("setId", Long.class).invoke(obj, 1L); } catch (Exception ignored) {}
             return obj;
         });
-        when(curiosityRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
         when(difficultyLevelRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(avatarEventCatalogRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(learningPathRepository.save(any())).thenAnswer(inv -> {
@@ -194,7 +189,7 @@ class SeedServiceTest {
 
         verify(categoryRepository, never()).save(any());
         verify(topicRepository, never()).save(any());
-        verify(curiosityRepository, never()).save(any());
+
         verify(activityRepository, never()).save(any());
     }
 

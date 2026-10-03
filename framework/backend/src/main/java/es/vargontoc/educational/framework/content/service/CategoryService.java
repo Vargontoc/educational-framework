@@ -1,5 +1,11 @@
 package es.vargontoc.educational.framework.content.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import es.vargontoc.educational.framework.content.model.Category;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.ports.in.CategoryUseCase;
@@ -7,12 +13,9 @@ import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
 import es.vargontoc.educational.framework.content.validation.CategoryValidator;
 import es.vargontoc.educational.framework.shared.exception.ConflictException;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Transactional
+@Service
 public class CategoryService implements CategoryUseCase {
 
     private final CategoryRepository categoryRepository;

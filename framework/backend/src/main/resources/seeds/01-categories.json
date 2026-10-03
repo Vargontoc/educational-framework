@@ -16,5 +16,11 @@
     "description": "Letras, palabras y reconocimiento lingüístico",
     "status": "ACTIVE",
     "displayOrder": 3
+  },
+  {
+    "name" : "Habilidad",
+    "description": "Memoria, psicomotriz",
+    "status" : "ACTIVE",
+    "displayOrder" : 4
   }
 ]

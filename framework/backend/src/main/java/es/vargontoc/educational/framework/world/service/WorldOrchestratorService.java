@@ -41,6 +41,7 @@ public class WorldOrchestratorService implements WorldOrchestrator {
     // Applied when the active host has no authored world_width, so the frontend keeps working
     // exactly as it did before this field existed in the content.
     private static final int DEFAULT_WORLD_WIDTH = 2560;
+    private static final int DEFAULT_CHILD_AGE = 3;
 
     private final SelectTopicsForDifficultyUseCase selectTopicsForDifficultyUseCase;
     private final WorldCatalogUseCase worldCatalogUseCase;
@@ -78,7 +79,10 @@ public class WorldOrchestratorService implements WorldOrchestrator {
 
     @Override
     public WorldDestinationSelectionResult selectDestination(Long childSessionId, Long childProfileId,
-                                                            WorldEngagementWindow engagementWindow, Integer childAge) {
+                                                            WorldEngagementWindow engagementWindow, Integer requestedAge) {
+        // Edad unica de esta version (3 años); los llamadores sin edad (p. ej. el fallback de
+        // WorldGameStartService) no deben provocar un NPE al comparar rangos de edad del catalogo.
+        Integer childAge = requestedAge != null ? requestedAge : DEFAULT_CHILD_AGE;
         Long topicId = selectTopic(childProfileId);
         List<CompatibleActivityProjection> compatibleActivities = getCompatibleActivities(topicId, childAge);
 

@@ -19,7 +19,6 @@ import es.vargontoc.educational.framework.content.infrastructure.seed.SeedData.L
 import es.vargontoc.educational.framework.content.model.Activity;
 import es.vargontoc.educational.framework.content.model.Category;
 import es.vargontoc.educational.framework.content.model.ContentStatus;
-import es.vargontoc.educational.framework.content.model.Curiosity;
 import es.vargontoc.educational.framework.content.model.DifficultyCode;
 import es.vargontoc.educational.framework.content.model.DifficultyLevel;
 import es.vargontoc.educational.framework.content.model.LearningPath;
@@ -29,11 +28,9 @@ import es.vargontoc.educational.framework.content.model.Topic;
 import es.vargontoc.educational.framework.content.model.TracingPattern;
 
 import es.vargontoc.educational.framework.content.model.WorldHost;
-import es.vargontoc.educational.framework.content.model.WorldNarrativeSituation;
 import es.vargontoc.educational.framework.content.ports.out.ActivityRepository;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.ports.out.CategoryRepository;
-import es.vargontoc.educational.framework.content.ports.out.CuriosityRepository;
 import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathRepository;
 import es.vargontoc.educational.framework.content.ports.out.LearningPathStepRepository;
@@ -41,9 +38,9 @@ import es.vargontoc.educational.framework.content.ports.out.RecognitionElementRe
 import es.vargontoc.educational.framework.content.ports.out.TopicRepository;
 import es.vargontoc.educational.framework.content.ports.out.TracingPatternRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
-import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
 import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaEntity;
 import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -56,6 +53,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
+
 @Transactional
 public class SeedService {
 
@@ -64,7 +63,7 @@ public class SeedService {
     private final DevSeedStateJpaRepository seedStateRepository;
     private final CategoryRepository categoryRepository;
     private final TopicRepository topicRepository;
-    private final CuriosityRepository curiosityRepository;
+
     private final ActivityRepository activityRepository;
     private final DifficultyLevelRepository difficultyLevelRepository;
     private final AvatarEventCatalogRepository avatarEventCatalogRepository;
@@ -72,7 +71,7 @@ public class SeedService {
     private final LearningPathStepRepository learningPathStepRepository;
     private final TracingPatternRepository tracingPatternRepository;
     private final WorldHostRepository worldHostRepository;
-    private final WorldNarrativeSituationRepository worldNarrativeSituationRepository;
+    private final WorldDiscoveryElementRepository worldelementRepository;
     private final RecognitionElementRepository recognitionElementRepository;
     private final RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository;
     private final ObjectMapper objectMapper;
@@ -89,7 +88,6 @@ public class SeedService {
             DevSeedStateJpaRepository seedStateRepository,
             CategoryRepository categoryRepository,
             TopicRepository topicRepository,
-            CuriosityRepository curiosityRepository,
             ActivityRepository activityRepository,
             DifficultyLevelRepository difficultyLevelRepository,
             AvatarEventCatalogRepository avatarEventCatalogRepository,
@@ -97,14 +95,13 @@ public class SeedService {
             LearningPathStepRepository learningPathStepRepository,
             TracingPatternRepository tracingPatternRepository,
             WorldHostRepository worldHostRepository,
-            WorldNarrativeSituationRepository worldNarrativeSituationRepository,
+            WorldDiscoveryElementRepository worldElementRepository,
             RecognitionElementRepository recognitionElementRepository,
             RecognitionSimilarityPairJpaRepository recognitionSimilarityPairRepository,
             ObjectMapper objectMapper) {
         this.seedStateRepository = seedStateRepository;
         this.categoryRepository = categoryRepository;
         this.topicRepository = topicRepository;
-        this.curiosityRepository = curiosityRepository;
         this.activityRepository = activityRepository;
         this.difficultyLevelRepository = difficultyLevelRepository;
         this.avatarEventCatalogRepository = avatarEventCatalogRepository;
@@ -112,11 +109,11 @@ public class SeedService {
         this.learningPathStepRepository = learningPathStepRepository;
         this.tracingPatternRepository = tracingPatternRepository;
         this.worldHostRepository = worldHostRepository;
-        this.worldNarrativeSituationRepository = worldNarrativeSituationRepository;
         this.recognitionElementRepository = recognitionElementRepository;
         this.recognitionSimilarityPairRepository = recognitionSimilarityPairRepository;
         this.objectMapper = objectMapper;
         this.audio = audio;
+        this.worldelementRepository = worldElementRepository;
     }
 
     public void loadAll() {
@@ -124,7 +121,6 @@ public class SeedService {
         int loaded = 0;
         loaded += loadCategories();
         loaded += loadTopics();
-        loaded += loadCuriosities();
         loaded += loadActivities();
         loaded += loadDifficultyLevels();
         loaded += loadAvatarEvents();
@@ -132,7 +128,6 @@ public class SeedService {
         loaded += loadLearningPathSteps();
         loaded += loadTracingPatterns();
         loaded += loadWorldHosts();
-        loaded += loadWorldNarrativeSituations();
         loaded += loadRecognitionAlphaNumeric(false);
         loaded += loadRecognitionAlphaNumeric(true);
         loaded += loadRecognitionColors();
@@ -226,34 +221,6 @@ public class SeedService {
         return count;
     }
 
-    private int loadCuriosities() {
-        String file = "03-curiosities.json";
-        var seeds = readSeedFile(file, new TypeReference<List<SeedData.CuriositySeed>>() {});
-        int count = 0;
-        for (var seed : seeds) {
-            String key = "curiosity:" + seed.text().substring(0, Math.min(50, seed.text().length())).toLowerCase();
-            if (alreadyLoaded(key)) {
-                log.debug("Skipping already loaded seed: {}", key);
-                continue;
-            }
-            Long topicId = resolveTopicId(seed.topicName());
-            var curiosity = new Curiosity();
-            curiosity.setText(seed.text());
-            curiosity.setTopicId(topicId);
-            curiosity.setMinAge(seed.minAge());
-            curiosity.setMaxAge(seed.maxAge());
-            curiosity.setTags(seed.tags() != null ? seed.tags() : Collections.emptyList());
-            curiosity.setLocale(seed.locale());
-            curiosity.setPhoneticHint(seed.phoneticHint());
-            curiosity.setStatus(ContentStatus.ACTIVE);
-            curiosity.setCreatedAt(LocalDateTime.now());
-            curiosityRepository.save(curiosity);
-            markLoaded(key, file);
-            count++;
-            log.info("Loaded seed: {}", key);
-        }
-        return count;
-    }
 
     private int loadActivities() {
         String file = "04-activities.json";
@@ -458,36 +425,12 @@ public class SeedService {
             count++;
             log.info("Loaded seed: {}", key);
         }
+
+        worldelementRepository.loadOnMemory();
+
         return count;
     }
 
-    private int loadWorldNarrativeSituations() {
-        String file = "13-world-narrative-situations.json";
-        var seeds = readSeedFile(file, new TypeReference<List<SeedData.WorldNarrativeSituationSeed>>() {});
-        int count = 0;
-        for (var seed : seeds) {
-            String key = "world-narrative-situation:" + seed.code().toLowerCase();
-            if (alreadyLoaded(key)) {
-                log.debug("Skipping already loaded seed: {}", key);
-                continue;
-            }
-            var situation = new WorldNarrativeSituation();
-            situation.setCode(seed.code());
-            situation.setDisplayText(seed.displayText());
-            situation.setSituationType(es.vargontoc.educational.framework.content.model.SituationType.valueOf(seed.situationType()));
-            situation.setTone(seed.tone() != null ? es.vargontoc.educational.framework.content.model.Tone.valueOf(seed.tone()) : null);
-            situation.setMinAge(seed.minAge());
-            situation.setMaxAge(seed.maxAge());
-            situation.setStatus(ContentStatus.valueOf(seed.status()));
-            situation.setSortOrder(seed.sortOrder());
-            situation.setCreatedAt(LocalDateTime.now());
-            worldNarrativeSituationRepository.save(situation);
-            markLoaded(key, file);
-            count++;
-            log.info("Loaded seed: {}", key);
-        }
-        return count;
-    }
 
     private Long resolveCategoryId(String name) {
         if (categoryCache.containsKey(name)) {
@@ -590,10 +533,9 @@ public class SeedService {
             String key =  "recognition-element-animal:" + seed.code();
             if(alreadyLoaded(key)){
                 log.debug("Skipping already loaded seed: {}", key);
+                recognitionElementRepository.addCuriosity(seed.code(), seed.curiosities());
                 continue;
             }
-
-            audio.getAudio(AudioRequest.withPreset(animalNubiAudio(seed), TonePreset.CALM));
 
             var element = new RecognitionElement();
             element.setTopicId(topicId);
@@ -607,7 +549,7 @@ public class SeedService {
             element.setStatus(ContentStatus.ACTIVE);
             element.setCreatedAt(LocalDateTime.now());
             recognitionElementRepository.save(element);
-
+            recognitionElementRepository.addCuriosity(seed.code(), seed.curiosities());
             markLoaded(key, file);
             count++;
             log.info("Loaded seed: {}", key);
