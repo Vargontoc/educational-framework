@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import childAvatarsUrl from '../../assets/icons/custom/child-avatars.svg?no-inline'
 import type { ChildProfile } from '../../services/familyService'
 
 interface Props {
@@ -44,7 +45,7 @@ const VALID_AVATARS = ['avatar-1', 'avatar-2', 'avatar-3', 'avatar-4', 'avatar-5
 
 const avatarHref = computed(() => {
   const avatar = VALID_AVATARS.includes(props.profile.avatar) ? props.profile.avatar : 'avatar-1'
-  return `/src/assets/icons/custom/child-avatars.svg#${avatar}`
+  return `${childAvatarsUrl}#${avatar}`
 })
 </script>
 

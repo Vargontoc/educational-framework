@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import childAvatarsUrl from '../../assets/icons/custom/child-avatars.svg?no-inline'
 
 interface Props {
   modelValue: string
@@ -35,12 +36,12 @@ const { t } = useI18n()
 const label = t('views.home.childSelection.registration.avatarLabel')
 
 const avatars = [
-  { id: 'avatar-1', href: '/src/assets/icons/custom/child-avatars.svg#avatar-1', label: t('views.home.childSelection.registration.avatar1') },
-  { id: 'avatar-2', href: '/src/assets/icons/custom/child-avatars.svg#avatar-2', label: t('views.home.childSelection.registration.avatar2') },
-  { id: 'avatar-3', href: '/src/assets/icons/custom/child-avatars.svg#avatar-3', label: t('views.home.childSelection.registration.avatar3') },
-  { id: 'avatar-4', href: '/src/assets/icons/custom/child-avatars.svg#avatar-4', label: t('views.home.childSelection.registration.avatar4') },
-  { id: 'avatar-5', href: '/src/assets/icons/custom/child-avatars.svg#avatar-5', label: t('views.home.childSelection.registration.avatar5') },
-  { id: 'avatar-6', href: '/src/assets/icons/custom/child-avatars.svg#avatar-6', label: t('views.home.childSelection.registration.avatar6') },
+  { id: 'avatar-1', href: `${childAvatarsUrl}#avatar-1`, label: t('views.home.childSelection.registration.avatar1') },
+  { id: 'avatar-2', href: `${childAvatarsUrl}#avatar-2`, label: t('views.home.childSelection.registration.avatar2') },
+  { id: 'avatar-3', href: `${childAvatarsUrl}#avatar-3`, label: t('views.home.childSelection.registration.avatar3') },
+  { id: 'avatar-4', href: `${childAvatarsUrl}#avatar-4`, label: t('views.home.childSelection.registration.avatar4') },
+  { id: 'avatar-5', href: `${childAvatarsUrl}#avatar-5`, label: t('views.home.childSelection.registration.avatar5') },
+  { id: 'avatar-6', href: `${childAvatarsUrl}#avatar-6`, label: t('views.home.childSelection.registration.avatar6') },
 ]
 </script>
 

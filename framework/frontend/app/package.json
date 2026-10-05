@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "assets": "node scripts/build-assets.mjs",
+    "predev": "npm run assets",
     "dev": "vite",
+    "prebuild": "npm run assets",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "histoire:dev": "histoire dev",

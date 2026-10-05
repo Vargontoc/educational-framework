@@ -21,6 +21,17 @@
 @import './themes/light.css';
 @import './themes/dark.css';
 
+/* Tema declarado: claro por defecto y oscuro solo en el panel parental ([data-theme="dark"]).
+   Sin esto, el modo oscuro forzado de Android/Samsung Internet puede pintar de negro los fondos
+   y las zonas transparentes de las imagenes en el movil. */
+:root {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 /* Estilos globales */
 * {
   margin: 0;

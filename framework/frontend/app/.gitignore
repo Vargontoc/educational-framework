@@ -25,6 +25,9 @@ dist-ssr
 
 public/assets
 public/assets/**
+# Pipeline de assets (npm run assets): originales locales y manifiesto generado
+assets-src
+public/assets-manifest.json
 
 # Cypress E2E - artefactos generados en cada ejecución
 cypress/results

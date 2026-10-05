@@ -13,8 +13,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,12 +105,16 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
 
         log.info("Loading World Discovery Elements");
         try {
-            Path path =  jsonFile.getFilePath();
-            if(!Files.exists(path))
+            if(!jsonFile.exists()) {
+                log.warn("World discovery seed not found: {}", jsonFile);
                 return;
-            
-            byte[] data =  Files.readAllBytes(path);
-            var items = mapper.readValue(data, new TypeReference<List<WorldDiscoveryElementSeed>>() {});
+            }
+
+            // El recurso vive dentro del jar en produccion: se lee como stream, nunca como fichero del sistema.
+            List<WorldDiscoveryElementSeed> items;
+            try (InputStream in = jsonFile.getInputStream()) {
+                items = mapper.readValue(in, new TypeReference<List<WorldDiscoveryElementSeed>>() {});
+            }
             long count = 0L;
             for(WorldDiscoveryElementSeed seed: items) {
                 try {
@@ -120,7 +123,7 @@ public class WorldDiscoveryElementPersistenceAdapter implements WorldDiscoveryEl
                         interactiveElements.add(new WorldElement(++count, biome, seed.code(), seed.visualAssetKey(), getActivityByName(seed.activityName()), seed.minAge(), seed.maxAge(), seed.positionX(), seed.positionY()));
     
                 }catch(Exception e) {
-                    log.error("Error reading seed", e.getMessage(), e);
+                    log.error("Error reading world discovery seed {}: {}", seed.code(), e.getMessage(), e);
                 }
             }
         }catch(IOException e) {

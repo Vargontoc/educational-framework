@@ -35,7 +35,19 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
           // daisy-tap.png (sprite sheet de animacion, ~2.3MB) supera el limite de precache
           // de workbox (2MB por defecto): se carga bajo demanda en vez de precachearse.
-          globIgnores: ['**/assets/images/biomes/meadow/daisy/daisy-tap.png']
+          globIgnores: ['**/assets/images/biomes/meadow/daisy/daisy-tap.png'],
+          // Los assets del juego convertidos a WebP (npm run assets) no se precachean: se guardan al
+          // usarlos, para no obligar a descargar todos los biomas al instalar la app.
+          runtimeCaching: [
+            {
+              urlPattern: ({ url }: { url: URL }) => url.pathname.startsWith('/assets/') && url.pathname.endsWith('.webp'),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'game-assets-webp',
+                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 }
+              }
+            }
+          ]
         }
       })
     ],

@@ -17,6 +17,7 @@ import { MemoryGameScene } from '@/game/MemoryGameScene';
 import { useRoute } from 'vue-router';
 import { useGlobalConfig } from '@/composables/useGlobalConfig';
 import { useGameOrientation } from '@/composables/useGameOrientation';
+import { readRenderDebugFlags, installRenderDebugOverlay } from '@/game/utils/renderDebug';
 
 const gameContainer = ref(null)
 const route = useRoute()
@@ -24,6 +25,7 @@ const { persisted: globalConfig } = useGlobalConfig()
 const { isPortrait } = useGameOrientation()
 
 let gameInstance = null as unknown as Phaser.Game;
+let removeRenderDebug: (() => void) | null = null;
 
 // Import estático (no dinámico) de Phaser: @esotericsoftware/spine-phaser-v4 ya
 // importa Phaser de forma estática internamente (y por tanto lo empaqueta de forma
@@ -34,8 +36,11 @@ let gameInstance = null as unknown as Phaser.Game;
 // SpinePlugin registrara `add.spine`/`load.spineBinary` en una instancia distinta
 // de la que usan las escenas, con el síntoma "this.scene.add.spine is not a function".
 const loadPhaserGame = async () => {
+    // Diagnostico opt-in para moviles (ver renderDebug.ts): sin parametros en la URL no cambia nada.
+    const debugFlags = readRenderDebugFlags()
     const config = {
-      type: Phaser.AUTO,
+      type: debugFlags.renderer === 'canvas' ? Phaser.CANVAS : Phaser.AUTO,
+      ...(debugFlags.maxTextures ? { render: { maxTextures: debugFlags.maxTextures } } : {}),
       width: 1280,
       height: 720,
       parent: gameContainer.value,
@@ -63,6 +68,9 @@ const loadPhaserGame = async () => {
   }
     
     gameInstance = new Phaser.Game(config)
+    if (debugFlags.overlay) {
+      removeRenderDebug = installRenderDebugOverlay(gameInstance)
+    }
 
     watch(isPortrait, (newVal) => {
       if (!gameInstance) return
@@ -288,6 +296,7 @@ onUnmounted(() => {
   if (typeof window !== 'undefined' && (window as any).Cypress) {
     delete (window as any).__NUBI_GAME_STATE__
   }
+  removeRenderDebug?.()
   if(gameInstance) {
     gameInstance.destroy(true)
   }
