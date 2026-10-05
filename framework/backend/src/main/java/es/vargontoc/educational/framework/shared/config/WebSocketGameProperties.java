@@ -12,6 +12,7 @@ public class WebSocketGameProperties {
     private long maxSessionIdleTimeoutMs = 120000;
     private int maxTextMessageBufferSize = 65536;
     private int maxBinaryMessageBufferSize = 524288;
+    private int maxPendingMessagesPerSession = 50;
 
     public int getSendTimeLimitMs() {
         return sendTimeLimitMs;
@@ -51,5 +52,13 @@ public class WebSocketGameProperties {
 
     public void setMaxBinaryMessageBufferSize(int maxBinaryMessageBufferSize) {
         this.maxBinaryMessageBufferSize = maxBinaryMessageBufferSize;
+    }
+
+    public int getMaxPendingMessagesPerSession() {
+        return maxPendingMessagesPerSession;
+    }
+
+    public void setMaxPendingMessagesPerSession(int maxPendingMessagesPerSession) {
+        this.maxPendingMessagesPerSession = maxPendingMessagesPerSession;
     }
 }

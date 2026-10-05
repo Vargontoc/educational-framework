@@ -98,6 +98,7 @@ app:
       max-session-idle-timeout-ms: ${APP_WS_GAME_MAX_SESSION_IDLE_TIMEOUT_MS:120000}
       max-text-message-buffer-size: ${APP_WS_GAME_MAX_TEXT_MESSAGE_BUFFER_SIZE:65536}
       max-binary-message-buffer-size: ${APP_WS_GAME_MAX_BINARY_MESSAGE_BUFFER_SIZE:524288}
+      max-pending-messages-per-session: ${APP_WS_GAME_MAX_PENDING_MESSAGES_PER_SESSION:50}
   audio:
     base-url: ${CHATTERBOX_BASE_URL:http://localhost:4123}
     cache:

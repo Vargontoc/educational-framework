@@ -120,12 +120,14 @@ class GameWebSocketHandlerTest {
     @BeforeEach
     void setUp() {
         WebSocketGameProperties wsProps = new WebSocketGameProperties();
+        WebSocketMetrics wsMetrics = new WebSocketMetrics(new SimpleMeterRegistry());
+        SynchronousSessionMessageDispatcher testDispatcher = new SynchronousSessionMessageDispatcher(wsProps.getMaxPendingMessagesPerSession(), wsMetrics);
         handler = new GameWebSocketHandler(childSessionUseCase, new ObjectMapper(), avatarService,
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
             recognitionElementRepository, worldExplorationStateRepository,
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
-            new WebSocketMetrics(new SimpleMeterRegistry()), SqlStatementCounter.NOOP, wsProps);
+            wsMetrics, SqlStatementCounter.NOOP, wsProps, testDispatcher);
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))

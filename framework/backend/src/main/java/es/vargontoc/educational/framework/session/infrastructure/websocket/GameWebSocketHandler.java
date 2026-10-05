@@ -103,6 +103,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final WebSocketMetrics metrics;
     private final SqlStatementCounter sqlStatementCounter;
     private final WebSocketGameProperties wsGameProperties;
+    private final SessionMessageDispatcher dispatcher;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -127,7 +128,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                             AccessibleColorPaletteRepository accessibleColorPaletteRepository,
                             WebSocketMetrics metrics,
                             SqlStatementCounter sqlStatementCounter,
-                            WebSocketGameProperties wsGameProperties) {
+                            WebSocketGameProperties wsGameProperties,
+                            SessionMessageDispatcher dispatcher) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarservice = avatarService;
@@ -145,6 +147,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         this.metrics = metrics;
         this.sqlStatementCounter = sqlStatementCounter;
         this.wsGameProperties = wsGameProperties;
+        this.dispatcher = dispatcher;
         registerGauges();
     }
 
@@ -174,47 +177,68 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
             return;
         }
+        JsonNode root;
+        String type;
         try {
-            JsonNode root = objectMapper.readTree(message.getPayload());
-            String type = root.has("type") ? root.get("type").asString() : "";
+            root = objectMapper.readTree(message.getPayload());
+            type = root.has("type") ? root.get("type").asString() : "";
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse game message from session={}: {}", session.getId(), e.getMessage());
+            return;
+        }
 
-            if (!"auth".equals(type) && !isAuthenticated(session)) {
-                LOGGER.warn("Message type '{}' received before auth from session {}", type, session.getId());
-                closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
-                return;
-            }
+        if (!"auth".equals(type) && !isAuthenticated(session)) {
+            LOGGER.warn("Message type '{}' received before auth from session {}", type, session.getId());
+            closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION);
+            return;
+        }
 
-            long startNanos = System.nanoTime();
-            long sqlBefore = sqlStatementCounter.snapshot();
-            String outcome = "ok";
-            try {
-                switch (type) {
-                    case "auth" -> handleAuth(session, root);
-                    case "heartbeat" -> handleHeartbeat(getChildSessionId(session));
-                    case "game_start" -> handleGameStart(session, getChildSessionId(session), root);
-                    case "game_ready" -> handleGameReady(session, getChildSessionId(session), root);
-                    case "game_abandon" -> handleGameAbandon(session, getChildSessionId(session), root);
-                    case "game_action" -> handleGameAction(session, getChildSessionId(session), root);
-                    case "world_heartbeat" -> handleWorldHeartbeat(session, getChildSessionId(session), root);
-                    case "world_discovery_interacted" -> handleWorldDiscoveryInteracted(session, getChildSessionId(session), root);
-                    case "world_travel" -> handleWorldTravel(session, getChildSessionId(session), root);
-                    default -> LOGGER.warn("Unknown game message type from session={}", session.getId());
-                }
-            } catch (Exception innerEx) {
-                outcome = "error";
-                throw innerEx;
-            } finally {
-                long durationNanos = System.nanoTime() - startNanos;
-                if (!type.isEmpty()) {
-                    metrics.recordMessageDuration(type, outcome, durationNanos);
-                    long sqlCount = sqlStatementCounter.countSince(sqlBefore);
-                    if (sqlCount > 0) {
-                        metrics.recordSqlStatements(type, sqlCount);
-                    }
+        if ("auth".equals(type)) {
+            dispatcher.dispatch(-1L, () -> processMessage(session, type, root));
+            return;
+        }
+
+        Long childSessionId = getChildSessionId(session);
+
+        if ("heartbeat".equals(type) || "world_heartbeat".equals(type)) {
+            dispatcher.dispatchHeartbeat(childSessionId, () -> processMessage(session, type, root));
+            return;
+        }
+
+        dispatcher.dispatchOrClose(childSessionId,
+            () -> processMessage(session, type, root),
+            () -> closeSessionQuietly(session, CloseStatus.POLICY_VIOLATION));
+    }
+
+    private void processMessage(WebSocketSession session, String type, JsonNode root) {
+        long startNanos = System.nanoTime();
+        long sqlBefore = sqlStatementCounter.snapshot();
+        String outcome = "ok";
+        try {
+            switch (type) {
+                case "auth" -> handleAuth(session, root);
+                case "heartbeat" -> handleHeartbeat(getChildSessionId(session));
+                case "game_start" -> handleGameStart(session, getChildSessionId(session), root);
+                case "game_ready" -> handleGameReady(session, getChildSessionId(session), root);
+                case "game_abandon" -> handleGameAbandon(session, getChildSessionId(session), root);
+                case "game_action" -> handleGameAction(session, getChildSessionId(session), root);
+                case "world_heartbeat" -> handleWorldHeartbeat(session, getChildSessionId(session), root);
+                case "world_discovery_interacted" -> handleWorldDiscoveryInteracted(session, getChildSessionId(session), root);
+                case "world_travel" -> handleWorldTravel(session, getChildSessionId(session), root);
+                default -> LOGGER.warn("Unknown game message type from session={}", session.getId());
+            }
+        } catch (Exception innerEx) {
+            outcome = "error";
+            LOGGER.error("Error processing {} for session={}: {}", type, session.getId(), innerEx.getMessage());
+        } finally {
+            long durationNanos = System.nanoTime() - startNanos;
+            if (!type.isEmpty()) {
+                metrics.recordMessageDuration(type, outcome, durationNanos);
+                long sqlCount = sqlStatementCounter.countSince(sqlBefore);
+                if (sqlCount > 0) {
+                    metrics.recordSqlStatements(type, sqlCount);
                 }
             }
-        } catch (Exception exception) {
-            LOGGER.error("Error processing game message from session={}: {}", session.getId(), exception.getMessage());
         }
     }
 
@@ -223,10 +247,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         cancelPendingTimeout(session);
         Long childSessionId = getChildSessionId(session);
         if (childSessionId != null) {
+            dispatcher.closeSession(childSessionId);
             sessionsByChildSessionId.remove(childSessionId);
             markWorldForExpiration(childSessionId);
             LOGGER.info("Game WebSocket disconnected: childSessionId={}, status={}", childSessionId, status);
         } else {
+            dispatcher.closeSession(-1L);
             LOGGER.debug("Game WebSocket closed before auth: sessionId={}, status={}", session.getId(), status);
         }
     }
@@ -351,11 +377,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    /**
-     * Sends a ROUND_PROMPT avatar event with audio if the round audio result is available.
-     * The event JSON is sent first, followed by the binary audio data.
-     */
-    private void sendRoundAudioIfPresent(Long childSessionId, WebSocketSession session, RoundAudioResult roundAudioResult) {
+    private void sendRoundAudioIfPresent(Long childSessionId, RoundAudioResult roundAudioResult) {
         if (roundAudioResult == null || !roundAudioResult.audioAvailable()) {
             return;
         }
@@ -366,8 +388,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     roundAudioResult.audioId(),
                     roundAudioResult.text());
             sendToSession(childSessionId, objectMapper.writeValueAsString(avatarEvent));
-            if (roundAudioResult.audioData() != null && session != null && session.isOpen()) {
-                sendBinaryFrame(session, roundAudioResult.audioId(), roundAudioResult.audioData());
+            if (roundAudioResult.audioData() != null) {
+                WebSocketSession session = sessionsByChildSessionId.get(childSessionId);
+                if (session != null && session.isOpen()) {
+                    sendBinaryFrame(session, roundAudioResult.audioId(), roundAudioResult.audioData());
+                }
             }
         } catch (Exception e) {
             LOGGER.warn("Could not send round audio to childSessionId={}: {}", childSessionId, e.getMessage());
@@ -392,6 +417,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     @PreDestroy
     public void destroy() {
         authTimeoutScheduler.shutdownNow();
+        dispatcher.shutdown();
     }
 
     private void handleAuth(WebSocketSession session, JsonNode root) {
@@ -504,7 +530,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             if (result.resultType() == es.vargontoc.educational.framework.game.model.ActionResultType.CORRECT
                     && !result.gameCompleted()) {
                 phaseStart = System.nanoTime();
-                sendRoundAudioIfPresent(childSessionId, session, result.updatedState().getRoundAudioResult());
+                sendRoundAudioIfPresent(childSessionId, result.updatedState().getRoundAudioResult());
                 metrics.recordPhaseDuration("game_action", "audio", "ok", System.nanoTime() - phaseStart);
             }
 
@@ -618,7 +644,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
             phaseStart = System.nanoTime();
             var withAudio = gameOrchestrator.attachRoundAudio(gameState.getGameId());
-            sendRoundAudioIfPresent(childSessionId, session, withAudio.getRoundAudioResult());
+            sendRoundAudioIfPresent(childSessionId, withAudio.getRoundAudioResult());
             metrics.recordPhaseDuration("game_ready", "audio", "ok", System.nanoTime() - phaseStart);
 
         } catch (GameUnavailableException e) {

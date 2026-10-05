@@ -141,12 +141,23 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     @Bean
+    public WebSocketMetrics webSocketMetrics() {
+        return new WebSocketMetrics(meterRegistry);
+    }
+
+    @Bean
+    public SessionMessageDispatcher sessionMessageDispatcher() {
+        return new SessionMessageDispatcher(wsGameProperties.getMaxPendingMessagesPerSession(), webSocketMetrics());
+    }
+
+    @Bean
     public GameWebSocketHandler gameWebSocketHandler() {
         return new GameWebSocketHandler(childSessionUseCase, objectMapper, avatarService,
             gameOrchestrator, gameStateRegistry,
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
             recognitionElementRepository, worldExplorationStateRepository,
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
-            new WebSocketMetrics(meterRegistry), sqlStatementCounter, wsGameProperties);
+            webSocketMetrics(), sqlStatementCounter, wsGameProperties,
+            sessionMessageDispatcher());
     }
 }

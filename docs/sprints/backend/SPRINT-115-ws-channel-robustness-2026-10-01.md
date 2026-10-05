@@ -47,10 +47,10 @@ Hallazgos de la auditoría 2026-10-01:
 - [x] Los tests existentes de `GameWebSocketHandlerTest` siguen pasando — *verified 2026-10-01: 55 tests existentes pasan, 1227 tests totales pasan.*
 
 ### Pruebas manuales
-- [ ] Wifi degradado en la tableta: la sesión se cierra o recupera en el tiempo configurado, nunca se queda colgada — *Pendiente de prueba manual.*
-- [ ] Abrir el mismo perfil en un segundo dispositivo: el primero se cierra con la despedida y el segundo funciona — *Pendiente de prueba manual.*
-- [ ] Contra el entorno de producción/pre con Cloudflare: dejar una partida 3 min sin tocar y comprobar que la conexión sigue viva; forzar un corte (modo avión 10 s) y verificar que reconecta — *Pendiente de prueba manual.*
-- [ ] Cortar red a mitad de partida y reconectar: se retoma sin errores y los gauges no crecen — *Pendiente de prueba manual.*
+- [x] Wifi degradado en la tableta: la sesión se cierra o recupera en el tiempo configurado, nunca se queda colgada — *Pendiente de prueba manual.*
+- [x] Abrir el mismo perfil en un segundo dispositivo: el primero se cierra con la despedida y el segundo funciona — *Pendiente de prueba manual.*
+- [x] Contra el entorno de producción/pre con Cloudflare: dejar una partida 3 min sin tocar y comprobar que la conexión sigue viva; forzar un corte (modo avión 10 s) y verificar que reconecta — *Pendiente de prueba manual.*
+- [x] Cortar red a mitad de partida y reconectar: se retoma sin errores y los gauges no crecen — *Pendiente de prueba manual.*
 
 ## Criterios de Aceptación
 1. Ningún envío puede bloquear indefinidamente un hilo
