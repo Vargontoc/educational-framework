@@ -16,12 +16,15 @@ public class WebSocketMetrics {
     private static final String AUDIO_CACHE_COUNTER = "ws.audio.cache";
     private static final String TTS_SYNTHESIS_TIMER = "ws.tts.synthesis.duration";
     private static final String SQL_STATEMENTS_COUNTER = "ws.sql.statements";
+    private static final String DATA_CACHE_COUNTER = "ws.data.cache";
 
     private final MeterRegistry registry;
     private final Map<String, Timer> messageTimers = new ConcurrentHashMap<>();
     private final Map<String, Timer> phaseTimers = new ConcurrentHashMap<>();
     private final Counter audioCacheHit;
     private final Counter audioCacheMiss;
+    private final Counter dataCacheHit;
+    private final Counter dataCacheMiss;
     private final Timer ttsSynthesisTimer;
 
     public WebSocketMetrics(MeterRegistry registry) {
@@ -33,6 +36,14 @@ public class WebSocketMetrics {
         this.audioCacheMiss = Counter.builder(AUDIO_CACHE_COUNTER)
             .tag("result", "miss")
             .description("Audio cache lookup result")
+            .register(registry);
+        this.dataCacheHit = Counter.builder(DATA_CACHE_COUNTER)
+            .tag("result", "hit")
+            .description("Game data cache lookup result")
+            .register(registry);
+        this.dataCacheMiss = Counter.builder(DATA_CACHE_COUNTER)
+            .tag("result", "miss")
+            .description("Game data cache lookup result")
             .register(registry);
         this.ttsSynthesisTimer = Timer.builder(TTS_SYNTHESIS_TIMER)
             .description("TTS synthesis duration")
@@ -68,6 +79,14 @@ public class WebSocketMetrics {
 
     public void recordAudioCacheMiss() {
         audioCacheMiss.increment();
+    }
+
+    public void recordDataCacheHit() {
+        dataCacheHit.increment();
+    }
+
+    public void recordDataCacheMiss() {
+        dataCacheMiss.increment();
     }
 
     public void recordTtsSynthesis(long durationNanos) {

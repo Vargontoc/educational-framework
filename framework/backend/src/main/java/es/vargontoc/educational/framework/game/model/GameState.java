@@ -6,6 +6,8 @@ import java.util.List;
 
 import es.vargontoc.educational.framework.game.model.enums.EngineType;
 import es.vargontoc.educational.framework.game.model.enums.RecognitionCategory;
+import es.vargontoc.educational.framework.game.model.memory.MemoryState;
+import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 import es.vargontoc.educational.framework.game.service.RoundAudioResult;
 
 public class GameState {
@@ -38,6 +40,16 @@ public class GameState {
     // Transient field for carrying round audio from orchestrator to WebSocket handler.
     // Not persisted; set by GameOrchestratorService after round transitions and consumed by GameWebSocketHandler.
     private transient RoundAudioResult roundAudioResult;
+
+    // SPRINT-118: Typed engine state kept in memory to avoid repeated JSON parsing.
+    // These fields are transient and only used during request processing.
+    private transient RecognitionState typedRecognitionState;
+    private transient MemoryState typedMemoryState;
+
+    // SPRINT-118: Audio reference without the byte[] data.
+    // The audio data is resolved from cache when sending to the client.
+    private transient String pendingAudioId;
+    private transient String pendingAudioText;
 
     public Long getGameId() {
         return gameId;
@@ -237,6 +249,38 @@ public class GameState {
 
     public void setRoundAudioResult(RoundAudioResult roundAudioResult) {
         this.roundAudioResult = roundAudioResult;
+    }
+
+    public RecognitionState getTypedRecognitionState() {
+        return typedRecognitionState;
+    }
+
+    public void setTypedRecognitionState(RecognitionState typedRecognitionState) {
+        this.typedRecognitionState = typedRecognitionState;
+    }
+
+    public MemoryState getTypedMemoryState() {
+        return typedMemoryState;
+    }
+
+    public void setTypedMemoryState(MemoryState typedMemoryState) {
+        this.typedMemoryState = typedMemoryState;
+    }
+
+    public String getPendingAudioId() {
+        return pendingAudioId;
+    }
+
+    public void setPendingAudioId(String pendingAudioId) {
+        this.pendingAudioId = pendingAudioId;
+    }
+
+    public String getPendingAudioText() {
+        return pendingAudioText;
+    }
+
+    public void setPendingAudioText(String pendingAudioText) {
+        this.pendingAudioText = pendingAudioText;
     }
 
 }

@@ -124,7 +124,7 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(10L)), eq(ContentStatus.ACTIVE)))
                 .thenReturn(List.of(element));
 
         ElementSummary masteredSummary = new ElementSummary();
@@ -164,12 +164,8 @@ class GameOrchestratorServiceMasteryPrioritizationTest {
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic, topic2, topic3));
 
-        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(element10));
-        when(recognitionElementRepository.findByTopicIdAndStatus(20L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(element20));
-        when(recognitionElementRepository.findByTopicIdAndStatus(30L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(element30));
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(10L, 20L, 30L)), eq(ContentStatus.ACTIVE)))
+                .thenReturn(List.of(element10, element20, element30));
 
         ElementSummary mastered = new ElementSummary();
         mastered.setElementId(100L);

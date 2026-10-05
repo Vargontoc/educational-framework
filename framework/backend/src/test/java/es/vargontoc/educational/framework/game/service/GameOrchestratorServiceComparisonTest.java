@@ -119,7 +119,7 @@ class GameOrchestratorServiceComparisonTest {
             element.setStatus(ContentStatus.ACTIVE);
             elements.add(element);
         }
-        when(recognitionElementRepository.findByTopicIdAndStatus(TOPIC_ID, ContentStatus.ACTIVE)).thenReturn(elements);
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(TOPIC_ID)), eq(ContentStatus.ACTIVE))).thenReturn(elements);
         when(recognitionElementRepository.findAllById(any())).thenAnswer(invocation -> {
             Iterable<Long> ids = invocation.getArgument(0);
             List<RecognitionElement> found = new ArrayList<>();

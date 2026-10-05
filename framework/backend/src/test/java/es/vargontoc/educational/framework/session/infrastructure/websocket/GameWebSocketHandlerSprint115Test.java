@@ -96,7 +96,9 @@ class GameWebSocketHandlerSprint115Test {
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
             recognitionElementRepository, worldExplorationStateRepository,
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
-            wsMetrics, SqlStatementCounter.NOOP, wsProps, testDispatcher);
+            wsMetrics, SqlStatementCounter.NOOP, wsProps, testDispatcher,
+            new es.vargontoc.educational.framework.world.service.ChildAgeResolver(),
+            GameWebSocketHandlerTest.createNoopCacheStorage());
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))
             .thenReturn(new WorldDestinationSelectionResult());
     }

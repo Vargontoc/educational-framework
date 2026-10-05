@@ -16,10 +16,12 @@ import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepos
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Transactional(readOnly = true)
 public class WorldCatalogService implements WorldCatalogUseCase {
@@ -29,49 +31,80 @@ public class WorldCatalogService implements WorldCatalogUseCase {
     private final WorldDiscoveryElementRepository worldDiscoveryElementRepository;
     private final ActivityRepository activityRepository;
     private final DifficultyLevelRepository difficultyLevelRepository;
+    private final GameCacheStorage gameCacheStorage;
 
     public WorldCatalogService(
             WorldHostRepository worldHostRepository,
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             ActivityRepository activityRepository,
-            DifficultyLevelRepository difficultyLevelRepository) {
+            DifficultyLevelRepository difficultyLevelRepository,
+            GameCacheStorage gameCacheStorage) {
         this.worldHostRepository = worldHostRepository;
         this.worldNarrativeSituationRepository = worldNarrativeSituationRepository;
         this.worldDiscoveryElementRepository = worldDiscoveryElementRepository;
         this.activityRepository = activityRepository;
         this.difficultyLevelRepository = difficultyLevelRepository;
+        this.gameCacheStorage = gameCacheStorage;
     }
 
     @Override
     public List<WorldHostProjection> listActiveHostsForAge(Integer targetAge) {
+        String cacheKey = "hosts:age=" + targetAge;
+        Optional<List<WorldHostProjection>> cached = gameCacheStorage.getWorldCatalog(cacheKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
         List<WorldHost> hosts = worldHostRepository.findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
             ContentStatus.ACTIVE, targetAge);
-        return hosts.stream().map(this::toWorldHostProjection).toList();
+        List<WorldHostProjection> result = hosts.stream().map(this::toWorldHostProjection).toList();
+        gameCacheStorage.putWorldCatalog(cacheKey, result);
+        return result;
     }
 
     @Override
     public List<WorldNarrativeSituationProjection> listActiveSituationsForAge(Integer targetAge) {
+        String cacheKey = "situations:age=" + targetAge;
+        Optional<List<WorldNarrativeSituationProjection>> cached = gameCacheStorage.getWorldCatalog(cacheKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
         List<WorldNarrativeSituation> situations = worldNarrativeSituationRepository
             .findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
                 ContentStatus.ACTIVE, targetAge);
-        return situations.stream().map(this::toWorldNarrativeSituationProjection).toList();
+        List<WorldNarrativeSituationProjection> result = situations.stream().map(this::toWorldNarrativeSituationProjection).toList();
+        gameCacheStorage.putWorldCatalog(cacheKey, result);
+        return result;
     }
 
     @Override
     public List<WorldDiscoveryElementProjection> listActiveElementsForAge(Integer targetAge) {
+        String cacheKey = "elements:age=" + targetAge;
+        Optional<List<WorldDiscoveryElementProjection>> cached = gameCacheStorage.getWorldCatalog(cacheKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
         List<WorldDiscoveryElement> elements = worldDiscoveryElementRepository
             .findByStatusAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
                 ContentStatus.ACTIVE, targetAge);
-        return elements.stream().map(this::toWorldDiscoveryElementProjection).toList();
+        List<WorldDiscoveryElementProjection> result = elements.stream().map(this::toWorldDiscoveryElementProjection).toList();
+        gameCacheStorage.putWorldCatalog(cacheKey, result);
+        return result;
     }
 
     @Override
     public List<WorldDiscoveryElementProjection> listActiveElementsByBiomeAndAge(Biome biome, Integer targetAge) {
+        String cacheKey = "elements:biome=" + biome.name() + ":age=" + targetAge;
+        Optional<List<WorldDiscoveryElementProjection>> cached = gameCacheStorage.getWorldCatalog(cacheKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
         List<WorldDiscoveryElement> elements = worldDiscoveryElementRepository
             .findByStatusAndBiomeAndMinAgeLessThanEqualAndMaxAgeGreaterThanEqual(
                 ContentStatus.ACTIVE, biome, targetAge);
-        return elements.stream().map(this::toWorldDiscoveryElementProjection).toList();
+        List<WorldDiscoveryElementProjection> result = elements.stream().map(this::toWorldDiscoveryElementProjection).toList();
+        gameCacheStorage.putWorldCatalog(cacheKey, result);
+        return result;
     }
 
     @Override
@@ -79,8 +112,15 @@ public class WorldCatalogService implements WorldCatalogUseCase {
         if (topicId == null) {
             return Collections.emptyList();
         }
+        String cacheKey = "activities:topic=" + topicId + ":age=" + targetAge;
+        Optional<List<CompatibleActivityProjection>> cached = gameCacheStorage.getWorldCatalog(cacheKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
         List<Activity> activities = activityRepository.findByStatusAndTopicId(topicId, ContentStatus.ACTIVE, targetAge);
-        return activities.stream().map(this::toCompatibleActivityProjection).toList();
+        List<CompatibleActivityProjection> result = activities.stream().map(this::toCompatibleActivityProjection).toList();
+        gameCacheStorage.putWorldCatalog(cacheKey, result);
+        return result;
     }
 
     private WorldHostProjection toWorldHostProjection(WorldHost source) {

@@ -9,6 +9,8 @@ public interface RecognitionElementRepository {
 
     List<RecognitionElement> findByTopicIdAndStatus(Long topicId, ContentStatus status);
 
+    List<RecognitionElement> findByTopicIdInAndStatus(List<Long> topicIds, ContentStatus status);
+
     RecognitionElement save(RecognitionElement element);
 
     boolean existsById(Long id);

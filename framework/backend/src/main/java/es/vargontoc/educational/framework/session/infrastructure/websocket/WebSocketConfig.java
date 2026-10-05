@@ -34,7 +34,9 @@ import org.springframework.web.socket.server.support.WebSocketHttpRequestHandler
 import java.util.Map;
 
 import es.vargontoc.educational.framework.shared.infrastructure.SqlStatementCounter;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
+import es.vargontoc.educational.framework.world.service.ChildAgeResolver;
 
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -62,6 +64,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final MeterRegistry meterRegistry;
     private final SqlStatementCounter sqlStatementCounter;
     private final WebSocketGameProperties wsGameProperties;
+    private final ChildAgeResolver childAgeResolver;
+    private final GameCacheStorage gameCacheStorage;
 
     public WebSocketConfig(
             ChildSessionUseCase childSessionUseCase,
@@ -83,7 +87,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             AccessibleColorPaletteRepository accessibleColorPaletteRepository,
             MeterRegistry meterRegistry,
             SqlStatementCounter sqlStatementCounter,
-            WebSocketGameProperties wsGameProperties) {
+            WebSocketGameProperties wsGameProperties,
+            ChildAgeResolver childAgeResolver,
+            GameCacheStorage gameCacheStorage) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.stompConnectAuthInterceptor = stompConnectAuthInterceptor;
@@ -104,6 +110,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.meterRegistry = meterRegistry;
         this.sqlStatementCounter = sqlStatementCounter;
         this.wsGameProperties = wsGameProperties;
+        this.childAgeResolver = childAgeResolver;
+        this.gameCacheStorage = gameCacheStorage;
     }
 
     @Override
@@ -158,6 +166,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             recognitionElementRepository, worldExplorationStateRepository,
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
             webSocketMetrics(), sqlStatementCounter, wsGameProperties,
-            sessionMessageDispatcher());
+            sessionMessageDispatcher(), childAgeResolver, gameCacheStorage);
     }
 }

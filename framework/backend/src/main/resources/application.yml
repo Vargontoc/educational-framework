@@ -123,3 +123,14 @@ app:
         option-count: ${APP_RECOGNITION_HARD_OPTION_COUNT:4}
         touch-enable-delay-ms: ${APP_RECOGNITION_HARD_TOUCH_DELAY_MS:0}
         guide-chrom-enabled: ${APP_RECOGNITION_HARD_GUIDE_CHROM:false}
+  cache:
+    recognition-element-max-size: ${APP_CACHE_RECOGNITION_ELEMENT_MAX_SIZE:512}
+    recognition-element-ttl-minutes: ${APP_CACHE_RECOGNITION_ELEMENT_TTL_MINUTES:30}
+    accessible-color-max-size: ${APP_CACHE_ACCESSIBLE_COLOR_MAX_SIZE:256}
+    accessible-color-ttl-minutes: ${APP_CACHE_ACCESSIBLE_COLOR_TTL_MINUTES:60}
+    world-catalog-max-size: ${APP_CACHE_WORLD_CATALOG_MAX_SIZE:64}
+    world-catalog-ttl-minutes: ${APP_CACHE_WORLD_CATALOG_TTL_MINUTES:15}
+    avatar-event-max-size: ${APP_CACHE_AVATAR_EVENT_MAX_SIZE:128}
+    avatar-event-ttl-minutes: ${APP_CACHE_AVATAR_EVENT_TTL_MINUTES:30}
+    child-profile-max-size: ${APP_CACHE_CHILD_PROFILE_MAX_SIZE:16}
+    child-profile-ttl-minutes: ${APP_CACHE_CHILD_PROFILE_TTL_MINUTES:10}

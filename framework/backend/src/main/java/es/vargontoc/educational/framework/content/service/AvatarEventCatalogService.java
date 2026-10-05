@@ -8,20 +8,25 @@ import es.vargontoc.educational.framework.content.ports.in.AvatarEventCatalogUse
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.content.validation.AvatarEventCatalogValidator;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Transactional
 public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
 
     private final AvatarEventCatalogRepository avatarEventCatalogRepository;
     private final AvatarEventCatalogValidator avatarEventCatalogValidator;
+    private final GameCacheStorage gameCacheStorage;
 
-    public AvatarEventCatalogService(AvatarEventCatalogRepository avatarEventCatalogRepository) {
+    public AvatarEventCatalogService(AvatarEventCatalogRepository avatarEventCatalogRepository,
+                                     GameCacheStorage gameCacheStorage) {
         this.avatarEventCatalogRepository = avatarEventCatalogRepository;
         this.avatarEventCatalogValidator = new AvatarEventCatalogValidator();
+        this.gameCacheStorage = gameCacheStorage;
     }
 
     @Override
@@ -37,7 +42,9 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
         event.setBiome(biome);
         event.setCreatedAt(LocalDateTime.now());
 
-        return avatarEventCatalogRepository.save(event);
+        var saved = avatarEventCatalogRepository.save(event);
+        gameCacheStorage.invalidateAllAvatarEvents();
+        return saved;
     }
 
     @Override
@@ -56,13 +63,27 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<AvatarEventCatalog> listAvatarEventsByEventType(AvatarEventType eventType) {
-        return avatarEventCatalogRepository.findByEventType(eventType);
+        String cacheKey = "avatarEvents:type=" + eventType.name();
+        Optional<List<AvatarEventCatalog>> cached = gameCacheStorage.getAvatarEvent(cacheKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+        List<AvatarEventCatalog> result = avatarEventCatalogRepository.findByEventType(eventType);
+        gameCacheStorage.putAvatarEvent(cacheKey, result);
+        return result;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<AvatarEventCatalog> listActiveAvatarEventsByFilters(AvatarEventType eventType, TonePreset tone, String locale) {
-        return avatarEventCatalogRepository.findActiveByFilters(eventType, tone, locale);
+        String cacheKey = "avatarEvents:active:type=" + eventType + ":tone=" + tone + ":locale=" + locale;
+        Optional<List<AvatarEventCatalog>> cached = gameCacheStorage.getAvatarEvent(cacheKey);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+        List<AvatarEventCatalog> result = avatarEventCatalogRepository.findActiveByFilters(eventType, tone, locale);
+        gameCacheStorage.putAvatarEvent(cacheKey, result);
+        return result;
     }
 
     @Override
@@ -80,6 +101,8 @@ public class AvatarEventCatalogService implements AvatarEventCatalogUseCase {
         existing.setBiome(biome);
         existing.setUpdatedAt(LocalDateTime.now());
 
-        return avatarEventCatalogRepository.save(existing);
+        var saved = avatarEventCatalogRepository.save(existing);
+        gameCacheStorage.invalidateAllAvatarEvents();
+        return saved;
     }
 }

@@ -27,6 +27,7 @@ import es.vargontoc.educational.framework.game.model.recognition.RecognitionStat
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
 import es.vargontoc.educational.framework.game.ports.out.GameStateRegistry;
 import es.vargontoc.educational.framework.session.model.ChildSession;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 import es.vargontoc.educational.framework.world.model.WorldDestinationSelectionResult;
 import es.vargontoc.educational.framework.world.ports.in.WorldGameStartUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
@@ -127,7 +128,9 @@ class GameWebSocketHandlerTest {
             worldHeartbeatUseCase, worldGameStartUseCase, worldStateRegistry, worldOrchestrator,
             recognitionElementRepository, worldExplorationStateRepository,
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
-            wsMetrics, SqlStatementCounter.NOOP, wsProps, testDispatcher);
+            wsMetrics, SqlStatementCounter.NOOP, wsProps, testDispatcher,
+            new es.vargontoc.educational.framework.world.service.ChildAgeResolver(),
+            createNoopCacheStorage());
         lenient().when(session.getId()).thenReturn("test-session-id");
         lenient().when(session.getAttributes()).thenReturn(new HashMap<>());
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))
@@ -1489,5 +1492,16 @@ class GameWebSocketHandlerTest {
         state.setCurrentStreak(0);
         state.setStarsEarned(0);
         return state;
+    }
+
+    static GameCacheStorage createNoopCacheStorage() {
+        return new GameCacheStorage(
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(1).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(1).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(1).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(1).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(1).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(1).build()
+        );
     }
 }

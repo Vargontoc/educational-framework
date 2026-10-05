@@ -17,6 +17,7 @@ import es.vargontoc.educational.framework.content.ports.out.DifficultyLevelRepos
 import es.vargontoc.educational.framework.content.ports.out.WorldDiscoveryElementRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldHostRepository;
 import es.vargontoc.educational.framework.content.ports.out.WorldNarrativeSituationRepository;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,12 +54,21 @@ class WorldCatalogServiceTest {
 
     @BeforeEach
     void setUp() {
+        GameCacheStorage cacheStorage = new GameCacheStorage(
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build()
+        );
         service = new WorldCatalogService(
             worldHostRepository,
             worldNarrativeSituationRepository,
             worldDiscoveryElementRepository,
             activityRepository,
-            difficultyLevelRepository
+            difficultyLevelRepository,
+            cacheStorage
         );
     }
 

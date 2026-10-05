@@ -63,6 +63,8 @@ import es.vargontoc.educational.framework.game.model.memory.MemoryState;
 import es.vargontoc.educational.framework.game.model.recognition.RecognitionState;
 
 import es.vargontoc.educational.framework.shared.infrastructure.SqlStatementCounter;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
+import es.vargontoc.educational.framework.world.service.ChildAgeResolver;
 
 import es.vargontoc.educational.framework.shared.config.WebSocketGameProperties;
 
@@ -104,6 +106,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final SqlStatementCounter sqlStatementCounter;
     private final WebSocketGameProperties wsGameProperties;
     private final SessionMessageDispatcher dispatcher;
+    private final ChildAgeResolver childAgeResolver;
+    private final GameCacheStorage gameCacheStorage;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
@@ -129,7 +133,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                             WebSocketMetrics metrics,
                             SqlStatementCounter sqlStatementCounter,
                             WebSocketGameProperties wsGameProperties,
-                            SessionMessageDispatcher dispatcher) {
+                            SessionMessageDispatcher dispatcher,
+                            ChildAgeResolver childAgeResolver,
+                            GameCacheStorage gameCacheStorage) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarservice = avatarService;
@@ -148,6 +154,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         this.sqlStatementCounter = sqlStatementCounter;
         this.wsGameProperties = wsGameProperties;
         this.dispatcher = dispatcher;
+        this.childAgeResolver = childAgeResolver;
+        this.gameCacheStorage = gameCacheStorage;
         registerGauges();
     }
 
@@ -295,17 +303,18 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         ws.setChildProfileId(profileId);
         ws.setStatus(WorldRuntimeStatus.ACTIVE);
 
+        Integer childAge = childAgeResolver.resolveEffectiveAgeBoxed();
         WorldDestination destination;
         var persistedState = worldExplorationStateRepository.findByChildProfileId(profileId);
         if (persistedState.isPresent() && persistedState.get().getBiome() != null) {
             String persistedBiome = persistedState.get().getBiome();
-            if (worldOrchestrator.isBiomeAvailable(persistedBiome, 3)) {
-                destination = worldOrchestrator.buildDestinationForBiome(childSessionId, persistedBiome, 3);
+            if (worldOrchestrator.isBiomeAvailable(persistedBiome, childAge)) {
+                destination = worldOrchestrator.buildDestinationForBiome(childSessionId, persistedBiome, childAge);
             } else {
-                destination = worldOrchestrator.buildDestinationForBiomeOrDefault(childSessionId, Biome.MEADOW.name(), 3);
+                destination = worldOrchestrator.buildDestinationForBiomeOrDefault(childSessionId, Biome.MEADOW.name(), childAge);
             }
         } else {
-            var select = worldOrchestrator.selectDestination(childSessionId, profileId, null, 3);
+            var select = worldOrchestrator.selectDestination(childSessionId, profileId, null, childAge);
             destination = select.getDestination();
         }
 
@@ -396,6 +405,17 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
         } catch (Exception e) {
             LOGGER.warn("Could not send round audio to childSessionId={}: {}", childSessionId, e.getMessage());
+        }
+    }
+
+    // SPRINT-118: Clear audio data from GameState after sending to reduce memory retention
+    private void clearAudioDataFromState(es.vargontoc.educational.framework.game.model.GameState state) {
+        if (state != null && state.getRoundAudioResult() != null) {
+            RoundAudioResult original = state.getRoundAudioResult();
+            if (original.audioAvailable()) {
+                state.setRoundAudioResult(RoundAudioResult.withAudio(
+                    original.audioId(), null, original.text()));
+            }
         }
     }
 
@@ -531,6 +551,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     && !result.gameCompleted()) {
                 phaseStart = System.nanoTime();
                 sendRoundAudioIfPresent(childSessionId, result.updatedState().getRoundAudioResult());
+                // SPRINT-118: Clear audio data from state after sending to reduce memory retention
+                clearAudioDataFromState(result.updatedState());
                 metrics.recordPhaseDuration("game_action", "audio", "ok", System.nanoTime() - phaseStart);
             }
 
@@ -769,13 +791,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             payload.put("starsEarned", state.getStarsEarned());
         }
         if (state.getEnginePayload() != null && state.getEngine() == EngineType.MEMORY) {
-            Map<String, Object> memoryPayload = memoryStatePayload(state.getEnginePayload());
+            Map<String, Object> memoryPayload = memoryStatePayload(state);
             if (memoryPayload != null) {
                 payload.put("memoryState", memoryPayload);
             }
         }
         if (state.getEnginePayload() != null && state.getEngine() == EngineType.RECOGNITION) {
-            RecognitionState recognitionState = deserializeRecognitionState(state.getEnginePayload());
+            RecognitionState recognitionState = getOrDeserializeRecognitionState(state);
             Map<String, Object> recognitionPayload = new java.util.HashMap<>();
             recognitionPayload.put("recognitionCategory", recognitionState.getRecognitionCategory() != null
                 ? recognitionState.getRecognitionCategory().name() : null);
@@ -841,12 +863,36 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         return payload;
     }
 
+    // SPRINT-118: Use typed state from GameState when available to avoid repeated JSON parsing
+    private RecognitionState getOrDeserializeRecognitionState(es.vargontoc.educational.framework.game.model.GameState state) {
+        if (state.getTypedRecognitionState() != null) {
+            return state.getTypedRecognitionState();
+        }
+        RecognitionState deserialized = deserializeRecognitionState(state.getEnginePayload());
+        state.setTypedRecognitionState(deserialized);
+        return deserialized;
+    }
+
+    private MemoryState getOrDeserializeMemoryState(es.vargontoc.educational.framework.game.model.GameState state) {
+        if (state.getTypedMemoryState() != null) {
+            return state.getTypedMemoryState();
+        }
+        MemoryState deserialized = deserializeMemoryState(state.getEnginePayload());
+        state.setTypedMemoryState(deserialized);
+        return deserialized;
+    }
+
     private ColorVisionMode resolveColorVisionMode(Long childProfileId) {
         if (childProfileId == null) {
             return ColorVisionMode.NONE;
         }
         try {
-            ChildProfile profile = childProfileUseCase.getChild(childProfileId);
+            ChildProfile profile = gameCacheStorage.<ChildProfile>getChildProfile(childProfileId)
+                .orElseGet(() -> {
+                    ChildProfile p = childProfileUseCase.getChild(childProfileId);
+                    gameCacheStorage.putChildProfile(childProfileId, p);
+                    return p;
+                });
             return profile.getColorVisionMode() != null ? profile.getColorVisionMode() : ColorVisionMode.NONE;
         } catch (ResourceNotFoundException e) {
             LOGGER.warn("ChildProfile {} not found, defaulting to ColorVisionMode.NONE", childProfileId);
@@ -855,21 +901,49 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private Map<String, Object> resolveAccessibleColor(Long accessibleColorId, ColorVisionMode colorVisionMode) {
-        return accessibleColorRepository.findById(accessibleColorId)
-            .flatMap(accessibleColor -> accessibleColorPaletteRepository
-                .findByAccessibleColorIdAndColorVisionMode(accessibleColorId, colorVisionMode)
-                .map(palette -> {
-                    Map<String, Object> result = new java.util.LinkedHashMap<>();
-                    result.put("value", palette.getAccessibleColorValue());
-                    result.put("shapeIcon", accessibleColor.getShapeIcon());
-                    result.put("labelKey", palette.getAccessibleLabelKey());
-                    return result;
-                }))
-            .orElseGet(() -> {
-                LOGGER.warn("No AccessibleColorPalette found for accessibleColorId={} colorVisionMode={}",
-                    accessibleColorId, colorVisionMode);
-                return null;
-            });
+        var cachedColor = gameCacheStorage.getAccessibleColor(accessibleColorId);
+        var cachedPalette = gameCacheStorage.getAccessibleColorPalette(accessibleColorId, colorVisionMode.name());
+
+        GameCacheStorage.CachedAccessibleColor color = cachedColor.orElseGet(() -> {
+            return accessibleColorRepository.findById(accessibleColorId)
+                .map(ac -> {
+                    var cached = new GameCacheStorage.CachedAccessibleColor(
+                        ac.getId(), ac.getConceptualIdentity(), ac.getLabelKey(),
+                        ac.getShapeIcon(), ac.getSymbol());
+                    gameCacheStorage.putAccessibleColor(accessibleColorId, cached);
+                    return cached;
+                })
+                .orElse(null);
+        });
+
+        if (color == null) {
+            return null;
+        }
+
+        GameCacheStorage.CachedAccessibleColorPalette palette = cachedPalette.orElseGet(() -> {
+            return accessibleColorPaletteRepository.findByAccessibleColorIdAndColorVisionMode(accessibleColorId, colorVisionMode)
+                .map(p -> {
+                    String cvmName = p.getColorVisionMode() != null ? p.getColorVisionMode().name() : colorVisionMode.name();
+                    var cached = new GameCacheStorage.CachedAccessibleColorPalette(
+                        p.getId(), p.getAccessibleColorId(), cvmName,
+                        p.getAccessibleColorValue(), p.getAccessibleLabelKey());
+                    gameCacheStorage.putAccessibleColorPalette(accessibleColorId, colorVisionMode.name(), cached);
+                    return cached;
+                })
+                .orElse(null);
+        });
+
+        if (palette == null) {
+            LOGGER.warn("No AccessibleColorPalette found for accessibleColorId={} colorVisionMode={}",
+                accessibleColorId, colorVisionMode);
+            return null;
+        }
+
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("value", palette.accessibleColorValue());
+        result.put("shapeIcon", color.shapeIcon());
+        result.put("labelKey", palette.accessibleLabelKey());
+        return result;
     }
 
     /**
@@ -877,14 +951,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
      * layout is not disclosed; {@code elements} describes every element of the board (for loading the images)
      * without saying where each one is. Internal fields (attempt buffer, counters, response times) are excluded.
      */
-    private Map<String, Object> memoryStatePayload(String enginePayload) {
-        MemoryState memory;
-        try {
-            memory = objectMapper.readValue(enginePayload, MemoryState.class);
-        } catch (Exception e) {
-            LOGGER.warn("Failed to deserialize MemoryState from enginePayload: {}", e.getMessage());
-            return null;
-        }
+    private Map<String, Object> memoryStatePayload(es.vargontoc.educational.framework.game.model.GameState state) {
+        MemoryState memory = getOrDeserializeMemoryState(state);
 
         List<Map<String, Object>> cards = new java.util.ArrayList<>();
         java.util.Set<Long> elementIds = new java.util.LinkedHashSet<>();
@@ -941,6 +1009,15 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         } catch (Exception e) {
             LOGGER.warn("Failed to deserialize RecognitionState from enginePayload: {}", e.getMessage());
             return new RecognitionState();
+        }
+    }
+
+    private MemoryState deserializeMemoryState(String payload) {
+        try {
+            return objectMapper.readValue(payload, MemoryState.class);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to deserialize MemoryState from enginePayload: {}", e.getMessage());
+            return null;
         }
     }
 
@@ -1043,7 +1120,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             }
 
             var childSession = childSessionUseCase.getSession(childSessionId);
-            Integer childAge = 3;
+            Integer childAge = childAgeResolver.resolveEffectiveAgeBoxed();
 
             WorldDestination destination = worldOrchestrator.buildDestinationForBiome(childSessionId, targetBiome.name(), childAge);
 

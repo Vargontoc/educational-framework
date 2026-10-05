@@ -42,24 +42,36 @@ public class RoundAudioService {
      * @return RoundAudioResult with audio data, or noAudio if NPC is disabled or generation fails
      */
     public RoundAudioResult generateRoundAudio(Long childProfileId, String targetElementId) {
+        return generateRoundAudio(childProfileId, targetElementId, null, null);
+    }
+
+    /**
+     * Generates audio for the target element of a recognition round, reusing pre-loaded data.
+     *
+     * @param childProfileId  the child profile to check NPC settings
+     * @param targetElementId the element ID (numeric string) to get narration text
+     * @param preloadedProfile the already-loaded ChildProfile (may be null to fetch from DB)
+     * @param preloadedElement the already-loaded RecognitionElement (may be null to fetch from DB)
+     * @return RoundAudioResult with audio data, or noAudio if NPC is disabled or generation fails
+     */
+    public RoundAudioResult generateRoundAudio(Long childProfileId, String targetElementId,
+                                                ChildProfile preloadedProfile,
+                                                RecognitionElement preloadedElement) {
         if (childProfileId == null || targetElementId == null || targetElementId.isBlank()) {
             return RoundAudioResult.noAudio(null);
         }
 
-        // Check NPC settings
-        if (!isNpcAudioEnabled(childProfileId)) {
+        if (!isNpcAudioEnabled(childProfileId, preloadedProfile)) {
             log.debug("NPC audio disabled for childProfileId={}, skipping round audio", childProfileId);
             return RoundAudioResult.noAudio(null);
         }
 
-        // Resolve element and extract text
-        String text = resolveNubiAudioText(targetElementId);
+        String text = resolveNubiAudioText(targetElementId, preloadedElement);
         if (text == null || text.isBlank()) {
             log.debug("No nubi-audio text found for elementId={}", targetElementId);
             return RoundAudioResult.noAudio(null);
         }
 
-        // Generate audio
         try {
             byte[] audioData = audioUseCase.getAudio(AudioRequest.withPreset(text, TonePreset.CALM));
             if (audioData == null || audioData.length == 0) {
@@ -74,13 +86,16 @@ public class RoundAudioService {
         }
     }
 
-    /**
-     * Checks whether NPC audio is enabled for the given child profile.
-     * Both npcEnabled and npcVoiceEnabled must be true.
-     */
     private boolean isNpcAudioEnabled(Long childProfileId) {
+        return isNpcAudioEnabled(childProfileId, null);
+    }
+
+    private boolean isNpcAudioEnabled(Long childProfileId, ChildProfile preloadedProfile) {
         try {
-            ChildProfile profile = childProfileUseCase.getChild(childProfileId);
+            ChildProfile profile = preloadedProfile;
+            if (profile == null) {
+                profile = childProfileUseCase.getChild(childProfileId);
+            }
             return profile != null && profile.isNpcEnabled() && profile.isNpcVoiceEnabled();
         } catch (Exception e) {
             log.warn("Failed to resolve ChildProfile {} for NPC check: {}", childProfileId, e.getMessage());
@@ -88,17 +103,21 @@ public class RoundAudioService {
         }
     }
 
-    /**
-     * Extracts the "nubi-audio" text from a RecognitionElement's resourceRefs JSON.
-     */
     String resolveNubiAudioText(String targetElementId) {
+        return resolveNubiAudioText(targetElementId, null);
+    }
+
+    String resolveNubiAudioText(String targetElementId, RecognitionElement preloadedElement) {
         try {
-            Long elementId = Long.valueOf(targetElementId);
-            var elements = recognitionElementRepository.findAllById(java.util.List.of(elementId));
-            if (elements.isEmpty()) {
-                return null;
+            RecognitionElement element = preloadedElement;
+            if (element == null) {
+                Long elementId = Long.valueOf(targetElementId);
+                var elements = recognitionElementRepository.findAllById(java.util.List.of(elementId));
+                if (elements.isEmpty()) {
+                    return null;
+                }
+                element = elements.get(0);
             }
-            RecognitionElement element = elements.get(0);
             return extractNubiAudioFromResourceRefs(element.getResourceRefs());
         } catch (NumberFormatException e) {
             log.debug("targetElementId '{}' is not a numeric ID", targetElementId);
@@ -106,9 +125,6 @@ public class RoundAudioService {
         }
     }
 
-    /**
-     * Parses the resourceRefs JSON string and extracts the "nubi-audio" value.
-     */
     String extractNubiAudioFromResourceRefs(String resourceRefs) {
         return RecognitionResourceRefs.nubiAudio(resourceRefs);
     }

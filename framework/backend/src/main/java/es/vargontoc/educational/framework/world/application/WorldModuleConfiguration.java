@@ -27,6 +27,7 @@ import es.vargontoc.educational.framework.world.service.WorldInactivityConfig;
 import es.vargontoc.educational.framework.world.service.WorldNarrativeCompletionService;
 import es.vargontoc.educational.framework.world.service.WorldOrchestratorService;
 import es.vargontoc.educational.framework.world.service.WorldProposalService;
+import es.vargontoc.educational.framework.world.service.ChildAgeResolver;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -97,5 +98,10 @@ class WorldModuleConfiguration {
                                                 WorldInactivityConfig inactivityConfig,
                                                 WorldExplorationStateRepository worldExplorationStateRepository) {
         return new WorldHeartbeatService(worldStateRegistry, worldProposalService, childSessionUseCase, inactivityConfig, worldExplorationStateRepository);
+    }
+
+    @Bean
+    ChildAgeResolver childAgeResolver() {
+        return new ChildAgeResolver();
     }
 }

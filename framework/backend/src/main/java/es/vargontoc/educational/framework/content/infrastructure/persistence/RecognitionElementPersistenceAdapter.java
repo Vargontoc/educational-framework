@@ -37,6 +37,17 @@ public class RecognitionElementPersistenceAdapter implements RecognitionElementR
     }
 
     @Override
+    public List<RecognitionElement> findByTopicIdInAndStatus(List<Long> topicIds, ContentStatus status) {
+        if (topicIds == null || topicIds.isEmpty()) {
+            return List.of();
+        }
+        return jpaRepository.findByTopicIdInAndStatus(topicIds, status.name())
+                .stream()
+                .map(RecognitionElementPersistenceAdapter::toDomain)
+                .toList();
+    }
+
+    @Override
     public RecognitionElement save(RecognitionElement element) {
         return toDomain(jpaRepository.save(toJpa(element)));
     }

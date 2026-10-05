@@ -173,7 +173,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(10L)), eq(ContentStatus.ACTIVE)))
                 .thenReturn(List.of(element));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
@@ -207,7 +207,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
                 .thenReturn(List.of(RecognitionCategory.ANIMAL));
         when(topicUseCase.listTopicsByRecognitionTypeAndHabitat(RecognitionType.ANIMAL, Biome.FARM))
                 .thenReturn(List.of(farmAnimalTopic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(21L, ContentStatus.ACTIVE))
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(21L)), eq(ContentStatus.ACTIVE)))
                 .thenReturn(List.of(farmElement));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
@@ -241,10 +241,8 @@ class GameOrchestratorServiceCandidateFilteringTest {
                 .thenReturn(List.of(RecognitionCategory.SHAPE));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.SHAPE))
                 .thenReturn(List.of(shapeTopic, anotherShapeTopic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(30L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(element30));
-        when(recognitionElementRepository.findByTopicIdAndStatus(31L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(element31));
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(30L, 31L)), eq(ContentStatus.ACTIVE)))
+                .thenReturn(List.of(element30, element31));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
         GameState result = orchestratorService.startGame(100L, 1L, launchContext);
@@ -297,7 +295,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(60L, ContentStatus.ACTIVE))
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(60L)), eq(ContentStatus.ACTIVE)))
                 .thenReturn(List.of());
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
@@ -330,10 +328,8 @@ class GameOrchestratorServiceCandidateFilteringTest {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(letterTopic, anotherLetterTopic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(50L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(element50));
-        when(recognitionElementRepository.findByTopicIdAndStatus(51L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(element51));
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(50L, 51L)), eq(ContentStatus.ACTIVE)))
+                .thenReturn(List.of(element50, element51));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
         when(gameStateRegistry.findByGameId(any())).thenAnswer(invocation -> {
             GameState savedState = new GameState();
@@ -374,7 +370,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
                 .thenReturn(List.of(RecognitionCategory.COLOR));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.COLOR))
                 .thenReturn(List.of(colorTopic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(70L, ContentStatus.ACTIVE))
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(70L)), eq(ContentStatus.ACTIVE)))
                 .thenReturn(List.of(red, blue));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
@@ -407,7 +403,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
                 .thenReturn(List.of(RecognitionCategory.SHAPE));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.SHAPE))
                 .thenReturn(List.of(shapeTopic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(80L, ContentStatus.ACTIVE))
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(80L)), eq(ContentStatus.ACTIVE)))
                 .thenReturn(List.of(circle, oval));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
@@ -438,7 +434,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
                 .thenReturn(List.of(RecognitionCategory.COLOR));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.COLOR))
                 .thenReturn(List.of(colorTopic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(90L, ContentStatus.ACTIVE))
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(90L)), eq(ContentStatus.ACTIVE)))
                 .thenReturn(List.of(red, blue));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
@@ -522,7 +518,7 @@ class GameOrchestratorServiceCandidateFilteringTest {
         when(topicUseCase.listTopicsByRecognitionTypeAndHabitat(eq(RecognitionType.ANIMAL), any(Biome.class)))
                 .thenReturn(List.of());
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.ANIMAL)).thenReturn(List.of(animalTopic));
-        when(recognitionElementRepository.findByTopicIdAndStatus(20L, ContentStatus.ACTIVE)).thenReturn(elements);
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(20L)), eq(ContentStatus.ACTIVE))).thenReturn(elements);
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
 
         return service.startGame(100L, 1L, new LaunchContext(null, biome, null, null));

@@ -40,6 +40,7 @@ import es.vargontoc.educational.framework.content.service.TopicService;
 import es.vargontoc.educational.framework.content.service.TracingPatternService;
 import es.vargontoc.educational.framework.content.service.WorldCatalogService;
 import es.vargontoc.educational.framework.game.infrastructure.persistence.RecognitionSimilarityPairJpaRepository;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivityInformationPort;
 import es.vargontoc.educational.framework.tracking.ports.out.ActivitySummaryRepository;
 import tools.jackson.databind.ObjectMapper;
@@ -79,8 +80,9 @@ class ContentModuleConfiguration {
 
 
     @Bean
-    public AvatarEventCatalogService avatarEventCatalogService(AvatarEventCatalogRepository avatarEventCatalogRepository) {
-        return new AvatarEventCatalogService(avatarEventCatalogRepository);
+    public AvatarEventCatalogService avatarEventCatalogService(AvatarEventCatalogRepository avatarEventCatalogRepository,
+                                                               GameCacheStorage gameCacheStorage) {
+        return new AvatarEventCatalogService(avatarEventCatalogRepository, gameCacheStorage);
     }
 
     @Bean
@@ -113,9 +115,10 @@ class ContentModuleConfiguration {
             WorldNarrativeSituationRepository worldNarrativeSituationRepository,
             WorldDiscoveryElementRepository worldDiscoveryElementRepository,
             ActivityRepository activityRepository,
-            DifficultyLevelRepository difficultyLevelRepository) {
+            DifficultyLevelRepository difficultyLevelRepository,
+            GameCacheStorage gameCacheStorage) {
         return new WorldCatalogService(worldHostRepository, worldNarrativeSituationRepository,
-            worldDiscoveryElementRepository, activityRepository, difficultyLevelRepository);
+            worldDiscoveryElementRepository, activityRepository, difficultyLevelRepository, gameCacheStorage);
     }
 
     @Bean

@@ -91,7 +91,10 @@ public class MemoryEngine implements GameEnginePort {
         List<String> candidates = parseCandidates(engineParams);
         Map<String, List<String>> groupByElementId = parseGroupsByElementId(engineParams);
 
-        gameState.setEnginePayload(serializeState(buildInitialState(config, candidates, groupByElementId)));
+        MemoryState state = buildInitialState(config, candidates, groupByElementId);
+        gameState.setEnginePayload(serializeState(state));
+        // SPRINT-118: Keep typed state in memory to avoid repeated JSON parsing
+        gameState.setTypedMemoryState(state);
     }
 
     @Override
@@ -180,6 +183,8 @@ public class MemoryEngine implements GameEnginePort {
         if (completed) {
             gameState.setStarsEarned(calculateStars(state));
         }
+        // SPRINT-118: Keep typed state in memory to avoid repeated JSON parsing
+        gameState.setTypedMemoryState(state);
         return buildResult(gameState, state, resultType, responseTimeMs, context);
     }
 

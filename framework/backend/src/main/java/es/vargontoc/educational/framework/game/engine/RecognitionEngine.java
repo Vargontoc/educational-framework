@@ -95,6 +95,8 @@ public class RecognitionEngine implements GameEnginePort {
         RecognitionState state = buildInitialState(
                 candidates, roundParameters, candidateMetadata, category, comparisonMode);
         gameState.setEnginePayload(serializeState(state));
+        // SPRINT-118: Keep typed state in memory to avoid repeated JSON parsing
+        gameState.setTypedRecognitionState(state);
     }
 
     @Override
@@ -146,6 +148,8 @@ public class RecognitionEngine implements GameEnginePort {
         }
 
         gameState.setEnginePayload(serializeState(state));
+        // SPRINT-118: Keep typed state in memory to avoid repeated JSON parsing
+        gameState.setTypedRecognitionState(state);
 
         ActionResult result = new ActionResult();
         result.setResultType(correct ? ActionResultType.CORRECT : ActionResultType.INCORRECT);

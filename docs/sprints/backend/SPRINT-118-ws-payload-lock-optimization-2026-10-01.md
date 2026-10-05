@@ -12,20 +12,20 @@ Hallazgos de la auditoría 2026-10-01:
 - Memory reenvía `elements` completos y se re-parsea el tablero en cada volteo.
 
 ## Tareas
-- [ ] Mantener el estado de engine tipado en memoria y serializar a `enginePayload` solo al persistir/consolidar (valorar cuándo se necesita realmente el JSON)
-- [ ] `gameStateToPayload`: construir a partir del estado ya deserializado; ningún `readValue` repetido por mensaje
-- [ ] Separar la parte estática de la dinámica del payload (elementos/recursos vs. estado de la ronda) usando las cachés de SPRINT-117
-- [ ] `processAction`: mover fuera del lock todo lo que no muta el estado (p. ej. generar el payload de respuesta, enviar)
-- [ ] `flushBufferedAttempts`: registrar los intentos en una única transacción por lotes, fuera del lock cuando sea seguro, preservando atomicidad y orden de logros/resumen
-- [ ] Mover `byte[] audioData` fuera de `GameState`: guardar `audioId`/texto y resolver el audio desde la caché de audio al enviarlo
-- [ ] Evaluar (sin cambiar aún el contrato) el tamaño del payload de Memory y documentar la propuesta de no reenviar `elements` en volteos; se decide con los datos medidos y con el analista de frontend
+- [x] Mantener el estado de engine tipado en memoria y serializar a `enginePayload` solo al persistir/consolidar (valorar cuándo se necesita realmente el JSON)
+- [x] `gameStateToPayload`: construir a partir del estado ya deserializado; ningún `readValue` repetido por mensaje
+- [x] Separar la parte estática de la dinámica del payload (elementos/recursos vs. estado de la ronda) usando las cachés de SPRINT-117
+- [x] `processAction`: mover fuera del lock todo lo que no muta el estado (p. ej. generar el payload de respuesta, enviar)
+- [x] `flushBufferedAttempts`: registrar los intentos en una única transacción por lotes, fuera del lock cuando sea seguro, preservando atomicidad y orden de logros/resumen
+- [x] Mover `byte[] audioData` fuera de `GameState`: guardar `audioId`/texto y resolver el audio desde la caché de audio al enviarlo
+- [x] Evaluar (sin cambiar aún el contrato) el tamaño del payload de Memory y documentar la propuesta de no reenviar `elements` en volteos; se decide con los datos medidos y con el analista de frontend
 
 ### Tests
-- [ ] Equivalencia de payloads antes/después (snapshot) en Recognition y Memory
-- [ ] Concurrencia: acciones simultáneas sobre la misma partida siguen serializadas y sin pérdida de estado
-- [ ] Finalización: los intentos se registran todos, en orden, y los logros/resumen son idénticos
-- [ ] Fallo en medio de la consolidación: no se pierde ni duplica ningún intento (comportamiento actual conservado o mejorado y documentado)
-- [ ] `GameState` ya no retiene audio tras enviarlo
+- [x] Equivalencia de payloads antes/después (snapshot) en Recognition y Memory
+- [x] Concurrencia: acciones simultáneas sobre la misma partida siguen serializadas y sin pérdida de estado
+- [x] Finalización: los intentos se registran todos, en orden, y los logros/resumen son idénticos
+- [x] Fallo en medio de la consolidación: no se pierde ni duplica ningún intento (comportamiento actual conservado o mejorado y documentado)
+- [x] `GameState` ya no retiene audio tras enviarlo
 
 ### Pruebas manuales
 - [ ] Memory 4x3: voltear cartas rápido y comprobar tiempo percibido y estado correcto

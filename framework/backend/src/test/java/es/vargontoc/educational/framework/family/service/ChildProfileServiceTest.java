@@ -8,6 +8,7 @@ import es.vargontoc.educational.framework.family.ports.out.FamilyRepository;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,9 @@ class ChildProfileServiceTest {
 
     @Mock
     private es.vargontoc.educational.framework.avatar.application.ports.in.AvatarUseCase avatarUseCase;
+
+    @Mock
+    private GameCacheStorage gameCacheStorage;
 
     @InjectMocks
     private ChildProfileService childProfileService;

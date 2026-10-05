@@ -7,6 +7,7 @@ import es.vargontoc.educational.framework.content.model.ContentStatus;
 import es.vargontoc.educational.framework.content.ports.out.AvatarEventCatalogRepository;
 import es.vargontoc.educational.framework.shared.exception.ResourceNotFoundException;
 import es.vargontoc.educational.framework.shared.exception.ValidationException;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +33,15 @@ class AvatarEventCatalogServiceTest {
 
     @BeforeEach
     void setUp() {
-        avatarEventCatalogService = new AvatarEventCatalogService(avatarEventCatalogRepository);
+        GameCacheStorage cacheStorage = new GameCacheStorage(
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build(),
+            com.github.benmanes.caffeine.cache.Caffeine.newBuilder().maximumSize(10).build()
+        );
+        avatarEventCatalogService = new AvatarEventCatalogService(avatarEventCatalogRepository, cacheStorage);
     }
 
     @Test

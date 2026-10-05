@@ -24,6 +24,7 @@ import es.vargontoc.educational.framework.session.infrastructure.websocket.Sessi
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
 import es.vargontoc.educational.framework.session.ports.out.ChildSessionRepository;
+import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
 
 @Service
 @Transactional
@@ -39,15 +40,17 @@ public class ChildProfileService implements ChildProfileUseCase {
 
     private final ChildSessionUseCase sessions;
     private final AvatarUseCase avatarUseCase;
+    private final GameCacheStorage gameCacheStorage;
 
-    public ChildProfileService(AvatarUseCase avatar, FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildSessionRepository childSessionRepository, @Lazy SessionEventPublisher sessionEventPublisher, ChildProfileRepository childProfileRepository) {
+    public ChildProfileService(AvatarUseCase avatar, FamilyRepository familyRepository, ChildSessionUseCase sessions, ChildSessionRepository childSessionRepository, @Lazy SessionEventPublisher sessionEventPublisher, ChildProfileRepository childProfileRepository, GameCacheStorage gameCacheStorage) {
         this.familyRepository = familyRepository;
-        this.childProfileRepository = childProfileRepository;
         this.childSessionRepository = childSessionRepository;
         this.sessionEventPublisher = sessionEventPublisher;
+        this.childProfileRepository = childProfileRepository;
         this.childProfileValidator = new ChildProfileValidator();
         this.sessions = sessions;
         this.avatarUseCase = avatar;
+        this.gameCacheStorage = gameCacheStorage;
     }
 
     @Override
@@ -86,8 +89,12 @@ public class ChildProfileService implements ChildProfileUseCase {
     @Override
     @Transactional(readOnly = true)
     public ChildProfile getChild(Long id) {
-        return childProfileRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Child profile not found"));
+        return gameCacheStorage.<ChildProfile>getChildProfile(id).orElseGet(() -> {
+            ChildProfile profile = childProfileRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Child profile not found"));
+            gameCacheStorage.putChildProfile(id, profile);
+            return profile;
+        });
     }
 
     @Override
@@ -159,6 +166,7 @@ public class ChildProfileService implements ChildProfileUseCase {
 
         try { 
             var stored = childProfileRepository.save(child);
+            gameCacheStorage.invalidateChildProfile(stored.getId());
 
             if(oldName != null && !oldName.trim().isBlank())
                 avatarUseCase.generateEventWithName(child.getName(), oldName);
@@ -205,6 +213,7 @@ public class ChildProfileService implements ChildProfileUseCase {
         child.setActive(!child.isActive());
         child.setUpdatedAt(LocalDateTime.now());
         childProfileRepository.save(child);
+        gameCacheStorage.invalidateChildProfile(id);
 
         if(!child.isActive()) {
             sessions.getActiveSessions(child.getFamilyId()).stream().filter(x -> x.getChildProfileId().equals(id)).toList().forEach(e -> sessions.expelChild(e.getId()));
@@ -220,6 +229,7 @@ public class ChildProfileService implements ChildProfileUseCase {
 
         sessions.getActiveSessions(child.getFamilyId()).stream().filter(x -> x.getChildProfileId().equals(id)).toList().forEach(e -> sessions.closeSession(e.getId()));
         childProfileRepository.deleteById(id);
+        gameCacheStorage.invalidateChildProfile(id);
     }
 
 

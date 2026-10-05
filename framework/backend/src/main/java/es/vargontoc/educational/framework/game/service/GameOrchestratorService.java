@@ -261,8 +261,20 @@ public class GameOrchestratorService implements GameOrchestrator {
     public ActionProcessingResult processAction(Long gameId, String actionPayload, Long topicId, Integer responseTimeMs) {
         ReentrantLock lock = getLock(gameId);
         lock.lock();
+
+        GameState state;
+        ActionResult engineResult;
+        String targetBeforeAction;
+        Long resolvedElementId;
+        Long resolvedTopicId = topicId;
+        boolean gameCompleted;
+        List<UnlockedAchievement> allUnlockedAchievements = new ArrayList<>();
+        boolean difficultyChanged = false;
+        Long newDifficultyLevelId = null;
+        FlushResult flushResult = null;
+
         try {
-            GameState state = gameStateRegistry.findByGameId(gameId)
+            state = gameStateRegistry.findByGameId(gameId)
                 .orElseThrow(() -> new GameNotFoundException(gameId));
 
             if (state.getStatus() != GameStatus.IN_PROGRESS) {
@@ -286,47 +298,42 @@ public class GameOrchestratorService implements GameOrchestrator {
             GameEnginePort engine = resolveEngine(state);
 
             if (state.getEngine() == EngineType.MEMORY) {
-                // The memory prompt is spoken once, when the game is ready: never resend it with an action.
                 state.setRoundAudioResult(null);
             }
 
-            String targetBeforeAction = null;
+            targetBeforeAction = null;
             if (state.getEngine() == EngineType.RECOGNITION && state.getEnginePayload() != null) {
-                RecognitionState recStateBefore = deserializeRecognitionState(state.getEnginePayload());
+                RecognitionState recStateBefore = getOrDeserializeRecognitionState(state);
                 targetBeforeAction = recStateBefore.getTargetElementId();
             }
 
-            ActionResult engineResult = engine.processAction(state, actionPayload);
+            engineResult = engine.processAction(state, actionPayload);
 
             state.setLastActivityAt(LocalDateTime.now());
 
             AttemptResult trackingResult = mapToTrackingResult(engineResult.getResultType());
 
-            Long elementId = null;
+            resolvedElementId = null;
             if (targetBeforeAction != null) {
                 try {
-                    elementId = Long.valueOf(targetBeforeAction);
+                    resolvedElementId = Long.valueOf(targetBeforeAction);
                 } catch (NumberFormatException e) {
                     log.debug("targetElementId '{}' is not a numeric element ID, skipping element tracking", targetBeforeAction);
                 }
             }
 
-            if (state.getEngine() == EngineType.RECOGNITION && elementId != null) {
-                List<RecognitionElement> resolvedElements = recognitionElementRepository.findAllById(List.of(elementId));
+            if (state.getEngine() == EngineType.RECOGNITION && resolvedElementId != null) {
+                List<RecognitionElement> resolvedElements = recognitionElementRepository.findAllById(List.of(resolvedElementId));
                 if (!resolvedElements.isEmpty()) {
-                    topicId = resolvedElements.get(0).getTopicId();
+                    resolvedTopicId = resolvedElements.get(0).getTopicId();
                 } else {
-                    log.debug("No RecognitionElement found for elementId={}, keeping client-supplied topicId", elementId);
+                    log.debug("No RecognitionElement found for elementId={}, keeping client-supplied topicId", resolvedElementId);
                 }
             }
 
-            List<UnlockedAchievement> allUnlockedAchievements = new ArrayList<>();
-            boolean difficultyChanged = false;
-            Long newDifficultyLevelId = null;
-
             if (!state.isRepetition()) {
                 try {
-                    bufferAttempt(state, topicId, elementId, trackingResult, responseTimeMs, engineResult.getAttemptContext());
+                    bufferAttempt(state, resolvedTopicId, resolvedElementId, trackingResult, responseTimeMs, engineResult.getAttemptContext());
                 } catch (Exception e) {
                     log.warn("Tracking operation failed, continuing without tracking update: {}", e.getMessage());
                 }
@@ -334,17 +341,13 @@ public class GameOrchestratorService implements GameOrchestrator {
 
             if (engineResult.getResultType() == ActionResultType.CORRECT
                     && state.getEngine() == EngineType.RECOGNITION) {
-                if (targetBeforeAction != null && topicId != null) {
+                if (targetBeforeAction != null && resolvedTopicId != null) {
                     sessionAntiRepetitionRegistry.registerRecentElement(
-                            state.getChildSessionId(), topicId, targetBeforeAction);
-                }
-                // Generate round audio for the next round (if game not completed)
-                if (!engineResult.isCompleted()) {
-                    generateAndAttachRoundAudio(state);
+                            state.getChildSessionId(), resolvedTopicId, targetBeforeAction);
                 }
             }
 
-            boolean gameCompleted = engineResult.isCompleted();
+            gameCompleted = engineResult.isCompleted();
 
             if (gameCompleted) {
                 state.setStatus(GameStatus.COMPLETED);
@@ -352,7 +355,7 @@ public class GameOrchestratorService implements GameOrchestrator {
 
                 if (!state.isRepetition()) {
                     try {
-                        FlushResult flushResult = flushBufferedAttempts(state);
+                        flushResult = flushBufferedAttempts(state);
                         if (!flushResult.unlockedAchievements().isEmpty()) {
                             allUnlockedAchievements.addAll(flushResult.unlockedAchievements());
                         }
@@ -362,14 +365,14 @@ public class GameOrchestratorService implements GameOrchestrator {
                             state.setDifficultyLevelId(newDifficultyLevelId);
                         }
 
-                        if (topicId == null && state.getEngine() == EngineType.MEMORY) {
-                            topicId = resolveMemoryTopicId(state);
+                        if (resolvedTopicId == null && state.getEngine() == EngineType.MEMORY) {
+                            resolvedTopicId = resolveMemoryTopicId(state);
                         }
 
                         List<UnlockedAchievement> completionAchievements = evaluateGameCompletionAchievementsUseCase.evaluate(
                             state.getChildProfileId(),
                             state.getActivityId(),
-                            topicId
+                            resolvedTopicId
                         );
                         if (completionAchievements != null) {
                             allUnlockedAchievements.addAll(completionAchievements);
@@ -401,25 +404,31 @@ public class GameOrchestratorService implements GameOrchestrator {
 
                 gameStateRegistry.remove(gameId);
                 gameLocks.remove(gameId);
-
-                publishGameCompletedEvent(gameId, state.getChildSessionId(), state.getActivityId(), GameSessionFinalStatus.COMPLETED);
             } else {
                 gameStateRegistry.save(state);
             }
-
-            return new ActionProcessingResult(
-                engineResult.getResultType(),
-                responseTimeMs,
-                state,
-                difficultyChanged,
-                newDifficultyLevelId,
-                gameCompleted,
-                allUnlockedAchievements,
-                engineResult.getAttemptContext()
-            );
         } finally {
             lock.unlock();
         }
+
+        // SPRINT-118: Work moved outside the lock - audio generation and event publishing
+        if (gameCompleted) {
+            publishGameCompletedEvent(gameId, state.getChildSessionId(), state.getActivityId(), GameSessionFinalStatus.COMPLETED);
+        } else if (engineResult.getResultType() == ActionResultType.CORRECT
+                && state.getEngine() == EngineType.RECOGNITION) {
+            generateAndAttachRoundAudio(state);
+        }
+
+        return new ActionProcessingResult(
+            engineResult.getResultType(),
+            responseTimeMs,
+            state,
+            difficultyChanged,
+            newDifficultyLevelId,
+            gameCompleted,
+            allUnlockedAchievements,
+            engineResult.getAttemptContext()
+        );
     }
 
     @Override
@@ -688,15 +697,16 @@ public class GameOrchestratorService implements GameOrchestrator {
     private List<String> resolveMemoryCandidates(Activity activity) {
         List<String> candidates = new ArrayList<>();
         List<Long> topicIds = activity.getTopicIds() != null ? activity.getTopicIds() : List.of();
-        for (Long topicId : topicIds) {
-            List<RecognitionElement> elements = recognitionElementRepository.findByTopicIdAndStatus(topicId, ContentStatus.ACTIVE);
-            if (elements.isEmpty()) {
-                log.warn("Topic {} has zero active elements for the memory game, skipping", topicId);
-                continue;
-            }
-            for (RecognitionElement element : elements) {
-                candidates.add(String.valueOf(element.getId()));
-            }
+        if (topicIds.isEmpty()) {
+            return candidates;
+        }
+        List<RecognitionElement> elements = recognitionElementRepository.findByTopicIdInAndStatus(topicIds, ContentStatus.ACTIVE);
+        if (elements.isEmpty()) {
+            log.warn("Topics {} have zero active elements for the memory game", topicIds);
+            return candidates;
+        }
+        for (RecognitionElement element : elements) {
+            candidates.add(String.valueOf(element.getId()));
         }
         return candidates;
     }
@@ -739,16 +749,16 @@ public class GameOrchestratorService implements GameOrchestrator {
 
         List<String> candidates = new ArrayList<>();
         Map<String, String> codeByCandidateId = new HashMap<>();
-        for (Topic topic : topics) {
-            List<RecognitionElement> elements = recognitionElementRepository.findByTopicIdAndStatus(topic.getId(), ContentStatus.ACTIVE);
-            if (elements.isEmpty()) {
-                log.warn("Topic {} has zero active recognition elements, skipping", topic.getId());
-                continue;
-            }
-            for (RecognitionElement element : elements) {
+        List<Long> topicIdList = topics.stream().map(Topic::getId).toList();
+        if (!topicIdList.isEmpty()) {
+            List<RecognitionElement> allElements = recognitionElementRepository.findByTopicIdInAndStatus(topicIdList, ContentStatus.ACTIVE);
+            for (RecognitionElement element : allElements) {
                 candidates.add(String.valueOf(element.getId()));
                 codeByCandidateId.put(String.valueOf(element.getId()), element.getCode());
             }
+        }
+        if (candidates.isEmpty()) {
+            log.warn("Topics have zero active recognition elements");
         }
 
         if (biome != null) {
@@ -892,10 +902,11 @@ public class GameOrchestratorService implements GameOrchestrator {
         if (state.getEngine() != EngineType.RECOGNITION) {
             return;
         }
-        RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
+        RecognitionState recState = getOrDeserializeRecognitionState(state);
         recState.getRoundAttempts().add(new RoundAttemptRecord(
                 topicId, elementId, state.getDifficultyLevelId(), result, responseTimeMs, attemptContext));
         state.setEnginePayload(serializeRecognitionState(recState));
+        state.setTypedRecognitionState(recState);
     }
 
     private record FlushResult(
@@ -946,7 +957,7 @@ public class GameOrchestratorService implements GameOrchestrator {
         if (state.getEngine() != EngineType.RECOGNITION) {
             return List.of();
         }
-        return deserializeRecognitionState(state.getEnginePayload()).getRoundAttempts();
+        return getOrDeserializeRecognitionState(state).getRoundAttempts();
     }
 
     /**
@@ -954,7 +965,7 @@ public class GameOrchestratorService implements GameOrchestrator {
      * matched element, or the board's topic for a pair that did not match (no element to attribute it to).
      */
     private List<RoundAttemptRecord> bufferedMemoryAttempts(GameState state) {
-        MemoryState memoryState = deserializeMemoryState(state.getEnginePayload());
+        MemoryState memoryState = getOrDeserializeMemoryState(state);
         Map<String, Long> topicByElementId = memoryTopicsByElementId(memoryState);
         Long boardTopicId = topicByElementId.values().stream().findFirst().orElse(null);
 
@@ -1009,12 +1020,31 @@ public class GameOrchestratorService implements GameOrchestrator {
 
     private Long resolveMemoryTopicId(GameState state) {
         try {
-            return memoryTopicsByElementId(deserializeMemoryState(state.getEnginePayload()))
+            return memoryTopicsByElementId(getOrDeserializeMemoryState(state))
                     .values().stream().findFirst().orElse(null);
         } catch (Exception e) {
             log.debug("Could not resolve the memory topic for gameId={}: {}", state.getGameId(), e.getMessage());
             return null;
         }
+    }
+
+    // SPRINT-118: Typed state accessors to avoid repeated JSON parsing
+    private RecognitionState getOrDeserializeRecognitionState(GameState state) {
+        if (state.getTypedRecognitionState() != null) {
+            return state.getTypedRecognitionState();
+        }
+        RecognitionState deserialized = deserializeRecognitionState(state.getEnginePayload());
+        state.setTypedRecognitionState(deserialized);
+        return deserialized;
+    }
+
+    private MemoryState getOrDeserializeMemoryState(GameState state) {
+        if (state.getTypedMemoryState() != null) {
+            return state.getTypedMemoryState();
+        }
+        MemoryState deserialized = deserializeMemoryState(state.getEnginePayload());
+        state.setTypedMemoryState(deserialized);
+        return deserialized;
     }
 
     private MemoryState deserializeMemoryState(String payload) {
@@ -1055,17 +1085,31 @@ public class GameOrchestratorService implements GameOrchestrator {
             return;
         }
         try {
-            RecognitionState recState = deserializeRecognitionState(state.getEnginePayload());
+            RecognitionState recState = getOrDeserializeRecognitionState(state);
             String targetElementId = recState.getTargetElementId();
             if (targetElementId == null || targetElementId.isBlank()) {
                 return;
             }
             RoundAudioResult audioResult = roundAudioService.generateRoundAudio(
                     state.getChildProfileId(), targetElementId);
-            state.setRoundAudioResult(audioResult);
+            attachAudioResult(state, audioResult);
         } catch (Exception e) {
             log.warn("Failed to generate round audio for gameId={}: {}", state.getGameId(), e.getMessage());
         }
+    }
+
+    /**
+     * Attaches audio result to GameState. SPRINT-118: Only stores audioId and text,
+     * not the byte[] data. The audio data is resolved from cache when sending.
+     */
+    private void attachAudioResult(GameState state, RoundAudioResult audioResult) {
+        if (audioResult == null || !audioResult.audioAvailable()) {
+            state.setRoundAudioResult(audioResult);
+            return;
+        }
+        state.setRoundAudioResult(audioResult);
+        state.setPendingAudioId(audioResult.audioId());
+        state.setPendingAudioText(audioResult.text());
     }
 
     /**
@@ -1075,12 +1119,13 @@ public class GameOrchestratorService implements GameOrchestrator {
      */
     private void generateAndAttachMemoryPromptAudio(GameState state) {
         try {
-            List<MemoryCard> cards = deserializeMemoryState(state.getEnginePayload()).getCards();
+            List<MemoryCard> cards = getOrDeserializeMemoryState(state).getCards();
             if (cards.isEmpty()) {
                 return;
             }
-            state.setRoundAudioResult(roundAudioService.generateRoundAudio(
-                    state.getChildProfileId(), cards.get(0).getElementId()));
+            RoundAudioResult audioResult = roundAudioService.generateRoundAudio(
+                    state.getChildProfileId(), cards.get(0).getElementId());
+            attachAudioResult(state, audioResult);
         } catch (Exception e) {
             log.warn("Failed to generate memory prompt audio for gameId={}: {}", state.getGameId(), e.getMessage());
         }

@@ -212,14 +212,8 @@ class GameOrchestratorServiceSprint070Test {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic10, topic11, topic12, topic13));
-        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(elem100));
-        when(recognitionElementRepository.findByTopicIdAndStatus(11L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(elem110));
-        when(recognitionElementRepository.findByTopicIdAndStatus(12L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(elem120));
-        when(recognitionElementRepository.findByTopicIdAndStatus(13L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(elem130));
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(10L, 11L, 12L, 13L)), eq(ContentStatus.ACTIVE)))
+                .thenReturn(List.of(elem100, elem110, elem120, elem130));
         when(sessionAntiRepetitionRegistry.getRecentElements(100L, 10L))
                 .thenReturn(List.of("100", "110"));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
@@ -254,10 +248,8 @@ class GameOrchestratorServiceSprint070Test {
                 .thenReturn(List.of(RecognitionCategory.LETTER));
         when(topicUseCase.listTopicsByRecognitionType(RecognitionType.LETTER))
                 .thenReturn(List.of(topic10, topic11));
-        when(recognitionElementRepository.findByTopicIdAndStatus(10L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(elem100));
-        when(recognitionElementRepository.findByTopicIdAndStatus(11L, ContentStatus.ACTIVE))
-                .thenReturn(List.of(elem110));
+        when(recognitionElementRepository.findByTopicIdInAndStatus(eq(List.of(10L, 11L)), eq(ContentStatus.ACTIVE)))
+                .thenReturn(List.of(elem100, elem110));
         when(sessionAntiRepetitionRegistry.getRecentElements(100L, 10L))
                 .thenReturn(List.of("100", "110"));
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));

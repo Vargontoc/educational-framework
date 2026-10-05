@@ -111,7 +111,7 @@ class GameOrchestratorServiceSprint115Test {
         GameCatalogReadiness readiness = new GameCatalogReadiness(activity, dl, true);
         when(gameCatalogUseCase.getGameReadiness(any(), any())).thenReturn(readiness);
         doAnswer(invocation -> null).when(gameStateRegistry).save(any(GameState.class));
-        lenient().when(recognitionElementRepository.findByTopicIdAndStatus(any(), any())).thenReturn(List.of());
+        lenient().when(recognitionElementRepository.findByTopicIdInAndStatus(any(), any())).thenReturn(List.of());
         lenient().when(filterAllowedRecognitionCategoriesUseCase.filterAllowedCategories(any(), any())).thenReturn(List.of());
 
         Set<Long> generatedIds = new HashSet<>();
