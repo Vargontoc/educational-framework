@@ -11,5 +11,11 @@ public interface AudioUseCase {
 
     byte[] getAudio(AudioRequest request);
 
+    /**
+     * Pide que el audio quede en cache sin esperarlo: para contenido curado conocido de antemano (arranque,
+     * semillas). Va detras de lo que se pide a demanda y no hace nada si ya esta en cache.
+     */
+    void warm(AudioRequest request);
+
     void cleanAudioByName(String text, ToneParams params);
 }

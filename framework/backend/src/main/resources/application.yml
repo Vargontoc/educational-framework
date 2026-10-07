@@ -89,6 +89,8 @@ app:
     default-heartbeat-interval-seconds: 30
     heartbeat-grace-multiplier: 2
     retention-days: 30
+    activity-flush-interval-seconds: ${APP_SESSION_ACTIVITY_FLUSH_INTERVAL_SECONDS:12}
+    exploration-flush-interval-seconds: ${APP_SESSION_EXPLORATION_FLUSH_INTERVAL_SECONDS:15}
     scheduling:
       enabled: ${APP_SESSION_SCHEDULING_ENABLED:true}
   ws:
@@ -101,10 +103,30 @@ app:
       max-pending-messages-per-session: ${APP_WS_GAME_MAX_PENDING_MESSAGES_PER_SESSION:50}
   audio:
     base-url: ${CHATTERBOX_BASE_URL:http://localhost:4123}
+    connect-timeout-seconds: ${APP_AUDIO_CONNECT_TIMEOUT_SECONDS:3}
+    # La sintesis es siempre asincrona (ningun mensaje espera al TTS), asi que un timeout largo no bloquea el juego.
+    # Uno corto cancelaba en el cliente generaciones que Chatterbox seguia haciendo y se solapaban con la siguiente.
+    read-timeout-seconds: ${APP_AUDIO_READ_TIMEOUT_SECONDS:90}
+    ping-cache-ttl-seconds: ${APP_AUDIO_PING_CACHE_TTL_SECONDS:5}
+    # Sintesis simultaneas contra Chatterbox: el modelo no soporta concurrencia (errores de tensores de PyTorch)
+    tts-max-concurrent-requests: ${APP_AUDIO_TTS_MAX_CONCURRENT_REQUESTS:1}
+    synthesis:
+      # Cola unica de sintesis: reintentos por texto y pausa mientras el TTS no esta disponible
+      max-attempts: ${APP_AUDIO_SYNTHESIS_MAX_ATTEMPTS:3}
+      retry-delay-ms: ${APP_AUDIO_SYNTHESIS_RETRY_DELAY_MS:2000}
+      unavailable-retry-delay-ms: ${APP_AUDIO_SYNTHESIS_UNAVAILABLE_RETRY_DELAY_MS:30000}
+    warmup:
+      # Genera al arrancar los audios de todo el texto curado (avatar, rondas de juego, curiosidades)
+      enabled: ${APP_AUDIO_WARMUP_ENABLED:true}
+    prewarm:
+      concurrency: ${APP_AUDIO_PREWARM_CONCURRENCY:2}
+      texts: ${APP_AUDIO_PREWARM_TEXTS:}
     cache:
       max-entries: ${AVATAR_CACHE_MAX_ENTRIES:1024}
       expire-after-write-minutes: ${AVATAR_CACHE_EXPIRE_MINUTES:60}
       max-disk-entries: ${AVATAR_CACHE_MAX_DISK_ENTRIES:4096}
+      disk-path: ${APP_AUDIO_CACHE_DISK_PATH:./data/audio-cache}
+      enforce-capacity-interval-seconds: ${APP_AUDIO_CACHE_ENFORCE_INTERVAL_SECONDS:300}
   telegram:
     bot:
       token: ${TELEGRAM_TOKEN:}

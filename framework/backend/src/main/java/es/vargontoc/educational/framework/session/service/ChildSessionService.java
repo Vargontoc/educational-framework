@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.session.service;
 
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
+import es.vargontoc.educational.framework.session.infrastructure.persistence.SessionActivityTracker;
 import es.vargontoc.educational.framework.session.model.ChildSessionHeartbeatResult;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
@@ -29,14 +30,17 @@ public class ChildSessionService implements ChildSessionUseCase {
     private final ChildSessionRepository childSessionRepository;
     private final SessionEventPublisher sessionEventPublisher;
     private final GameOrchestrator gameOrchestrator;
+    private final SessionActivityTracker sessionActivityTracker;
 
     public ChildSessionService(
             ChildSessionRepository childSessionRepository,
             @Lazy SessionEventPublisher sessionEventPublisher,
-            @Lazy GameOrchestrator gameOrchestrator) {
+            @Lazy GameOrchestrator gameOrchestrator,
+            SessionActivityTracker sessionActivityTracker) {
         this.childSessionRepository = childSessionRepository;
         this.sessionEventPublisher = sessionEventPublisher;
         this.gameOrchestrator = gameOrchestrator;
+        this.sessionActivityTracker = sessionActivityTracker;
     }
 
     @Override
@@ -85,6 +89,7 @@ public class ChildSessionService implements ChildSessionUseCase {
     public ChildSession closeSession(Long id) {
         var session = findById(id);
         Long childSessionId = session.getId();
+        sessionActivityTracker.flushAndRemove(childSessionId);
         closeExistingSession(session, LocalDateTime.now(), ChildSessionStatus.CLOSED);
         var saved = childSessionRepository.save(session);
 
@@ -101,6 +106,7 @@ public class ChildSessionService implements ChildSessionUseCase {
     public ChildSession expelChild(Long id) {
         var session = findById(id);
         Long childSessionId = session.getId();
+        sessionActivityTracker.flushAndRemove(childSessionId);
         closeExistingSession(session, LocalDateTime.now(), ChildSessionStatus.EXPELLED);
         var saved = childSessionRepository.save(session);
 
@@ -133,8 +139,7 @@ public class ChildSessionService implements ChildSessionUseCase {
             throw new SessionException("Child session is not active");
         }
 
-        session.setLastActivityAt(LocalDateTime.now());
-        childSessionRepository.save(session);
+        sessionActivityTracker.recordActivity(id);
     }
 
     @Override
@@ -150,10 +155,9 @@ public class ChildSessionService implements ChildSessionUseCase {
             return new ChildSessionHeartbeatResult(false, session.getStatus().name(), session.getLastActivityAt());
         }
 
-        session.setLastActivityAt(LocalDateTime.now());
-        childSessionRepository.save(session);
+        sessionActivityTracker.recordActivity(childSessionId);
 
-        return new ChildSessionHeartbeatResult(true, session.getStatus().name(), session.getLastActivityAt());
+        return new ChildSessionHeartbeatResult(true, session.getStatus().name(), getEffectiveLastActivity(childSessionId));
     }
 
     @Override
@@ -173,14 +177,20 @@ public class ChildSessionService implements ChildSessionUseCase {
     public int expireInactiveSessions(LocalDateTime cutoff) {
         var sessions = childSessionRepository.findExpirableSessions(cutoff);
 
+        var trulyExpired = new java.util.ArrayList<ChildSession>();
         for (ChildSession session : sessions) {
-            session.setStatus(ChildSessionStatus.EXPIRED);
+            LocalDateTime effectiveActivity = getEffectiveLastActivity(session.getId());
+            if (effectiveActivity != null && effectiveActivity.isBefore(cutoff)) {
+                session.setStatus(ChildSessionStatus.EXPIRED);
+                trulyExpired.add(session);
+            }
         }
 
-        childSessionRepository.saveAll(sessions);
+        childSessionRepository.saveAll(trulyExpired);
 
-        for (ChildSession session : sessions) {
+        for (ChildSession session : trulyExpired) {
             Long childSessionId = session.getId();
+            sessionActivityTracker.removeSession(childSessionId);
             sessionEventPublisher.notifyChildWithFarewellAndParent(
                 session.getId(),
                 session.getFamilyId(),
@@ -201,7 +211,23 @@ public class ChildSessionService implements ChildSessionUseCase {
             }
         }
 
-        return sessions.size();
+        return trulyExpired.size();
+    }
+
+    @Override
+    public void flushAndRemoveActivity(Long childSessionId) {
+        sessionActivityTracker.flushAndRemove(childSessionId);
+    }
+
+    @Override
+    public LocalDateTime getEffectiveLastActivity(Long childSessionId) {
+        LocalDateTime inMemory = sessionActivityTracker.getLastActivity(childSessionId);
+        if (inMemory != null) {
+            return inMemory;
+        }
+        return childSessionRepository.findById(childSessionId)
+            .map(ChildSession::getLastActivityAt)
+            .orElse(null);
     }
 
     private ChildSession findById(Long id) {

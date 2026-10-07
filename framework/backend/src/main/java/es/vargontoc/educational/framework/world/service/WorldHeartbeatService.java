@@ -1,13 +1,12 @@
 package es.vargontoc.educational.framework.world.service;
 
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
-import es.vargontoc.educational.framework.world.model.WorldExplorationState;
+import es.vargontoc.educational.framework.world.infrastructure.persistence.ExplorationStateTracker;
 import es.vargontoc.educational.framework.world.model.WorldHeartbeatResult;
 import es.vargontoc.educational.framework.world.model.WorldInactivityResult;
 import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
 import es.vargontoc.educational.framework.world.model.WorldState;
 import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
-import es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,18 +23,18 @@ public class WorldHeartbeatService implements WorldHeartbeatUseCase {
     private final WorldProposalService worldProposalService;
     private final ChildSessionUseCase childSessionUseCase;
     private final WorldInactivityConfig inactivityConfig;
-    private final WorldExplorationStateRepository worldExplorationStateRepository;
+    private final ExplorationStateTracker explorationStateTracker;
 
     public WorldHeartbeatService(WorldStateRegistry worldStateRegistry,
-                                 WorldProposalService worldProposalService,
-                                 ChildSessionUseCase childSessionUseCase,
-                                 WorldInactivityConfig inactivityConfig,
-                                 WorldExplorationStateRepository worldExplorationStateRepository) {
+                                  WorldProposalService worldProposalService,
+                                  ChildSessionUseCase childSessionUseCase,
+                                  WorldInactivityConfig inactivityConfig,
+                                  ExplorationStateTracker explorationStateTracker) {
         this.worldStateRegistry = worldStateRegistry;
         this.worldProposalService = worldProposalService;
         this.childSessionUseCase = childSessionUseCase;
         this.inactivityConfig = inactivityConfig;
-        this.worldExplorationStateRepository = worldExplorationStateRepository;
+        this.explorationStateTracker = explorationStateTracker;
     }
 
     @Override
@@ -70,9 +69,8 @@ public class WorldHeartbeatService implements WorldHeartbeatUseCase {
 
         worldState.setLastWorldActivityAt(LocalDateTime.now());
         worldState.setUpdatedAt(LocalDateTime.now());
-        worldStateRegistry.save(worldState);
 
-        persistExplorationState(worldState.getChildProfileId(), positionX, positionY, biome);
+        trackExplorationState(worldState.getChildProfileId(), positionX, positionY, biome);
 
         childSessionUseCase.recordHeartbeat(childSessionId);
 
@@ -87,7 +85,7 @@ public class WorldHeartbeatService implements WorldHeartbeatUseCase {
         );
     }
 
-    private void persistExplorationState(Long childProfileId, Double positionX, Double positionY, String biome) {
+    private void trackExplorationState(Long childProfileId, Double positionX, Double positionY, String biome) {
         if (childProfileId == null) {
             return;
         }
@@ -97,23 +95,18 @@ public class WorldHeartbeatService implements WorldHeartbeatUseCase {
             return;
         }
 
-        WorldExplorationState explorationState = worldExplorationStateRepository.findByChildProfileId(childProfileId)
-            .orElseGet(() -> {
-                WorldExplorationState newState = new WorldExplorationState();
-                newState.setChildProfileId(childProfileId);
-                return newState;
-            });
-
         if (hasBiome) {
-            explorationState.setBiome(biome);
+            String lastBiome = explorationStateTracker.getLastPersistedBiome(childProfileId);
+            if (lastBiome == null || !lastBiome.equals(biome)) {
+                Double clampedX = hasPosition ? clampNormalized(positionX) : null;
+                Double clampedY = hasPosition ? clampNormalized(positionY) : null;
+                explorationStateTracker.recordBiomeChange(childProfileId, biome, clampedX, clampedY);
+            } else if (hasPosition) {
+                explorationStateTracker.recordPosition(childProfileId, clampNormalized(positionX), clampNormalized(positionY));
+            }
+        } else if (hasPosition) {
+            explorationStateTracker.recordPosition(childProfileId, clampNormalized(positionX), clampNormalized(positionY));
         }
-        if (hasPosition) {
-            explorationState.setPositionX(clampNormalized(positionX));
-            explorationState.setPositionY(clampNormalized(positionY));
-        }
-        explorationState.setUpdatedAt(LocalDateTime.now());
-
-        worldExplorationStateRepository.save(explorationState);
     }
 
     private double clampNormalized(double value) {

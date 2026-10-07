@@ -495,7 +495,7 @@ public class SeedService {
                 continue;
             }
 
-            audio.getAudio(AudioRequest.withPreset(shapeNubiAudio(seed), TonePreset.CALM));
+            audio.warm(AudioRequest.withPreset(shapeNubiAudio(seed), TonePreset.CALM));
 
             var element = new RecognitionElement();
             element.setTopicId(topicId);
@@ -603,7 +603,7 @@ public class SeedService {
 
             String nubiAudio = nubiAudioText(seed.resourceRefs(), null);
             if (nubiAudio != null) {
-                audio.getAudio(AudioRequest.withPreset(nubiAudio, TonePreset.CALM));
+                audio.warm(AudioRequest.withPreset(nubiAudio, TonePreset.CALM));
             }
 
             var element = new RecognitionElement();
@@ -647,7 +647,7 @@ public class SeedService {
             // Same prompt for every element: warm the audio cache with the text asked for at runtime.
             String nubiAudio = nubiAudioText(seed.resourceRefs(), null);
             if (nubiAudio != null) {
-                audio.getAudio(AudioRequest.withPreset(nubiAudio, TonePreset.CALM));
+                audio.warm(AudioRequest.withPreset(nubiAudio, TonePreset.CALM));
             }
 
             var element = new RecognitionElement();
@@ -688,7 +688,7 @@ public class SeedService {
                 continue;
             }
 
-            audio.getAudio(AudioRequest.withPreset(nubiAudioText(seed.resourceRefs(), seed.nubi()), TonePreset.CALM));
+            audio.warm(AudioRequest.withPreset(nubiAudioText(seed.resourceRefs(), seed.nubi()), TonePreset.CALM));
 
             var element = new RecognitionElement();
             element.setTopicId(topicId);
@@ -737,7 +737,7 @@ public class SeedService {
                 continue;
             }
 
-            audio.getAudio(AudioRequest.withPreset(nubiAudioText(seed.resourceRefs(), seed.nubi()), TonePreset.CALM));
+            audio.warm(AudioRequest.withPreset(nubiAudioText(seed.resourceRefs(), seed.nubi()), TonePreset.CALM));
 
             var element = new RecognitionElement();
             element.setTopicId(topicId);

@@ -1,5 +1,5 @@
 =================================================== 
-       Fecha: 01/10/2026  Hora: 18:11:32,36               
+       Fecha: 01/10/2026  Hora: 18:15:32,00               
 =================================================== 
  
 [TIMERS DE MENSAJE] 
@@ -9,76 +9,76 @@ ws_message_duration_seconds_count{application="${spring.application.name}",outco
 ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="auth"} 0.1519399
 ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="game_abandon"} 2
 ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="game_abandon"} 0.0360495
-ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="game_action"} 2
-ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="game_action"} 0.0529294
-ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="game_ready"} 2
-ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="game_ready"} 0.0750952
-ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="game_start"} 2
-ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="game_start"} 0.0011689
-ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="heartbeat"} 52
-ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="heartbeat"} 0.5326537
-ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="world_discovery_interacted"} 2
-ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="world_discovery_interacted"} 0.0864451
-ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="world_heartbeat"} 686
-ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="world_heartbeat"} 9.5507159
+ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="game_action"} 7
+ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="game_action"} 0.2405707
+ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="game_ready"} 3
+ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="game_ready"} 0.093554
+ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="game_start"} 3
+ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="game_start"} 0.0014037
+ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="heartbeat"} 58
+ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="heartbeat"} 0.5514747
+ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="world_discovery_interacted"} 3
+ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="world_discovery_interacted"} 0.1026266
+ws_message_duration_seconds_count{application="${spring.application.name}",outcome="ok",type="world_heartbeat"} 718
+ws_message_duration_seconds_sum{application="${spring.application.name}",outcome="ok",type="world_heartbeat"} 9.6861989
 # HELP ws_message_duration_seconds_max WebSocket message processing duration
 # TYPE ws_message_duration_seconds_max gauge
 ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="auth"} 0.0
 ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="game_abandon"} 0.0
-ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="game_action"} 0.0
-ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="game_ready"} 0.0
-ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="game_start"} 0.0
-ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="heartbeat"} 0.0036199
-ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="world_discovery_interacted"} 0.0
-ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="world_heartbeat"} 0.0061049
+ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="game_action"} 0.1325887
+ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="game_ready"} 0.0184588
+ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="game_start"} 2.348E-4
+ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="heartbeat"} 0.0037427
+ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="world_discovery_interacted"} 0.0161815
+ws_message_duration_seconds_max{application="${spring.application.name}",outcome="ok",type="world_heartbeat"} 0.0089097
  
 [TIMERS POR FASE] 
 # HELP ws_message_phase_duration_seconds WebSocket message phase duration
 # TYPE ws_message_phase_duration_seconds summary
 ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="audio",type="auth"} 5
 ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="audio",type="auth"} 0.0560162
-ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="audio",type="game_action"} 2
-ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="audio",type="game_action"} 3.0E-6
-ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="audio",type="game_ready"} 2
-ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="audio",type="game_ready"} 0.0139447
+ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="audio",type="game_action"} 6
+ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="audio",type="game_action"} 9.9E-6
+ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="audio",type="game_ready"} 3
+ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="audio",type="game_ready"} 0.019457
 ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="db",type="auth"} 5
 ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="db",type="auth"} 0.0903412
-ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="db",type="game_action"} 2
-ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="db",type="game_action"} 0.0318931
-ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="db",type="game_ready"} 2
-ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="db",type="game_ready"} 0.0439952
+ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="db",type="game_action"} 7
+ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="db",type="game_action"} 0.2029923
+ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="db",type="game_ready"} 3
+ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="db",type="game_ready"} 0.0543103
 ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="send",type="auth"} 5
 ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="send",type="auth"} 0.0047997
-ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="send",type="game_action"} 2
-ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="send",type="game_action"} 0.0063384
-ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="send",type="game_ready"} 2
-ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="send",type="game_ready"} 0.0167738
+ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="send",type="game_action"} 7
+ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="send",type="game_action"} 0.0225442
+ws_message_phase_duration_seconds_count{application="${spring.application.name}",outcome="ok",phase="send",type="game_ready"} 3
+ws_message_phase_duration_seconds_sum{application="${spring.application.name}",outcome="ok",phase="send",type="game_ready"} 0.0193686
 # HELP ws_message_phase_duration_seconds_max WebSocket message phase duration
 # TYPE ws_message_phase_duration_seconds_max gauge
 ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="audio",type="auth"} 0.0
-ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="audio",type="game_action"} 0.0
-ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="audio",type="game_ready"} 0.0
+ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="audio",type="game_action"} 2.1E-6
+ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="audio",type="game_ready"} 0.0055123
 ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="db",type="auth"} 0.0
-ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="db",type="game_action"} 0.0
-ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="db",type="game_ready"} 0.0
+ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="db",type="game_action"} 0.129786
+ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="db",type="game_ready"} 0.0103151
 ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="send",type="auth"} 0.0
-ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="send",type="game_action"} 0.0
-ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="send",type="game_ready"} 0.0
+ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="send",type="game_action"} 0.0042414
+ws_message_phase_duration_seconds_max{application="${spring.application.name}",outcome="ok",phase="send",type="game_ready"} 0.0025948
  
 [CACHÉ DE AUDIO] 
 # HELP ws_audio_cache_total Audio cache lookup result
 # TYPE ws_audio_cache_total counter
 ws_audio_cache_total{application="${spring.application.name}",result="hit"} 1.0
-ws_audio_cache_total{application="${spring.application.name}",result="miss"} 10.0
+ws_audio_cache_total{application="${spring.application.name}",result="miss"} 15.0
  
 [SÍNTESIS TTS] 
 # HELP ws_tts_synthesis_duration_seconds TTS synthesis duration
 # TYPE ws_tts_synthesis_duration_seconds summary
-ws_tts_synthesis_duration_seconds_count{application="${spring.application.name}"} 10
-ws_tts_synthesis_duration_seconds_sum{application="${spring.application.name}"} 0.0061272
+ws_tts_synthesis_duration_seconds_count{application="${spring.application.name}"} 15
+ws_tts_synthesis_duration_seconds_sum{application="${spring.application.name}"} 0.0067552
 # HELP ws_tts_synthesis_duration_seconds_max TTS synthesis duration
 # TYPE ws_tts_synthesis_duration_seconds_max gauge
-ws_tts_synthesis_duration_seconds_max{application="${spring.application.name}"} 0.0
+ws_tts_synthesis_duration_seconds_max{application="${spring.application.name}"} 1.428E-4
  
 [ESTADOS GLOBALES - GAUGES] 
 # HELP ws_games_active  
@@ -99,11 +99,11 @@ ws_world_states{application="${spring.application.name}",kind="world"} NaN
 # TYPE ws_sql_statements_total counter
 ws_sql_statements_total{application="${spring.application.name}",type="auth"} 45.0
 ws_sql_statements_total{application="${spring.application.name}",type="game_abandon"} 6.0
-ws_sql_statements_total{application="${spring.application.name}",type="game_action"} 10.0
-ws_sql_statements_total{application="${spring.application.name}",type="game_ready"} 14.0
-ws_sql_statements_total{application="${spring.application.name}",type="heartbeat"} 104.0
-ws_sql_statements_total{application="${spring.application.name}",type="world_discovery_interacted"} 20.0
-ws_sql_statements_total{application="${spring.application.name}",type="world_heartbeat"} 1372.0
+ws_sql_statements_total{application="${spring.application.name}",type="game_action"} 104.0
+ws_sql_statements_total{application="${spring.application.name}",type="game_ready"} 20.0
+ws_sql_statements_total{application="${spring.application.name}",type="heartbeat"} 116.0
+ws_sql_statements_total{application="${spring.application.name}",type="world_discovery_interacted"} 30.0
+ws_sql_statements_total{application="${spring.application.name}",type="world_heartbeat"} 1436.0
  
 =================================================== 
 FIN DEL REPORTE 

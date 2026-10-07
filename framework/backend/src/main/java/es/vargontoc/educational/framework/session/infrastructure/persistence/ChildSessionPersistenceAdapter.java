@@ -82,6 +82,11 @@ public class ChildSessionPersistenceAdapter implements ChildSessionRepository {
         return jpaRepository.deleteByEndedAtBeforeAndStatusNot(cutoff, ChildSessionStatus.ACTIVE.name());
     }
 
+    @Override
+    public int updateLastActivityAt(Long id, LocalDateTime lastActivityAt) {
+        return jpaRepository.updateLastActivityAt(id, lastActivityAt);
+    }
+
     static ChildSession toDomain(ChildSessionJpaEntity source) {
         var target = new ChildSession();
         target.setId(source.getId());

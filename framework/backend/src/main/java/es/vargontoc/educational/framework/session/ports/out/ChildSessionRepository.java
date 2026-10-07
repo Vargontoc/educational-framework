@@ -23,4 +23,6 @@ public interface ChildSessionRepository {
     void saveAll(List<ChildSession> sessions);
 
     int deleteEndedBefore(LocalDateTime cutoff);
+
+    int updateLastActivityAt(Long id, LocalDateTime lastActivityAt);
 }

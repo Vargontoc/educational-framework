@@ -33,6 +33,7 @@ import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.Wor
 import es.vargontoc.educational.framework.world.infrastructure.websocket.dto.WorldStateSyncPayload;
 import es.vargontoc.educational.framework.world.model.WorldDestination;
 import es.vargontoc.educational.framework.world.model.WorldDiscoveryProposal;
+import es.vargontoc.educational.framework.world.infrastructure.persistence.ExplorationStateTracker;
 import es.vargontoc.educational.framework.world.model.WorldExplorationState;
 import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
 import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
@@ -108,9 +109,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private final SessionMessageDispatcher dispatcher;
     private final ChildAgeResolver childAgeResolver;
     private final GameCacheStorage gameCacheStorage;
+    private final ExplorationStateTracker explorationStateTracker;
 
     private final Map<Long, WebSocketSession> sessionsByChildSessionId = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> pendingAuthTimeouts = new ConcurrentHashMap<>();
+    private final Map<String, WorldDestinationPayload> destinationPayloadCache = new ConcurrentHashMap<>();
+    private final Map<Long, String> lastSentDestinationBySession = new ConcurrentHashMap<>();
     private final ScheduledExecutorService authTimeoutScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         var t = new Thread(r, "ws-auth-timeout");
         t.setDaemon(true);
@@ -135,7 +139,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                             WebSocketGameProperties wsGameProperties,
                             SessionMessageDispatcher dispatcher,
                             ChildAgeResolver childAgeResolver,
-                            GameCacheStorage gameCacheStorage) {
+                            GameCacheStorage gameCacheStorage,
+                            ExplorationStateTracker explorationStateTracker) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.avatarservice = avatarService;
@@ -156,6 +161,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         this.dispatcher = dispatcher;
         this.childAgeResolver = childAgeResolver;
         this.gameCacheStorage = gameCacheStorage;
+        this.explorationStateTracker = explorationStateTracker;
         registerGauges();
     }
 
@@ -257,11 +263,25 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         if (childSessionId != null) {
             dispatcher.closeSession(childSessionId);
             sessionsByChildSessionId.remove(childSessionId);
+            lastSentDestinationBySession.remove(childSessionId);
+            flushExplorationOnDisconnect(childSessionId);
+            childSessionUseCase.flushAndRemoveActivity(childSessionId);
             markWorldForExpiration(childSessionId);
             LOGGER.info("Game WebSocket disconnected: childSessionId={}, status={}", childSessionId, status);
         } else {
             dispatcher.closeSession(-1L);
             LOGGER.debug("Game WebSocket closed before auth: sessionId={}, status={}", session.getId(), status);
+        }
+    }
+
+    private void flushExplorationOnDisconnect(Long childSessionId) {
+        try {
+            var worldState = worldStateRegistry.findByChildSessionId(childSessionId).orElse(null);
+            if (worldState != null && worldState.getChildProfileId() != null) {
+                explorationStateTracker.flushAndRemove(worldState.getChildProfileId());
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to flush exploration state on disconnect for childSessionId={}: {}", childSessionId, e.getMessage());
         }
     }
 
@@ -1036,7 +1056,18 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             if (heartbeatResult.getStatus() == WorldInactivityStatus.ACTIVE) {
                 var worldState = worldStateRegistry.findByChildSessionId(childSessionId).orElse(null);
                 if (worldState != null && worldState.getCurrentDestination() != null) {
-                    destinationPayload = toDestinationPayload(worldState.getCurrentDestination());
+                    String destinationId = worldState.getCurrentDestination().getDestinationId();
+                    String lastSent = lastSentDestinationBySession.get(childSessionId);
+                    if (destinationId != null && destinationId.equals(lastSent)) {
+                        destinationPayload = destinationPayloadCache.get(destinationId);
+                    }
+                    if (destinationPayload == null) {
+                        destinationPayload = toDestinationPayload(worldState.getCurrentDestination());
+                        if (destinationId != null) {
+                            destinationPayloadCache.put(destinationId, destinationPayload);
+                            lastSentDestinationBySession.put(childSessionId, destinationId);
+                        }
+                    }
                 }
             }
             WorldStateSyncPayload syncPayload = new WorldStateSyncPayload(status, destinationPayload);
@@ -1139,7 +1170,16 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
             persistExplorationStateOnTravel(childSession.getChildProfileId(), targetBiome.name());
 
+            if (destination.getDestinationId() != null) {
+                destinationPayloadCache.remove(destination.getDestinationId());
+            }
+            lastSentDestinationBySession.remove(childSessionId);
+
             WorldDestinationPayload destinationPayload = toDestinationPayload(destination);
+            if (destination.getDestinationId() != null) {
+                destinationPayloadCache.put(destination.getDestinationId(), destinationPayload);
+                lastSentDestinationBySession.put(childSessionId, destination.getDestinationId());
+            }
             WorldStateSyncPayload syncPayload = new WorldStateSyncPayload(
                 WorldRuntimeStatus.ACTIVE.name(), destinationPayload);
             SessionEvent event = SessionEvent.of(SessionEventType.WORLD_STATE_SYNC, childSessionId, toPayload(syncPayload));

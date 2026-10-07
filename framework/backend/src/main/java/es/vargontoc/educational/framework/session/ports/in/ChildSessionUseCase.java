@@ -23,4 +23,8 @@ public interface ChildSessionUseCase {
     List<ChildSession> getActiveSessions(Long familyId);
 
     int expireInactiveSessions(LocalDateTime cutoff);
+
+    void flushAndRemoveActivity(Long childSessionId);
+
+    LocalDateTime getEffectiveLastActivity(Long childSessionId);
 }

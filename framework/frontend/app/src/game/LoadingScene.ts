@@ -9,6 +9,9 @@ import { AudioDecoder } from "@/services/AudioDecoder";
 import { MessageRouter } from "@/services/MessageRouter";
 import { NubiLayer } from "./worldmap/layers/NubiLayer";
 
+/** Espera maxima (ms) a que termine el audio de bienvenida/despedida antes de continuar de todos modos. */
+const AUDIO_MAX_WAIT_MS = 12000
+
 export class LoadingScene extends Scene {
     websocket?: WebSocket
     sessionId?: number
@@ -145,12 +148,37 @@ export class LoadingScene extends Scene {
         }
     }
 
+    /**
+     * Ejecuta `onDone` una sola vez cuando el audio termina (`audio-completed`), falla (`audio-error`) o pasa
+     * `AUDIO_MAX_WAIT_MS`. Antes solo se escuchaba `audio-completed`: si la reproduccion fallaba, nunca se emitia
+     * y la pantalla se quedaba en "Preparando..." para siempre (el temporizador de 5 s solo cubre que no llegue el evento).
+     */
+    private whenAudioFinishes(audioService: AudioService, onDone: () => void) {
+        let finished = false
+        let timer: ReturnType<typeof setTimeout> | undefined
+        const finish = () => {
+            if (finished) return
+            finished = true
+            if (timer) clearTimeout(timer)
+            audioService.off('audio-completed', finish)
+            audioService.off('audio-error', finish)
+            onDone()
+        }
+        audioService.on('audio-completed', finish)
+        audioService.on('audio-error', finish)
+        timer = setTimeout(() => {
+            console.warn('Audio sin finalizar tras ' + AUDIO_MAX_WAIT_MS + ' ms, continuando')
+            finish()
+        }, AUDIO_MAX_WAIT_MS)
+    }
+
     handleWelcomeEvent(event: AvatarEvent) {
         this.welcomeEventReceived = true
         const audioService = this.registry.get('audioService') as AudioService
 
-        // Escuchar cuando el audio termine (cualquier audio: estático o dinámico)
-        audioService.once('audio-completed', () => {
+        // Avanzar cuando el audio termine (estático o dinámico), falle o tarde demasiado: la pantalla de carga
+        // nunca debe quedarse esperando un audio que no va a terminar (autoplay bloqueado, error de decodificación...)
+        this.whenAudioFinishes(audioService, () => {
             this.welcomeAudioCompleted = true
             // Esperar 1 segundo después de que termine el audio
             this.time.delayedCall(1000, () => {
@@ -191,8 +219,8 @@ export class LoadingScene extends Scene {
     handleFarewellEvent(event: AvatarEvent) {
         const audioService = this.registry.get('audioService') as AudioService
 
-        // Escuchar cuando el audio termine
-        audioService.once('audio-completed', () => {
+        // Avanzar cuando el audio termine, falle o tarde demasiado (ver whenAudioFinishes)
+        this.whenAudioFinishes(audioService, () => {
             // Esperar 1 segundo después de que termine el audio
             this.time.delayedCall(1000, () => {
                 this.goToWorldMap()

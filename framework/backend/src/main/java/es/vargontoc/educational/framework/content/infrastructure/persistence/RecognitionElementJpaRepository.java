@@ -8,5 +8,7 @@ public interface RecognitionElementJpaRepository extends JpaRepository<Recogniti
 
     List<RecognitionElementJpaEntity> findByTopicIdAndStatus(Long topicId, String status);
 
+    List<RecognitionElementJpaEntity> findByStatus(String status);
+
     List<RecognitionElementJpaEntity> findByTopicIdInAndStatus(List<Long> topicIds, String status);
 }

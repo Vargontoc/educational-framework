@@ -17,22 +17,22 @@ Hallazgos de la auditoría 2026-10-01:
 SPRINT-116 garantiza que ningún mensaje espera al TTS (se envía el audio cacheado si existe y la síntesis va en paralelo). Este sprint reduce los fallos de caché y endurece la caché y el cliente TTS.
 
 ## Tareas
-- [ ] Clave de caché con hash fuerte (SHA-256 de texto normalizado + tono + voz); migración de la caché existente (invalidar las entradas antiguas)
-- [ ] Ruta de caché en disco real y configurable (`application.yml`), con comprobación de escritura al arrancar y fallo claro si no es válida
-- [ ] `enforceDiskCapacity` periódico (tarea programada) en lugar de por escritura
-- [ ] Pre-calentamiento: sintetizar en segundo plano los textos fijos (bienvenida, despedida, transición de bioma, prompts de ronda frecuentes) al arrancar y al cambiar el catálogo, con límite de concurrencia
-- [ ] Cliente HTTP con pool y reutilización de conexiones; eliminar o cachear unos segundos el resultado de `/ping`
-- [ ] Timeouts de conexión y lectura acordes al juego del niño (p. ej. conexión 2-3 s, lectura configurable) con degradación limpia a "sin audio" y mensaje WS sin audio como hoy
-- [ ] Corregir extensión/tipo del fichero de caché según el formato real
+- [x] Clave de caché con hash fuerte (SHA-256 de texto normalizado + tono + voz); migración de la caché existente (invalidar las entradas antiguas)
+- [x] Ruta de caché en disco real y configurable (`application.yml`), con comprobación de escritura al arrancar y fallo claro si no es válida
+- [x] `enforceDiskCapacity` periódico (tarea programada) en lugar de por escritura
+- [x] Pre-calentamiento: sintetizar en segundo plano los textos fijos (bienvenida, despedida, transición de bioma, prompts de ronda frecuentes) al arrancar y al cambiar el catálogo, con límite de concurrencia
+- [x] Cliente HTTP con pool y reutilización de conexiones; eliminar o cachear unos segundos el resultado de `/ping`
+- [x] Timeouts de conexión y lectura acordes al juego del niño (p. ej. conexión 2-3 s, lectura configurable) con degradación limpia a "sin audio" y mensaje WS sin audio como hoy
+- [x] Corregir extensión/tipo del fichero de caché según el formato real
 - [ ] Opcional según medición: enviar audio grande en varios frames o comprimir; solo si el tamaño medido lo justifica y sin cambiar el protocolo de cabecera (`audioId` + bytes) sin acuerdo con frontend
-- [ ] Métricas de acierto/fallo y de tiempo de síntesis (SPRINT-114)
+- [x] Métricas de acierto/fallo y de tiempo de síntesis (SPRINT-114)
 
 ### Tests
-- [ ] Dos textos con el mismo `hashCode` distinto no comparten audio
-- [ ] La ruta de caché inválida produce error de arranque explícito
-- [ ] Caída del servicio TTS: el juego continúa sin audio y el tiempo de `game_ready`/`game_action` no sube del timeout configurado
-- [ ] Pre-calentamiento: tras arrancar, los textos fijos se sirven desde caché
-- [ ] Capacidad en disco respetada sin listar el directorio en cada escritura
+- [x] Dos textos con el mismo `hashCode` distinto no comparten audio
+- [x] La ruta de caché inválida produce error de arranque explícito
+- [x] Caída del servicio TTS: el juego continúa sin audio y el tiempo de `game_ready`/`game_action` no sube del timeout configurado
+- [x] Pre-calentamiento: tras arrancar, los textos fijos se sirven desde caché
+- [x] Capacidad en disco respetada sin listar el directorio en cada escritura
 
 ### Pruebas manuales
 - [ ] Arrancar el backend en frío y jugar la primera partida: Nubi habla en bienvenida y primera ronda

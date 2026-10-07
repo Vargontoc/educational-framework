@@ -37,6 +37,14 @@ public class RecognitionElementPersistenceAdapter implements RecognitionElementR
     }
 
     @Override
+    public List<RecognitionElement> findAllByStatus(ContentStatus status) {
+        return jpaRepository.findByStatus(status.name())
+                .stream()
+                .map(RecognitionElementPersistenceAdapter::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<RecognitionElement> findByTopicIdInAndStatus(List<Long> topicIds, ContentStatus status) {
         if (topicIds == null || topicIds.isEmpty()) {
             return List.of();
@@ -104,7 +112,7 @@ public class RecognitionElementPersistenceAdapter implements RecognitionElementR
             AudioRequest r = AudioRequest.withPreset(c, TonePreset.ADVENTURE);
 
             this.curiosities.get(code).add(r);
-            audio.getAudio(r);
+            audio.warm(r);
         }
         
     }

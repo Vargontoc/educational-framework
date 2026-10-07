@@ -4,6 +4,7 @@ import es.vargontoc.educational.framework.world.model.WorldExplorationState;
 import es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Component
@@ -24,6 +25,16 @@ public class JpaWorldExplorationStateRepository implements WorldExplorationState
     public void save(WorldExplorationState state) {
         WorldExplorationStateJpaEntity entity = toEntity(state);
         jpaRepository.save(entity);
+    }
+
+    @Override
+    public int updatePosition(Long childProfileId, Double positionX, Double positionY) {
+        return jpaRepository.updatePosition(childProfileId, positionX, positionY, LocalDateTime.now());
+    }
+
+    @Override
+    public int updateBiomeAndPosition(Long childProfileId, String biome, Double positionX, Double positionY) {
+        return jpaRepository.updateBiomeAndPosition(childProfileId, biome, positionX, positionY, LocalDateTime.now());
     }
 
     private WorldExplorationState toDomain(WorldExplorationStateJpaEntity entity) {

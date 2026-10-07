@@ -1,6 +1,7 @@
 package es.vargontoc.educational.framework.session.service;
 
 import es.vargontoc.educational.framework.game.ports.in.GameOrchestrator;
+import es.vargontoc.educational.framework.session.infrastructure.persistence.SessionActivityTracker;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEvent;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventPublisher;
 import es.vargontoc.educational.framework.session.infrastructure.websocket.SessionEventType;
@@ -44,6 +45,9 @@ class ChildSessionServiceTest {
 
     @Mock
     private GameOrchestrator gameOrchestrator;
+
+    @Mock
+    private SessionActivityTracker sessionActivityTracker;
 
     @InjectMocks
     private ChildSessionService childSessionService;
@@ -167,8 +171,7 @@ class ChildSessionServiceTest {
 
         childSessionService.recordHeartbeat(1L);
 
-        assertTrue(session.getLastActivityAt().isAfter(previousActivity));
-        verify(childSessionRepository).save(session);
+        verify(sessionActivityTracker).recordActivity(1L);
     }
 
     @Test
@@ -204,9 +207,11 @@ class ChildSessionServiceTest {
     void expireInactiveSessions_callsDiscardGameForSession() {
         var session = activeSession();
         session.setId(55L);
+        session.setLastActivityAt(LocalDateTime.now().minusMinutes(5));
         var cutoff = LocalDateTime.now().minusMinutes(1);
 
         when(childSessionRepository.findExpirableSessions(cutoff)).thenReturn(List.of(session));
+        when(sessionActivityTracker.getLastActivity(55L)).thenReturn(LocalDateTime.now().minusMinutes(5));
 
         childSessionService.expireInactiveSessions(cutoff);
 
@@ -216,10 +221,16 @@ class ChildSessionServiceTest {
     @Test
     void expireInactiveSessions_marksAllResultsExpired() {
         var first = activeSession();
+        first.setId(1L);
+        first.setLastActivityAt(LocalDateTime.now().minusMinutes(5));
         var second = activeSession();
+        second.setId(2L);
+        second.setLastActivityAt(LocalDateTime.now().minusMinutes(5));
         var cutoff = LocalDateTime.now().minusMinutes(1);
 
         when(childSessionRepository.findExpirableSessions(cutoff)).thenReturn(List.of(first, second));
+        when(sessionActivityTracker.getLastActivity(1L)).thenReturn(LocalDateTime.now().minusMinutes(5));
+        when(sessionActivityTracker.getLastActivity(2L)).thenReturn(LocalDateTime.now().minusMinutes(5));
 
         childSessionService.expireInactiveSessions(cutoff);
 
@@ -234,9 +245,11 @@ class ChildSessionServiceTest {
         var session = activeSession();
         session.setId(55L);
         session.setFamilyId(1L);
+        session.setLastActivityAt(LocalDateTime.now().minusMinutes(5));
         var cutoff = LocalDateTime.now().minusMinutes(1);
 
         when(childSessionRepository.findExpirableSessions(cutoff)).thenReturn(List.of(session));
+        when(sessionActivityTracker.getLastActivity(55L)).thenReturn(LocalDateTime.now().minusMinutes(5));
 
         childSessionService.expireInactiveSessions(cutoff);
 
@@ -256,15 +269,14 @@ class ChildSessionServiceTest {
         session.setLastActivityAt(previousActivity);
 
         when(childSessionRepository.findById(1L)).thenReturn(Optional.of(session));
-        when(childSessionRepository.save(any(ChildSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(sessionActivityTracker.getLastActivity(1L)).thenReturn(LocalDateTime.now());
 
         var result = childSessionService.recordGameHeartbeat(1L);
 
         assertTrue(result.active());
         assertEquals("ACTIVE", result.status());
         assertNotNull(result.lastActivityAt());
-        assertTrue(result.lastActivityAt().isAfter(previousActivity));
-        verify(childSessionRepository).save(session);
+        verify(sessionActivityTracker).recordActivity(1L);
     }
 
     @Test

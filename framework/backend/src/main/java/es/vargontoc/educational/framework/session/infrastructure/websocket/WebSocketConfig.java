@@ -35,6 +35,7 @@ import java.util.Map;
 
 import es.vargontoc.educational.framework.shared.infrastructure.SqlStatementCounter;
 import es.vargontoc.educational.framework.shared.infrastructure.GameCacheStorage;
+import es.vargontoc.educational.framework.world.infrastructure.persistence.ExplorationStateTracker;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.service.ChildAgeResolver;
 
@@ -66,6 +67,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WebSocketGameProperties wsGameProperties;
     private final ChildAgeResolver childAgeResolver;
     private final GameCacheStorage gameCacheStorage;
+    private final ExplorationStateTracker explorationStateTracker;
 
     public WebSocketConfig(
             ChildSessionUseCase childSessionUseCase,
@@ -89,7 +91,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             SqlStatementCounter sqlStatementCounter,
             WebSocketGameProperties wsGameProperties,
             ChildAgeResolver childAgeResolver,
-            GameCacheStorage gameCacheStorage) {
+            GameCacheStorage gameCacheStorage,
+            ExplorationStateTracker explorationStateTracker) {
         this.childSessionUseCase = childSessionUseCase;
         this.objectMapper = objectMapper;
         this.stompConnectAuthInterceptor = stompConnectAuthInterceptor;
@@ -112,6 +115,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.wsGameProperties = wsGameProperties;
         this.childAgeResolver = childAgeResolver;
         this.gameCacheStorage = gameCacheStorage;
+        this.explorationStateTracker = explorationStateTracker;
     }
 
     @Override
@@ -166,6 +170,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             recognitionElementRepository, worldExplorationStateRepository,
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
             webSocketMetrics(), sqlStatementCounter, wsGameProperties,
-            sessionMessageDispatcher(), childAgeResolver, gameCacheStorage);
+            sessionMessageDispatcher(), childAgeResolver, gameCacheStorage,
+            explorationStateTracker);
     }
 }

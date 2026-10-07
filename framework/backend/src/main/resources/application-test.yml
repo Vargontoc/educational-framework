@@ -4,6 +4,9 @@ spring:
       hibernate:
         generate_statistics: true
 app:
+  audio:
+    cache:
+      disk-path: ${java.io.tmpdir}/audio-cache-test
   recognition:
     touch-target-size-px: 96
     difficulty:

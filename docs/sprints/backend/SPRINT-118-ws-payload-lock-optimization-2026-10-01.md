@@ -28,9 +28,9 @@ Hallazgos de la auditoría 2026-10-01:
 - [x] `GameState` ya no retiene audio tras enviarlo
 
 ### Pruebas manuales
-- [ ] Memory 4x3: voltear cartas rápido y comprobar tiempo percibido y estado correcto
-- [ ] Completar una partida Recognition: el resumen, los logros y el diario parental muestran lo mismo que antes
-- [ ] Observar `ws.message.duration{type=game_action}` y memoria de heap durante 20 partidas seguidas
+- [x] Memory 4x3: voltear cartas rápido y comprobar tiempo percibido y estado correcto
+- [x] Completar una partida Recognition: el resumen, los logros y el diario parental muestran lo mismo que antes
+- [x] Observar `ws.message.duration{type=game_action}` y memoria de heap durante 20 partidas seguidas
 
 ## Criterios de Aceptación
 1. p95 de `game_action` < 100 ms en Recognition y Memory

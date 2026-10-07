@@ -40,11 +40,11 @@ public class AudioAdapter implements AudioUseCase {
 
     @Override
     public byte[] getAudio(AudioRequest request) {
-
-        AudioCache key = build(request.text(), new ToneParams(request.exageration(), request.cfg(), request.temperature()));
+        ToneParams toneParams = new ToneParams(request.exageration(), request.cfg(), request.temperature());
+        AudioCache key = AudioCache.of(normalizeText(request.text()), toneParams);
         byte[] cached = cache.get(key);
 
-        if(cached != null) {
+        if (cached != null) {
             cacheHit.increment();
             return cached;
         }
@@ -57,16 +57,25 @@ public class AudioAdapter implements AudioUseCase {
         return null;
     }
 
-    private AudioCache build(String text, ToneParams toneParams) {
-        int textHash = text != null ? text.hashCode() : 0;
-        return new AudioCache(toneParams, textHash);
+    @Override
+    public void warm(AudioRequest request) {
+        ToneParams toneParams = new ToneParams(request.exageration(), request.cfg(), request.temperature());
+        AudioCache key = AudioCache.of(normalizeText(request.text()), toneParams);
+        if (cache.get(key) != null) {
+            return;
+        }
+        audioAsync.warmAudio(key, request, port, cache);
+    }
+
+    private String normalizeText(String text) {
+        if (text == null) return "";
+        return text.strip().replaceAll("\\s+", " ");
     }
 
     @Override
     public void cleanAudioByName(String text, ToneParams params) {
-
-        AudioCache key = build(text, params);
-        if(cache.get(key) != null) {
+        AudioCache key = AudioCache.of(normalizeText(text), params);
+        if (cache.get(key) != null) {
             cache.remove(key);
         }
     }

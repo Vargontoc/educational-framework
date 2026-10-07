@@ -15,6 +15,7 @@ import es.vargontoc.educational.framework.world.ports.in.WorldHeartbeatUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldNarrativeCompletionUseCase;
 import es.vargontoc.educational.framework.world.ports.in.WorldOrchestrator;
 import es.vargontoc.educational.framework.world.ports.in.WorldProposalResolutionUseCase;
+import es.vargontoc.educational.framework.world.infrastructure.persistence.ExplorationStateTracker;
 import es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import es.vargontoc.educational.framework.world.service.EngagementThresholdConfigService;
@@ -93,11 +94,11 @@ class WorldModuleConfiguration {
 
     @Bean
     WorldHeartbeatUseCase worldHeartbeatUseCase(WorldStateRegistry worldStateRegistry,
-                                                WorldProposalService worldProposalService,
-                                                ChildSessionUseCase childSessionUseCase,
-                                                WorldInactivityConfig inactivityConfig,
-                                                WorldExplorationStateRepository worldExplorationStateRepository) {
-        return new WorldHeartbeatService(worldStateRegistry, worldProposalService, childSessionUseCase, inactivityConfig, worldExplorationStateRepository);
+                                                 WorldProposalService worldProposalService,
+                                                 ChildSessionUseCase childSessionUseCase,
+                                                 WorldInactivityConfig inactivityConfig,
+                                                 ExplorationStateTracker explorationStateTracker) {
+        return new WorldHeartbeatService(worldStateRegistry, worldProposalService, childSessionUseCase, inactivityConfig, explorationStateTracker);
     }
 
     @Bean

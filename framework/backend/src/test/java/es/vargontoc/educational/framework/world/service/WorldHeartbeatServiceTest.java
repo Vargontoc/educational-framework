@@ -1,11 +1,11 @@
 package es.vargontoc.educational.framework.world.service;
 
 import es.vargontoc.educational.framework.session.ports.in.ChildSessionUseCase;
+import es.vargontoc.educational.framework.world.infrastructure.persistence.ExplorationStateTracker;
 import es.vargontoc.educational.framework.world.model.WorldHeartbeatResult;
 import es.vargontoc.educational.framework.world.model.WorldInactivityStatus;
 import es.vargontoc.educational.framework.world.model.WorldRuntimeStatus;
 import es.vargontoc.educational.framework.world.model.WorldState;
-import es.vargontoc.educational.framework.world.ports.out.WorldExplorationStateRepository;
 import es.vargontoc.educational.framework.world.ports.out.WorldStateRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ class WorldHeartbeatServiceTest {
     private ChildSessionUseCase childSessionUseCase;
 
     @Mock
-    private WorldExplorationStateRepository worldExplorationStateRepository;
+    private ExplorationStateTracker explorationStateTracker;
 
     private WorldInactivityConfig inactivityConfig;
 
@@ -47,7 +47,7 @@ class WorldHeartbeatServiceTest {
     void setUp() {
         inactivityConfig = new WorldInactivityConfig();
         inactivityConfig.setInactivityThresholdSeconds(180);
-        service = new WorldHeartbeatService(worldStateRegistry, worldProposalService, childSessionUseCase, inactivityConfig, worldExplorationStateRepository);
+        service = new WorldHeartbeatService(worldStateRegistry, worldProposalService, childSessionUseCase, inactivityConfig, explorationStateTracker);
     }
 
     private WorldState createWorldState(Long childSessionId) {
@@ -75,7 +75,6 @@ class WorldHeartbeatServiceTest {
         assertTrue(result.isWorldStateFound());
         assertTrue(result.isChildSessionActivityUpdated());
         assertNotNull(result.getLastWorldActivityAt());
-        verify(worldStateRegistry).save(worldState);
         verify(childSessionUseCase).recordHeartbeat(childSessionId);
     }
 

@@ -72,6 +72,7 @@ class GameWebSocketHandlerSprint116Test {
     @Mock private ChildProfileUseCase childProfileUseCase;
     @Mock private AccessibleColorRepository accessibleColorRepository;
     @Mock private AccessibleColorPaletteRepository accessibleColorPaletteRepository;
+    @Mock private es.vargontoc.educational.framework.world.infrastructure.persistence.ExplorationStateTracker explorationStateTracker;
 
     private GameWebSocketHandler handler;
     private SessionMessageDispatcher dispatcher;
@@ -89,7 +90,7 @@ class GameWebSocketHandlerSprint116Test {
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
             wsMetrics, SqlStatementCounter.NOOP, wsProps, dispatcher,
             new es.vargontoc.educational.framework.world.service.ChildAgeResolver(),
-            GameWebSocketHandlerTest.createNoopCacheStorage());
+            GameWebSocketHandlerTest.createNoopCacheStorage(), explorationStateTracker);
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))
             .thenReturn(new WorldDestinationSelectionResult());
     }
@@ -111,7 +112,7 @@ class GameWebSocketHandlerSprint116Test {
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
             wsMetrics, SqlStatementCounter.NOOP, wsProps, orderDispatcher,
             new es.vargontoc.educational.framework.world.service.ChildAgeResolver(),
-            GameWebSocketHandlerTest.createNoopCacheStorage());
+            GameWebSocketHandlerTest.createNoopCacheStorage(), explorationStateTracker);
 
         Long childSessionId = 100L;
         WebSocketSession session = mockAuthenticatedSessionForHandler(orderHandler, childSessionId);
@@ -271,7 +272,7 @@ class GameWebSocketHandlerSprint116Test {
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
             wsMetrics, SqlStatementCounter.NOOP, wsProps, limitedDispatcher,
             new es.vargontoc.educational.framework.world.service.ChildAgeResolver(),
-            GameWebSocketHandlerTest.createNoopCacheStorage());
+            GameWebSocketHandlerTest.createNoopCacheStorage(), explorationStateTracker);
 
         GameState gameState = buildGameState(6L, childSessionId);
         lenient().when(gameStateRegistry.findByChildSessionId(childSessionId)).thenReturn(Optional.of(gameState));

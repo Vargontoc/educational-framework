@@ -84,6 +84,9 @@ class GameWebSocketHandlerSprint115Test {
     @Mock
     private AccessibleColorPaletteRepository accessibleColorPaletteRepository;
 
+    @Mock
+    private es.vargontoc.educational.framework.world.infrastructure.persistence.ExplorationStateTracker explorationStateTracker;
+
     private GameWebSocketHandler handler;
 
     @BeforeEach
@@ -98,7 +101,7 @@ class GameWebSocketHandlerSprint115Test {
             childProfileUseCase, accessibleColorRepository, accessibleColorPaletteRepository,
             wsMetrics, SqlStatementCounter.NOOP, wsProps, testDispatcher,
             new es.vargontoc.educational.framework.world.service.ChildAgeResolver(),
-            GameWebSocketHandlerTest.createNoopCacheStorage());
+            GameWebSocketHandlerTest.createNoopCacheStorage(), explorationStateTracker);
         lenient().when(worldOrchestrator.selectDestination(any(), any(), any(), any()))
             .thenReturn(new WorldDestinationSelectionResult());
     }

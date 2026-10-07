@@ -3,160 +3,159 @@ package es.vargontoc.educational.framework.audio.infrastructure.cache;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
 import java.time.Duration;
-import java.util.Base64;
 import java.util.Comparator;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
+import java.util.stream.Stream;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import es.vargontoc.educational.framework.audio.domain.AudioCache;
 import es.vargontoc.educational.framework.audio.infrastructure.config.AudioCacheConfiguration;
-import es.vargontoc.educational.framework.shared.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AudioCacheStorage {
     
+    private static final String CACHE_FILE_EXTENSION = ".wav";
+
     private final Path cachePath;
     private final AudioCacheConfiguration properties;
-
     private final Cache<AudioCache, byte[]> internalCache;
 
-    public AudioCacheStorage(
-        @Value("classpath:/cache/audios") Resource cachePath,
-        AudioCacheConfiguration properties) {
+    public AudioCacheStorage(Path cachePath, AudioCacheConfiguration properties) {
         this.properties = properties;
-        try {
-            this.cachePath = Path.of(cachePath.getURI());
-            if(!Files.exists(this.cachePath)){
-                Files.createDirectories(this.cachePath);
-            }
-        }catch(IOException e) {
-            log.error("Error en ruta cache: {}", e.getMessage(), e);
-            throw new AppException("Error en obtener la ruta de cache", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
+        this.cachePath = validateAndPrepareCachePath(cachePath);
         this.internalCache = Caffeine.newBuilder()
             .maximumSize(properties.maxEntries())
             .expireAfterWrite(Duration.ofMinutes(properties.expireAfterWriteMinutes()))
             .build();
     }
 
+    private Path validateAndPrepareCachePath(Path configuredPath) {
+        try {
+            if (!Files.exists(configuredPath)) {
+                Files.createDirectories(configuredPath);
+            }
+            if (!Files.isDirectory(configuredPath)) {
+                throw new IllegalStateException("Audio cache path is not a directory: " + configuredPath);
+            }
+            Path probe = configuredPath.resolve(".startup-write-check");
+            Files.write(probe, new byte[]{0});
+            Files.deleteIfExists(probe);
+            log.info("Audio cache disk path validated: {}", configuredPath.toAbsolutePath());
+            return configuredPath;
+        } catch (IOException e) {
+            throw new IllegalStateException("Invalid audio cache path '" + configuredPath + "': " + e.getMessage(), e);
+        }
+    }
+
     public byte[] get(AudioCache key) {
         byte[] result = internalCache.getIfPresent(key);
-        if(result != null){
+        if (result != null) {
             log.debug("Internal cache hit: {}", key);
             return result;
         }
 
         result = loadFromDisk(key);
-
-        if(result != null){
+        if (result != null) {
             log.info("Disk cache hit, promoting to internal: {}", key);
             internalCache.put(key, result);
             return result;
         }
 
-        log.warn("Cache miss: {}", key);
+        log.debug("Cache miss: {}", key);
         return null;
     }
 
-    public void put(AudioCache key, byte[] data){
+    public void put(AudioCache key, byte[] data) {
         internalCache.put(key, data);
         saveToDisk(key, data);
-        log.info("Cached {} byte: {}", data.length, key);
+        log.info("Cached {} bytes: {}", data.length, key);
     }
 
     public void remove(AudioCache key) {
-        if(internalCache.getIfPresent(key) != null) 
+        if (internalCache.getIfPresent(key) != null) {
             internalCache.invalidate(key);
-
+        }
         Path file = resolveDiskPath(key);
-        if(Files.exists(file)) {
+        if (Files.exists(file)) {
             try {
                 Files.deleteIfExists(file);
-            }catch(IOException e) {
-                log.error("Could not delete file: '{}'", file.toFile().toString(), e.getMessage(), e);
+            } catch (IOException e) {
+                log.error("Could not delete cache file '{}': {}", file, e.getMessage());
             }
         }
     }
 
-
-    private void saveToDisk(AudioCache key, byte[] audio){
-        Path file = resolveDiskPath(key);
-        try
-        {
-            Files.write(file, audio);
-            enforceDiskCapacity();
-        } catch (IOException e){
-            log.error("Error escritura en disco {}: {}", file, e.getMessage());
+    public void enforceDiskCapacity() {
+        try (Stream<Path> stream = Files.list(cachePath)) {
+            var files = stream
+                .filter(p -> p.toString().endsWith(CACHE_FILE_EXTENSION))
+                .toList();
+            if (files.size() <= properties.maxDiskEntries()) {
+                return;
+            }
+            int toDelete = files.size() - properties.maxDiskEntries();
+            files.stream()
+                .sorted(Comparator.comparingLong(f -> {
+                    try {
+                        return Files.getLastModifiedTime(f).toMillis();
+                    } catch (IOException e) {
+                        return 0L;
+                    }
+                }))
+                .limit(toDelete)
+                .forEach(f -> {
+                    try {
+                        Files.delete(f);
+                    } catch (IOException e) {
+                        log.warn("Failed to delete old cache file {}", f);
+                    }
+                });
+            log.info("Cleaned {} old cache files from disk cache", toDelete);
+        } catch (IOException e) {
+            log.error("Failed to enforce disk capacity: {}", e.getMessage());
         }
     }
 
-    private void enforceDiskCapacity() {
-        try {
-            var files = Files.list(cachePath).filter(p -> p.toString().endsWith(".mp3")).toList();
-            if(files.size() <= properties.maxDiskEntries())
-                return;
+    public Path getCachePath() {
+        return cachePath;
+    }
 
-            int toDelete = files.size() - properties.maxDiskEntries();
-            files.stream().sorted(Comparator.comparingLong(f -> {
-                try {
-                    return Files.getLastModifiedTime(f).toMillis();
-                }catch(IOException e) { return 0L;}
-            }))
-            .limit(toDelete)
-            .forEach(f -> {
-                try{ Files.delete(f); }
-                catch(IOException e){ log.warn("Failed to delete old cache file {}", f);}
-            });
-            log.info("Cleaned {} old files from disk", toDelete);
-        }catch(IOException e) {
-            log.error("Failed to enforce disk capacity: {}", e.getMessage());
+    private void saveToDisk(AudioCache key, byte[] audio) {
+        Path file = resolveDiskPath(key);
+        try {
+            Files.write(file, audio);
+        } catch (IOException e) {
+            log.error("Error writing cache file {}: {}", file, e.getMessage());
         }
     }
 
     private byte[] loadFromDisk(AudioCache key) {
         Path file = resolveDiskPath(key);
-        if(!Files.exists(file))
+        if (!Files.exists(file)) {
             return null;
-        
+        }
         try {
             byte[] data = Files.readAllBytes(file);
-            if(data == null || data.length == 0)
-            {
-                try { Files.deleteIfExists(file); } catch(IOException e) { log.info("Excepcion ignorada al borrar un fichero vacio"); }
+            if (data == null || data.length == 0) {
+                Files.deleteIfExists(file);
+                return null;
             }
             return data;
-        }catch(IOException e){
-            log.error("Error al leer en disco {}: {}", file, e.getMessage());
-            try { Files.deleteIfExists(file); } catch(IOException e1) { }
+        } catch (IOException e) {
+            log.error("Error reading cache file {}: {}", file, e.getMessage());
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e1) {
+                // ignored
+            }
             return null;
         }
     }
 
-    private Path resolveDiskPath(AudioCache key){
-        String encoded = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(digest(key))
-            .replace("/", "_")
-            .replace("+", "-");
-        return cachePath.resolve(encoded + ".mp3");
+    private Path resolveDiskPath(AudioCache key) {
+        return cachePath.resolve(key.getTextHashSha256() + CACHE_FILE_EXTENSION);
     }
-
-    private byte[] digest(AudioCache key){
-        try{
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            return md.digest(key.toString().getBytes());
-        }catch(Exception e) {
-            log.error(e.getMessage(), e);
-            return String.valueOf(key.hashCode()).getBytes();
-        }
-    }
-
 }
